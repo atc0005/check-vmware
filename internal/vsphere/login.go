@@ -17,6 +17,9 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 )
 
+// Login receives credentials and related settings used to handle creating a
+// new client and logging into a specified vSphere environment. The
+// initialized and logged-in client is returned for further use.
 func Login(
 	ctx context.Context,
 	server string,

@@ -50,6 +50,7 @@ const (
 	defaultConnectTimeout int = 10
 )
 
+// Plugin types provided by this project.
 const (
 	PluginTypeTools                 string = "vmware-tools"
 	PluginTypeSnapshotsAge          string = "snapshots-age"
