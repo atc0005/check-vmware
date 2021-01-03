@@ -3,7 +3,7 @@
 # check-vmware
 
 Go-based tooling to monitor VMware environments; **NOT** affiliated with
-or endorsed by VMware, Inc..
+or endorsed by VMware, Inc.
 
 [![Latest Release](https://img.shields.io/github/release/atc0005/check-vmware.svg?style=flat-square)](https://github.com/atc0005/check-vmware/releases/latest)
 [![GoDoc](https://godoc.org/github.com/atc0005/check-vmware?status.svg)](https://godoc.org/github.com/atc0005/check-vmware)
