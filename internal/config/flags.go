@@ -66,7 +66,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 	// Shared flags for all plugin types
 
 	flag.StringVar(&c.Username, "username", defaultUsername, usernameFlagHelp)
+	flag.StringVar(&c.Username, "u", defaultUsername, usernameFlagHelp+" (shorthand)")
 	flag.StringVar(&c.Password, "password", defaultPassword, passwordFlagHelp)
+	flag.StringVar(&c.Password, "pw", defaultPassword, passwordFlagHelp+" (shorthand)")
 
 	// TODO: Is this actually needed?
 	flag.StringVar(&c.Domain, "domain", defaultUserDomain, userDomainFlagHelp)
