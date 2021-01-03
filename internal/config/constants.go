@@ -10,14 +10,6 @@ package config
 const myAppName string = "check-cert"
 const myAppURL string = "https://github.com/atc0005/check-vmware"
 
-// SkipSANSCheckKeyword is used as the sole argument to `--sans-entries` if
-// the user wishes to disable SANs entry verification. This seemingly
-// illogical option allows defining the `--sans-entries` flag in a command
-// definition used by a group-based service check even though some systems
-// targeted by that service check may use a certificate which does not have
-// any SANs entries present.
-const SkipSANSCheckKeyword string = "SKIPSANSCHECKS"
-
 const (
 	versionFlagHelp               string = "Whether to display application version and then immediately exit application."
 	logLevelFlagHelp              string = "Sets log level to one of disabled, panic, fatal, error, warn, info, debug or trace."
