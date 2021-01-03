@@ -6,6 +6,14 @@
 # full license information.
 
 
+# Ignore Visual Studio Code workspace-level settings
 /.vscode
+
+# Ignore local "scratch" directory of temporary files
+scratch/
+
+# Ignore local builds
+/release_assets
+
+# Ignore one-off CLI app builds
 /check_vmware_tools
-/scratch
