@@ -1,0 +1,33 @@
+# Copyright 2020 Adam Chalkley
+#
+# https://github.com/atc0005/go-nagios
+#
+# Licensed under the MIT License. See LICENSE file in the project root for
+# full license information.
+
+issues:
+  # equivalent CLI flag: --exclude-use-default
+  #
+  # see:
+  #   atc0005/todo#29
+  #   golangci-lint/golangci-lint#1249
+  #   golangci-lint/golangci-lint#413
+  exclude-use-default: false
+
+linters:
+  enable:
+    - depguard
+    - dogsled
+    - dupl
+    - goconst
+    - gocritic
+    - gofmt
+    - goimports
+    - golint
+    - gosec
+    - maligned
+    - misspell
+    - prealloc
+    - scopelint
+    - stylecheck
+    - unconvert
