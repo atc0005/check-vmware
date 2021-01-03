@@ -83,6 +83,8 @@ func GetVMsWithToolsIssues(vms []mo.VirtualMachine) []mo.VirtualMachine {
 
 }
 
+// VMToolsOneLineCheckSummary is used to generate a one-line Nagios service
+// check results summary. This is the line most prominent in notifications.
 func VMToolsOneLineCheckSummary(stateLabel string, vmsWithIssues []mo.VirtualMachine, evaluatedVMs []mo.VirtualMachine, rps []mo.ResourcePool) string {
 
 	switch {
@@ -107,6 +109,11 @@ func VMToolsOneLineCheckSummary(stateLabel string, vmsWithIssues []mo.VirtualMac
 	}
 }
 
+// VMToolsReport generates a comprehensive summary including any active issues
+// along with various verbose details intended to aid in troubleshooting check
+// results at a glance. This information is provided for use with the Long
+// Service Output field commonly displayed on the detailed service check
+// results display in the web UI or in the body of many notifications.
 func VMToolsReport(
 	c *vim25.Client,
 	allVMs []mo.VirtualMachine,

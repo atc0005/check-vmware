@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
@@ -114,22 +113,21 @@ func GetDatastoreByName(ctx context.Context, c *vim25.Client, dsName string, dat
 
 	finder := find.NewFinder(c, true)
 
-	var dc *object.Datacenter
-	var findDCErr error
-	var errMsg string
 	switch {
 	case datacenter == "":
-		dc, findDCErr = finder.DefaultDatacenter(ctx)
-		errMsg = "error: datacenter not provided, failed to fallback to default datacenter"
-	default:
-		dc, findDCErr = finder.DatacenterOrDefault(ctx, datacenter)
-		errMsg = "error: failed to use provided datacenter, failed to fallback to default datacenter"
-	}
+		dc, findDCErr := finder.DefaultDatacenter(ctx)
+		if findDCErr != nil {
+			return mo.Datastore{}, fmt.Errorf("%s: %w", dcNotProvidedFailedToFallback, findDCErr)
+		}
+		finder.SetDatacenter(dc)
 
-	if findDCErr != nil {
-		return mo.Datastore{}, fmt.Errorf("%s: %w", errMsg, findDCErr)
+	default:
+		dc, findDCErr := finder.DatacenterOrDefault(ctx, datacenter)
+		if findDCErr != nil {
+			return mo.Datastore{}, fmt.Errorf("%s: %w", failedToUseFailedToFallback, findDCErr)
+		}
+		finder.SetDatacenter(dc)
 	}
-	finder.SetDatacenter(dc)
 
 	dsObj, err := finder.Network(ctx, dsName)
 	if err != nil {

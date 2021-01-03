@@ -78,7 +78,7 @@ func ValidateRPs(ctx context.Context, c *vim25.Client, includeRPs []string, excl
 	}
 
 	// We're only interested in working with resource pool names
-	var poolNamesFound []string
+	poolNamesFound := make([]string, 0, len(rpsSearchResults))
 	for _, rp := range rpsSearchResults {
 		poolNamesFound = append(poolNamesFound, rp.Name)
 	}
@@ -131,6 +131,13 @@ func ValidateRPs(ctx context.Context, c *vim25.Client, includeRPs []string, excl
 
 }
 
+// GetEligibleRPs receives a list of Resource Pool names that should either be
+// explicitly included or excluded along with a boolean value indicating
+// whether only a subset of properties for the Resource Pools should be
+// returned. If requested, a subset of all available properties will be
+// retrieved (faster) instead of recursively fetching all properties (about 2x
+// as slow). The filtered list of Resource Pools is returned, or an error if
+// one occurs.
 func GetEligibleRPs(ctx context.Context, c *vim25.Client, includeRPs []string, excludeRPs []string, propsSubset bool) ([]mo.ResourcePool, error) {
 
 	funcTimeStart := time.Now()
