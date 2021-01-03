@@ -1,0 +1,85 @@
+# Copyright 2021 Adam Chalkley
+#
+# https://github.com/atc0005/check-cert
+#
+# Licensed under the MIT License. See LICENSE file in the project root for
+# full license information.
+
+name: Validate Codebase
+
+# Run builds for Pull Requests (new, updated)
+# `synchronized` seems to equate to pushing new commits to a linked branch
+# (whether force-pushed or not)
+on:
+  #push:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  lint_code:
+    name: Lint codebase
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: index.docker.io/atc0005/go-ci:go-ci-lint-only
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2.3.4
+
+      - name: Remove repo-provided golangci-lint config file
+        run: |
+          # Remove the copy of the config file bundled with the repo/code so
+          # that the configuration provided by the atc0005/go-ci project is
+          # used instead
+          rm -vf .golangci.yml
+
+      - name: Run golangci-lint using container-provided config file settings
+        run: golangci-lint run -v
+
+      # This is the very latest stable version of staticcheck provided by the
+      # atc0005/go-ci container. The version included with golangci-lint often
+      # lags behind the official stable releases.
+      - name: Run staticcheck
+        run: staticcheck $(go list -mod=vendor ./... | grep -v /vendor/)
+
+  test_code:
+    name: Run tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        container-image: ["go-ci-oldstable", "go-ci-stable", "go-ci-unstable"]
+
+    container:
+      image: "index.docker.io/atc0005/go-ci:${{ matrix.container-image}}"
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2.3.4
+
+      - name: Run all tests
+        run: go test -mod=vendor -v ./...
+
+  build_code:
+    name: Build codebase
+    runs-on: ubuntu-latest
+    # Default: 360 minutes
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        container-image: ["go-ci-oldstable", "go-ci-stable", "go-ci-unstable"]
+
+    container:
+      image: "index.docker.io/atc0005/go-ci:${{ matrix.container-image}}"
+
+    steps:
+      - name: Print go version
+        run: go version
+
+      - name: Check out code
+        uses: actions/checkout@v2.3.4
+
+      - name: Build using vendored dependencies
+        run: |
+          go build -v -mod=vendor ./cmd/check_vmware_tools
