@@ -20,6 +20,7 @@ import (
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 // GetVMs accepts a context, a connected client and a boolean value indicating
@@ -392,5 +393,49 @@ func ExcludeVMsByName(allVMs []mo.VirtualMachine, ignoreList []string) []mo.Virt
 	})
 
 	return vmsToKeep
+
+}
+
+// FilterVMsByPowerState accepts a collection of VirtualMachines and a boolean
+// value to indicate whether powered off VMs should be included in the
+// returned collection. If the collection of provided VirtualMachines is
+// empty, an empty collection is returned.
+func FilterVMsByPowerState(vms []mo.VirtualMachine, includePoweredOff bool) []mo.VirtualMachine {
+
+	// setup early so we can reference it from deferred stats output
+	filteredVMs := make([]mo.VirtualMachine, 0, len(vms))
+
+	funcTimeStart := time.Now()
+
+	defer func(vms []mo.VirtualMachine, filteredVMs *[]mo.VirtualMachine) {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute FilterVMsByPowerState func (for %d VMs, yielding %d VMs)\n",
+			time.Since(funcTimeStart),
+			len(vms),
+			len(*filteredVMs),
+		)
+	}(vms, &filteredVMs)
+
+	if len(vms) == 0 {
+		return vms
+	}
+
+	for _, vm := range vms {
+		switch {
+		// case includePoweredOff && vm.Guest.ToolsStatus != types.VirtualMachineToolsStatusToolsOk:
+		// 	vmsWithIssues = append(vmsWithIssues, vm)
+
+		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn:
+			filteredVMs = append(filteredVMs, vm)
+
+		case includePoweredOff &&
+			vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff:
+			filteredVMs = append(filteredVMs, vm)
+
+		}
+	}
+
+	return filteredVMs
 
 }

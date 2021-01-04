@@ -163,6 +163,9 @@ func main() {
 	log.Debug().Msg("Drop any VMs we've been asked to exclude from checks")
 	filteredVMs := vsphere.ExcludeVMsByName(vms, cfg.IgnoredVMs)
 
+	log.Debug().Msg("Filter VMs to specified power state")
+	filteredVMs = vsphere.FilterVMsByPowerState(filteredVMs, cfg.PoweredOff)
+
 	vmNames := make([]string, 0, len(filteredVMs))
 	for _, vm := range filteredVMs {
 		vmNames = append(vmNames, vm.Name)
@@ -171,8 +174,8 @@ func main() {
 		Str("virtual_machines", strings.Join(vmNames, ", ")).
 		Msg("")
 
-	log.Debug().Msg("Checking VMware Tools state")
-	vmsWithIssues := vsphere.GetVMsWithToolsIssues(filteredVMs, cfg.PoweredOff)
+	log.Debug().Msg("Filter VMs to those with VMware Tools issues")
+	vmsWithIssues := vsphere.FilterVMsWithToolsIssues(filteredVMs)
 
 	if len(vmsWithIssues) > 0 {
 
