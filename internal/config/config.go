@@ -121,6 +121,19 @@ type Config struct {
 	// returned.
 	timeout int
 
+	// VCPUsAllocatedWarning specifies the percentage of vCPUs allocation (as
+	// a whole number) when a WARNING threshold is reached.
+	VCPUsAllocatedWarning int
+
+	// VCPUsAllocatedCritical specifies the percentage of vCPUs allocation (as
+	// a whole number) when a CRITICAL threshold is reached.
+	VCPUsAllocatedCritical int
+
+	// VCPUsMaxAllowed specifies the maximum amount of virtual CPUs (as a
+	// whole number) that we are allowed to allocate in the target VMware
+	// environment.
+	VCPUsMaxAllowed int
+
 	// PoweredOff indicates whether powered off VMs are evaluated in addition
 	// to powered on VMs.
 	PoweredOff bool

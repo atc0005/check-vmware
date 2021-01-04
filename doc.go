@@ -16,6 +16,8 @@ FEATURES
 
 • Nagios plugin for monitoring VMware Tools for select (or all) Resource Pools
 
+• Nagios plugin for monitoring virtual CPU allocations for select (or all) Resource Pools
+
 USAGE
 
 See our main README for supported settings and examples.
