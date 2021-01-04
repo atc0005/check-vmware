@@ -78,18 +78,27 @@ Loop:
 
 }
 
-// GetVMsWithToolsIssues should probably be renamed to indicate that we are
-// filtering the received VMs list.
-func GetVMsWithToolsIssues(vms []mo.VirtualMachine, includePoweredOff bool) []mo.VirtualMachine {
+// FilterVMsWithToolsIssues filters the provided collection of VirtualMachines
+// to just those with non-OK status.
+func FilterVMsWithToolsIssues(vms []mo.VirtualMachine) []mo.VirtualMachine {
 
+	// setup early so we can reference it from deferred stats output
 	var vmsWithIssues []mo.VirtualMachine
-	for _, vm := range vms {
-		switch {
-		case includePoweredOff && vm.Guest.ToolsStatus != types.VirtualMachineToolsStatusToolsOk:
-			vmsWithIssues = append(vmsWithIssues, vm)
 
-		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn &&
-			vm.Guest.ToolsStatus != types.VirtualMachineToolsStatusToolsOk:
+	funcTimeStart := time.Now()
+
+	defer func(vms []mo.VirtualMachine, filteredVMs *[]mo.VirtualMachine) {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute FilterVMsWithToolsIssues func (for %d VMs, yielding %d VMs).\n",
+			time.Since(funcTimeStart),
+			len(vms),
+			len(*filteredVMs),
+		)
+	}(vms, &vmsWithIssues)
+
+	for _, vm := range vms {
+		if vm.Guest.ToolsStatus != types.VirtualMachineToolsStatusToolsOk {
 			vmsWithIssues = append(vmsWithIssues, vm)
 		}
 	}
