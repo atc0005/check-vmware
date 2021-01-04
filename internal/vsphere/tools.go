@@ -135,7 +135,7 @@ func VMToolsOneLineCheckSummary(stateLabel string, vmsWithIssues []mo.VirtualMac
 
 		return fmt.Sprintf(
 			"%s: No VMware Tools issues detected (evaluated %d VMs, %d Resource Pools)",
-			nagios.StateOKLabel,
+			stateLabel,
 			len(evaluatedVMs),
 			len(rps),
 		)
@@ -176,7 +176,9 @@ func VMToolsReport(
 
 	var vmsReport strings.Builder
 
-	if len(vmsWithIssues) > 1 {
+	switch {
+
+	case len(vmsWithIssues) > 1:
 
 		sort.Slice(vmsWithIssues, func(i, j int) bool {
 			return strings.ToLower(vmsWithIssues[i].Name) < strings.ToLower(vmsWithIssues[j].Name)
@@ -192,6 +194,13 @@ func VMToolsReport(
 				nagios.CheckOutputEOL,
 			)
 		}
+
+	default:
+		fmt.Fprintf(
+			&vmsReport,
+			"* No VMware Tools issues detected.%s",
+			nagios.CheckOutputEOL,
+		)
 	}
 
 	fmt.Fprintf(
