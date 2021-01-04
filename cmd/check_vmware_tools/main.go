@@ -68,6 +68,7 @@ func main() {
 		Str("included_resource_pools", cfg.IncludedResourcePools.String()).
 		Str("excluded_resource_pools", cfg.ExcludedResourcePools.String()).
 		Str("ignored_vms", cfg.IgnoredVMs.String()).
+		Bool("eval_powered_off", cfg.PoweredOff).
 		Logger()
 
 	log.Debug().Msg("Logging into vSphere environment")
@@ -171,7 +172,7 @@ func main() {
 		Msg("")
 
 	log.Debug().Msg("Checking VMware Tools state")
-	vmsWithIssues := vsphere.GetVMsWithToolsIssues(filteredVMs)
+	vmsWithIssues := vsphere.GetVMsWithToolsIssues(filteredVMs, cfg.PoweredOff)
 
 	if len(vmsWithIssues) > 0 {
 
@@ -200,6 +201,7 @@ func main() {
 			c,
 			vms,
 			filteredVMs,
+			vmsWithIssues,
 			cfg.IgnoredVMs,
 			cfg.IncludedResourcePools,
 			cfg.ExcludedResourcePools,
@@ -232,6 +234,7 @@ func main() {
 		c,
 		vms,
 		filteredVMs,
+		vmsWithIssues,
 		cfg.IgnoredVMs,
 		cfg.IncludedResourcePools,
 		cfg.ExcludedResourcePools,
