@@ -9,8 +9,10 @@ package vsphere
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25"
@@ -22,6 +24,16 @@ import (
 // the ToolsStatus for each one providing an overall Nagios state label and
 // exit code for the collection.
 func GetVMToolsStatusSummary(vms []mo.VirtualMachine) (string, int) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute GetVMToolsStatusSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	var nagiosExitStateLabel string
 	var nagiosExitStateCode int
@@ -90,6 +102,16 @@ func GetVMsWithToolsIssues(vms []mo.VirtualMachine, includePoweredOff bool) []mo
 // check results summary. This is the line most prominent in notifications.
 func VMToolsOneLineCheckSummary(stateLabel string, vmsWithIssues []mo.VirtualMachine, evaluatedVMs []mo.VirtualMachine, rps []mo.ResourcePool) string {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute VMToolsOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	switch {
 	case len(vmsWithIssues) > 0:
 		return fmt.Sprintf(
@@ -127,6 +149,16 @@ func VMToolsReport(
 	excludeRPs []string,
 	rps []mo.ResourcePool,
 ) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute VMToolsReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	rpNames := make([]string, len(rps))
 	for i := range rps {
