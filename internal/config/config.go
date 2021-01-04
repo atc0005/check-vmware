@@ -121,6 +121,10 @@ type Config struct {
 	// returned.
 	timeout int
 
+	// PoweredOff indicates whether powered off VMs are evaluated in addition
+	// to powered on VMs.
+	PoweredOff bool
+
 	// Whether the certificate should be trusted as-is without validation.
 	TrustCert bool
 

@@ -68,14 +68,17 @@ Loop:
 
 // GetVMsWithToolsIssues should probably be renamed to indicate that we are
 // filtering the received VMs list.
-func GetVMsWithToolsIssues(vms []mo.VirtualMachine) []mo.VirtualMachine {
+func GetVMsWithToolsIssues(vms []mo.VirtualMachine, includePoweredOff bool) []mo.VirtualMachine {
 
 	var vmsWithIssues []mo.VirtualMachine
 	for _, vm := range vms {
-		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
-			if vm.Guest.ToolsStatus != types.VirtualMachineToolsStatusToolsOk {
-				vmsWithIssues = append(vmsWithIssues, vm)
-			}
+		switch {
+		case includePoweredOff && vm.Guest.ToolsStatus != types.VirtualMachineToolsStatusToolsOk:
+			vmsWithIssues = append(vmsWithIssues, vm)
+
+		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn &&
+			vm.Guest.ToolsStatus != types.VirtualMachineToolsStatusToolsOk:
+			vmsWithIssues = append(vmsWithIssues, vm)
 		}
 	}
 
@@ -118,13 +121,13 @@ func VMToolsReport(
 	c *vim25.Client,
 	allVMs []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
+	vmsWithIssues []mo.VirtualMachine,
 	vmsToExclude []string,
 	includeRPs []string,
 	excludeRPs []string,
 	rps []mo.ResourcePool,
 ) string {
 
-	vmsWithIssues := GetVMsWithToolsIssues(evaluatedVMs)
 	rpNames := make([]string, len(rps))
 	for i := range rps {
 		rpNames[i] = rps[i].Name
@@ -141,15 +144,22 @@ func VMToolsReport(
 		for idx, vm := range vmsWithIssues {
 			fmt.Fprintf(
 				&vmsReport,
-				"* %2d) %s (%s)%s%s",
+				"* %02d) %s (%s)%s",
 				idx+1,
 				vm.Name,
 				string(vm.Guest.ToolsStatus),
 				nagios.CheckOutputEOL,
-				nagios.CheckOutputEOL,
 			)
 		}
 	}
+
+	fmt.Fprintf(
+		&vmsReport,
+		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
 
 	fmt.Fprintf(
 		&vmsReport,
