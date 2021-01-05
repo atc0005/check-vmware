@@ -26,6 +26,20 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.5.3] - 2021-01-05
+
+### Changed
+
+- dependencies
+  - `actions/setup-node`
+    - `v2.1.2` to `v2.1.4`
+
+### Fixed
+
+- Preformatted `ServiceOutput` string subjected to another (failed) formatting
+  operation
+- Breadcrumb URL formatting
+
 ## [v0.5.2] - 2020-11-08
 
 ### Changed
@@ -215,7 +229,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.5.3...HEAD
+[v0.5.3]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.3
 [v0.5.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.2
 [v0.5.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.1
 [v0.5.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.0
