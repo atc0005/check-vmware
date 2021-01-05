@@ -20,6 +20,7 @@ or endorsed by VMware, Inc.
   - [Overview](#overview)
     - [`check_vmware_tools`](#check_vmware_tools)
     - [`check_vmware_vcpus`](#check_vmware_vcpus)
+    - [`check_vmware_vhw`](#check_vmware_vhw)
   - [Features](#features)
   - [Changelog](#changelog)
   - [Requirements](#requirements)
@@ -34,6 +35,7 @@ or endorsed by VMware, Inc.
       - [Shared](#shared)
       - [`check_vmware_tools`](#check_vmware_tools-2)
       - [`check_vmware_vcpus`](#check_vmware_vcpus-1)
+      - [`check_vmware_vhw`](#check_vmware_vhw-1)
     - [Configuration file](#configuration-file)
   - [Examples](#examples)
     - [`check_vmware_tools` Nagios plugin](#check_vmware_tools-nagios-plugin)
@@ -44,6 +46,10 @@ or endorsed by VMware, Inc.
       - [OK results](#ok-results-1)
       - [WARNING results](#warning-results-1)
       - [CRITICAL results](#critical-results-1)
+    - [`check_vmware_vhw` Nagios plugin](#check_vmware_vhw-nagios-plugin)
+      - [OK results](#ok-results-2)
+      - [WARNING results](#warning-results-2)
+      - [CRITICAL results](#critical-results-2)
   - [License](#license)
   - [References](#references)
 
@@ -64,6 +70,7 @@ This repo contains various tools used to monitor/validate VMware environments.
 | -------------------- | ------ | ----------------------------------------------------------------- |
 | `check_vmware_tools` | Alpha  | Nagios plugin used to monitor VMware Tools installations.         |
 | `check_vmware_vcpus` | Alpha  | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs). |
+| `check_vmware_vhw`   | Alpha  | Nagios plugin used to monitor virtual hardware versions.          |
 
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
@@ -88,6 +95,22 @@ Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).
 Thresholds for `CRITICAL` and `WARNING` vCPUs allocation have usable defaults,
 but Max vCPUs allocation is required before this plugin can be used.
 
+### `check_vmware_vhw`
+
+Nagios plugin used to monitor virtual hardware versions.
+
+As of this writing, I am unaware of a way to query the current vSphere
+environment for the latest available hardware version. As a workaround for
+that lack of knowledge, this plugin applies an automatic baseline of "highest
+version discovered" across evaluated VMs. Any VMs with a hardware version not
+at that highest version are flagged as problematic. Please file an issue or
+open a discussion in this project's repo if you're aware of a way to directly
+query the desired value from the current vSphere environment.
+
+Instead of trying to determine how far behind each VM is from the newest
+version, this plugin assumes that any deviation is a `WARNING` level issue.
+See GH-33 for future potential changes to this behavior.
+
 ## Features
 
 - Multiple plugins ("Coming Soon") for monitoring VMware vSphere environments
@@ -97,6 +120,9 @@ but Max vCPUs allocation is required before this plugin can be used.
   Pools.
 
 - Nagios plugin for monitoring virtual CPU allocations for select (or all)
+  Resource Pools.
+
+- Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
 - Optional, leveled logging using `rs/zerolog` package
@@ -172,6 +198,7 @@ been tested.
          in top-level `vendor` folder
      - `go build -mod=vendor ./cmd/check_vmware_tools/`
      - `go build -mod=vendor ./cmd/check_vmware_vcpus/`
+     - `go build -mod=vendor ./cmd/check_vmware_vhw/`
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
@@ -184,6 +211,7 @@ been tested.
    - if using `Makefile`
      - look in `/tmp/check-vmware/release_assets/check_vmware_tools/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_vcpus/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_vhw/`
    - if using `go build`
      - look in `/tmp/check-vmware/`
 
@@ -259,6 +287,26 @@ TODO: Remove this section and instead duplicate the full table for each plugin.
 | `vc`, `vcpus-critical`      | No       | `100`   | No     | *percentage as positive whole number*                                   | Specifies the percentage of vCPUs allocation (as a whole number) when a CRITICAL threshold is reached.                                                                                                             |
 | `vw`, `vcpus-warning`       | No       | `95`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of vCPUs allocation (as a whole number) when a WARNING threshold is reached.                                                                                                              |
 
+#### `check_vmware_vhw`
+
+| Flag              | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                        |
+| ----------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `branding`        | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                               |
+| `h`, `help`       | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                             |
+| `v`, `version`    | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                      |
+| `ll`, `log-level` | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                          |
+| `p`, `port`       | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                 |
+| `t`, `timeout`    | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                             |
+| `s`, `server`     | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                         |
+| `u`, `username`   | **Yes**  |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                        |
+| `pw`, `password`  | **Yes**  |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                           |
+| `domain`          | No       |         | No     | *valid password*                                                        | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                 |
+| `trust-cert`      | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                              |
+| `include-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
+| `exclude-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                     |
+| `ignore-vm`       | No       |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                   |
+| `powered-off`     | No       | `false` | No     | `true`, `false`                                                         | Toggles evaluation of powered off VMs in addition to powered on VMs. Evaluation of powered off VMs is disabled by default.                                                                                         |
+
 ### Configuration file
 
 Not currently supported. This feature may be added later if there is
@@ -281,6 +329,20 @@ TODO
 TODO
 
 ### `check_vmware_vcpus` Nagios plugin
+
+#### OK results
+
+TODO
+
+#### WARNING results
+
+TODO
+
+#### CRITICAL results
+
+TODO
+
+### `check_vmware_vhw` Nagios plugin
 
 #### OK results
 

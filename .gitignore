@@ -18,3 +18,4 @@ scratch/
 # Ignore one-off CLI app builds
 /check_vmware_tools
 /check_vmware_vcpus
+/check_vmware_vhw
