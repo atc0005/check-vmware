@@ -61,6 +61,16 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+
+		flag.IntVar(&c.VCPUsAllocatedWarning, "vcpus-warning", defaultVCPUsAllocatedWarning, vCPUsAllocatedWarningFlagHelp)
+		flag.IntVar(&c.VCPUsAllocatedWarning, "vw", defaultVCPUsAllocatedWarning, vCPUsAllocatedWarningFlagHelp+" (shorthand)")
+
+		flag.IntVar(&c.VCPUsAllocatedCritical, "vcpus-critical", defaultVCPUsAllocatedCritical, vCPUsAllocatedCriticalFlagHelp)
+		flag.IntVar(&c.VCPUsAllocatedCritical, "vc", defaultVCPUsAllocatedCritical, vCPUsAllocatedCriticalFlagHelp+" (shorthand)")
+
+		flag.IntVar(&c.VCPUsMaxAllowed, "vcpus-max-allowed", defaultVCPUsMaxAllowedAllowed, vCPUsAllocatedMaxAllowedFlagHelp)
+		flag.IntVar(&c.VCPUsMaxAllowed, "vcma", defaultVCPUsMaxAllowedAllowed, vCPUsAllocatedMaxAllowedFlagHelp+" (shorthand)")
 
 	}
 

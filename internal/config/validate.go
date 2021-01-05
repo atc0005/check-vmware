@@ -50,6 +50,33 @@ func (c Config) validate(pluginType PluginType) error {
 
 	case pluginType.VirtualCPUsAllocation:
 
+		if c.VCPUsMaxAllowed < 1 {
+			return fmt.Errorf(
+				"invalid maximum number of vCPUs allowed: %d",
+				c.VCPUsMaxAllowed,
+			)
+		}
+
+		if c.VCPUsAllocatedCritical < 1 {
+			return fmt.Errorf(
+				"invalid vCPUs allocation CRITICAL threshold number: %d",
+				c.VCPUsAllocatedCritical,
+			)
+		}
+
+		if c.VCPUsAllocatedWarning < 1 {
+			return fmt.Errorf(
+				"invalid vCPUs allocation WARNING threshold number: %d",
+				c.VCPUsAllocatedWarning,
+			)
+		}
+
+		if c.VCPUsAllocatedCritical < c.VCPUsAllocatedWarning {
+			return fmt.Errorf(
+				"critical threshold set lower than warning threshold",
+			)
+		}
+
 	}
 
 	if c.Server == "" {
