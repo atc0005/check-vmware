@@ -17,3 +17,7 @@ const ParentResourcePool string = "Resources"
 const failedToUseFailedToFallback string = "error: failed to use provided datacenter, failed to fallback to default datacenter"
 
 const dcNotProvidedFailedToFallback string = "error: datacenter not provided, failed to fallback to default datacenter"
+
+// virtualHardwareVersionPrefix is used as a prefix for virtual hardware
+// versions used by VirtualMachines. Examples include vmx-15, vmx-14 and so on.
+const virtualHardwareVersionPrefix string = "vmx-"

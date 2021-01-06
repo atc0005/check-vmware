@@ -72,6 +72,13 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.VCPUsMaxAllowed, "vcpus-max-allowed", defaultVCPUsMaxAllowedAllowed, vCPUsAllocatedMaxAllowedFlagHelp)
 		flag.IntVar(&c.VCPUsMaxAllowed, "vcma", defaultVCPUsMaxAllowedAllowed, vCPUsAllocatedMaxAllowedFlagHelp+" (shorthand)")
 
+	case pluginType.VirtualHardwareVersion:
+
+		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+
 	}
 
 	// Shared flags for all plugin types
