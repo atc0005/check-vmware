@@ -83,3 +83,4 @@ jobs:
       - name: Build using vendored dependencies
         run: |
           go build -v -mod=vendor ./cmd/check_vmware_tools
+          go build -v -mod=vendor ./cmd/check_vmware_vcpus
