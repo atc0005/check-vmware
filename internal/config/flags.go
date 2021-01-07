@@ -79,6 +79,26 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
+	case pluginType.Host2Datastores2VMs:
+
+		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+
+		flag.Var(&c.IgnoredDatastores, "ignore-ds", ignoreDatastoreFlagHelp)
+
+		flag.StringVar(&c.sharedCustomAttributeName, "ca-name", defaultCustomAttributeName, sharedCustomAttributeNameFlagHelp)
+		flag.StringVar(&c.sharedCustomAttributePrefixSeparator, "ca-prefix-sep", defaultCustomAttributePrefixSeparator, sharedCustomAttributePrefixSeparatorFlagHelp)
+
+		flag.StringVar(&c.hostCustomAttributeName, "host-ca-name", defaultCustomAttributeName, hostCustomAttributeNameFlagHelp)
+		flag.StringVar(&c.hostCustomAttributePrefixSeparator, "host-ca-prefix-sep", defaultCustomAttributePrefixSeparator, hostCustomAttributePrefixSeparatorFlagHelp)
+
+		flag.StringVar(&c.datastoreCustomAttributeName, "ds-ca-name", defaultCustomAttributeName, datastoreCustomAttributeNameFlagHelp)
+		flag.StringVar(&c.datastoreCustomAttributePrefixSeparator, "ds-ca-prefix-sep", defaultCustomAttributePrefixSeparator, datastoreCustomAttributePrefixSeparatorFlagHelp)
+
+		flag.BoolVar(&c.IgnoreMissingCustomAttribute, "ignore-missing-ca", defaultIgnoreMissingCustomAttribute, ignoreMissingCustomAttributeFlagHelp)
+
 	}
 
 	// Shared flags for all plugin types

@@ -85,3 +85,4 @@ jobs:
           go build -v -mod=vendor ./cmd/check_vmware_tools
           go build -v -mod=vendor ./cmd/check_vmware_vcpus
           go build -v -mod=vendor ./cmd/check_vmware_vhw
+          go build -v -mod=vendor ./cmd/check_vmware_hs2ds2vms

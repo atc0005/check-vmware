@@ -39,10 +39,10 @@ type PluginType struct {
 	ResourcePoolsMemory    bool
 	VirtualCPUsAllocation  bool
 	VirtualHardwareVersion bool
+	Host2Datastores2VMs    bool
 
 	// TODO:
 	// - Hosts (memory, CPU usage)
-	// - Mismatched storage/host pairings
 	// - vCenter/server time (NTP)
 
 }
@@ -106,6 +106,47 @@ type Config struct {
 	// LoggingLevel is the supported logging level for this application.
 	LoggingLevel string
 
+	// hostCustomAttributeName is a Custom Attribute name specific to hosts.
+	// If specified, the user must also specify the Custom Attribute name
+	// specific to datastores.
+	hostCustomAttributeName string
+
+	// hostCustomAttributePrefixSeparator is a prefix separator for Custom
+	// Attribute values specific to hosts. If specified, this separator is
+	// used to split the value for the specified Custom Attribute. The first
+	// element from the split value is used as the prefix when comparing
+	// Custom Attribute values. Also if specified, the user must also specify
+	// the Custom Attribute prefix separator specific to datastores.
+	hostCustomAttributePrefixSeparator string
+
+	// datastoreCustomAttributeName is a Custom Attribute name specific to
+	// datastores. If specified, the user must also specify the Custom
+	// Attribute name specific to hosts.
+	datastoreCustomAttributeName string
+
+	// datastoreCustomAttributePrefixSeparator is a prefix separator for
+	// Custom Attribute values specific to datastores. If specified, this
+	// separator is used to split the value for the specified Custom
+	// Attribute. The first element from the split value is used as the prefix
+	// when comparing Custom Attribute values. Also if specified, the user
+	// must also specify the Custom Attribute prefix separator specific to
+	// hosts.
+	datastoreCustomAttributePrefixSeparator string
+
+	// sharedCustomAttributeName is a Custom Attribute name shared by both
+	// hosts and datastores. If specified, the user must not specify the
+	// Custom Attribute name specific to hosts or datastores.
+	sharedCustomAttributeName string
+
+	// sharedCustomAttributePrefixSeparator is a prefix separator for Custom
+	// Attribute values shared by both hosts and datastores. If specified,
+	// this separator is used to split the value for the specified Custom
+	// Attribute. The first element from the split value is used as the prefix
+	// when comparing Custom Attribute values. If specified, the user must not
+	// specify the Custom Attribute prefix separator specific to hosts or
+	// datastores.
+	sharedCustomAttributePrefixSeparator string
+
 	// Port is the TCP port used by the certifcate-enabled service.
 	Port int
 
@@ -137,6 +178,10 @@ type Config struct {
 	// environment.
 	VCPUsMaxAllowed int
 
+	// IgnoreMissingCustomAttribute indicates whether a host or datastore
+	// missing the specified Custom Attribute should be ignored.
+	IgnoreMissingCustomAttribute bool
+
 	// PoweredOff indicates whether powered off VMs are evaluated in addition
 	// to powered on VMs.
 	PoweredOff bool
@@ -163,9 +208,14 @@ type Config struct {
 	// or excluded from being monitored.
 	ExcludedResourcePools multiValueStringFlag
 
-	// IgnoreVM lists VMs that are explicitly ignored or excluded from being
-	// monitored.
+	// IgnoredVM is a list of VMs that are explicitly ignored or excluded
+	// from being monitored.
 	IgnoredVMs multiValueStringFlag
+
+	// IgnoredDatastores is a list of datastore names for Datastores that are
+	// allowed to be associated with a VirtualMachine that are not associated
+	// with its current host.
+	IgnoredDatastores multiValueStringFlag
 
 	// Log is an embedded zerolog Logger initialized via config.New().
 	Log zerolog.Logger

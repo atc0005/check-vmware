@@ -16,8 +16,6 @@ import (
 	"time"
 
 	"github.com/atc0005/check-vmware/internal/textutils"
-	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
@@ -41,95 +39,15 @@ func GetVMs(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.Virtua
 	defer func(vms *[]mo.VirtualMachine) {
 		fmt.Fprintf(
 			os.Stderr,
-			"It took %v to execute GetVMs func (and retrieve %d VMs).\n",
+			"It took %v to execute GetVMs func (and retrieve %d VirtualMachines).\n",
 			time.Since(funcTimeStart),
 			len(*vms),
 		)
 	}(&vms)
 
-	m := view.NewManager(c)
-
-	v, err := m.CreateContainerView(
-		ctx,
-		c.ServiceContent.RootFolder,
-
-		// Q: Is this a selection of what appears "in" the view we are creating?
-		// A: Based on testing, it appears so. Much like a database view, you
-		// can tie together multiple types into a single view that can be
-		// selectively queried.
-		[]string{
-			"VirtualMachine",
-			//
-			// Q: What difference does it make to specify additional Managed
-			// Object Types here?
-			// A: It exposes additional types from this view.
-			//
-			// "Network",
-			// "ResourcePool",
-		},
-		true,
-	)
+	err := getObjects(ctx, c, &vms, c.ServiceContent.RootFolder, propsSubset)
 	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		// Per vSphere Web Services SDK Programming Guide - VMware vSphere 7.0
-		// Update 1:
-		//
-		// A best practice when using views is to call the DestroyView()
-		// method when a view is no longer needed. This practice frees memory
-		// on the server.
-		if err := v.Destroy(ctx); err != nil {
-			fmt.Println("Error occurred while destroying view")
-		}
-	}()
-
-	// If the properties slice is nil, all properties are loaded.
-	var props []string
-	if propsSubset {
-		// https://code.vmware.com/apis/1067/vsphere
-		// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.VirtualMachine.html
-		props = []string{
-			"summary",
-			"datastore",
-			"resourcePool",
-			"config",
-			"snapshot",
-			"guest",
-			"name",
-			"network",
-			"runtime",
-		}
-	}
-
-	err = v.Retrieve(
-		ctx,
-
-		// Q: Is this meant to indicate just one "kind" from the view?
-		//
-		// I: This type has to match the destination slice type setup
-		// previously. If `mo.VirtualMachine` is the slice type, then
-		// `VirtualMachine` is the required, single slice entry value here.
-		// Adding other "kind" values here results in this library attempting
-		// to retrieve and assign types (e.g.,
-		// `mo.DistributedVirtualPortgroup`) to the slice of
-		// `mo.VirtualMachine` causing a panic.
-		//
-		// Alternatively, it appears you can use a slice of empty interface,
-		// then use a type switch later to figure out what you're working
-		// with.
-		[]string{
-			"VirtualMachine",
-			// "Network",
-		},
-		// https://code.vmware.com/apis/1067/vsphere
-		// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.VirtualMachine.html
-		props,
-		&vms,
-	)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to retrieve VirtualMachines: %w", err)
 	}
 
 	sort.Slice(vms, func(i, j int) bool {
@@ -137,7 +55,6 @@ func GetVMs(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.Virtua
 	})
 
 	return vms, nil
-
 }
 
 // GetVMsFromRPs receives a list of ResourcePool object references and returns
@@ -153,7 +70,6 @@ func GetVMsFromRPs(ctx context.Context, c *vim25.Client, rps []mo.ResourcePool, 
 
 	// declare this early so that we can grab a pointer to it in order to
 	// access the entries later
-	// vms := make([]mo.VirtualMachine, 0, 100)
 	var vms []mo.VirtualMachine
 
 	defer func(vms *[]mo.VirtualMachine) {
@@ -165,57 +81,17 @@ func GetVMsFromRPs(ctx context.Context, c *vim25.Client, rps []mo.ResourcePool, 
 		)
 	}(&vms)
 
-	m := view.NewManager(c)
-
 	for _, rp := range rps {
 
-		// attempt to limit view to VMs within the resource pool
-		v, err := m.CreateContainerView(
-			ctx,
-			rp.Reference(),
-			[]string{
-				"VirtualMachine",
-			},
-			true,
-		)
+		err := getObjects(ctx, c, &vms, rp.Reference(), propsSubset)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf(
+				"failed to retrieve VirtualMachines from Resource Pool %s: %w",
+				rp.Name,
+				err,
+			)
 		}
 
-		defer func() {
-			// Per vSphere Web Services SDK Programming Guide - VMware vSphere 7.0
-			// Update 1:
-			//
-			// A best practice when using views is to call the DestroyView()
-			// method when a view is no longer needed. This practice frees memory
-			// on the server.
-			if err := v.Destroy(ctx); err != nil {
-				fmt.Println("Error occurred while destroying view")
-			}
-		}()
-
-		// If the properties slice is nil, all properties are loaded.
-		var props []string
-		if propsSubset {
-			// https://code.vmware.com/apis/1067/vsphere
-			// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.VirtualMachine.html
-			props = []string{
-				"summary",
-				"datastore",
-				"resourcePool",
-				"config",
-				"snapshot",
-				"guest",
-				"name",
-				"network",
-				"runtime",
-			}
-		}
-
-		err = v.Retrieve(ctx, []string{"VirtualMachine"}, props, &vms)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	sort.Slice(vms, func(i, j int) bool {
@@ -244,53 +120,8 @@ func GetVMByName(ctx context.Context, c *vim25.Client, vmName string, datacenter
 		)
 	}()
 
-	finder := find.NewFinder(c, true)
-
-	switch {
-	case datacenter == "":
-		dc, findDCErr := finder.DefaultDatacenter(ctx)
-		if findDCErr != nil {
-			return mo.VirtualMachine{}, fmt.Errorf("%s: %w", dcNotProvidedFailedToFallback, findDCErr)
-		}
-		finder.SetDatacenter(dc)
-
-	default:
-		dc, findDCErr := finder.DatacenterOrDefault(ctx, datacenter)
-		if findDCErr != nil {
-			return mo.VirtualMachine{}, fmt.Errorf("%s: %w", failedToUseFailedToFallback, findDCErr)
-		}
-		finder.SetDatacenter(dc)
-	}
-
-	vmo, err := finder.VirtualMachine(ctx, vmName)
-	if err != nil {
-		return mo.VirtualMachine{}, err
-	}
-
-	// If the properties slice is nil, all properties are loaded.
-	var props []string
-	if propsSubset {
-		// https://code.vmware.com/apis/1067/vsphere
-		// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.VirtualMachine.html
-		props = []string{
-			"summary",
-			"datastore",
-			"resourcePool",
-			"config",
-			"snapshot",
-			"guest",
-			"name",
-			"network",
-		}
-	}
-
 	var vm mo.VirtualMachine
-	err = vmo.Common.Properties(
-		ctx,
-		vmo.Reference(),
-		props,
-		&vm,
-	)
+	err := getObjectByName(ctx, c, &vm, vmName, datacenter, propsSubset)
 
 	if err != nil {
 		return mo.VirtualMachine{}, err

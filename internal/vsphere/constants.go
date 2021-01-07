@@ -21,3 +21,7 @@ const dcNotProvidedFailedToFallback string = "error: datacenter not provided, fa
 // virtualHardwareVersionPrefix is used as a prefix for virtual hardware
 // versions used by VirtualMachines. Examples include vmx-15, vmx-14 and so on.
 const virtualHardwareVersionPrefix string = "vmx-"
+
+// CustomAttributeValNotSet is used to indicate that a Custom Attribute value
+// was not set on an object.
+const CustomAttributeValNotSet string = "NotSet"

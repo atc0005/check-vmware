@@ -77,6 +77,85 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+	case pluginType.Host2Datastores2VMs:
+
+		// Validate that *only one* of shared Custom Attribute name is
+		// provided or both datastore and host Custom Attribute names are
+		// provided.
+		switch {
+
+		// no Custom Attribute provided
+		case c.sharedCustomAttributeName == "" &&
+			(c.datastoreCustomAttributeName == "" && c.hostCustomAttributeName == ""):
+
+			return fmt.Errorf(
+				"one of shared or resource-specific Custom Attribute name must be specified",
+			)
+
+		// shared Custom Attribute and one of resource-specific Custom
+		// Attribute provided
+		case c.sharedCustomAttributeName != "" &&
+			(c.datastoreCustomAttributeName != "" || c.hostCustomAttributeName != ""):
+
+			return fmt.Errorf(
+				"only one of shared or resource-specific Custom Attribute name may be specified",
+			)
+
+		// shared Custom Attribute not provided and either of datastore or
+		// host Custom Attribute not provided
+		case c.sharedCustomAttributeName == "" &&
+			c.datastoreCustomAttributeName == "" && c.hostCustomAttributeName != "":
+
+			return fmt.Errorf(
+				"datastore Custom Attribute name must be specified if providing Custom Attribute name for hosts",
+			)
+
+		case c.sharedCustomAttributeName == "" &&
+			c.datastoreCustomAttributeName != "" && c.hostCustomAttributeName == "":
+
+			return fmt.Errorf(
+				"host Custom Attribute name must be specified if providing Custom Attribute name for datastores",
+			)
+
+		}
+
+		// Validate that shared Custom Attribute separator is provided, both
+		// datastore and host Custom Attribute separators are provided (and
+		// not shared), or no Custom Attribute separator is provided.
+		switch {
+
+		// no Custom Attribute prefix separator provided
+		case c.sharedCustomAttributePrefixSeparator == "" &&
+			(c.datastoreCustomAttributePrefixSeparator == "" && c.hostCustomAttributePrefixSeparator == ""):
+
+			// this is a valid scenario and indicates that literal Custom
+			// Attribute value matching is performed.
+
+		// shared Custom Attribute prefix separator and one of
+		// resource-specific Custom Attribute prefix separators provided
+		case c.sharedCustomAttributePrefixSeparator != "" &&
+			(c.datastoreCustomAttributePrefixSeparator != "" || c.hostCustomAttributePrefixSeparator != ""):
+
+			return fmt.Errorf(
+				"error: Custom Attribute prefix separators may only be specified as a shared value, or for both datastore and hosts",
+			)
+
+		case c.sharedCustomAttributePrefixSeparator == "" &&
+			c.datastoreCustomAttributePrefixSeparator == "" && c.hostCustomAttributePrefixSeparator != "":
+
+			return fmt.Errorf(
+				"datastore Custom Attribute prefix must be specified if providing prefix for hosts",
+			)
+
+		case c.sharedCustomAttributePrefixSeparator == "" &&
+			c.datastoreCustomAttributePrefixSeparator != "" && c.hostCustomAttributePrefixSeparator == "":
+
+			return fmt.Errorf(
+				"host Custom Attribute prefix must be specified if providing prefix for datastores",
+			)
+
+		}
+
 	}
 
 	if c.Server == "" {
