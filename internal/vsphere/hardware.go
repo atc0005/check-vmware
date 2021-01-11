@@ -295,6 +295,7 @@ func VirtualHardwareReport(
 	evaluatedVMs []mo.VirtualMachine,
 	vmsWithIssues []mo.VirtualMachine,
 	vmsToExclude []string,
+	evalPoweredOffVMs bool,
 	includeRPs []string,
 	excludeRPs []string,
 	rps []mo.ResourcePool,
@@ -400,6 +401,13 @@ func VirtualHardwareReport(
 		"* VMs (evaluated: %d, total: %d)%s",
 		len(evaluatedVMs),
 		len(allVMs),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Powered off VMs evaluated: %t%s",
+		evalPoweredOffVMs,
 		nagios.CheckOutputEOL,
 	)
 
