@@ -26,6 +26,14 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.1.1] - 2021-01-11
+
+### Fixed
+
+- Incorrect project name in version output
+- Plugins require write permission on home directory in order to cache login
+  sessions
+
 ## [v0.1.0] - 2021-01-06
 
 Initial release!
@@ -44,5 +52,6 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.1.1...HEAD
+[v0.1.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.1.1
 [v0.1.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.1.0
