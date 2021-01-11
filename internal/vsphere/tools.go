@@ -154,6 +154,7 @@ func VMToolsReport(
 	evaluatedVMs []mo.VirtualMachine,
 	vmsWithIssues []mo.VirtualMachine,
 	vmsToExclude []string,
+	evalPoweredOffVMs bool,
 	includeRPs []string,
 	excludeRPs []string,
 	rps []mo.ResourcePool,
@@ -223,6 +224,13 @@ func VMToolsReport(
 		"* VMs (evaluated: %d, total: %d)%s",
 		len(evaluatedVMs),
 		len(allVMs),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&vmsReport,
+		"* Powered off VMs evaluated: %t%s",
+		evalPoweredOffVMs,
 		nagios.CheckOutputEOL,
 	)
 
