@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/vmware/govmomi"
 )
@@ -39,6 +40,9 @@ func Login(
 		return nil, parseErr
 	}
 
+	if domain != "" {
+		username = strings.Join([]string{username, domain}, "@")
+	}
 	u.User = url.UserPassword(username, password)
 
 	c, authErr := govmomi.NewClient(ctx, u, trustCert)
