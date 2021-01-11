@@ -9,6 +9,7 @@ github.com/rs/zerolog/internal/json
 github.com/rs/zerolog/log
 # github.com/vmware/govmomi v0.24.0
 ## explicit
+github.com/vmware/govmomi
 github.com/vmware/govmomi/find
 github.com/vmware/govmomi/internal
 github.com/vmware/govmomi/list
@@ -16,7 +17,6 @@ github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
 github.com/vmware/govmomi/property
 github.com/vmware/govmomi/session
-github.com/vmware/govmomi/session/cache
 github.com/vmware/govmomi/session/keepalive
 github.com/vmware/govmomi/task
 github.com/vmware/govmomi/vapi/internal

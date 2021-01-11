@@ -97,13 +97,21 @@ func main() {
 		return
 	}
 
+	defer func() {
+		if err := c.Logout(ctx); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to logout")
+		}
+	}()
+
 	// At this point we're logged in, ready to retrieve a list of VMs. If
 	// specified, we should limit VMs based on include/exclude lists. First,
 	// we'll make sure that all specified resource pools actually exist in the
 	// vSphere environment.
 
 	log.Debug().Msg("Validating resource pools")
-	validateErr := vsphere.ValidateRPs(ctx, c, cfg.IncludedResourcePools, cfg.ExcludedResourcePools)
+	validateErr := vsphere.ValidateRPs(ctx, c.Client, cfg.IncludedResourcePools, cfg.ExcludedResourcePools)
 	if validateErr != nil {
 		log.Error().Err(validateErr).Msg("error validating include/exclude lists")
 
@@ -120,7 +128,7 @@ func main() {
 	log.Debug().Msg("Retrieving eligible resource pools")
 	resourcePools, getRPsErr := vsphere.GetEligibleRPs(
 		ctx,
-		c,
+		c.Client,
 		cfg.IncludedResourcePools,
 		cfg.ExcludedResourcePools,
 		true,
@@ -151,7 +159,7 @@ func main() {
 		Msg("")
 
 	log.Debug().Msg("Retrieving vms from eligible resource pools")
-	vms, getVMsErr := vsphere.GetVMsFromRPs(ctx, c, resourcePools, true)
+	vms, getVMsErr := vsphere.GetVMsFromRPs(ctx, c.Client, resourcePools, true)
 	if getVMsErr != nil {
 		log.Error().Err(getVMsErr).Msg(
 			"error retrieving list of VMs from resource pools list",
@@ -224,7 +232,7 @@ func main() {
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.VirtualHardwareReport(
-			c,
+			c.Client,
 			hardwareVersionsIdx,
 			vms,
 			filteredVMs,
@@ -254,7 +262,7 @@ func main() {
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.VirtualHardwareReport(
-			c,
+			c.Client,
 			hardwareVersionsIdx,
 			vms,
 			filteredVMs,

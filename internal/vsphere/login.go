@@ -12,9 +12,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/vmware/govmomi/session/cache"
-	"github.com/vmware/govmomi/vim25"
-	"github.com/vmware/govmomi/vim25/soap"
+	"github.com/vmware/govmomi"
 )
 
 // Login receives credentials and related settings used to handle creating a
@@ -28,7 +26,7 @@ func Login(
 	username string,
 	domain string,
 	password string,
-) (*vim25.Client, error) {
+) (*govmomi.Client, error) {
 
 	// TODO: Do we really need to support user domains?
 
@@ -36,25 +34,16 @@ func Login(
 
 	// TODO: soap.ParseURL automatically adds missing scheme and path. It may
 	// be worth using that as a fallback if there are issues logging in?
-	u, parseErr := soap.ParseURL(vCenterURL)
+	u, parseErr := url.Parse(vCenterURL)
 	if parseErr != nil {
 		return nil, parseErr
 	}
 
 	u.User = url.UserPassword(username, password)
 
-	// Use session cache to help avoid "leaking sessions"; Session.Login will
-	// only create a new authenticated session if the cached session does not
-	// exist or is invalid.
-	s := &cache.Session{
-		URL:      u,
-		Insecure: trustCert,
-	}
-
-	c := new(vim25.Client)
-	loginErr := s.Login(ctx, c, nil)
-	if loginErr != nil {
-		return nil, loginErr
+	c, authErr := govmomi.NewClient(ctx, u, trustCert)
+	if authErr != nil {
+		return nil, authErr
 	}
 
 	return c, nil
