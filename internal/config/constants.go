@@ -7,8 +7,8 @@
 
 package config
 
-const myAppName string = "check-cert"
-const myAppURL string = "https://github.com/atc0005/check-vmware"
+const myAppName string = "check-vmware"
+const myAppURL string = "https://github.com/atc0005/" + myAppName
 
 const (
 	versionFlagHelp                  string = "Whether to display application version and then immediately exit application."
