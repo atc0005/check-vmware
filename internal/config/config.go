@@ -73,6 +73,8 @@ func (mvs *multiValueStringFlag) Set(value string) error {
 	items := strings.Split(value, ",")
 	for index, item := range items {
 		items[index] = strings.TrimSpace(item)
+		items[index] = strings.ReplaceAll(items[index], "'", "")
+		items[index] = strings.ReplaceAll(items[index], "\"", "")
 	}
 
 	// add them to the collection
