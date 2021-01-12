@@ -15,9 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/property"
-	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 )
@@ -45,55 +42,9 @@ func GetNetworks(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.N
 		)
 	}(&nets)
 
-	// Create a view of Network objects
-	m := view.NewManager(c)
-
-	v, err := m.CreateContainerView(
-		ctx,
-		c.ServiceContent.RootFolder,
-		[]string{
-			"Network", // managed object types we are exposing via this view
-		},
-		true,
-	)
+	err := getObjects(ctx, c, &nets, c.ServiceContent.RootFolder, propsSubset)
 	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		// Per vSphere Web Services SDK Programming Guide - VMware vSphere 7.0
-		// Update 1:
-		//
-		// A best practice when using views is to call the DestroyView()
-		// method when a view is no longer needed. This practice frees memory
-		// on the server.
-		if err := v.Destroy(ctx); err != nil {
-			fmt.Println("Error occurred while destroying view")
-		}
-	}()
-
-	var props []string
-	if propsSubset {
-		// https://code.vmware.com/apis/1067/vsphere
-		// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.Network.html
-		props = []string{
-			"summary", // properties of this network
-			"name",    // name of this network
-			"host",    // hosts attached to this network
-			"vm",      // virtual machines using this network
-		}
-	}
-
-	err = v.Retrieve(
-		ctx,
-		[]string{
-			"Network", // managed object type we are retrieving from the view
-		},
-		props,
-		&nets,
-	)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to retrieve host systems: %w", err)
 	}
 
 	sort.Slice(nets, func(i, j int) bool {
@@ -101,7 +52,6 @@ func GetNetworks(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.N
 	})
 
 	return nets, nil
-
 }
 
 // GetNetworkByName accepts the name of a network, the name of a datacenter
@@ -122,50 +72,8 @@ func GetNetworkByName(ctx context.Context, c *vim25.Client, netName string, data
 		)
 	}()
 
-	finder := find.NewFinder(c, true)
-
-	switch {
-	case datacenter == "":
-		dc, findDCErr := finder.DefaultDatacenter(ctx)
-		if findDCErr != nil {
-			return mo.Network{}, fmt.Errorf("%s: %w", dcNotProvidedFailedToFallback, findDCErr)
-		}
-		finder.SetDatacenter(dc)
-
-	default:
-		dc, findDCErr := finder.DatacenterOrDefault(ctx, datacenter)
-		if findDCErr != nil {
-			return mo.Network{}, fmt.Errorf("%s: %w", failedToUseFailedToFallback, findDCErr)
-		}
-		finder.SetDatacenter(dc)
-	}
-
-	netObj, err := finder.Network(ctx, netName)
-	if err != nil {
-		return mo.Network{}, err
-	}
-
-	pc := property.DefaultCollector(c)
-
-	var props []string
-	if propsSubset {
-		// https://code.vmware.com/apis/1067/vsphere
-		// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.Network.html
-		props = []string{
-			"summary", // properties of this network
-			"name",    // name of this network
-			"host",    // hosts attached to this network
-			"vm",      // virtual machines using this network
-		}
-	}
-
 	var network mo.Network
-	err = pc.RetrieveOne(
-		ctx,
-		netObj.Reference(),
-		props,
-		&network,
-	)
+	err := getObjectByName(ctx, c, &network, netName, datacenter, propsSubset)
 
 	if err != nil {
 		return mo.Network{}, err

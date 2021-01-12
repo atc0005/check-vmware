@@ -21,6 +21,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_tools`](#check_vmware_tools)
     - [`check_vmware_vcpus`](#check_vmware_vcpus)
     - [`check_vmware_vhw`](#check_vmware_vhw)
+    - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms)
   - [Features](#features)
   - [Changelog](#changelog)
   - [Requirements](#requirements)
@@ -30,12 +31,15 @@ or endorsed by VMware, Inc.
   - [Configuration options](#configuration-options)
     - [Threshold calculations](#threshold-calculations)
       - [`check_vmware_tools`](#check_vmware_tools-1)
-      - [TODO](#todo)
+      - [`check_vmware_vcpus`](#check_vmware_vcpus-1)
+      - [`check_vmware_vhw`](#check_vmware_vhw-1)
+      - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-1)
     - [Command-line arguments](#command-line-arguments)
       - [Shared](#shared)
       - [`check_vmware_tools`](#check_vmware_tools-2)
-      - [`check_vmware_vcpus`](#check_vmware_vcpus-1)
-      - [`check_vmware_vhw`](#check_vmware_vhw-1)
+      - [`check_vmware_vcpus`](#check_vmware_vcpus-2)
+      - [`check_vmware_vhw`](#check_vmware_vhw-2)
+      - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-2)
     - [Configuration file](#configuration-file)
   - [Examples](#examples)
     - [`check_vmware_tools` Nagios plugin](#check_vmware_tools-nagios-plugin)
@@ -50,6 +54,10 @@ or endorsed by VMware, Inc.
       - [OK results](#ok-results-2)
       - [WARNING results](#warning-results-2)
       - [CRITICAL results](#critical-results-2)
+    - [`check_vmware_hs2ds2vms` Nagios plugin](#check_vmware_hs2ds2vms-nagios-plugin)
+      - [OK results](#ok-results-3)
+      - [WARNING results](#warning-results-3)
+      - [CRITICAL results](#critical-results-3)
   - [License](#license)
   - [References](#references)
 
@@ -66,11 +74,12 @@ VMware, Inc.
 
 This repo contains various tools used to monitor/validate VMware environments.
 
-| Tool Name            | Status | Description                                                       |
-| -------------------- | ------ | ----------------------------------------------------------------- |
-| `check_vmware_tools` | Alpha  | Nagios plugin used to monitor VMware Tools installations.         |
-| `check_vmware_vcpus` | Alpha  | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs). |
-| `check_vmware_vhw`   | Alpha  | Nagios plugin used to monitor virtual hardware versions.          |
+| Tool Name                | Status | Description                                                       |
+| ------------------------ | ------ | ----------------------------------------------------------------- |
+| `check_vmware_tools`     | Alpha  | Nagios plugin used to monitor VMware Tools installations.         |
+| `check_vmware_vcpus`     | Alpha  | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs). |
+| `check_vmware_vhw`       | Alpha  | Nagios plugin used to monitor virtual hardware versions.          |
+| `check_vmware_hs2ds2vms` | Alpha  | Nagios plugin used to monitor host/datastore/vm pairings.         |
 
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
@@ -111,19 +120,58 @@ Instead of trying to determine how far behind each VM is from the newest
 version, this plugin assumes that any deviation is a `WARNING` level issue.
 See GH-33 for future potential changes to this behavior.
 
+### `check_vmware_hs2ds2vms`
+
+Nagios plugin used to monitor host/datastore/vm pairings.
+
+This is a functional plugin responsible for verifying that each VM is housed
+on a datastore (best) intended for the host associated with the VM.
+
+By default, the evaluation is limited to powered on VMs, but this can be
+toggled to also include powered off VMs.
+
+The association between datastores and hosts is determined by a user-provided
+Custom Attribute. Flags for this plugin allow specifying separate Custom
+Attribute names for hosts and datastores along with optional separate prefixes
+for the provided Custom Attributes.
+
+This allows for example, hosts to use a `Location` Custom Attribute that
+shares a datacenter name with datastores using the same `Location` Custom
+Attribute. If not specifying a prefix separator, the plugin assumes that a
+literal, case-insensitive match of the `Location` field is required. If a
+prefix separator is provided, then the separator is used to retrieve the
+common prefix for the `Location` Custom Attribute for both hosts and
+datastores.
+
+This is intended to work around hosts that may include both the datacenter
+name and rack location details in their Custom Attribute (e.g., `Location`).
+
+This plugin optionally allows ignoring a list of datastores, and both hosts
+and datastores that are missing the specified Custom Attribute.
+
+In addition to specifying separate Custom Attribute names (required) and
+prefix separators (optional), the plugin also accepts a single Custom
+Attribute used by both hosts and datastores and an optional prefix separator,
+also used by both hosts and datastores.
+
+If specifying a shared Custom Attribute or prefix, per-resource Custom
+Attribute flags are rejected (error condition).
+
+Known issues:
+
+- While testing indicates that this plugin is functional, significant
+  refactoring is still needed
+
+- As with other plugins, documentation is incredibly thin
+
 ## Features
 
-- Multiple plugins ("Coming Soon") for monitoring VMware vSphere environments
-  (standalone ESXi hosts or vCenter instances).
-
-- Nagios plugin for monitoring VMware Tools for select (or all) Resource
-  Pools.
-
-- Nagios plugin for monitoring virtual CPU allocations for select (or all)
-  Resource Pools.
-
-- Nagios plugin for monitoring virtual hardware versions for select (or all)
-  Resource Pools.
+- Multiple plugins for monitoring VMware vSphere environments (standalone ESXi
+  hosts or vCenter instances) for select (or all) Resource Pools.
+  - VMware Tools
+  - Virtual CPU allocations
+  - Virtual hardware versions
+  - Host/Datastore/Virtual Machine pairings (using provided Custom Attribute)
 
 - Optional, leveled logging using `rs/zerolog` package
   - JSON-format output (to `stderr`)
@@ -199,6 +247,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_tools/`
      - `go build -mod=vendor ./cmd/check_vmware_vcpus/`
      - `go build -mod=vendor ./cmd/check_vmware_vhw/`
+     - `go build -mod=vendor ./cmd/check_vmware_hs2ds2vms/`
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
@@ -212,6 +261,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_tools/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_vcpus/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_vhw/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_hs2ds2vms/`
    - if using `go build`
      - look in `/tmp/check-vmware/`
 
@@ -228,10 +278,29 @@ been tested.
 | `toolsNotRunning`   | `CRITICAL`   | VMware Tools (or `open-vm-tools`) not currently running. It likely crashed or was terminated due to low memory scenario. |
 | `toolsNotInstalled` | `CRITICAL`   | Fresh virtual environment, or VMware Tools removed as part of an upgrade of an existing installation.                    |
 
-#### TODO
+#### `check_vmware_vcpus`
 
-- Add other sections for each new plugin describing how the Nagios state
-  determination is reached.
+| Nagios State | Description                                                       |
+| ------------ | ----------------------------------------------------------------- |
+| `OK`         | Ideal state, vCPU allocations within bounds.                      |
+| `WARNING`    | vCPU allocations crossed user-specified threshold for this state. |
+| `CRITICAL`   | vCPU allocations crossed user-specified threshold for this state. |
+
+#### `check_vmware_vhw`
+
+| Nagios State | Description                                                                  |
+| ------------ | ---------------------------------------------------------------------------- |
+| `OK`         | Ideal state, no mismatched Host/Datastore/Virtual machine pairings detected. |
+| `WARNING`    | Non-homogenous hardware versions.                                            |
+| `CRITICAL`   | Not used by this plugin.                                                     |
+
+#### `check_vmware_hs2ds2vms`
+
+| Nagios State | Description                                                                  |
+| ------------ | ---------------------------------------------------------------------------- |
+| `OK`         | Ideal state, no mismatched Host/Datastore/Virtual machine pairings detected. |
+| `WARNING`    | Not used by this plugin.                                                     |
+| `CRITICAL`   | Any errors encountered or Hosts/Datastores/VM mismatches.                    |
 
 ### Command-line arguments
 
@@ -307,6 +376,34 @@ TODO: Remove this section and instead duplicate the full table for each plugin.
 | `ignore-vm`       | No       |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                   |
 | `powered-off`     | No       | `false` | No     | `true`, `false`                                                         | Toggles evaluation of powered off VMs in addition to powered on VMs. Evaluation of powered off VMs is disabled by default.                                                                                         |
 
+#### `check_vmware_hs2ds2vms`
+
+| Flag                 | Required  | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                               |
+| -------------------- | --------- | ------- | ------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `branding`           | No        | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                      |
+| `h`, `help`          | No        | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                    |
+| `v`, `version`       | No        | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                             |
+| `ll`, `log-level`    | No        | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                 |
+| `p`, `port`          | No        | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                        |
+| `t`, `timeout`       | No        | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                    |
+| `s`, `server`        | **Yes**   |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                |
+| `u`, `username`      | **Yes**   |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                                                               |
+| `pw`, `password`     | **Yes**   |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                                                                  |
+| `domain`             | No        |         | No     | *valid password*                                                        | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                                                        |
+| `trust-cert`         | No        | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                                                                     |
+| `include-rp`         | No        |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation.                                        |
+| `exclude-rp`         | No        |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                                                            |
+| `ignore-vm`          | No        |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                          |
+| `ignore-ds`          | No        |         | No     | *comma-separated list of (vSphere) datastore names*                     | Specifies a comma-separated list of Datastore names that should be ignored or excluded from evaluation.                                                                                                                                                   |
+| `powered-off`        | No        | `false` | No     | `true`, `false`                                                         | Toggles evaluation of powered off VMs in addition to powered on VMs. Evaluation of powered off VMs is disabled by default.                                                                                                                                |
+| `ca-name`            | **Maybe** |         | No     | *valid Custom Attribute name*                                           | Custom Attribute name for host ESXi systems and datastores. Optional if specifying resource-specific custom attribute names.                                                                                                                              |
+| `ca-prefix-sep`      | **Maybe** |         | No     | *valid Custom Attribute prefix separator character*                     | Custom Attribute prefix separator for host ESXi systems and datastores. Skip if using Custom Attribute values as-is for comparison, otherwise optional if specifying resource-specific custom attribute prefix separator, or using the default separator. |
+| `ignore-missing-ca`  | No        | `false` | No     | `true`, `false`                                                         | Toggles how missing specified Custom Attributes will be handled. By default, ESXi hosts and datastores missing the Custom Attribute are treated as an error condition.                                                                                    |
+| `host-ca-name`       | **Maybe** |         | No     | *valid Custom Attribute name*                                           | Custom Attribute name specific to host ESXi systems. Optional if specifying shared custom attribute flag.                                                                                                                                                 |
+| `host-ca-prefix-sep` | **Maybe** |         | No     | *valid Custom Attribute prefix separator character*                     | Custom Attribute prefix separator specific to host ESXi systems. Skip if using Custom Attribute values as-is for comparison, otherwise optional if specifying shared custom attribute prefix separator, or using the default separator.                   |
+| `ds-ca-name`         | **Maybe** |         | No     | *valid Custom Attribute name*                                           | Custom Attribute name specific to datastores. Optional if specifying shared custom attribute flag.                                                                                                                                                        |
+| `ds-ca-prefix-sep`   | **Maybe** |         | No     | *valid Custom Attribute prefix separator character*                     | Custom Attribute prefix separator specific to datastores. Skip if using Custom Attribute values as-is for comparison, otherwise optional if specifying shared custom attribute prefix separator, or using the default separator.                          |
+
 ### Configuration file
 
 Not currently supported. This feature may be added later if there is
@@ -343,6 +440,20 @@ TODO
 TODO
 
 ### `check_vmware_vhw` Nagios plugin
+
+#### OK results
+
+TODO
+
+#### WARNING results
+
+TODO
+
+#### CRITICAL results
+
+TODO
+
+### `check_vmware_hs2ds2vms` Nagios plugin
 
 #### OK results
 

@@ -14,11 +14,16 @@ Monitor VMware environments
 
 FEATURES
 
-• Nagios plugin for monitoring VMware Tools for select (or all) Resource Pools
+Nagios plugins for monitoring VMware vSphere environments (standalone ESXi
+hosts or vCenter instances) for select (or all) Resource Pools.
 
-• Nagios plugin for monitoring virtual CPU allocations for select (or all) Resource Pools
+• VMware Tools
 
-• Nagios plugin for monitoring virtual hardware versions for select (or all) Resource Pools
+• Virtual CPU allocations
+
+• Virtual hardware versions
+
+• Host/Datastore/Virtual Machine pairings (using provided Custom Attribute)
 
 USAGE
 

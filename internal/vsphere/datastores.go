@@ -15,12 +15,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/property"
-	"github.com/vmware/govmomi/view"
+	"github.com/atc0005/check-vmware/internal/textutils"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 )
+
+// DatastoreIDToNameIndex maps a Datastore's ID value to its name.
+type DatastoreIDToNameIndex map[string]string
 
 // GetDatastores accepts a context, a connected client and a boolean value
 // indicating whether a subset of properties per Datastore are retrieved. A
@@ -44,45 +46,9 @@ func GetDatastores(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo
 		)
 	}(&dss)
 
-	// Create a view of Datastore objects
-	m := view.NewManager(c)
-
-	v, err := m.CreateContainerView(
-		ctx,
-		c.ServiceContent.RootFolder,
-		[]string{"Datastore"},
-		true,
-	)
+	err := getObjects(ctx, c, &dss, c.ServiceContent.RootFolder, propsSubset)
 	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		if err := v.Destroy(ctx); err != nil {
-			fmt.Println("Error occurred while destroying view")
-		}
-	}()
-
-	// If the properties slice is nil, all properties are loaded.
-	var props []string
-	if propsSubset {
-		// https://code.vmware.com/apis/1067/vsphere
-		// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.Datastore.html
-		props = []string{
-			"summary",
-			"vm",
-			"name",
-		}
-	}
-
-	err = v.Retrieve(
-		ctx,
-		[]string{"Datastore"},
-		props,
-		&dss,
-	)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to retrieve Datastores: %w", err)
 	}
 
 	sort.Slice(dss, func(i, j int) bool {
@@ -90,7 +56,6 @@ func GetDatastores(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo
 	})
 
 	return dss, nil
-
 }
 
 // GetDatastoreByName accepts the name of a network, the name of a datacenter
@@ -111,51 +76,9 @@ func GetDatastoreByName(ctx context.Context, c *vim25.Client, dsName string, dat
 		)
 	}()
 
-	finder := find.NewFinder(c, true)
-
-	switch {
-	case datacenter == "":
-		dc, findDCErr := finder.DefaultDatacenter(ctx)
-		if findDCErr != nil {
-			return mo.Datastore{}, fmt.Errorf("%s: %w", dcNotProvidedFailedToFallback, findDCErr)
-		}
-		finder.SetDatacenter(dc)
-
-	default:
-		dc, findDCErr := finder.DatacenterOrDefault(ctx, datacenter)
-		if findDCErr != nil {
-			return mo.Datastore{}, fmt.Errorf("%s: %w", failedToUseFailedToFallback, findDCErr)
-		}
-		finder.SetDatacenter(dc)
-	}
-
-	dsObj, err := finder.Network(ctx, dsName)
-	if err != nil {
-		return mo.Datastore{}, err
-	}
-
-	pc := property.DefaultCollector(c)
-
-	// If the properties slice is nil, all properties are loaded.
-	var props []string
-	if propsSubset {
-		// https://code.vmware.com/apis/1067/vsphere
-		// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.Datastore.html
-		props = []string{
-			"summary",
-			"vm",
-			"name",
-		}
-	}
-
 	var datastore mo.Datastore
-	err = pc.RetrieveOne(
-		ctx,
-		dsObj.Reference(),
-		props,
-		&datastore,
-	)
 
+	err := getObjectByName(ctx, c, &datastore, dsName, datacenter, propsSubset)
 	if err != nil {
 		return mo.Datastore{}, err
 	}
@@ -217,6 +140,8 @@ func FilterDatastoreByID(dss []mo.Datastore, dsID string) (mo.Datastore, error) 
 
 	for _, ds := range dss {
 		// return match, if available
+		// TODO: Refactor, use abstract type here
+		// ds.GetManagedEntity().Reference().Value
 		if ds.Summary.Datastore.Value == dsID {
 			return ds, nil
 		}
@@ -226,5 +151,26 @@ func FilterDatastoreByID(dss []mo.Datastore, dsID string) (mo.Datastore, error) 
 		"error: failed to retrieve Datastore using provided id %q",
 		dsID,
 	)
+
+}
+
+// DatastoreIDsToNames returns a list of matching Datastore names for the
+// provided list of Managed Object References for Datastores.
+func DatastoreIDsToNames(dsRefs []types.ManagedObjectReference, dss []mo.Datastore) []string {
+
+	dsNames := make([]string, 0, len(dsRefs))
+	dsIDs := make([]string, 0, len(dsRefs))
+
+	for _, dsRef := range dsRefs {
+		dsIDs = append(dsIDs, dsRef.Value)
+	}
+
+	for _, ds := range dss {
+		if textutils.InList(ds.Summary.Datastore.Value, dsIDs, true) {
+			dsNames = append(dsNames, ds.Name)
+		}
+	}
+
+	return dsNames
 
 }

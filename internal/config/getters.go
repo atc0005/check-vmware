@@ -15,3 +15,73 @@ import "time"
 func (c Config) Timeout() time.Duration {
 	return time.Duration(c.timeout) * time.Second
 }
+
+// add getters to indicate whether user has specified a shared custom
+// attribute or whether separate host and datastore attributes are used.
+
+// UsingSharedCA indicates whether the user opted to use a shared Custom
+// Attribute for linking Hosts with specific Datastores, or whether they opted
+// to instead specify Custom Attributes for Hosts and Datastores separately.
+// This method relies heavily on config validation to enforce only one flag
+// set for specifying the required Custom Attribute.
+func (c Config) UsingSharedCA() bool {
+	return c.sharedCustomAttributeName != ""
+}
+
+// UsingCAPrefixes indicates whether the user opted to use a Custom Attribute
+// prefix in place of a literal value for linking Hosts with specific
+// Datastores.
+func (c Config) UsingCAPrefixes() bool {
+	return c.sharedCustomAttributePrefixSeparator != "" ||
+		(c.datastoreCustomAttributePrefixSeparator != "" && c.hostCustomAttributePrefixSeparator != "")
+}
+
+// DatastoreCAName returns the user-provided Custom Attribute name specific to
+// datastores or the shared Custom Attribute name used for both datastores and
+// hosts.
+func (c Config) DatastoreCAName() string {
+	if c.datastoreCustomAttributeName != "" {
+		return c.datastoreCustomAttributeName
+	}
+
+	return c.sharedCustomAttributeName
+}
+
+// HostCAName returns the user-provided Custom Attribute name specific to
+// hosts or the shared Custom Attribute name used for both hosts and
+// datastores.
+func (c Config) HostCAName() string {
+	if c.hostCustomAttributeName != "" {
+		return c.hostCustomAttributeName
+	}
+
+	return c.sharedCustomAttributeName
+}
+
+// DatastoreCASep returns the user-provided Custom Attribute prefix separator
+// specific to datastores, the shared separator provided for both datastores
+// and hosts or the default separator if not specified.
+func (c Config) DatastoreCASep() string {
+	switch {
+	case c.datastoreCustomAttributePrefixSeparator != "":
+		return c.datastoreCustomAttributePrefixSeparator
+	case c.sharedCustomAttributePrefixSeparator != "":
+		return c.sharedCustomAttributePrefixSeparator
+	default:
+		return defaultCustomAttributePrefixSeparator
+	}
+}
+
+// HostCASep returns the user-provided Custom Attribute prefix separator
+// specific to datastores, the shared separator provided for both datastores
+// and hosts or the default separator if not specified.
+func (c Config) HostCASep() string {
+	switch {
+	case c.hostCustomAttributePrefixSeparator != "":
+		return c.hostCustomAttributePrefixSeparator
+	case c.sharedCustomAttributePrefixSeparator != "":
+		return c.sharedCustomAttributePrefixSeparator
+	default:
+		return defaultCustomAttributePrefixSeparator
+	}
+}

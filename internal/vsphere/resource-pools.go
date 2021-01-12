@@ -155,53 +155,13 @@ func GetEligibleRPs(ctx context.Context, c *vim25.Client, includeRPs []string, e
 		)
 	}(&rps)
 
-	m := view.NewManager(c)
-
-	// Create a view of Resource Pool objects
-	v, err := m.CreateContainerView(
-		ctx,
-		c.ServiceContent.RootFolder,
-		[]string{
-			"ResourcePool",
-		},
-		true,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		// Per vSphere Web Services SDK Programming Guide - VMware vSphere 7.0
-		// Update 1:
-		//
-		// A best practice when using views is to call the DestroyView()
-		// method when a view is no longer needed. This practice frees memory
-		// on the server.
-		if err := v.Destroy(ctx); err != nil {
-			fmt.Println("Error occurred while destroying view")
-		}
-	}()
-
-	// If the properties slice is nil, all properties are loaded.
-	var props []string
-	if propsSubset {
-		// https://code.vmware.com/apis/1067/vsphere
-		// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.VirtualMachine.html
-		props = []string{
-			"summary",
-			"resourcePool", // potential child resource pools
-			"config",
-			"name",
-			"runtime",
-		}
-	}
-
 	// By default, all resource pools will be retrieved. We will filter and
 	// return a trimmed list.
 	var rpsSearchResults []mo.ResourcePool
-	err = v.Retrieve(ctx, []string{"ResourcePool"}, props, &rpsSearchResults)
+
+	err := getObjects(ctx, c, &rpsSearchResults, c.ServiceContent.RootFolder, propsSubset)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to retrieve ResourcePools: %w", err)
 	}
 
 	for _, rp := range rpsSearchResults {
@@ -245,5 +205,34 @@ func GetEligibleRPs(ctx context.Context, c *vim25.Client, includeRPs []string, e
 	})
 
 	return rps, nil
+
+}
+
+// GetRPByName accepts the name of a Resource Pool, the name of a datacenter
+// and a boolean value indicating whether only a subset of properties for the
+// Network should be returned. If requested, a subset of all available
+// properties will be retrieved (faster) instead of recursively fetching all
+// properties (about 2x as slow). If the datacenter name is an empty string
+// then the default datacenter will be used.
+func GetRPByName(ctx context.Context, c *vim25.Client, rpName string, datacenter string, propsSubset bool) (mo.ResourcePool, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute GetRPByName func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	var rPool mo.ResourcePool
+	err := getObjectByName(ctx, c, &rPool, rpName, datacenter, propsSubset)
+
+	if err != nil {
+		return mo.ResourcePool{}, err
+	}
+
+	return rPool, nil
 
 }
