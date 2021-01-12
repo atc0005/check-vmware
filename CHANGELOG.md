@@ -26,6 +26,23 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.2.0] - 2021-01-12
+
+### Added
+
+- New plugin: `check_vmware_hs2ds2vms`
+  - used to assert that VMs are running and housed on intended hosts and
+    datastores
+
+### Changed
+
+- Allow specifying lists of values via CLI flag with or without quotes
+
+### Fixed
+
+- Expose via Long Service Output whether powered off VMs are evaluated
+- Wire-up user domain support
+
 ## [v0.1.1] - 2021-01-11
 
 ### Fixed
@@ -52,6 +69,7 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.2.0...HEAD
+[v0.2.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.2.0
 [v0.1.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.1.1
 [v0.1.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.1.0
