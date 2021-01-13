@@ -35,29 +35,25 @@ or endorsed by VMware, Inc.
       - [`check_vmware_vhw`](#check_vmware_vhw-1)
       - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-1)
     - [Command-line arguments](#command-line-arguments)
-      - [Shared](#shared)
       - [`check_vmware_tools`](#check_vmware_tools-2)
       - [`check_vmware_vcpus`](#check_vmware_vcpus-2)
       - [`check_vmware_vhw`](#check_vmware_vhw-2)
       - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-2)
     - [Configuration file](#configuration-file)
+  - [Contrib](#contrib)
   - [Examples](#examples)
     - [`check_vmware_tools` Nagios plugin](#check_vmware_tools-nagios-plugin)
-      - [OK results](#ok-results)
-      - [WARNING results](#warning-results)
-      - [CRITICAL results](#critical-results)
+      - [CLI invocation](#cli-invocation)
+      - [Command definition](#command-definition)
     - [`check_vmware_vcpus` Nagios plugin](#check_vmware_vcpus-nagios-plugin)
-      - [OK results](#ok-results-1)
-      - [WARNING results](#warning-results-1)
-      - [CRITICAL results](#critical-results-1)
+      - [CLI invocation](#cli-invocation-1)
+      - [Command definition](#command-definition-1)
     - [`check_vmware_vhw` Nagios plugin](#check_vmware_vhw-nagios-plugin)
-      - [OK results](#ok-results-2)
-      - [WARNING results](#warning-results-2)
-      - [CRITICAL results](#critical-results-2)
+      - [CLI invocation](#cli-invocation-2)
+      - [Command definition](#command-definition-2)
     - [`check_vmware_hs2ds2vms` Nagios plugin](#check_vmware_hs2ds2vms-nagios-plugin)
-      - [OK results](#ok-results-3)
-      - [WARNING results](#warning-results-3)
-      - [CRITICAL results](#critical-results-3)
+      - [CLI invocation](#cli-invocation-3)
+      - [Command definition](#command-definition-3)
   - [License](#license)
   - [References](#references)
 
@@ -88,13 +84,13 @@ more detailed information for use in email and Teams notifications
 
 Some plugins provide optional support to limit evaluation of VMs to specific
 Resource Pools (explicitly including or excluding) and power states (on or
-off). See the [Configuration options](#configuration-options) section for more
-information.
+off). See the [configuration options](#configuration-options),
+[examples](#examples) and [contrib](#contrib) sections for more information.
 
 ### `check_vmware_tools`
 
 Nagios plugin used to monitor VMware Tools installations. See the
-[Configuration options](#configuration-options) section for details regarding
+[configuration options](#configuration-options) section for details regarding
 how the various Tools states are evaluated.
 
 ### `check_vmware_vcpus`
@@ -102,7 +98,8 @@ how the various Tools states are evaluated.
 Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).
 
 Thresholds for `CRITICAL` and `WARNING` vCPUs allocation have usable defaults,
-but Max vCPUs allocation is required before this plugin can be used.
+but Max vCPUs allocation is required before this plugin can be used. See the
+[configuration options](#configuration-options) section for details.
 
 ### `check_vmware_vhw`
 
@@ -156,13 +153,6 @@ also used by both hosts and datastores.
 
 If specifying a shared Custom Attribute or prefix, per-resource Custom
 Attribute flags are rejected (error condition).
-
-Known issues:
-
-- While testing indicates that this plugin is functional, significant
-  refactoring is still needed
-
-- As with other plugins, documentation is incredibly thin
 
 ## Features
 
@@ -264,6 +254,8 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_hs2ds2vms/`
    - if using `go build`
      - look in `/tmp/check-vmware/`
+1. Review [configuration options](#configuration-options),
+   [`examples`](#examples) and [`contrib`](#contrib) sections usage details.
 
 ## Configuration options
 
@@ -309,10 +301,6 @@ been tested.
 - Flags *not* marked as required are for settings where a useful default is
   already defined, but may be overridden if desired.
 
-#### Shared
-
-TODO: Remove this section and instead duplicate the full table for each plugin.
-
 #### `check_vmware_tools`
 
 | Flag              | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                        |
@@ -326,7 +314,7 @@ TODO: Remove this section and instead duplicate the full table for each plugin.
 | `s`, `server`     | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                         |
 | `u`, `username`   | **Yes**  |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                        |
 | `pw`, `password`  | **Yes**  |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                           |
-| `domain`          | No       |         | No     | *valid password*                                                        | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                 |
+| `domain`          | No       |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                 |
 | `trust-cert`      | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                              |
 | `include-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
 | `exclude-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                     |
@@ -346,7 +334,7 @@ TODO: Remove this section and instead duplicate the full table for each plugin.
 | `s`, `server`               | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                         |
 | `u`, `username`             | **Yes**  |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                        |
 | `pw`, `password`            | **Yes**  |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                           |
-| `domain`                    | No       |         | No     | *valid password*                                                        | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                 |
+| `domain`                    | No       |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                 |
 | `trust-cert`                | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                              |
 | `include-rp`                | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
 | `exclude-rp`                | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                     |
@@ -369,7 +357,7 @@ TODO: Remove this section and instead duplicate the full table for each plugin.
 | `s`, `server`     | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                         |
 | `u`, `username`   | **Yes**  |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                        |
 | `pw`, `password`  | **Yes**  |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                           |
-| `domain`          | No       |         | No     | *valid password*                                                        | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                 |
+| `domain`          | No       |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                 |
 | `trust-cert`      | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                              |
 | `include-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
 | `exclude-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                     |
@@ -389,7 +377,7 @@ TODO: Remove this section and instead duplicate the full table for each plugin.
 | `s`, `server`        | **Yes**   |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                |
 | `u`, `username`      | **Yes**   |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                                                               |
 | `pw`, `password`     | **Yes**   |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                                                                  |
-| `domain`             | No        |         | No     | *valid password*                                                        | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                                                        |
+| `domain`             | No        |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                                                        |
 | `trust-cert`         | No        | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                                                                     |
 | `include-rp`         | No        |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation.                                        |
 | `exclude-rp`         | No        |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                                                            |
@@ -409,63 +397,236 @@ TODO: Remove this section and instead duplicate the full table for each plugin.
 Not currently supported. This feature may be added later if there is
 sufficient interest.
 
+## Contrib
+
+Example Nagios configuration files are provided in an effort to illustrate
+usage of plugins provided by this project. See the [Contrib
+README](contrib/README.md) and [directory contents](./contrib/) for details.
+
 ## Examples
+
+While entries in this section attempt to provide a brief overview of usage, it
+is recommended that you review the provided command definitions and other
+Nagios configuration files within the [`contrib`](#contrib) directory for more
+complete examples.
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each.
 
 ### `check_vmware_tools` Nagios plugin
 
-#### OK results
+#### CLI invocation
 
-TODO
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_tools --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --exclude-rp "Desktops" --ignore-vm "test1.example.com,redmine.example.com,TESTING-AC,RHEL7-TEST" --trust-cert --log-level info
+```
 
-#### WARNING results
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
 
-TODO
+Of note:
 
-#### CRITICAL results
+- The resource pool named `Desktops` is excluded from evaluation.
+  - this results in *all other* resource pools used for evaluation
+- Multiple Virtual machines (vSphere inventory name, not OS hostname), are
+  ignored, regardless of which Resource Pool they are part of.
+  - `test1.example.com`
+  - `redmine.example.com`
+  - `TESTING-AC`
+  - `RHEL7-TEST`
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
 
-TODO
+#### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-tools.cfg
+
+# Look at all pools, all VMs, do not evaluate any VMs that are powered off.
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally.
+define command{
+    command_name    check_vmware_tools
+    command_line    /usr/lib/nagios/plugins/check_vmware_tools --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert  --log-level info
+    }
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
 
 ### `check_vmware_vcpus` Nagios plugin
 
-#### OK results
+#### CLI invocation
 
-TODO
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_tools --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --exclude-rp "Desktops" --ignore-vm "test1.example.com,redmine.example.com,TESTING-AC,RHEL7-TEST" --vcpus-warning 97 --vcpus-critical 100  --vcpus-max-allowed 160 --trust-cert --log-level info
+```
 
-#### WARNING results
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
 
-TODO
+Of note:
 
-#### CRITICAL results
+- The resource pool named `Desktops` is excluded from evaluation.
+  - this results in *all other* resource pools used for evaluation
+- Multiple Virtual machines (vSphere inventory name, not OS hostname), are
+  ignored, regardless of which Resource Pool they are part of.
+  - `test1.example.com`
+  - `redmine.example.com`
+  - `TESTING-AC`
+  - `RHEL7-TEST`
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
 
-TODO
+#### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-vcpus.cfg
+
+# Look at all pools, all VMs, do not evaluate any VMs that are powered off.
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally.
+define command{
+    command_name    check_vmware_vcpus
+    command_line    /usr/lib/nagios/plugins/check_vmware_vcpus --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --vcpus-warning '$ARG4$' --vcpus-critical '$ARG5$' --vcpus-max-allowed '$ARG6$' --trust-cert --log-level info
+    }
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
 
 ### `check_vmware_vhw` Nagios plugin
 
-#### OK results
+#### CLI invocation
 
-TODO
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_vhw --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --exclude-rp "Desktops" --ignore-vm "test1.example.com,redmine.example.com,TESTING-AC,RHEL7-TEST" --trust-cert --log-level info
+```
 
-#### WARNING results
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
 
-TODO
+Of note:
 
-#### CRITICAL results
+- The resource pool named `Desktops` is excluded from evaluation.
+  - this results in *all other* resource pools used for evaluation
+- Multiple Virtual machines (vSphere inventory name, not OS hostname), are
+  ignored, regardless of which Resource Pool they are part of.
+  - `test1.example.com`
+  - `redmine.example.com`
+  - `TESTING-AC`
+  - `RHEL7-TEST`
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
 
-TODO
+#### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-virtual-hardware.cfg
+
+# Look at all pools, all VMs, do not evaluate any VMs that are powered off.
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally.
+define command{
+    command_name    check_vmware_vhw
+    command_line    /usr/lib/nagios/plugins/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --trust-cert --log-level info
+    }
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
 
 ### `check_vmware_hs2ds2vms` Nagios plugin
 
-#### OK results
+#### CLI invocation
 
-TODO
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_vhw --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --exclude-rp "Desktops" --ignore-vm "test1.example.com,redmine.example.com,TESTING-AC,RHEL7-TEST" --ca-name "Location" --ca-prefix-sep "-" --trust-cert --log-level info
+```
 
-#### WARNING results
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
 
-TODO
+Of note:
 
-#### CRITICAL results
+- The resource pool named `Desktops` is excluded from evaluation.
+  - this results in *all other* resource pools used for evaluation
+- Multiple Virtual machines (vSphere inventory name, not OS hostname), are
+  ignored, regardless of which Resource Pool they are part of.
+  - `test1.example.com`
+  - `redmine.example.com`
+  - `TESTING-AC`
+  - `RHEL7-TEST`
+- The Custom Attribute named `Location` is used to dynamically build pairs of
+  Hosts and Datastores. Any Host or Datastore missing that Custom Attribute is
+  reported as an error condition unless the appropriate CLI flag is provided.
+  See the [Configuration options](#configuration-options) section for the flag
+  name and further details.
+- The Custom Attribute prefix separator `-` is provided in order to "split"
+  the value found for the Custom Attribute named `Location` into pairs. The
+  second value is thrown away, leaving the first to be used as the `Location`
+  value for comparison. VMs running on a host with one value have their
+  datastores checked for the same value. If a mismatch is found, this is
+  assumed to be a `CRITICAL` level event and reported as such.
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
 
-TODO
+#### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-host-datastore-vms-pairings.cfg
+
+# Look at all pools, all VMs, do not evaluate any VMs that are powered off.
+# Use the same Custom Attribute for hosts and datastores. Use the same Custom
+# Attribute prefix separator for hosts and datastores.
+#
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally.
+define command{
+    command_name   check_vmware_hs2ds2vms
+    command_line   /usr/lib/nagios/plugins/check_vmware_hs2ds2vms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ca-name '$ARG4$' --ca-prefix-sep '$ARG5$' --trust-cert --log-level info
+    }
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
 
 ## License
 
@@ -496,6 +657,14 @@ SOFTWARE.
 ```
 
 ## References
+
+- Related projects
+  - <https://github.com/atc0005/send2teams>
+  - <https://github.com/atc0005/check-cert>
+  - <https://github.com/atc0005/check-mail>
+  - <https://github.com/atc0005/check-path>
+  - <https://github.com/atc0005/nagios-debug>
+  - <https://github.com/atc0005/go-nagios>
 
 - vSphere
   - [Go library for the VMware vSphere API](https://github.com/vmware/govmomi)
