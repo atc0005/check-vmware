@@ -25,3 +25,12 @@ const virtualHardwareVersionPrefix string = "vmx-"
 // CustomAttributeValNotSet is used to indicate that a Custom Attribute value
 // was not set on an object.
 const CustomAttributeValNotSet string = "NotSet"
+
+// Managed Object Reference types
+const (
+	MgObjRefTypeFolder          string = "Folder"
+	MgObjRefTypeDatacenter      string = "Datacenter"
+	MgObjRefTypeComputeResource string = "ComputeResource"
+	MgObjRefTypeResourcePool    string = "ResourcePool"
+	MgObjRefTypeHostSystem      string = "HostSystem"
+)
