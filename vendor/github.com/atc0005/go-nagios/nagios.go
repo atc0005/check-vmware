@@ -134,7 +134,7 @@ func (es *ExitState) ReturnCheckResults() {
 	// ExitState and make clear that the client code/plugin crashed.
 	if err := recover(); err != nil {
 
-		es.LastError = fmt.Errorf("plugin crash/panic detected")
+		es.LastError = fmt.Errorf("plugin crash/panic detected: %s", err)
 
 		es.ServiceOutput = fmt.Sprintf(
 			"%s: plugin crash detected. See details via web UI or run plugin manually via CLI.",
@@ -151,7 +151,10 @@ func (es *ExitState) ReturnCheckResults() {
 		// details so that they are not interpreted as formatting characters
 		// when passed through web UI, text, email, Teams, etc.
 		es.LongServiceOutput = fmt.Sprintf(
-			"<pre>%s%s%s</pre>",
+			"<pre>%s%s%s%s%s%s</pre>",
+			CheckOutputEOL,
+			err,
+			CheckOutputEOL,
 			CheckOutputEOL,
 			stackTrace[0:stackTraceSize],
 			CheckOutputEOL,
