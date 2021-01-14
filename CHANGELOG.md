@@ -26,6 +26,37 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.3.0] - 2021-01-14
+
+### Overview
+
+- New plugin
+- CI build timeout tweak
+- Bug fixes
+- built using Go 1.15.6
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- New plugin: `check_vmware_datastore`
+  - used to monitor space usage on datastores (one per service check)
+
+### Changed
+
+- GitHub Actions Workflow: `Build codebase using Makefile`
+  - build timeout adjusted from 10 minutes to 20 minutes
+
+### Fixed
+
+- `vsphere.getObjectByName`
+  - `RetrieveOne` PropertyCollector method called with an empty interface
+    causing `unexpected type` panic
+- `sphere.getObjects`
+  - accepts unsupported `types.ManagedObjectReference` for use with
+    `CreateContainerView`
+
 ## [v0.2.1] - 2021-01-14
 
 ### Overview
@@ -100,7 +131,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.3.0...HEAD
+[v0.3.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.3.0
 [v0.2.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.2.1
 [v0.2.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.2.0
 [v0.1.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.1.1
