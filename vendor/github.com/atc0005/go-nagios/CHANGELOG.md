@@ -26,6 +26,14 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.6.0] - 2021-01-14
+
+### Added
+
+- Expose panic error message
+  - emit as first line item in pre block above stack trace
+  - emit as part of error entry
+
 ## [v0.5.3] - 2021-01-05
 
 ### Changed
@@ -229,7 +237,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.6.0...HEAD
+[v0.6.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.6.0
 [v0.5.3]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.3
 [v0.5.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.2
 [v0.5.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.1
