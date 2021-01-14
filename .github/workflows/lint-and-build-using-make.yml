@@ -56,7 +56,7 @@ jobs:
     name: Build codebase using Makefile
     runs-on: ubuntu-latest
     # Default: 360 minutes
-    timeout-minutes: 10
+    timeout-minutes: 20
     container:
       image: "index.docker.io/golang:latest"
 
