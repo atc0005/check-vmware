@@ -229,9 +229,7 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 
 	pc := property.DefaultCollector(c)
 
-	var objRef types.ManagedObjectReference
-
-	switch dst.(type) {
+	switch u := dst.(type) {
 	case *mo.Datastore:
 
 		objKind = "Datastore"
@@ -243,7 +241,17 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 		if err != nil {
 			return err
 		}
-		objRef = obj.Reference()
+
+		err = pc.RetrieveOne(
+			ctx,
+			obj.Reference(),
+			props,
+			u,
+		)
+
+		if err != nil {
+			return err
+		}
 
 	case *mo.HostSystem:
 
@@ -256,7 +264,17 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 		if err != nil {
 			return err
 		}
-		objRef = obj.Reference()
+
+		err = pc.RetrieveOne(
+			ctx,
+			obj.Reference(),
+			props,
+			u,
+		)
+
+		if err != nil {
+			return err
+		}
 
 	case *mo.VirtualMachine:
 
@@ -270,7 +288,16 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 			return err
 		}
 
-		objRef = obj.Reference()
+		err = pc.RetrieveOne(
+			ctx,
+			obj.Reference(),
+			props,
+			u,
+		)
+
+		if err != nil {
+			return err
+		}
 
 	case *mo.Network:
 
@@ -284,7 +311,16 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 			return err
 		}
 
-		objRef = obj.Reference()
+		err = pc.RetrieveOne(
+			ctx,
+			obj.Reference(),
+			props,
+			u,
+		)
+
+		if err != nil {
+			return err
+		}
 
 	case *mo.ResourcePool:
 
@@ -298,7 +334,16 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 			return err
 		}
 
-		objRef = obj.Reference()
+		err = pc.RetrieveOne(
+			ctx,
+			obj.Reference(),
+			props,
+			u,
+		)
+
+		if err != nil {
+			return err
+		}
 
 	default:
 
@@ -306,17 +351,6 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 
 		return fmt.Errorf("func getObjectByName: unknown type provided as destination")
 
-	}
-
-	err := pc.RetrieveOne(
-		ctx,
-		objRef,
-		props,
-		&dst,
-	)
-
-	if err != nil {
-		return err
 	}
 
 	return nil
