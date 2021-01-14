@@ -22,6 +22,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_vcpus`](#check_vmware_vcpus)
     - [`check_vmware_vhw`](#check_vmware_vhw)
     - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms)
+    - [`check_vmware_datastore`](#check_vmware_datastore)
   - [Features](#features)
   - [Changelog](#changelog)
   - [Requirements](#requirements)
@@ -34,11 +35,13 @@ or endorsed by VMware, Inc.
       - [`check_vmware_vcpus`](#check_vmware_vcpus-1)
       - [`check_vmware_vhw`](#check_vmware_vhw-1)
       - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-1)
+      - [`check_vmware_datastore`](#check_vmware_datastore-1)
     - [Command-line arguments](#command-line-arguments)
       - [`check_vmware_tools`](#check_vmware_tools-2)
       - [`check_vmware_vcpus`](#check_vmware_vcpus-2)
       - [`check_vmware_vhw`](#check_vmware_vhw-2)
       - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-2)
+      - [`check_vmware_datastore`](#check_vmware_datastore-2)
     - [Configuration file](#configuration-file)
   - [Contrib](#contrib)
   - [Examples](#examples)
@@ -54,6 +57,9 @@ or endorsed by VMware, Inc.
     - [`check_vmware_hs2ds2vms` Nagios plugin](#check_vmware_hs2ds2vms-nagios-plugin)
       - [CLI invocation](#cli-invocation-3)
       - [Command definition](#command-definition-3)
+    - [`check_vmware_datastore` Nagios plugin](#check_vmware_datastore-nagios-plugin)
+      - [CLI invocation](#cli-invocation-4)
+      - [Command definition](#command-definition-4)
   - [License](#license)
   - [References](#references)
 
@@ -76,6 +82,7 @@ This repo contains various tools used to monitor/validate VMware environments.
 | `check_vmware_vcpus`     | Alpha  | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs). |
 | `check_vmware_vhw`       | Alpha  | Nagios plugin used to monitor virtual hardware versions.          |
 | `check_vmware_hs2ds2vms` | Alpha  | Nagios plugin used to monitor host/datastore/vm pairings.         |
+| `check_vmware_datastore` | Alpha  | Nagios plugin used to monitor datastore usage.                    |
 
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
@@ -154,6 +161,14 @@ also used by both hosts and datastores.
 If specifying a shared Custom Attribute or prefix, per-resource Custom
 Attribute flags are rejected (error condition).
 
+### `check_vmware_datastore`
+
+Nagios plugin used to monitor datastore usage.
+
+In addition to reporting current datastore usage, this plugin also reports
+which VMs reside on the datastore along with their percentage of the total
+datastore space used.
+
 ## Features
 
 - Multiple plugins for monitoring VMware vSphere environments (standalone ESXi
@@ -162,6 +177,7 @@ Attribute flags are rejected (error condition).
   - Virtual CPU allocations
   - Virtual hardware versions
   - Host/Datastore/Virtual Machine pairings (using provided Custom Attribute)
+  - Datastore usage
 
 - Optional, leveled logging using `rs/zerolog` package
   - JSON-format output (to `stderr`)
@@ -238,6 +254,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_vcpus/`
      - `go build -mod=vendor ./cmd/check_vmware_vhw/`
      - `go build -mod=vendor ./cmd/check_vmware_hs2ds2vms/`
+     - `go build -mod=vendor ./cmd/check_vmware_datastore/`
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
@@ -252,6 +269,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_vcpus/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_vhw/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_hs2ds2vms/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_datastore/`
    - if using `go build`
      - look in `/tmp/check-vmware/`
 1. Review [configuration options](#configuration-options),
@@ -293,6 +311,14 @@ been tested.
 | `OK`         | Ideal state, no mismatched Host/Datastore/Virtual machine pairings detected. |
 | `WARNING`    | Not used by this plugin.                                                     |
 | `CRITICAL`   | Any errors encountered or Hosts/Datastores/VM mismatches.                    |
+
+#### `check_vmware_datastore`
+
+| Nagios State | Description                                                      |
+| ------------ | ---------------------------------------------------------------- |
+| `OK`         | Ideal state, Datastore usage within bounds.                      |
+| `WARNING`    | Datastore usage crossed user-specified threshold for this state. |
+| `CRITICAL`   | Datastore usage crossed user-specified threshold for this state. |
 
 ### Command-line arguments
 
@@ -391,6 +417,26 @@ been tested.
 | `host-ca-prefix-sep` | **Maybe** |         | No     | *valid Custom Attribute prefix separator character*                     | Custom Attribute prefix separator specific to host ESXi systems. Skip if using Custom Attribute values as-is for comparison, otherwise optional if specifying shared custom attribute prefix separator, or using the default separator.                   |
 | `ds-ca-name`         | **Maybe** |         | No     | *valid Custom Attribute name*                                           | Custom Attribute name specific to datastores. Optional if specifying shared custom attribute flag.                                                                                                                                                        |
 | `ds-ca-prefix-sep`   | **Maybe** |         | No     | *valid Custom Attribute prefix separator character*                     | Custom Attribute prefix separator specific to datastores. Skip if using Custom Attribute values as-is for comparison, otherwise optional if specifying shared custom attribute prefix separator, or using the default separator.                          |
+
+#### `check_vmware_datastore`
+
+| Flag                        | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                            |
+| --------------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `branding`                  | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                   |
+| `h`, `help`                 | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                 |
+| `v`, `version`              | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                          |
+| `ll`, `log-level`           | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                              |
+| `p`, `port`                 | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                     |
+| `t`, `timeout`              | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                 |
+| `s`, `server`               | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                             |
+| `u`, `username`             | **Yes**  |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                            |
+| `pw`, `password`            | **Yes**  |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                               |
+| `domain`                    | No       |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                     |
+| `trust-cert`                | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                  |
+| `dc-name`                   | No       |         | No     | *valid vSphere datacenter name*                                         | Specifies the name of a vSphere Datacenter. If not specified, applicable plugins will attempt to use the default datacenter found in the vSphere environment. Not applicable to standalone ESXi hosts. |
+| `ds-name`                   | **Yes**  |         | No     | *valid datastore name*                                                  | Datastore name as it is found within the vSphere inventory.                                                                                                                                            |
+| `dsuc`, `ds-usage-critical` | No       | `95`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of a datastore's storage usage (as a whole number) when a `CRITICAL` threshold is reached.                                                                                    |
+| `dsuw`, `ds-usage-warning`  | No       | `90`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of a datastore's storage usage (as a whole number) when a `WARNING` threshold is reached.                                                                                     |
 
 ### Configuration file
 
@@ -621,6 +667,48 @@ define command{
     command_name   check_vmware_hs2ds2vms
     command_line   /usr/lib/nagios/plugins/check_vmware_hs2ds2vms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ca-name '$ARG4$' --ca-prefix-sep '$ARG5$' --trust-cert --log-level info
     }
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+### `check_vmware_datastore` Nagios plugin
+
+#### CLI invocation
+
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_datastore --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --ds-name "HUSVM-DC1-vol6" --ds-usage-warning 95 --ds-usage-critical 97 --trust-cert --log-level info
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+Of note:
+
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
+
+#### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-datastores.cfg
+
+# Look at specific datastore and explicitly provide custom WARNING and
+# CRITICAL threshold values.
+define command{
+    command_name    check_vmware_datastore
+    command_line    /usr/lib/nagios/plugins/check_vmware_tools --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ds-usage-warning '$ARG4$' --ds-usage-critical '$ARG5$' --ds-name '$ARG6$' --trust-cert  --log-level info
+    }
+
 ```
 
 See the [configuration options](#configuration-options) section for all

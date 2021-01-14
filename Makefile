@@ -23,7 +23,7 @@
 SHELL = /bin/bash
 
 # Space-separated list of cmd/BINARY_NAME directories to build
-WHAT 					= check_vmware_tools check_vmware_vcpus check_vmware_vhw check_vmware_hs2ds2vms
+WHAT 					= check_vmware_tools check_vmware_vcpus check_vmware_vhw check_vmware_hs2ds2vms check_vmware_datastore
 
 
 # What package holds the "version" variable used in branding/version output?

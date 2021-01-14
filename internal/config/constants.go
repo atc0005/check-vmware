@@ -36,6 +36,10 @@ const (
 	sharedCustomAttributePrefixSeparatorFlagHelp    string = "Custom Attribute prefix separator for host ESXi systems and datastores. Skip if using Custom Attribute values as-is for comparison, otherwise optional if specifying resource-specific custom attribute prefix separator, or using the default separator."
 	ignoreMissingCustomAttributeFlagHelp            string = "Toggles how missing specified Custom Attributes will be handled. By default, ESXi hosts and datastores missing the Custom Attribute are treated as an error condition."
 	ignoreDatastoreFlagHelp                         string = "Specifies a comma-separated list of Datastore names that should be ignored or excluded from evaluation."
+	datastoreNameFlagHelp                           string = "Datastore name as it is found within the vSphere inventory."
+	datastoreUsageCriticalFlagHelp                  string = "Specifies the percentage of a datastore's storage usage (as a whole number) when a CRITICAL threshold is reached."
+	datastoreUsageWarningFlagHelp                   string = "Specifies the percentage of a datastore's storage usage (as a whole number) when a WARNING threshold is reached."
+	datacenterNameFlagHelp                          string = "Specifies the name of a vSphere Datacenter. If not specified, applicable plugins will attempt to use the default datacenter found in the vSphere environment. Not applicable to standalone ESXi hosts."
 )
 
 // Default flag settings if not overridden by user input
@@ -53,6 +57,10 @@ const (
 	defaultVCPUsAllocatedCritical       int    = 100
 	defaultVCPUsAllocatedWarning        int    = 95
 	defaultIgnoreMissingCustomAttribute bool   = false
+	defaultDatastoreName                string = ""
+	defaultDatastoreUsageCritical       int    = 95
+	defaultDatastoreUsageWarning        int    = 90
+	defaultDatacenterName               string = ""
 
 	// Intentionally set low to trigger validation failure if not specified by
 	// the end user.

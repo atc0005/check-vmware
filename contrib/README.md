@@ -50,39 +50,40 @@ contrib
 └── nagios
     └── etc
         ├── nagios-plugins
-        │ └── config
-        │     ├── send2teams.cfg
-        │     ├── vmware-host-datastore-vms-pairings.cfg
-        │     ├── vmware-tools.cfg
-        │     ├── vmware-vcpus.cfg
-        │     └── vmware-virtual-hardware.cfg
+        │   └── config
+        │       ├── send2teams.cfg
+        │       ├── vmware-datastores.cfg
+        │       ├── vmware-host-datastore-vms-pairings.cfg
+        │       ├── vmware-tools.cfg
+        │       ├── vmware-vcpus.cfg
+        │       └── vmware-virtual-hardware.cfg
         └── nagios3
             ├── commands.cfg
             ├── conf
-            │ ├── contacts
-            │ │ ├── helpdesk.cfg
-            │ │ └── msteams.cfg
-            │ ├── groups
-            │ │ ├── contact-groups.cfg
-            │ │ ├── host-groups.cfg
-            │ │ └── service-groups.cfg
-            │ ├── hosts
-            │ │ ├── servers
-            │ │ │ └── vc1.example.com.cfg
-            │ │ └── templates
-            │ │     ├── generic-host.cfg
-            │ │     ├── generic-linux-box.cfg
-            │ │     └── generic-production-host.cfg
-            │ └── services
-            │     ├── service_host_group_pairings.cfg
-            │     └── templates
-            │         ├── generic-helpdesk-service.cfg
-            │         ├── generic-service.cfg
-            │         └── vmware-vsphere-service.cfg
+            │   ├── contacts
+            │   │   ├── helpdesk.cfg
+            │   │   └── msteams.cfg
+            │   ├── groups
+            │   │   ├── contact-groups.cfg
+            │   │   ├── host-groups.cfg
+            │   │   └── service-groups.cfg
+            │   ├── hosts
+            │   │   ├── servers
+            │   │   │   └── vc1.example.com.cfg
+            │   │   └── templates
+            │   │       ├── generic-host.cfg
+            │   │       ├── generic-linux-box.cfg
+            │   │       └── generic-production-host.cfg
+            │   └── services
+            │       ├── service_host_group_pairings.cfg
+            │       └── templates
+            │           ├── generic-helpdesk-service.cfg
+            │           ├── generic-service.cfg
+            │           └── vmware-vsphere-service.cfg
             ├── nagios.cfg
             └── resource.cfg
 
-13 directories, 22 files
+13 directories, 23 files
 ```
 
 ### Overview

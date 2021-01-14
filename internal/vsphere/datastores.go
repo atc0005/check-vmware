@@ -9,20 +9,83 @@ package vsphere
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
 	"strings"
+	"text/tabwriter"
 	"time"
 
 	"github.com/atc0005/check-vmware/internal/textutils"
+	"github.com/atc0005/go-nagios"
+	"github.com/vmware/govmomi/units"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 )
 
+// ErrDatastoreUsageCriticalLevel indicates that Datastore usage has crossed
+// the CRITICAL level threshold.
+var ErrDatastoreUsageCriticalLevel = errors.New("datastore usage critical level")
+
+// ErrDatastoreUsageWarningLevel indicates that Datastore usage has crossed
+// the CRITICAL level threshold.
+var ErrDatastoreUsageWarningLevel = errors.New("datastore usage warning level")
+
 // DatastoreIDToNameIndex maps a Datastore's ID value to its name.
 type DatastoreIDToNameIndex map[string]string
+
+// DatastoreUsageSummary tracks usage details for a specific Datastore
+type DatastoreUsageSummary struct {
+	Datastore               mo.Datastore
+	StorageRemainingPercent float64
+	StorageUsedPercent      float64
+	StorageTotal            int64
+	StorageUsed             int64
+	StorageRemaining        int64
+	CriticalThreshold       int
+	WarningThreshold        int
+}
+
+// NewDatastoreUsageSummary receives a Datastore and generates summary
+// information used to determine if usage levels have crossed user-specified
+// thresholds.
+func NewDatastoreUsageSummary(ds mo.Datastore, criticalThreshold int, warningThreshold int) DatastoreUsageSummary {
+
+	storageRemainingPercentage := float64(ds.Summary.FreeSpace) / float64(ds.Summary.Capacity) * 100
+	storageUsedPercentage := 100 - storageRemainingPercentage
+	storageRemaining := ds.Summary.FreeSpace
+	storageTotal := ds.Summary.Capacity
+	storageUsed := storageTotal - storageRemaining
+
+	dsUsage := DatastoreUsageSummary{
+		Datastore:               ds,
+		StorageRemainingPercent: storageRemainingPercentage,
+		StorageUsedPercent:      storageUsedPercentage,
+		StorageTotal:            storageTotal,
+		StorageUsed:             storageUsed,
+		StorageRemaining:        storageRemaining,
+		CriticalThreshold:       criticalThreshold,
+		WarningThreshold:        warningThreshold,
+	}
+
+	return dsUsage
+
+}
+
+// IsWarningState indicates whether Datastore usage has crossed the WARNING
+// level threshold.
+func (dus DatastoreUsageSummary) IsWarningState() bool {
+	return dus.StorageUsedPercent < float64(dus.CriticalThreshold) &&
+		dus.StorageUsedPercent >= float64(dus.WarningThreshold)
+}
+
+// IsCriticalState indicates whether Datastore usage has crossed the CRITICAL
+// level threshold.
+func (dus DatastoreUsageSummary) IsCriticalState() bool {
+	return dus.StorageUsedPercent >= float64(dus.CriticalThreshold)
+}
 
 // GetDatastores accepts a context, a connected client and a boolean value
 // indicating whether a subset of properties per Datastore are retrieved. A
@@ -173,4 +236,124 @@ func DatastoreIDsToNames(dsRefs []types.ManagedObjectReference, dss []mo.Datasto
 
 	return dsNames
 
+}
+
+// DatastoreUsageOneLineCheckSummary is used to generate a one-line Nagios
+// service check results summary. This is the line most prominent in
+// notifications.
+func DatastoreUsageOneLineCheckSummary(
+	stateLabel string,
+	dsUsageSummary DatastoreUsageSummary,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute DatastoreUsageOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	return fmt.Sprintf(
+		"%s: Datastore %s usage is %.2f%% of %s with %s remaining [WARNING: %d%% , CRITICAL: %d%%]",
+		stateLabel,
+		dsUsageSummary.Datastore.Name,
+		dsUsageSummary.StorageUsedPercent,
+		units.ByteSize(dsUsageSummary.StorageTotal),
+		units.ByteSize(dsUsageSummary.StorageRemaining),
+		dsUsageSummary.WarningThreshold,
+		dsUsageSummary.CriticalThreshold,
+	)
+
+}
+
+// DatastoreUsageReport generates a summary of Datastore usage along with
+// various verbose details intended to aid in troubleshooting check results at
+// a glance. This information is provided for use with the Long Service Output
+// field commonly displayed on the detailed service check results display in
+// the web UI or in the body of many notifications.
+func DatastoreUsageReport(
+	c *vim25.Client,
+	dsUsageSummary DatastoreUsageSummary,
+	dsVMs []mo.VirtualMachine,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute DatastoreUsageReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	var report strings.Builder
+
+	fmt.Fprintf(
+		&report,
+		"Datastore Summary:%s%s"+
+			"* Name: %s%s"+
+			"* Used: %v (%.2f%%)%s"+
+			"* Remaining: %v (%.2f%%)%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		dsUsageSummary.Datastore.Name,
+		nagios.CheckOutputEOL,
+		units.ByteSize(dsUsageSummary.StorageUsed),
+		dsUsageSummary.StorageUsedPercent,
+		nagios.CheckOutputEOL,
+		units.ByteSize(dsUsageSummary.StorageRemaining),
+		dsUsageSummary.StorageRemainingPercent,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"VMs on datastore:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(&report, "<pre>%s", nagios.CheckOutputEOL)
+
+	tw := tabwriter.NewWriter(&report, 2, 0, 2, ' ', 0)
+	fmt.Fprintf(tw, "Name\tSpace used\tDatastore Usage%s", nagios.CheckOutputEOL)
+
+	for _, vm := range dsVMs {
+		vmStorageUsed := vm.Summary.Storage.Committed + vm.Summary.Storage.Uncommitted
+		vmPercentOfDSUsed := float64(vmStorageUsed) / float64(dsUsageSummary.StorageTotal) * 100
+		fmt.Fprintf(
+			tw,
+			"%s\t%v\t%1.f%%%s",
+			vm.Name,
+			units.ByteSize(vmStorageUsed),
+			vmPercentOfDSUsed,
+			nagios.CheckOutputEOL,
+		)
+	}
+
+	_ = tw.Flush()
+
+	fmt.Fprintf(&report, "</pre>%s", nagios.CheckOutputEOL)
+
+	fmt.Fprintf(
+		&report,
+		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* vSphere environment: %s%s",
+		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	return report.String()
 }

@@ -147,6 +147,14 @@ type Config struct {
 	// datastores.
 	sharedCustomAttributePrefixSeparator string
 
+	// DatastoreName is the name of the datastore as it is found within the
+	// vSphere inventory of the specified ESXi host or vCenter instance.
+	DatastoreName string
+
+	// DatacenterName is the name of a Datacenter in the associated vSphere
+	// inventory. Not applicable to standline ESXi hosts.
+	DatacenterName string
+
 	// Port is the TCP port used by the certifcate-enabled service.
 	Port int
 
@@ -177,6 +185,14 @@ type Config struct {
 	// whole number) that we are allowed to allocate in the target VMware
 	// environment.
 	VCPUsMaxAllowed int
+
+	// DatastoreUsageWarning specifies the percentage of a datastore's storage
+	// usage (as a whole number) when a WARNING threshold is reached.
+	DatastoreUsageWarning int
+
+	// DatastoreUsageCritical specifies the percentage of a datastore's storage
+	// usage (as a whole number) when a CRITICAL threshold is reached.
+	DatastoreUsageCritical int
 
 	// IgnoreMissingCustomAttribute indicates whether a host or datastore
 	// missing the specified Custom Attribute should be ignored.

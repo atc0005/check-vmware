@@ -46,6 +46,30 @@ func (c Config) validate(pluginType PluginType) error {
 
 	case pluginType.DatastoresSize:
 
+		if c.DatastoreName == "" {
+			return fmt.Errorf("datastore name not provided")
+		}
+
+		if c.DatastoreUsageCritical < 1 {
+			return fmt.Errorf(
+				"invalid datastore usage (percentage as whole number) CRITICAL threshold number: %d",
+				c.DatastoreUsageCritical,
+			)
+		}
+
+		if c.DatastoreUsageWarning < 1 {
+			return fmt.Errorf(
+				"invalid datastore usage (percentage as whole number) WARNING threshold number: %d",
+				c.DatastoreUsageWarning,
+			)
+		}
+
+		if c.DatastoreUsageCritical < c.DatastoreUsageWarning {
+			return fmt.Errorf(
+				"datastore critical threshold set lower than warning threshold",
+			)
+		}
+
 	case pluginType.ResourcePoolsMemory:
 
 	case pluginType.VirtualCPUsAllocation:
@@ -73,7 +97,7 @@ func (c Config) validate(pluginType PluginType) error {
 
 		if c.VCPUsAllocatedCritical < c.VCPUsAllocatedWarning {
 			return fmt.Errorf(
-				"critical threshold set lower than warning threshold",
+				"vCPUs allocation critical threshold set lower than warning threshold",
 			)
 		}
 

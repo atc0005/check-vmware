@@ -102,6 +102,61 @@ func GetVMsFromRPs(ctx context.Context, c *vim25.Client, rps []mo.ResourcePool, 
 
 }
 
+// GetVMsFromDatastore receives a Datastore object reference and returns a
+// list of VirtualMachine object references. The propsSubset boolean value
+// indicates whether a subset of properties per VirtualMachine are retrieved.
+// If requested, a subset of all available properties will be retrieved
+// (faster) instead of recursively fetching all properties (about 2x as slow)
+// A collection of VirtualMachines with requested properties is returned or
+// nil and an error, if one occurs.
+func GetVMsFromDatastore(ctx context.Context, c *vim25.Client, ds mo.Datastore, propsSubset bool) ([]mo.VirtualMachine, error) {
+
+	funcTimeStart := time.Now()
+
+	// declare this early so that we can grab a pointer to it in order to
+	// access the entries later
+	dsVMs := make([]mo.VirtualMachine, len(ds.Vm))
+
+	defer func(vms *[]mo.VirtualMachine) {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute GetVMsFromDatastore func (and retrieve %d VMs).\n",
+			time.Since(funcTimeStart),
+			len(*vms),
+		)
+	}(&dsVMs)
+
+	var allVMs []mo.VirtualMachine
+	err := getObjects(ctx, c, &allVMs, c.ServiceContent.RootFolder, propsSubset)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to retrieve VirtualMachines from Datastore %s: %w",
+			ds.Name,
+			err,
+		)
+	}
+
+	for i := range ds.Vm {
+		vm, err := FilterVMByID(allVMs, ds.Vm[i].Value)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to retrieve VM for VM ID %s: %w",
+				ds.Vm[i].Value,
+				err,
+			)
+		}
+
+		dsVMs[i] = vm
+	}
+
+	sort.Slice(dsVMs, func(i, j int) bool {
+		return strings.ToLower(dsVMs[i].Name) < strings.ToLower(dsVMs[j].Name)
+	})
+
+	return dsVMs, nil
+
+}
+
 // GetVMByName accepts the name of a VirtualMachine, the name of a datacenter
 // and a boolean value indicating whether only a subset of properties for the
 // VirtualMachine should be returned. If requested, a subset of all available

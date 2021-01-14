@@ -25,6 +25,8 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Host/Datastore/Virtual Machine pairings (using provided Custom Attribute)
 
+• Datastore usage
+
 USAGE
 
 See our main README for supported settings and examples.

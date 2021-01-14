@@ -102,6 +102,20 @@ func getObjects(ctx context.Context, c *vim25.Client, dst interface{}, objRef ty
 	// Create a view of caller-specified objects
 	m := view.NewManager(c)
 
+	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.view.ContainerView.html
+	switch objRef.Type {
+	case MgObjRefTypeFolder:
+	case MgObjRefTypeDatacenter:
+	case MgObjRefTypeComputeResource:
+	case MgObjRefTypeResourcePool:
+	case MgObjRefTypeHostSystem:
+	default:
+		return fmt.Errorf(
+			"unsupported container type specified for ContainerView: %s",
+			objRef.Type,
+		)
+	}
+
 	switch u := dst.(type) {
 	case *[]mo.Datastore:
 		defer func() {
