@@ -328,7 +328,7 @@ func DatastoreUsageReport(
 		vmPercentOfDSUsed := float64(vmStorageUsed) / float64(dsUsageSummary.StorageTotal) * 100
 		fmt.Fprintf(
 			tw,
-			"%s\t%v\t%1.f%%%s",
+			"%s\t%v\t%2.2f%%%s",
 			vm.Name,
 			units.ByteSize(vmStorageUsed),
 			vmPercentOfDSUsed,
