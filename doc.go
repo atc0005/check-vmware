@@ -27,6 +27,8 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Datastore usage
 
+• Snapshots age
+
 USAGE
 
 See our main README for supported settings and examples.

@@ -23,8 +23,10 @@ func getVirtualMachinePropsSubset() []string {
 		"resourcePool",
 		"config",
 		"snapshot",
+		// "rootSnapshot", // TODO: need for this?
 		"storage",
 		"guest",
+		"layoutEx",
 		"name",
 		"network",
 		"runtime", // Host system is listed here

@@ -158,16 +158,6 @@ type Config struct {
 	// Port is the TCP port used by the certifcate-enabled service.
 	Port int
 
-	// AgeWarning is the number of days remaining before certificate
-	// expiration when this application will flag the NotAfter certificate
-	// field as a WARNING state.
-	// AgeWarning int
-
-	// AgeCritical is the number of days remaining before certificate
-	// expiration when this application will flag the NotAfter certificate
-	// field as a CRITICAL state.
-	// AgeCritical int
-
 	// timeout is the number of seconds allowed before the connection attempt
 	// to a standalone ESXi host or vCenter instance is abandoned and an error
 	// returned.
@@ -193,6 +183,22 @@ type Config struct {
 	// DatastoreUsageCritical specifies the percentage of a datastore's storage
 	// usage (as a whole number) when a CRITICAL threshold is reached.
 	DatastoreUsageCritical int
+
+	// SnapshotsSizeWarning specifies the size of a snapshot in GB when a
+	// WARNING threshold is reached. 20 GB is the default.
+	SnapshotsSizeWarning int
+
+	// SnapshotsSizeCritical specifies the size of a snapshot in GB when a
+	// CRITICAL threshold is reached. 40 GB is the default.
+	SnapshotsSizeCritical int
+
+	// SnapshotsAgeWarning specifies the age of a snapshot in days when a
+	// WARNING threshold is reached.
+	SnapshotsAgeWarning int
+
+	// SnapshotsAgeCritical specifies the age of a snapshot in days when a
+	// CRITICAL threshold is reached.
+	SnapshotsAgeCritical int
 
 	// IgnoreMissingCustomAttribute indicates whether a host or datastore
 	// missing the specified Custom Attribute should be ignored.

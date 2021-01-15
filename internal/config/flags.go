@@ -31,22 +31,41 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 
-	// 	flag.IntVar(&c.AgeWarning, "w", defaultSnapshotAgeWarning, snapshotAgeWarningFlagHelp)
-	// 	flag.IntVar(&c.AgeWarning, "age-warning", defaultSnapshotAgeWarning, snapshotAgeWarningFlagHelp)
-	//
-	// 	flag.IntVar(&c.AgeCritical, "c", defaultSnapshotAgeCritical, snapshotAgeCriticalFlagHelp)
-	// 	flag.IntVar(&c.AgeCritical, "age-critical", defaultSnapshotAgeCritical, snapshotAgeCriticalFlagHelp)
+		// NOTE: This plugin is hard-coded to evaluate powered off and powered
+		// on VMs equally. I'm not sure whether ignoring powered off VMs by
+		// default makes sense for this particular plugin.
+		//
+		// Please submit a GitHub issue if you feel differently and expand on
+		// some use cases for ignoring powered off VMs by default.
+		//
+		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
+		flag.IntVar(&c.SnapshotsAgeWarning, "aw", defaultSnapshotsAgeWarning, snapshotsAgeWarningFlagHelp)
+		flag.IntVar(&c.SnapshotsAgeWarning, "age-warning", defaultSnapshotsAgeWarning, snapshotsAgeWarningFlagHelp)
+
+		flag.IntVar(&c.SnapshotsAgeCritical, "ac", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp)
+		flag.IntVar(&c.SnapshotsAgeCritical, "age-critical", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp)
+
+	// See atc0005/check-vmware#4,vmware/govmomi#2243
 	case pluginType.SnapshotsSize:
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 
-	// 	flag.IntVar(&c.SizeWarning, "w", defaultSnapshotSizeWarning, snapshotSizeWarningFlagHelp)
+		// NOTE: This plugin is hard-coded to evaluate powered off and powered
+		// on VMs equally. I'm not sure whether ignoring powered off VMs by
+		// default makes sense for this particular plugin.
+		//
+		// Please submit a GitHub issue if you feel differently and expand on
+		// some use cases for ignoring powered off VMs by default.
+		//
+		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+
+	// 	flag.IntVar(&c.SizeWarning, "sw", defaultSnapshotSizeWarning, snapshotSizeWarningFlagHelp)
 	// 	flag.IntVar(&c.SizeWarning, "size-warning", defaultSnapshotSizeWarning, snapshotSizeWarningFlagHelp)
 	//
-	// 	flag.IntVar(&c.SizeCritical, "c", defaultSnapshotSizeCritical, snapshotSizeCriticalFlagHelp)
+	// 	flag.IntVar(&c.SizeCritical, "sc", defaultSnapshotSizeCritical, snapshotSizeCriticalFlagHelp)
 	// 	flag.IntVar(&c.SizeCritical, "size-critical", defaultSnapshotSizeCritical, snapshotSizeCriticalFlagHelp)
 
 	case pluginType.DatastoresSize:
