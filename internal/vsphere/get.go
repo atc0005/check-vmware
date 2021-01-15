@@ -23,6 +23,7 @@ func getVirtualMachinePropsSubset() []string {
 		"resourcePool",
 		"config",
 		"snapshot",
+		"storage",
 		"guest",
 		"name",
 		"network",
