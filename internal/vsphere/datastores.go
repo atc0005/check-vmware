@@ -324,7 +324,14 @@ func DatastoreUsageReport(
 	fmt.Fprintf(tw, "Name\tSpace used\tDatastore Usage%s", nagios.CheckOutputEOL)
 
 	for _, vm := range dsVMs {
-		vmStorageUsed := vm.Summary.Storage.Committed + vm.Summary.Storage.Uncommitted
+
+		var vmStorageUsed int64
+		for _, usage := range vm.Storage.PerDatastoreUsage {
+			if usage.Datastore == dsUsageSummary.Datastore.Reference() {
+				vmStorageUsed += usage.Committed + usage.Uncommitted
+			}
+		}
+
 		vmPercentOfDSUsed := float64(vmStorageUsed) / float64(dsUsageSummary.StorageTotal) * 100
 		fmt.Fprintf(
 			tw,
