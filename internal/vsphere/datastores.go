@@ -14,7 +14,6 @@ import (
 	"os"
 	"sort"
 	"strings"
-	"text/tabwriter"
 	"time"
 
 	"github.com/atc0005/check-vmware/internal/textutils"
@@ -318,11 +317,6 @@ func DatastoreUsageReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(&report, "<pre>%s", nagios.CheckOutputEOL)
-
-	tw := tabwriter.NewWriter(&report, 2, 0, 2, ' ', 0)
-	fmt.Fprintf(tw, "Name\tSpace used\tDatastore Usage%s", nagios.CheckOutputEOL)
-
 	for _, vm := range dsVMs {
 
 		var vmStorageUsed int64
@@ -334,18 +328,14 @@ func DatastoreUsageReport(
 
 		vmPercentOfDSUsed := float64(vmStorageUsed) / float64(dsUsageSummary.StorageTotal) * 100
 		fmt.Fprintf(
-			tw,
-			"%s\t%v\t%2.2f%%%s",
+			&report,
+			"* %s [Size: %v, Datastore Usage: %2.2f%%]%s",
 			vm.Name,
 			units.ByteSize(vmStorageUsed),
 			vmPercentOfDSUsed,
 			nagios.CheckOutputEOL,
 		)
 	}
-
-	_ = tw.Flush()
-
-	fmt.Fprintf(&report, "</pre>%s", nagios.CheckOutputEOL)
 
 	fmt.Fprintf(
 		&report,
