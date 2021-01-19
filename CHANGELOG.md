@@ -26,6 +26,30 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.4.0] - 2021-01-19
+
+### Overview
+
+- New plugin
+- Bug fixes
+- built using Go 1.15.6
+  - Statically linked
+  - Windows (x86, x64)
+  - Linux (x86, x64)
+
+### Added
+
+- New plugin: `check_vmware_snapshots_age`
+
+### Fixed
+
+- check_vmware_datastore | Datastore-specific storage usage for VMs appears to
+  be incorrect
+- check_vmware_datastore | Datastore-specific storage usage for VMs is rounded
+  without sufficient precision
+- check_vmware_datastore | Angle brackets for pre tags (in VM listing)
+  shown in CLI, missing from Nagios generated notifications
+
 ## [v0.3.0] - 2021-01-14
 
 ### Overview
@@ -131,7 +155,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.4.0...HEAD
+[v0.4.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.0
 [v0.3.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.3.0
 [v0.2.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.2.1
 [v0.2.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.2.0
