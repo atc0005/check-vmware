@@ -137,8 +137,6 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 		Bool("trust_cert", c.TrustCert).
 		Str("server", c.Server).
 		Int("port", c.Port).
-		// Int("age_warning", c.AgeWarning).
-		// Int("age_critical", c.AgeCritical).
 		Logger()
 
 	if err := setLoggingLevel(c.LoggingLevel); err != nil {

@@ -22,25 +22,25 @@ func (c Config) validate(pluginType PluginType) error {
 
 	case pluginType.SnapshotsAge:
 
-	// 	if c.AgeWarning < 0 {
-	// 		return fmt.Errorf(
-	// 			"invalid cert expiration WARNING threshold number: %d",
-	// 			c.AgeWarning,
-	// 		)
-	// 	}
-	//
-	// 	if c.AgeCritical < 0 {
-	// 		return fmt.Errorf(
-	// 			"invalid cert expiration CRITICAL threshold number: %d",
-	// 			c.AgeCritical,
-	// 		)
-	// 	}
-	//
-	// 	if c.AgeCritical > c.AgeWarning {
-	// 		return fmt.Errorf(
-	// 			"critical threshold set higher than warning threshold",
-	// 		)
-	// 	}
+		if c.SnapshotsAgeWarning < 0 {
+			return fmt.Errorf(
+				"invalid snapshot age WARNING threshold number: %d",
+				c.SnapshotsAgeWarning,
+			)
+		}
+
+		if c.SnapshotsAgeCritical < 0 {
+			return fmt.Errorf(
+				"invalid snapshot age CRITICAL threshold number: %d",
+				c.SnapshotsAgeCritical,
+			)
+		}
+
+		if c.SnapshotsAgeCritical < c.SnapshotsAgeWarning {
+			return fmt.Errorf(
+				"critical threshold set lower than warning threshold",
+			)
+		}
 
 	case pluginType.SnapshotsSize:
 
