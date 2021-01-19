@@ -611,7 +611,10 @@ func SnapshotsAgeReport(
 	)
 
 	switch {
-	case !snapshotSummarySets.IsAgeCriticalState() && !snapshotSummarySets.IsAgeWarningState():
+	case len(snapshotSummarySets) > 0 &&
+		!snapshotSummarySets.IsAgeCriticalState() &&
+		!snapshotSummarySets.IsAgeWarningState():
+
 		for _, snapSet := range snapshotSummarySets {
 			for _, snap := range snapSet.Snapshots {
 				if !snap.IsAgeCriticalState() && !snap.IsAgeWarningState() {

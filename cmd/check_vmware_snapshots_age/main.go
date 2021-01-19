@@ -312,7 +312,7 @@ func main() {
 		nagiosExitState.LastError = nil
 
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsAgeOneLineCheckSummary(
-			nagios.StateWARNINGLabel,
+			nagios.StateOKLabel,
 			snapshotSets,
 			cfg.SnapshotsAgeCritical,
 			cfg.SnapshotsAgeWarning,
