@@ -29,6 +29,8 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Snapshots age
 
+• Snapshots size
+
 USAGE
 
 See our main README for supported settings and examples.

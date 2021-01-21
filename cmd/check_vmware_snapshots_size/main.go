@@ -35,7 +35,7 @@ func main() {
 	// Setup configuration by parsing user-provided flags. Note plugin type so
 	// that only applicable CLI flags are exposed and any plugin-specific
 	// settings are applied.
-	cfg, cfgErr := config.New(config.PluginType{SnapshotsAge: true})
+	cfg, cfgErr := config.New(config.PluginType{SnapshotsSize: true})
 	switch {
 	case errors.Is(cfgErr, config.ErrVersionRequested):
 		fmt.Println(config.Version())
@@ -63,13 +63,13 @@ func main() {
 	// content is shown in the detailed web UI and in notifications generated
 	// by Nagios.
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
-		"%d day old snapshots present",
-		cfg.SnapshotsAgeCritical,
+		"%d GB size snapshots present",
+		cfg.SnapshotsSizeCritical,
 	)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
-		"%d day old snapshots present",
-		cfg.SnapshotsAgeWarning,
+		"%d GB size snapshots present",
+		cfg.SnapshotsSizeWarning,
 	)
 
 	if cfg.EmitBranding {
@@ -81,8 +81,8 @@ func main() {
 		Str("included_resource_pools", cfg.IncludedResourcePools.String()).
 		Str("excluded_resource_pools", cfg.ExcludedResourcePools.String()).
 		Str("ignored_vms", cfg.IgnoredVMs.String()).
-		Int("snapshots_age_critical", cfg.SnapshotsAgeCritical).
-		Int("snapshots_age_warning", cfg.SnapshotsAgeWarning).
+		Int("snapshots_size_critical", cfg.SnapshotsSizeCritical).
+		Int("snapshots_size_warning", cfg.SnapshotsSizeWarning).
 		Logger()
 
 	log.Debug().Msg("Logging into vSphere environment")
@@ -230,28 +230,28 @@ func main() {
 
 	switch {
 
-	case snapshotSets.IsAgeCriticalState():
+	case snapshotSets.IsSizeCriticalState():
 
 		log.Error().
-			Int("num_snapshots_age_critical", snapshotSets.ExceedsAge(cfg.SnapshotsAgeCritical)).
-			Msg("Snapshot sets contain a snapshot which exceeds specified age in days")
+			Int("num_snapshots_size_critical", snapshotSets.ExceedsSize(cfg.SnapshotsSizeCritical)).
+			Msg("Snapshot sets contain a snapshot which exceeds specified size in GB")
 
-		nagiosExitState.LastError = vsphere.ErrSnapshotAgeThresholdCrossed
+		nagiosExitState.LastError = vsphere.ErrSnapshotSizeThresholdCrossed
 
-		nagiosExitState.ServiceOutput = vsphere.SnapshotsAgeOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.SnapshotsSizeOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			cfg.SnapshotsSizeCritical,
+			cfg.SnapshotsSizeWarning,
 			filteredVMs,
 			resourcePools,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.SnapshotsAgeReport(
+		nagiosExitState.LongServiceOutput = vsphere.SnapshotsSizeReport(
 			c.Client,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			cfg.SnapshotsSizeCritical,
+			cfg.SnapshotsSizeWarning,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,
@@ -266,28 +266,28 @@ func main() {
 
 		return
 
-	case snapshotSets.IsAgeWarningState():
+	case snapshotSets.IsSizeWarningState():
 
 		log.Error().
-			Int("num_snapshots_age_warning", snapshotSets.ExceedsAge(cfg.SnapshotsAgeWarning)).
-			Msg("Snapshot sets contain one or more snapshots which exceed specified age in days")
+			Int("num_snapshots_size_warning", snapshotSets.ExceedsSize(cfg.SnapshotsSizeWarning)).
+			Msg("Snapshot sets contain one or more snapshots which exceed specified size in GB")
 
-		nagiosExitState.LastError = vsphere.ErrSnapshotAgeThresholdCrossed
+		nagiosExitState.LastError = vsphere.ErrSnapshotSizeThresholdCrossed
 
-		nagiosExitState.ServiceOutput = vsphere.SnapshotsAgeOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.SnapshotsSizeOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			cfg.SnapshotsSizeCritical,
+			cfg.SnapshotsSizeWarning,
 			filteredVMs,
 			resourcePools,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.SnapshotsAgeReport(
+		nagiosExitState.LongServiceOutput = vsphere.SnapshotsSizeReport(
 			c.Client,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			cfg.SnapshotsSizeCritical,
+			cfg.SnapshotsSizeWarning,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,
@@ -306,20 +306,20 @@ func main() {
 
 		nagiosExitState.LastError = nil
 
-		nagiosExitState.ServiceOutput = vsphere.SnapshotsAgeOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.SnapshotsSizeOneLineCheckSummary(
 			nagios.StateOKLabel,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			cfg.SnapshotsSizeCritical,
+			cfg.SnapshotsSizeWarning,
 			filteredVMs,
 			resourcePools,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.SnapshotsAgeReport(
+		nagiosExitState.LongServiceOutput = vsphere.SnapshotsSizeReport(
 			c.Client,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			cfg.SnapshotsSizeCritical,
+			cfg.SnapshotsSizeWarning,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,

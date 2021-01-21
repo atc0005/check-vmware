@@ -46,7 +46,6 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.SnapshotsAgeCritical, "ac", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp)
 		flag.IntVar(&c.SnapshotsAgeCritical, "age-critical", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp)
 
-	// See atc0005/check-vmware#4,vmware/govmomi#2243
 	case pluginType.SnapshotsSize:
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
@@ -62,11 +61,11 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		//
 		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
-	// 	flag.IntVar(&c.SizeWarning, "sw", defaultSnapshotSizeWarning, snapshotSizeWarningFlagHelp)
-	// 	flag.IntVar(&c.SizeWarning, "size-warning", defaultSnapshotSizeWarning, snapshotSizeWarningFlagHelp)
-	//
-	// 	flag.IntVar(&c.SizeCritical, "sc", defaultSnapshotSizeCritical, snapshotSizeCriticalFlagHelp)
-	// 	flag.IntVar(&c.SizeCritical, "size-critical", defaultSnapshotSizeCritical, snapshotSizeCriticalFlagHelp)
+		flag.IntVar(&c.SnapshotsSizeWarning, "sw", defaultSnapshotsSizeWarning, snapshotsSizeWarningFlagHelp)
+		flag.IntVar(&c.SnapshotsSizeWarning, "size-warning", defaultSnapshotsSizeWarning, snapshotsSizeWarningFlagHelp)
+
+		flag.IntVar(&c.SnapshotsSizeCritical, "sc", defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp)
+		flag.IntVar(&c.SnapshotsSizeCritical, "size-critical", defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp)
 
 	case pluginType.DatastoresSize:
 
