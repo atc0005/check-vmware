@@ -35,8 +35,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		// on VMs equally. I'm not sure whether ignoring powered off VMs by
 		// default makes sense for this particular plugin.
 		//
-		// Please submit a GitHub issue if you feel differently and expand on
-		// some use cases for ignoring powered off VMs by default.
+		// Please share your feedback on this GitHub issue if you feel differently:
+		// https://github.com/atc0005/check-vmware/issues/79
 		//
 		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
@@ -57,8 +57,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		// on VMs equally. I'm not sure whether ignoring powered off VMs by
 		// default makes sense for this particular plugin.
 		//
-		// Please submit a GitHub issue if you feel differently and expand on
-		// some use cases for ignoring powered off VMs by default.
+		// Please share your feedback on this GitHub issue if you feel differently:
+		// https://github.com/atc0005/check-vmware/issues/79
 		//
 		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 

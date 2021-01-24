@@ -189,8 +189,10 @@ func main() {
 	// on VMs equally. I'm not sure whether ignoring powered off VMs by
 	// default makes sense for this particular plugin.
 	//
-	// Please submit a GitHub issue if you feel differently and expand on
-	// some use cases for ignoring powered off VMs by default.
+	// Please share your feedback on this GitHub issue if you feel differently:
+	// https://github.com/atc0005/check-vmware/issues/79
+	//
+	// Please expand on some use cases for ignoring powered off VMs by default.
 	//
 	// log.Debug().Msg("Filter VMs to specified power state")
 	// filteredVMs = vsphere.FilterVMsByPowerState(filteredVMs, cfg.PoweredOff)
