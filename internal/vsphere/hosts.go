@@ -53,12 +53,12 @@ func GetHostSystems(ctx context.Context, c *vim25.Client, propsSubset bool) ([]m
 	return hss, nil
 }
 
-// GetHostSystemByName accepts the name of a network, the name of a datacenter
-// and a boolean value indicating whether only a subset of properties for the
-// HostSystem should be returned. If requested, a subset of all available
-// properties will be retrieved (faster) instead of recursively fetching all
-// properties (about 2x as slow). If the datacenter name is an empty string
-// then the default datacenter will be used.
+// GetHostSystemByName accepts the name of a HostSystem, the name of a
+// datacenter and a boolean value indicating whether only a subset of
+// properties for the HostSystem should be returned. If requested, a subset of
+// all available properties will be retrieved (faster) instead of recursively
+// fetching all properties (about 2x as slow). If the datacenter name is an
+// empty string then the default datacenter will be used.
 func GetHostSystemByName(ctx context.Context, c *vim25.Client, hsName string, datacenter string, propsSubset bool) (mo.HostSystem, error) {
 
 	funcTimeStart := time.Now()
