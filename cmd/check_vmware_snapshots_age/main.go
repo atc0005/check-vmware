@@ -83,7 +83,6 @@ func main() {
 		Str("ignored_vms", cfg.IgnoredVMs.String()).
 		Int("snapshots_age_critical", cfg.SnapshotsAgeCritical).
 		Int("snapshots_age_warning", cfg.SnapshotsAgeWarning).
-		Str("ignored_vms", cfg.IgnoredVMs.String()).
 		Logger()
 
 	log.Debug().Msg("Logging into vSphere environment")
