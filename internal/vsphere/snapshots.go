@@ -619,7 +619,7 @@ func SnapshotsAgeReport(
 						&report,
 						// See atc0005/check-vmware#4,vmware/govmomi#2243
 						// "* %q [Age: %v, SnapSize: %v, Combined SnapSize: %v, Name: %q, SnapID: %v]\n"
-						"* %q [Age: %v, SnapName: %q, SnapID: %v, ]\n",
+						"* %q [Age: %v, SnapName: %q, SnapID: %v]\n",
 						snap.VMName,
 						snap.Age(),
 						snap.Name,

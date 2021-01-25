@@ -120,12 +120,12 @@ func GetDatastores(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo
 	return dss, nil
 }
 
-// GetDatastoreByName accepts the name of a network, the name of a datacenter
-// and a boolean value indicating whether only a subset of properties for the
-// Datastore should be returned. If requested, a subset of all available
-// properties will be retrieved (faster) instead of recursively fetching all
-// properties (about 2x as slow). If the datacenter name is an empty string
-// then the default datacenter will be used.
+// GetDatastoreByName accepts the name of a datastore, the name of a
+// datacenter and a boolean value indicating whether only a subset of
+// properties for the Datastore should be returned. If requested, a subset of
+// all available properties will be retrieved (faster) instead of recursively
+// fetching all properties (about 2x as slow). If the datacenter name is an
+// empty string then the default datacenter will be used.
 func GetDatastoreByName(ctx context.Context, c *vim25.Client, dsName string, datacenter string, propsSubset bool) (mo.Datastore, error) {
 
 	funcTimeStart := time.Now()
