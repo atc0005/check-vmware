@@ -26,6 +26,30 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.4.2] - 2021-01-25
+
+### Overview
+
+- Bug fixes
+- built using Go 1.15.7
+
+### Changed
+
+- Swap out GoDoc badge for pkg.go.dev badge
+- Dependencies
+  - built using Go 1.15.7
+    - Statically linked
+    - Windows (x86, x64)
+    - Linux (x86, x64)
+
+### Fixed
+
+- check_vmware_snapshots_age plugin: duplicated structured logging field
+- "Snapshots *not yet* exceeding age thresholds" list not populated
+- Replace "please submit issue" request text with link to recently created
+  issue for feedback collection
+- Misc typos, copy/paste/modify mistakes
+
 ## [v0.4.1] - 2021-01-19
 
 ### Overview
@@ -171,7 +195,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.4.2...HEAD
+[v0.4.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.2
 [v0.4.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.1
 [v0.4.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.0
 [v0.3.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.3.0
