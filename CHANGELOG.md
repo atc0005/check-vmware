@@ -26,6 +26,33 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.4.3] - 2021-01-26
+
+### Overview
+
+- Bug fixes
+- built using Go 1.15.7
+
+### Changed
+
+- The default `Resources` Resource Pool is now evaluated *unless* a Resource
+  Pool is explicitly *included* via the `--include-rp` flag
+  - previously VirtualMachine objects *outside* of a Resource Pool were
+    unintentionally ignored
+  - affected multiple plugins (see Fixed section)
+  - credit: bug report from @HisArchness via Twitter
+
+### Fixed
+
+- check_vmware_tools: Long Service Output listing omits affected VMs when only one affected
+- VMs outside of Resource Pools excluded from evaluation
+  - multiple plugins affected
+    - `check_vmware_tools`
+    - `check_vmware_hs2ds2vms`
+    - `check_vmware_snapshots_age`
+    - `check_vmware_vhw`
+    - `check_vmware_vcpus`
+
 ## [v0.4.2] - 2021-01-25
 
 ### Overview
@@ -195,7 +222,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.4.3...HEAD
+[v0.4.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.3
 [v0.4.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.2
 [v0.4.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.1
 [v0.4.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.0
