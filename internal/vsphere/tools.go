@@ -179,7 +179,7 @@ func VMToolsReport(
 
 	switch {
 
-	case len(vmsWithIssues) > 1:
+	case len(vmsWithIssues) > 0:
 
 		sort.Slice(vmsWithIssues, func(i, j int) bool {
 			return strings.ToLower(vmsWithIssues[i].Name) < strings.ToLower(vmsWithIssues[j].Name)
