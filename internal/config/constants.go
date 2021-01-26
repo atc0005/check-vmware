@@ -21,7 +21,7 @@ const (
 	usernameFlagHelp                                string = "Username with permission to access specified ESXi host or vCenter instance."
 	passwordFlagHelp                                string = "Password used to login to ESXi host or vCenter instance."
 	userDomainFlagHelp                              string = "(Optional) domain for user account used to login to ESXi host or vCenter instance."
-	includedResourcePoolsFlagHelp                   string = "Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation."
+	includedResourcePoolsFlagHelp                   string = "Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation."
 	excludedResourcePoolsFlagHelp                   string = "Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation."
 	ignoreVMsFlagHelp                               string = "Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation."
 	poweredOffFlagHelp                              string = "Toggles evaluation of powered off VMs in addition to powered on VMs. Evaluation of powered off VMs is disabled by default."

@@ -91,8 +91,11 @@ func GetVMsFromRPs(ctx context.Context, c *vim25.Client, rps []mo.ResourcePool, 
 				err,
 			)
 		}
-
 	}
+
+	// remove any potential duplicate entries which could occur if we are
+	// evaluating the (default, hidden) 'Resources' Resource Pool
+	vms = dedupeVMs(vms)
 
 	sort.Slice(vms, func(i, j int) bool {
 		return strings.ToLower(vms[i].Name) < strings.ToLower(vms[j].Name)
@@ -324,4 +327,37 @@ func FilterVMsByPowerState(vms []mo.VirtualMachine, includePoweredOff bool) []mo
 
 	return filteredVMs
 
+}
+
+// dedupeVMs receives a list of VirtualMachine values potentially containing
+// one or more duplicate values and returns a new list of unique
+// VirtualMachine values.
+//
+// Credit:
+// https://www.reddit.com/r/golang/comments/5ia523/idiomatic_way_to_remove_duplicates_in_a_slice/db6qa2e
+func dedupeVMs(vmsList []mo.VirtualMachine) []mo.VirtualMachine {
+
+	funcTimeStart := time.Now()
+
+	defer func(vms *[]mo.VirtualMachine) {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute dedupeVMs func (evaluated %d VMs).\n",
+			time.Since(funcTimeStart),
+			len(*vms),
+		)
+	}(&vmsList)
+
+	seen := make(map[string]struct{}, len(vmsList))
+	j := 0
+	for _, vm := range vmsList {
+		if _, ok := seen[vm.Summary.Vm.Value]; ok {
+			continue
+		}
+		seen[vm.Summary.Vm.Value] = struct{}{}
+		vmsList[j] = vm
+		j++
+	}
+
+	return vmsList[:j]
 }

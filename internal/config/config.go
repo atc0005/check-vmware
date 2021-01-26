@@ -223,7 +223,8 @@ type Config struct {
 	ShowVersion bool
 
 	// IncludedResourcePools lists resource pools that are explicitly
-	// monitored.
+	// monitored. Specifying list values automatically excludes VirtualMachine
+	// objects outside a Resource Pool.
 	IncludedResourcePools multiValueStringFlag
 
 	// ExcludedResourcePools lists resource pools that are explicitly ignored
