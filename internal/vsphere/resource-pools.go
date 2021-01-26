@@ -168,10 +168,14 @@ func GetEligibleRPs(ctx context.Context, c *vim25.Client, includeRPs []string, e
 
 		// Virtual machine hosts have a hidden resource pool named Resources,
 		// which is a parent of all resource pools of the host. Including this
-		// pool throws off our calculations, so we ignore it by default which
-		// means the user does not need to explicitly specify it.
+		// pool can throw off our calculations, so we ignore it *unless* the
+		// list of provided Resource Pools to explicitly include is empty.
+		// Because this is a hidden pool and non-obvious, we try to avoid
+		// requiring the sysadmin to specify it explicitly.
 		if strings.EqualFold(rp.Name, ParentResourcePool) {
-			continue
+			if len(includeRPs) != 0 {
+				continue
+			}
 		}
 
 		// config validation asserts that only one of include/exclude resource
