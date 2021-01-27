@@ -26,6 +26,28 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.5.0] - 2021-01-27
+
+### Overview
+
+- New plugin
+- Bug fixes
+- built using Go 1.15.7
+
+### Added
+
+- New plugin: `check_vmware_snapshots_size`
+
+### Changed
+
+- Makefile: indent output per plugin build step
+
+### Fixed
+
+- check_vmware_tools plugin does not clearly define what thresholds are used
+  for service check logic
+- GoDoc coverage missing for project plugins
+
 ## [v0.4.3] - 2021-01-26
 
 ### Overview
@@ -222,7 +244,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.5.0...HEAD
+[v0.5.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.5.0
 [v0.4.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.3
 [v0.4.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.2
 [v0.4.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.1
