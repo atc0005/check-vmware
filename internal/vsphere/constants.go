@@ -34,3 +34,15 @@ const (
 	MgObjRefTypeResourcePool    string = "ResourcePool"
 	MgObjRefTypeHostSystem      string = "HostSystem"
 )
+
+// used with snapshots reports that provide Long Service Output
+const (
+	snapshotThresholdTypeAge  string = "age"
+	snapshotThresholdTypeSize string = "size"
+)
+
+// used with snapshots reports that provide Long Service Output
+const (
+	snapshotThresholdTypeAgeSuffix  string = "d"
+	snapshotThresholdTypeSizeSuffix string = "GB"
+)

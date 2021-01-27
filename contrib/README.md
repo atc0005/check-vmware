@@ -54,6 +54,8 @@ contrib
         │       ├── send2teams.cfg
         │       ├── vmware-datastores.cfg
         │       ├── vmware-host-datastore-vms-pairings.cfg
+        │       ├── vmware-snapshots-age.cfg
+        │       ├── vmware-snapshots-size.cfg
         │       ├── vmware-tools.cfg
         │       ├── vmware-vcpus.cfg
         │       └── vmware-virtual-hardware.cfg
@@ -83,7 +85,7 @@ contrib
             ├── nagios.cfg
             └── resource.cfg
 
-13 directories, 23 files
+13 directories, 25 files
 ```
 
 ### Overview

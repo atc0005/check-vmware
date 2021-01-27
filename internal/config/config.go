@@ -184,12 +184,12 @@ type Config struct {
 	// usage (as a whole number) when a CRITICAL threshold is reached.
 	DatastoreUsageCritical int
 
-	// SnapshotsSizeWarning specifies the size of a snapshot in GB when a
-	// WARNING threshold is reached. 20 GB is the default.
+	// SnapshotsSizeCritical specifies the cumulative size in GB of all
+	// snapshots for a VM when a WARNING threshold is reached.
 	SnapshotsSizeWarning int
 
-	// SnapshotsSizeCritical specifies the size of a snapshot in GB when a
-	// CRITICAL threshold is reached. 40 GB is the default.
+	// SnapshotsSizeCritical specifies the cumulative size in GB of all
+	// snapshots for a VM when a CRITICAL threshold is reached.
 	SnapshotsSizeCritical int
 
 	// SnapshotsAgeWarning specifies the age of a snapshot in days when a

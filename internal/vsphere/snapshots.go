@@ -3,6 +3,8 @@ package vsphere
 import (
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -21,6 +23,12 @@ var ErrSnapshotAgeThresholdCrossed = errors.New("snapshot exceeds specified age 
 // ErrSnapshotSizeThresholdCrossed indicates that a snapshot is larger than a
 // specified size threshold
 var ErrSnapshotSizeThresholdCrossed = errors.New("snapshot exceeds specified size threshold")
+
+// ExceedsSize indicates whether a given snapshot size is greater than the
+// specified value in GB.
+func ExceedsSize(snapshotSize int64, thresholdSize int64) bool {
+	return snapshotSize > (thresholdSize * units.GB)
+}
 
 // ExceedsAge indicates whether a given snapshot creation date is older than
 // the specified number of days.
@@ -112,7 +120,7 @@ type SnapshotSummary struct {
 	// CRITICAL state based on crossing snapshot age threshold.
 	ageCriticalState bool
 
-	// sizeWarningState indicates Whether this snapshot is considered in a
+	// sizeWarningState indicates whether this snapshot is considered in a
 	// WARNING state based on crossing snapshot size threshold.
 	sizeWarningState bool
 
@@ -127,8 +135,28 @@ type SnapshotSummary struct {
 // specific VirtualMachine by way of a VirtualMachine Managed Object
 // Reference.
 type SnapshotSummarySet struct {
-	VM        types.ManagedObjectReference
+
+	// VM is the Managed Object Reference for the VirtualMachine associated
+	// with the snapshots in this set.
+	VM types.ManagedObjectReference
+
+	// VMName is the name of the VirtualMachine associated with the snapshots
+	// in this set.
+	VMName string
+
+	// Snapshots is the collection of higher level summary values for
+	// snapshots associated with a specific VirtualMachine.
 	Snapshots []SnapshotSummary
+
+	// setSizeWarningState indicates whether this snapshot set is considered in a
+	// WARNING state based on cumulative size of all snapshots in the set
+	// crossing snapshot size threshold.
+	setSizeWarningState bool
+
+	// setSizeCriticalState indicates whether this snapshot set is considered in a
+	// WARNING state based on cumulative size of all snapshots in the set
+	// crossing snapshot size threshold.
+	setSizeCriticalState bool
 }
 
 // SnapshotSummarySets is a collection of SnapshotSummarySet types for bulk
@@ -137,7 +165,6 @@ type SnapshotSummarySet struct {
 type SnapshotSummarySets []SnapshotSummarySet
 
 // Size returns the size of all snapshots in the set.
-// TODO: See atc0005/check-vmware#4,vmware/govmomi#2243
 func (sss SnapshotSummarySet) Size() int64 {
 	var sum int64
 	for i := range sss.Snapshots {
@@ -148,7 +175,6 @@ func (sss SnapshotSummarySet) Size() int64 {
 }
 
 // SizeHR returns the human readable size of all snapshots in the set.
-// TODO: See atc0005/check-vmware#4,vmware/govmomi#2243
 func (sss SnapshotSummarySet) SizeHR() string {
 	return units.ByteSize(sss.Size()).String()
 }
@@ -160,6 +186,20 @@ func (sss SnapshotSummarySet) ExceedsAge(days int) int {
 	var numExceeded int
 	for _, snap := range sss.Snapshots {
 		if snap.IsAgeExceeded(days) {
+			numExceeded++
+		}
+	}
+
+	return numExceeded
+}
+
+// ExceedsSize indicates how many snapshots in the set are larger than the
+// specified size in GB.
+func (sss SnapshotSummarySet) ExceedsSize(sizeGB int) int {
+
+	var numExceeded int
+	for _, snap := range sss.Snapshots {
+		if snap.IsSizeExceeded(sizeGB) {
 			numExceeded++
 		}
 	}
@@ -179,8 +219,48 @@ func (sss SnapshotSummarySets) ExceedsAge(days int) int {
 	return numExceeded
 }
 
+// ExceedsSize indicates how many snapshots in any of the sets are larger
+// than the specified size in GB.
+func (sss SnapshotSummarySets) ExceedsSize(sizeGB int) int {
+
+	var numExceeded int
+	for _, set := range sss {
+		numExceeded += set.ExceedsSize(sizeGB)
+	}
+
+	return numExceeded
+}
+
+// HasNotYetExceededAge indicates whether any of the snapshots in any of the
+// sets have yet to exceed the threshold for the specified number of days.
+func (sss SnapshotSummarySets) HasNotYetExceededAge(days int) bool {
+
+	for _, set := range sss {
+		for _, snapSummary := range set.Snapshots {
+			if !ExceedsAge(snapSummary.createTime, days) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// HasNotYetExceededSize indicates whether any snapshot set (all snapshots for
+// a specific VM) has yet to exceed the threshold for the specified size in
+// GB.
+func (sss SnapshotSummarySets) HasNotYetExceededSize(sizeGB int) bool {
+
+	for _, set := range sss {
+		if !ExceedsSize(set.Size(), int64(sizeGB)) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // SizeHR returns the human readable size of the snapshot.
-// TODO: See atc0005/check-vmware#4,vmware/govmomi#2243
 func (ss SnapshotSummary) SizeHR() string {
 	return units.ByteSize(ss.Size).String()
 }
@@ -208,6 +288,12 @@ func (ss SnapshotSummary) Age() string {
 // number of days.
 func (ss SnapshotSummary) IsAgeExceeded(days int) bool {
 	return ExceedsAge(ss.createTime, days)
+}
+
+// IsSizeExceeded indicates whether the snapshot is larger than the specified
+// size in GB.
+func (ss SnapshotSummary) IsSizeExceeded(sizeGB int) bool {
+	return ExceedsSize(ss.Size, int64(sizeGB))
 }
 
 // IsWarningState indicates whether the snapshot has exceeded age or size
@@ -297,25 +383,13 @@ func (sss SnapshotSummarySet) IsAgeCriticalState() bool {
 // IsSizeWarningState indicates whether the snapshot set has exceeded the
 // size WARNING threshold.
 func (sss SnapshotSummarySet) IsSizeWarningState() bool {
-	for i := range sss.Snapshots {
-		if sss.Snapshots[i].IsSizeWarningState() {
-			return true
-		}
-	}
-
-	return false
+	return sss.setSizeWarningState
 }
 
 // IsSizeCriticalState indicates whether the snapshot set has exceeded the
 // size CRITICAL threshold.
 func (sss SnapshotSummarySet) IsSizeCriticalState() bool {
-	for i := range sss.Snapshots {
-		if sss.Snapshots[i].IsSizeCriticalState() {
-			return true
-		}
-	}
-
-	return false
+	return sss.setSizeCriticalState
 }
 
 // IsWarningState indicates whether the snapshot sets have exceeded age or
@@ -398,6 +472,56 @@ func (sss SnapshotSummarySets) IsSizeCriticalState() bool {
 // Deprecated ?
 type SnapshotsIndex map[string]types.VirtualMachineSnapshotTree
 
+// removeFileKey removes a given file key directly from the list of file keys
+func removeFileKey(l *[]int32, key int32) {
+	for i, k := range *l {
+		if k == key {
+			*l = append((*l)[:i], (*l)[i+1:]...)
+			break
+		}
+	}
+}
+
+// ListVMSnapshots generates a quick listing of all snapshots for a given VM
+// and emits the results to the provided io.Writer.
+func ListVMSnapshots(vm mo.VirtualMachine, w io.Writer) {
+
+	now := time.Now()
+
+	var listFunc func(mo.VirtualMachine, []types.VirtualMachineSnapshotTree, *types.ManagedObjectReference)
+
+	listFunc = func(vm mo.VirtualMachine, snapTrees []types.VirtualMachineSnapshotTree, parent *types.ManagedObjectReference) {
+
+		if len(snapTrees) == 0 {
+			return
+		}
+
+		for _, snapTree := range snapTrees {
+
+			daysAge := now.Sub(snapTree.CreateTime).Hours() / 24
+
+			fmt.Fprintf(
+				w,
+				"Snapshot [Name: %v, Age: %v, ID: %v, MOID: %v, Active: %t]\n",
+				snapTree.Name,
+				// snapTree.CreateTime.Format("2006-01-02 15:04:05"),
+				daysAge,
+				snapTree.Id,
+				snapTree.Snapshot.Value,
+				snapTree.Snapshot.Value == vm.Snapshot.CurrentSnapshot.Value,
+			)
+
+			if snapTree.ChildSnapshotList != nil {
+				listFunc(vm, snapTree.ChildSnapshotList, &snapTree.Snapshot)
+			}
+
+		}
+	}
+
+	listFunc(vm, vm.Snapshot.RootSnapshotList, nil)
+
+}
+
 // NewSnapshotSummarySet returns a set of SnapshotSummary values for snapshots
 // associated with a specified VirtualMachine.
 func NewSnapshotSummarySet(
@@ -406,7 +530,26 @@ func NewSnapshotSummarySet(
 	snapshotsAgeWarning int,
 	snapshotsSizeCritical int,
 	snapshotsSizeWarning int,
+
+	// workaround until GH-76 is settled
+	debugPrint bool,
 ) SnapshotSummarySet {
+
+	// TODO: Return error if no snapshots are present?
+
+	// workaround until GH-76 is settled
+	var output io.Writer
+	switch debugPrint {
+	case true:
+		output = os.Stderr
+	case false:
+		output = ioutil.Discard
+	}
+
+	fmt.Fprintln(output, "Number of snapshot trees:", len(vm.Snapshot.RootSnapshotList))
+	if vm.Snapshot.CurrentSnapshot != nil {
+		fmt.Fprintln(output, "Active snapshot MOID:", vm.Snapshot.CurrentSnapshot)
+	}
 
 	funcTimeStart := time.Now()
 
@@ -414,6 +557,7 @@ func NewSnapshotSummarySet(
 
 	defer func(ss *[]SnapshotSummary) {
 		fmt.Fprintf(
+			// hard-coded for now; revisit with GH-76
 			os.Stderr,
 			"It took %v to execute NewSnapshotSummarySet func "+
 				"(and retrieve %d snapshot summaries).\n",
@@ -422,53 +566,236 @@ func NewSnapshotSummarySet(
 		)
 	}(&snapshots)
 
-	var crawlFunc func([]types.VirtualMachineSnapshotTree)
+	// all disk files attached to the virtual machine at the current point of
+	// running
+	vmAllDiskFileKeys := make([]int32, 0, len(vm.LayoutEx.Disk)*2)
+	for _, layoutExDisk := range vm.LayoutEx.Disk {
+		for _, link := range layoutExDisk.Chain {
+			vmAllDiskFileKeys = append(vmAllDiskFileKeys, link.FileKey...)
+		}
+	}
 
-	crawlFunc = func(snapTree []types.VirtualMachineSnapshotTree) {
+	fmt.Fprintf(output, "vmAllDiskFileKeys (%d): %v\n", len(vmAllDiskFileKeys), vmAllDiskFileKeys)
 
-		if len(snapTree) == 0 {
+	// all files (vm.LayoutEx.File) attached to the virtual machine, indexed
+	// by file key (vm.LayoutEx.File.Key) to make retrieving the size for a
+	// specific file easier later
+	fileKeyMap := make(map[int32]types.VirtualMachineFileLayoutExFileInfo)
+	fmt.Fprintln(output, "Disk files (diskDescriptor, diskExtent) attached for Virtual Machine's current state:")
+	for _, fileLayout := range vm.LayoutEx.File {
+
+		fileKeyMap[fileLayout.Key] = fileLayout
+
+		// list disk files only
+		if fileLayout.Type == "diskDescriptor" || fileLayout.Type == "diskExtent" {
+			fmt.Fprintf(
+				output,
+				"* fileLayout [Name: %v, Size: %v (%s), Key: %v]\n",
+				fileLayout.Name,
+				fileLayout.Size,
+				units.ByteSize(fileLayout.Size),
+				fileLayout.Key,
+			)
+		}
+	}
+
+	var crawlFunc func(mo.VirtualMachine, []types.VirtualMachineSnapshotTree, *types.ManagedObjectReference)
+
+	crawlFunc = func(vm mo.VirtualMachine, snapTrees []types.VirtualMachineSnapshotTree, parent *types.ManagedObjectReference) {
+
+		if len(snapTrees) == 0 {
 			return
 		}
 
-		for _, snap := range snapTree {
+		for _, snapTree := range snapTrees {
 
 			fmt.Fprintf(
-				os.Stderr,
-				"Processing Snapshot ID %s\n",
-				snap.Snapshot.Value,
+				output,
+				"Processing snapshot: [ID: %s, Name: %s, HasParent: %t]\n",
+				snapTree.Snapshot.Value,
+				snapTree.Name,
+				parent != nil,
+			)
+
+			fmt.Fprintf(
+				output,
+				"Active snapshot: %s\n",
+				vm.Snapshot.CurrentSnapshot.Value,
+			)
+
+			var snapshotSize int64
+
+			parentSnapshotDiskFileKeys := make([]int32, 0, len(vmAllDiskFileKeys))
+			snapshotDiskFileKeys := make([]int32, 0, len(vmAllDiskFileKeys))
+
+			fmt.Fprintln(output, "Collecting snapshot disk, data file keys ...")
+			for _, snapLayout := range vm.LayoutEx.Snapshot {
+
+				// Evaluating snapshot layout for current snapshot tree.
+				if snapLayout.Key.Value == snapTree.Snapshot.Value {
+
+					fmt.Fprintln(
+						output,
+						"Adding snapTree (vmsn, snapData) file key",
+						snapLayout.DataKey,
+					)
+					fmt.Fprintf(
+						output,
+						"snapLayout [Name: %v, Size: %v (%s), Key: %v]\n",
+						fileKeyMap[snapLayout.DataKey].Name,
+						fileKeyMap[snapLayout.DataKey].Size,
+						units.ByteSize(fileKeyMap[snapLayout.DataKey].Size),
+						snapLayout.DataKey,
+					)
+					snapshotDiskFileKeys = append(snapshotDiskFileKeys, snapLayout.DataKey)
+
+					// Grab all disk file keys for the snapshot tree we are
+					// currently evaluating.
+					for _, snapLayoutExDisk := range snapLayout.Disk {
+						for _, link := range snapLayoutExDisk.Chain {
+							fmt.Fprintln(output, "Adding snapTree disk descriptor, extent file keys", link.FileKey)
+							snapshotDiskFileKeys = append(snapshotDiskFileKeys, link.FileKey...)
+						}
+					}
+				}
+
+				// Fetch disk keys for parent snapshot, if present
+				if parent != nil && snapLayout.Key.Value == parent.Value {
+					for _, snapLayoutExDisk := range snapLayout.Disk {
+						for _, link := range snapLayoutExDisk.Chain {
+							fmt.Fprintln(output, "Adding parent disk descriptor, extent keys", link.FileKey)
+							parentSnapshotDiskFileKeys = append(parentSnapshotDiskFileKeys, link.FileKey...)
+						}
+					}
+				}
+			}
+
+			// Retain a copy of all snapshot keys for later use
+			allSnapshotKeys := make([]int32, len(snapshotDiskFileKeys))
+			copy(allSnapshotKeys, snapshotDiskFileKeys)
+
+			// TODO: Is it cheaper to copy vmAllDiskFileKeys here for per-loop
+			// iteration use, or move the creation of vmAllDiskFileKeys list
+			// inside the loop in order to drop the use of an extra variable?
+			remainingDiskFiles := make([]int32, len(vmAllDiskFileKeys))
+			copy(remainingDiskFiles, vmAllDiskFileKeys)
+
+			// fmt.Fprintln(output, "Current snapshotDiskFileKeys:", snapshotDiskFileKeys)
+			// fmt.Fprintln(output, "Current allSnapshotKeys:", allSnapshotKeys)
+			// fmt.Fprintln(output, "")
+			// fmt.Fprintln(output, "Current vmAllDiskFileKeys:", vmAllDiskFileKeys)
+			// fmt.Fprintln(output, "Current remainingDiskFiles:", remainingDiskFiles)
+
+			// Conditionally prune disk files not directly associated with the
+			// unique snapshot tree we are evaluating
+			switch {
+
+			case parent == nil:
+
+				// No parent snapshot is present. Remove all attached disk
+				// file keys from the list of snapshot file keys. This leaves
+				// the snapshot data file as the sole file key in the list.
+
+				fmt.Fprintln(output, "Removing file keys for attached VM disks from list for current snapshot tree ...")
+
+				for _, key := range vmAllDiskFileKeys {
+					fmt.Fprintf(output, "Removing key %d\n", key)
+					removeFileKey(&snapshotDiskFileKeys, key)
+				}
+
+			case parent != nil:
+
+				// Parent snapshot is present. Remove all parent snapshot file
+				// keys from the list of snapshot file keys. This leaves only
+				// the snapshot file keys associated with the fixed snapshot
+				// state.
+
+				fmt.Fprintln(
+					output,
+					"Removing parent snapshot disk file keys from list for current snapshot tree ...",
+				)
+				for _, key := range parentSnapshotDiskFileKeys {
+					fmt.Fprintf(output, "Removing key %d\n", key)
+					removeFileKey(&snapshotDiskFileKeys, key)
+
+				}
+
+			}
+
+			fmt.Fprintln(
+				output,
+				"Remaining file keys in list for current snapshot tree:",
+				snapshotDiskFileKeys,
+			)
+			fmt.Fprintln(output, "Computing snapshot size (using remaining snapshot tree file keys)")
+			for _, fileKey := range snapshotDiskFileKeys {
+				snapshotSize += fileKeyMap[fileKey].Size
+			}
+
+			// If the current snapshot tree we are evaluating is active,
+			// include additional disk files not associated with a parent
+			// snapshot or the current snapshot in size calculations. This
+			// allows for measuring and including the growth from the last
+			// fixed snapshot to the present state.
+			if snapTree.Snapshot.Value == vm.Snapshot.CurrentSnapshot.Value {
+				fmt.Fprintln(output, "allSnapshotKeys:", allSnapshotKeys)
+				for _, fileKey := range allSnapshotKeys {
+					removeFileKey(&remainingDiskFiles, fileKey)
+				}
+				fmt.Fprintln(output, "remainingDiskFiles:", remainingDiskFiles)
+				fmt.Fprintln(output, "Updating computed snapshot size (using keys from remainingDiskFiles)")
+				for _, fileKey := range remainingDiskFiles {
+					snapshotSize += fileKeyMap[fileKey].Size
+				}
+			}
+
+			fmt.Fprintf(
+				output,
+				"Size [bytes: %v, HR: %s] calculated for %s snapshot\n\n\n",
+				snapshotSize,
+				units.ByteSize(snapshotSize),
+				snapTree.Name,
 			)
 
 			snapshots = append(snapshots, SnapshotSummary{
-				Name:             snap.Name,
-				VMName:           vm.Name,
-				ID:               snap.Id,
-				MOID:             snap.Snapshot.Value,
-				Description:      snap.Description,
-				createTime:       snap.CreateTime,
-				ageWarningState:  ExceedsAge(snap.CreateTime, snapshotsAgeWarning),
-				ageCriticalState: ExceedsAge(snap.CreateTime, snapshotsAgeCritical),
-
-				// See atc0005/check-vmware#4,vmware/govmomi#2243
-				//
-				// NOTE:
-				// Probably cleaner to implement as a separate helper function
-				// Size:        fileLayout.Size,
-				// ageWarningSize: ,
-				// ageCriticalSize: ,
+				Name:              snapTree.Name,
+				VMName:            vm.Name,
+				ID:                snapTree.Id,
+				MOID:              snapTree.Snapshot.Value,
+				Description:       snapTree.Description,
+				Size:              snapshotSize,
+				createTime:        snapTree.CreateTime,
+				ageWarningState:   ExceedsAge(snapTree.CreateTime, snapshotsAgeWarning),
+				ageCriticalState:  ExceedsAge(snapTree.CreateTime, snapshotsAgeCritical),
+				sizeWarningState:  ExceedsSize(snapshotSize, int64(snapshotsSizeCritical)),
+				sizeCriticalState: ExceedsSize(snapshotSize, int64(snapshotsSizeWarning)),
 			})
 
-			if snap.ChildSnapshotList != nil {
-				crawlFunc(snap.ChildSnapshotList)
+			if snapTree.ChildSnapshotList != nil {
+				crawlFunc(vm, snapTree.ChildSnapshotList, &snapTree.Snapshot)
 			}
 
 		}
 	}
 
-	crawlFunc(vm.Snapshot.RootSnapshotList)
+	// no parent to pass in for the root
+	crawlFunc(vm, vm.Snapshot.RootSnapshotList, nil)
+
+	var setSize int64
+	for _, snap := range snapshots {
+		setSize += snap.Size
+	}
+
+	fmt.Fprintln(output, "setSize for VM ", vm.Name, ":", setSize)
+	fmt.Fprintln(output, "setSizeWarningState for VM ", vm.Name, ":", ExceedsSize(setSize, int64(snapshotsSizeWarning)))
+	fmt.Fprintln(output, "setSizeCriticalState for VM ", vm.Name, ":", ExceedsSize(setSize, int64(snapshotsSizeCritical)))
 
 	return SnapshotSummarySet{
-		VM:        vm.Self,
-		Snapshots: snapshots,
+		VM:                   vm.Self,
+		VMName:               vm.Name,
+		Snapshots:            snapshots,
+		setSizeWarningState:  ExceedsSize(setSize, int64(snapshotsSizeWarning)),
+		setSizeCriticalState: ExceedsSize(setSize, int64(snapshotsSizeCritical)),
 	}
 
 }
@@ -532,6 +859,292 @@ func SnapshotsAgeOneLineCheckSummary(
 	}
 }
 
+// SnapshotsSizeOneLineCheckSummary is used to generate a one-line Nagios
+// service check results summary. This is the line most prominent in
+// notifications.
+func SnapshotsSizeOneLineCheckSummary(
+	stateLabel string,
+	snapshotSets SnapshotSummarySets,
+	snapshotsSizeCritical int,
+	snapshotsSizeWarning int,
+	evaluatedVMs []mo.VirtualMachine,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute SnapshotsSizeOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	switch {
+
+	case snapshotSets.IsSizeCriticalState():
+
+		return fmt.Sprintf(
+			"%s: %d snapshots larger than %d %s detected (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			snapshotSets.ExceedsSize(snapshotsSizeCritical),
+			snapshotsSizeCritical,
+			snapshotThresholdTypeSizeSuffix,
+			len(evaluatedVMs),
+			len(rps),
+		)
+
+	case snapshotSets.IsSizeWarningState():
+
+		return fmt.Sprintf(
+			"%s: %d snapshots larger than %d %s detected (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			snapshotSets.ExceedsSize(snapshotsSizeWarning),
+			snapshotsSizeWarning,
+			snapshotThresholdTypeSizeSuffix,
+			len(evaluatedVMs),
+			len(rps),
+		)
+
+	default:
+
+		return fmt.Sprintf(
+			"%s: No snapshots larger than %d %s detected (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			snapshotsSizeWarning,
+			snapshotThresholdTypeSizeSuffix,
+			len(evaluatedVMs),
+			len(rps),
+		)
+
+	}
+}
+
+// writeSnapshotsListEntries generates a common snapshots report for both age
+// and size checks listing any snapshots which have exceeded thresholds along
+// with any snapshots which have not yet exceeded them.
+func writeSnapshotsListEntries(
+	w io.Writer,
+	snapshotCriticalThreshold int,
+	snapshotWarningThreshold int,
+	unitSuffix string,
+	unitName string,
+	snapshotSummarySets SnapshotSummarySets,
+) {
+
+	// listEntryTemplate := "* %q [Age: %v, SnapSize: %v, Combined SnapSize: %v, Name: %q, SnapID: %v]\n"
+	listEntryTemplate := "* %q [Age: %v, Size (item: %v, sum: %v), Name: %q, ID: %v]\n"
+
+	fmt.Fprintf(
+		w,
+		"Snapshots exceeding WARNING (%d%s) or CRITICAL (%d%s) %s thresholds:%s%s",
+		snapshotWarningThreshold,
+		unitSuffix,
+		snapshotCriticalThreshold,
+		unitSuffix,
+		unitName,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	switch {
+
+	case unitName == snapshotThresholdTypeAge &&
+		(snapshotSummarySets.IsAgeCriticalState() ||
+			snapshotSummarySets.IsAgeWarningState()):
+		for _, snapSet := range snapshotSummarySets {
+			for _, snap := range snapSet.Snapshots {
+				if snap.IsAgeCriticalState() || snap.IsAgeWarningState() {
+					fmt.Fprintf(
+						w,
+						listEntryTemplate,
+						snap.VMName,
+						snap.Age(),
+						snap.SizeHR(),
+						snapSet.SizeHR(),
+						snap.Name,
+						snap.MOID,
+					)
+				}
+			}
+		}
+
+	case unitName == snapshotThresholdTypeSize &&
+		(snapshotSummarySets.IsSizeCriticalState() ||
+			snapshotSummarySets.IsSizeWarningState()):
+		for _, snapSet := range snapshotSummarySets {
+			if snapSet.IsSizeWarningState() || snapSet.IsSizeCriticalState() {
+				for _, snap := range snapSet.Snapshots {
+					fmt.Fprintf(
+						w,
+						listEntryTemplate,
+						snap.VMName,
+						snap.Age(),
+						snap.SizeHR(),
+						snapSet.SizeHR(),
+						snap.Name,
+						snap.MOID,
+					)
+				}
+			}
+		}
+
+	default:
+		fmt.Fprintln(w, "* None detected")
+	}
+
+	fmt.Fprintf(
+		w,
+		"%sSnapshots *not yet* exceeding %s thresholds:%s%s",
+		nagios.CheckOutputEOL,
+		unitName,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	switch {
+
+	case unitName == snapshotThresholdTypeAge &&
+		snapshotSummarySets.HasNotYetExceededAge(snapshotWarningThreshold):
+		for _, snapSet := range snapshotSummarySets {
+			for _, snap := range snapSet.Snapshots {
+				if !(snap.IsAgeCriticalState() ||
+					snap.IsAgeWarningState()) {
+					fmt.Fprintf(
+						w,
+						listEntryTemplate,
+						snap.VMName,
+						snap.Age(),
+						snap.SizeHR(),
+						snapSet.SizeHR(),
+						snap.Name,
+						snap.MOID,
+					)
+				}
+			}
+		}
+
+	case unitName == snapshotThresholdTypeSize &&
+		snapshotSummarySets.HasNotYetExceededSize(snapshotWarningThreshold):
+		for _, snapSet := range snapshotSummarySets {
+			if !(snapSet.IsSizeWarningState() ||
+				snapSet.IsSizeCriticalState()) {
+				for _, snap := range snapSet.Snapshots {
+					fmt.Fprintf(
+						w,
+						listEntryTemplate,
+						snap.VMName,
+						snap.Age(),
+						snap.SizeHR(),
+						snapSet.SizeHR(),
+						snap.Name,
+						snap.MOID,
+					)
+				}
+			}
+		}
+
+	default:
+		fmt.Fprintln(w, "* None detected")
+	}
+
+}
+
+// writeSnapshotsReportFooter generates a common "footer" for use with
+// summarizing snapshots age and size plugin check results.
+//
+// TODO: Refactor for shared use by other (all?) plugins
+func writeSnapshotsReportFooter(
+	c *vim25.Client,
+	w io.Writer,
+	allVMs []mo.VirtualMachine,
+	evaluatedVMs []mo.VirtualMachine,
+	vmsWithIssues []mo.VirtualMachine,
+	vmsToExclude []string,
+	evalPoweredOffVMs bool,
+	includeRPs []string,
+	excludeRPs []string,
+	rps []mo.ResourcePool,
+) {
+
+	rpNames := make([]string, len(rps))
+	for i := range rps {
+		rpNames[i] = rps[i].Name
+	}
+
+	fmt.Fprintf(
+		w,
+		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* vSphere environment: %s%s",
+		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* VMs (evaluated: %d, total: %d)%s",
+		len(evaluatedVMs),
+		len(allVMs),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Powered off VMs evaluated: %t%s",
+		// NOTE: This plugin is hard-coded to evaluate powered off and powered
+		// on VMs equally. I'm not sure whether ignoring powered off VMs by
+		// default makes sense for this particular plugin.
+		//
+		// Please share your feedback on this GitHub issue if you feel differently:
+		// https://github.com/atc0005/check-vmware/issues/79
+		//
+		// Please expand on some use cases for ignoring powered off VMs by default.
+		true,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Specified VMs to exclude (%d): [%v]%s",
+		len(vmsToExclude),
+		strings.Join(vmsToExclude, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
+		len(includeRPs),
+		strings.Join(includeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
+		len(excludeRPs),
+		strings.Join(excludeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Resource Pools evaluated (%d): [%v]%s",
+		len(rpNames),
+		strings.Join(rpNames, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+}
+
 // SnapshotsAgeReport generates a summary of snapshot details along with
 // various verbose details intended to aid in troubleshooting check results at
 // a glance. This information is provided for use with the Long Service Output
@@ -562,143 +1175,87 @@ func SnapshotsAgeReport(
 		)
 	}()
 
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
+	var report strings.Builder
+
+	writeSnapshotsListEntries(
+		&report,
+		snapshotsAgeCritical,
+		snapshotsAgeWarning,
+		snapshotThresholdTypeAgeSuffix,
+		snapshotThresholdTypeAge,
+		snapshotSummarySets,
+	)
+
+	// Generate common footer information, send to strings Builder
+	writeSnapshotsReportFooter(
+		c,
+		&report,
+		allVMs,
+		evaluatedVMs,
+		vmsWithIssues,
+		vmsToExclude,
+		evalPoweredOffVMs,
+		includeRPs,
+		excludeRPs,
+		rps,
+	)
+
+	return report.String()
+}
+
+// SnapshotsSizeReport generates a summary of snapshot details along with
+// various verbose details intended to aid in troubleshooting check results at
+// a glance. This information is provided for use with the Long Service Output
+// field commonly displayed on the detailed service check results display in
+// the web UI or in the body of many notifications.
+func SnapshotsSizeReport(
+	c *vim25.Client,
+	snapshotSummarySets SnapshotSummarySets,
+	snapshotsSizeCritical int,
+	snapshotsSizeWarning int,
+	allVMs []mo.VirtualMachine,
+	evaluatedVMs []mo.VirtualMachine,
+	vmsWithIssues []mo.VirtualMachine,
+	vmsToExclude []string,
+	evalPoweredOffVMs bool,
+	includeRPs []string,
+	excludeRPs []string,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		fmt.Fprintf(
+			os.Stderr,
+			"It took %v to execute SnapshotsSizeReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	var report strings.Builder
 
-	fmt.Fprintf(
+	writeSnapshotsListEntries(
 		&report,
-		"Snapshots exceeding CRITICAL (%dd) or WARNING (%dd) age thresholds:%s%s",
-		snapshotsAgeCritical,
-		snapshotsAgeWarning,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
+		snapshotsSizeCritical,
+		snapshotsSizeWarning,
+		snapshotThresholdTypeSizeSuffix,
+		snapshotThresholdTypeSize,
+		snapshotSummarySets,
 	)
 
-	switch {
-
-	case snapshotSummarySets.IsAgeCriticalState(), snapshotSummarySets.IsAgeWarningState():
-		for _, snapSet := range snapshotSummarySets {
-			for _, snap := range snapSet.Snapshots {
-				if snap.IsAgeCriticalState() || snap.IsAgeWarningState() {
-					fmt.Fprintf(
-						&report,
-						// See atc0005/check-vmware#4,vmware/govmomi#2243
-						// "* %q [Age: %v, SnapSize: %v, Combined SnapSize: %v, Name: %q, SnapID: %v]\n"
-						"* %q [Age: %v, Name: %q, SnapID: %v]\n",
-						snap.VMName,
-						snap.Age(),
-						snap.Name,
-						snap.MOID,
-					)
-				}
-			}
-		}
-
-	default:
-		fmt.Fprintln(&report, "* None detected")
-	}
-
-	fmt.Fprintf(
+	// Generate common footer information, send to strings Builder
+	writeSnapshotsReportFooter(
+		c,
 		&report,
-		"%sSnapshots *not yet* exceeding age thresholds:%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	switch {
-	case len(snapshotSummarySets) > 0:
-		for _, snapSet := range snapshotSummarySets {
-			for _, snap := range snapSet.Snapshots {
-				if !snap.IsAgeCriticalState() && !snap.IsAgeWarningState() {
-					fmt.Fprintf(
-						&report,
-						// See atc0005/check-vmware#4,vmware/govmomi#2243
-						// "* %q [Age: %v, SnapSize: %v, Combined SnapSize: %v, Name: %q, SnapID: %v]\n"
-						"* %q [Age: %v, SnapName: %q, SnapID: %v]\n",
-						snap.VMName,
-						snap.Age(),
-						snap.Name,
-						snap.MOID,
-					)
-				}
-			}
-		}
-
-	default:
-		fmt.Fprintln(&report, "* None detected")
-	}
-
-	fmt.Fprintf(
-		&report,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* VMs (evaluated: %d, total: %d)%s",
-		len(evaluatedVMs),
-		len(allVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Powered off VMs evaluated: %t%s",
-		// NOTE: This plugin is hard-coded to evaluate powered off and powered
-		// on VMs equally. I'm not sure whether ignoring powered off VMs by
-		// default makes sense for this particular plugin.
-		//
-		// Please submit a GitHub issue if you feel differently and expand on
-		// some use cases for ignoring powered off VMs by default.
-		true,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
-		nagios.CheckOutputEOL,
+		allVMs,
+		evaluatedVMs,
+		vmsWithIssues,
+		vmsToExclude,
+		evalPoweredOffVMs,
+		includeRPs,
+		excludeRPs,
+		rps,
 	)
 
 	return report.String()

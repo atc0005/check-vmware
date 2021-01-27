@@ -42,7 +42,39 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+		if c.SnapshotsAgeCritical == c.SnapshotsAgeWarning {
+			return fmt.Errorf(
+				"critical threshold set equal to warning threshold",
+			)
+		}
+
 	case pluginType.SnapshotsSize:
+
+		if c.SnapshotsSizeWarning < 0 {
+			return fmt.Errorf(
+				"invalid snapshot size WARNING threshold number: %d",
+				c.SnapshotsSizeWarning,
+			)
+		}
+
+		if c.SnapshotsSizeCritical < 0 {
+			return fmt.Errorf(
+				"invalid snapshot size CRITICAL threshold number: %d",
+				c.SnapshotsSizeCritical,
+			)
+		}
+
+		if c.SnapshotsSizeCritical < c.SnapshotsSizeWarning {
+			return fmt.Errorf(
+				"critical threshold set lower than warning threshold",
+			)
+		}
+
+		if c.SnapshotsSizeCritical == c.SnapshotsSizeWarning {
+			return fmt.Errorf(
+				"critical threshold set equal to warning threshold",
+			)
+		}
 
 	case pluginType.DatastoresSize:
 

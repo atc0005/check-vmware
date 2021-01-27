@@ -28,7 +28,8 @@ WHAT 					= check_vmware_tools \
 							check_vmware_vhw \
 							check_vmware_hs2ds2vms \
 							check_vmware_datastore \
-							check_vmware_snapshots_age
+							check_vmware_snapshots_age \
+							check_vmware_snapshots_size \
 
 
 # What package holds the "version" variable used in branding/version output?

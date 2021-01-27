@@ -42,10 +42,8 @@ const (
 	datacenterNameFlagHelp                          string = "Specifies the name of a vSphere Datacenter. If not specified, applicable plugins will attempt to use the default datacenter found in the vSphere environment. Not applicable to standalone ESXi hosts."
 	snapshotsAgeCriticalFlagHelp                    string = "Specifies the age of a snapshot in days when a CRITICAL threshold is reached."
 	snapshotsAgeWarningFlagHelp                     string = "Specifies the age of a snapshot in days when a WARNING threshold is reached."
-
-	// See atc0005/check-vmware#4,vmware/govmomi#2243
-	// snapshotsSizeCriticalFlagHelp                   string = "Specifies the size of a snapshot in GB when a CRITICAL threshold is reached."
-	// snapshotsSizeWarningFlagHelp                    string = "Specifies the size of a snapshot in GB when a WARNING threshold is reached."
+	snapshotsSizeCriticalFlagHelp                   string = "Specifies the cumulative size in GB of all snapshots for a Virtual Machine when a CRITICAL threshold is reached."
+	snapshotsSizeWarningFlagHelp                    string = "Specifies the cumulative size in GB of all snapshots for a Virtual Machine when a WARNING threshold is reached."
 )
 
 // Default flag settings if not overridden by user input
@@ -69,6 +67,8 @@ const (
 	defaultDatacenterName               string = ""
 	defaultSnapshotsAgeCritical         int    = 2
 	defaultSnapshotsAgeWarning          int    = 1
+	defaultSnapshotsSizeCritical        int    = 40 // size in GB
+	defaultSnapshotsSizeWarning         int    = 20 // size in GB
 
 	// Intentionally set low to trigger validation failure if not specified by
 	// the end user.
