@@ -1,6 +1,7 @@
 /*
 
-This repo contains various tools used to monitor VMware environments.
+Go-based tooling to monitor VMware environments; **NOT** affiliated with
+or endorsed by VMware, Inc.
 
 PROJECT HOME
 
