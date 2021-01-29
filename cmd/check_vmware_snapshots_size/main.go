@@ -72,12 +72,12 @@ func main() {
 	// content is shown in the detailed web UI and in notifications generated
 	// by Nagios.
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
-		"%d GB size snapshots present",
+		"snapshots of %d GB (combined size) present",
 		cfg.SnapshotsSizeCritical,
 	)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
-		"%d GB size snapshots present",
+		"snapshots of %d GB (combined size) present",
 		cfg.SnapshotsSizeWarning,
 	)
 
@@ -238,8 +238,11 @@ func main() {
 
 	case snapshotSets.IsSizeCriticalState():
 
+		vmsWithLargeCumulativeSnapshots, largeSnapshots := snapshotSets.ExceedsSize(cfg.SnapshotsSizeCritical)
+
 		log.Error().
-			Int("num_snapshots_size_critical", snapshotSets.ExceedsSize(cfg.SnapshotsSizeCritical)).
+			Int("num_vms_with_critical_snapshots", vmsWithLargeCumulativeSnapshots).
+			Int("num_snapshots_size_critical", largeSnapshots).
 			Msg("Snapshot sets contain a snapshot which exceeds specified size in GB")
 
 		nagiosExitState.LastError = vsphere.ErrSnapshotSizeThresholdCrossed
@@ -274,9 +277,12 @@ func main() {
 
 	case snapshotSets.IsSizeWarningState():
 
+		vmsWithLargeCumulativeSnapshots, largeSnapshots := snapshotSets.ExceedsSize(cfg.SnapshotsSizeWarning)
+
 		log.Error().
-			Int("num_snapshots_size_warning", snapshotSets.ExceedsSize(cfg.SnapshotsSizeWarning)).
-			Msg("Snapshot sets contain one or more snapshots which exceed specified size in GB")
+			Int("num_vms_with_warning_snapshots", vmsWithLargeCumulativeSnapshots).
+			Int("num_snapshots_size_warning", largeSnapshots).
+			Msg("Snapshot sets contain a snapshot which exceeds specified size in GB")
 
 		nagiosExitState.LastError = vsphere.ErrSnapshotSizeThresholdCrossed
 

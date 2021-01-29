@@ -238,8 +238,11 @@ func main() {
 
 	case snapshotSets.IsAgeCriticalState():
 
+		vmsWithOldSnapshots, oldSnapshots := snapshotSets.ExceedsAge(cfg.SnapshotsAgeCritical)
+
 		log.Error().
-			Int("num_snapshots_age_critical", snapshotSets.ExceedsAge(cfg.SnapshotsAgeCritical)).
+			Int("num_vms_with_critical_snapshots", vmsWithOldSnapshots).
+			Int("num_snapshots_age_critical", oldSnapshots).
 			Msg("Snapshot sets contain a snapshot which exceeds specified age in days")
 
 		nagiosExitState.LastError = vsphere.ErrSnapshotAgeThresholdCrossed
@@ -274,8 +277,11 @@ func main() {
 
 	case snapshotSets.IsAgeWarningState():
 
+		vmsWithOldSnapshots, oldSnapshots := snapshotSets.ExceedsAge(cfg.SnapshotsAgeWarning)
+
 		log.Error().
-			Int("num_snapshots_age_warning", snapshotSets.ExceedsAge(cfg.SnapshotsAgeWarning)).
+			Int("num_vms_with_warning_snapshots", vmsWithOldSnapshots).
+			Int("num_snapshots_age_warning", oldSnapshots).
 			Msg("Snapshot sets contain one or more snapshots which exceed specified age in days")
 
 		nagiosExitState.LastError = vsphere.ErrSnapshotAgeThresholdCrossed
