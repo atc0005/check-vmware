@@ -10,7 +10,6 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -34,8 +33,7 @@ func GetNetworks(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.N
 	var nets []mo.Network
 
 	defer func(nets *[]mo.Network) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetNetworks func (and retrieve %d Networks).\n",
 			time.Since(funcTimeStart),
 			len(*nets),
@@ -65,8 +63,7 @@ func GetNetworkByName(ctx context.Context, c *vim25.Client, netName string, data
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetNetworkByName func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -91,8 +88,7 @@ func FilterNetworkByName(nets []mo.Network, netName string) (mo.Network, error) 
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterNetworkByName func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -123,8 +119,7 @@ func FilterNetworkByID(nets []mo.Network, netID string) (mo.Network, error) {
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterNetworkByID func.\n",
 			time.Since(funcTimeStart),
 		)

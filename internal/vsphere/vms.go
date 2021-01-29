@@ -10,7 +10,6 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -37,8 +36,7 @@ func GetVMs(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.Virtua
 	var vms []mo.VirtualMachine
 
 	defer func(vms *[]mo.VirtualMachine) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetVMs func (and retrieve %d VirtualMachines).\n",
 			time.Since(funcTimeStart),
 			len(*vms),
@@ -73,8 +71,7 @@ func GetVMsFromRPs(ctx context.Context, c *vim25.Client, rps []mo.ResourcePool, 
 	var vms []mo.VirtualMachine
 
 	defer func(vms *[]mo.VirtualMachine) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetVMsFromRPs func (and retrieve %d VMs).\n",
 			time.Since(funcTimeStart),
 			len(*vms),
@@ -121,8 +118,7 @@ func GetVMsFromDatastore(ctx context.Context, c *vim25.Client, ds mo.Datastore, 
 	dsVMs := make([]mo.VirtualMachine, len(ds.Vm))
 
 	defer func(vms *[]mo.VirtualMachine) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetVMsFromDatastore func (and retrieve %d VMs).\n",
 			time.Since(funcTimeStart),
 			len(*vms),
@@ -171,8 +167,7 @@ func GetVMByName(ctx context.Context, c *vim25.Client, vmName string, datacenter
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetVMByName func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -197,8 +192,7 @@ func FilterVMByName(vms []mo.VirtualMachine, vmName string) (mo.VirtualMachine, 
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterVMByName func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -229,8 +223,7 @@ func FilterVMByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, erro
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterVMByID func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -297,8 +290,7 @@ func FilterVMsByPowerState(vms []mo.VirtualMachine, includePoweredOff bool) []mo
 	funcTimeStart := time.Now()
 
 	defer func(vms []mo.VirtualMachine, filteredVMs *[]mo.VirtualMachine) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterVMsByPowerState func (for %d VMs, yielding %d VMs)\n",
 			time.Since(funcTimeStart),
 			len(vms),
@@ -340,8 +332,7 @@ func dedupeVMs(vmsList []mo.VirtualMachine) []mo.VirtualMachine {
 	funcTimeStart := time.Now()
 
 	defer func(vms *[]mo.VirtualMachine) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute dedupeVMs func (evaluated %d VMs).\n",
 			time.Since(funcTimeStart),
 			len(*vms),

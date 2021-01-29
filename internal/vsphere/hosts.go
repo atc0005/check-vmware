@@ -10,7 +10,6 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -33,8 +32,7 @@ func GetHostSystems(ctx context.Context, c *vim25.Client, propsSubset bool) ([]m
 	var hss []mo.HostSystem
 
 	defer func(hss *[]mo.HostSystem) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetHostSystems func (and retrieve %d HostSystems).\n",
 			time.Since(funcTimeStart),
 			len(*hss),
@@ -64,8 +62,7 @@ func GetHostSystemByName(ctx context.Context, c *vim25.Client, hsName string, da
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetHostSystemByName func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -90,8 +87,7 @@ func FilterHostSystemByName(hss []mo.HostSystem, hsName string) (mo.HostSystem, 
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterHostSystemByName func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -122,8 +118,7 @@ func FilterHostSystemByID(hss []mo.HostSystem, hsID string) (mo.HostSystem, erro
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterHostSystemByID func.\n",
 			time.Since(funcTimeStart),
 		)

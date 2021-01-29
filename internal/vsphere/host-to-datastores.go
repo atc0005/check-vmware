@@ -376,8 +376,7 @@ func H2D2VMsOneLineCheckSummary(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute H2D2VMsOneLineCheckSummary func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -432,8 +431,7 @@ func H2D2VMsReport(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute HostToDatastoresToVMsReport func.\n",
 			time.Since(funcTimeStart),
 		)

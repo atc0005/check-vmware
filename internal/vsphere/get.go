@@ -3,7 +3,6 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/vmware/govmomi/find"
@@ -93,8 +92,7 @@ func getObjects(ctx context.Context, c *vim25.Client, dst interface{}, objRef ty
 	// length checks in type switch below
 	var objCount int
 	defer func(count *int, kind *string) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute getObjects func (and retrieve %d %s objects).\n",
 			time.Since(funcTimeStart),
 			*count,
@@ -215,8 +213,7 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 	var objKind string
 
 	defer func(kind *string) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute getObjectByName func (and retrieve %s object).\n",
 			time.Since(funcTimeStart),
 			*kind,
