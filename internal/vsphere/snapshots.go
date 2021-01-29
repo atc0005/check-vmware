@@ -177,7 +177,9 @@ func (sss SnapshotSummarySet) SizeHR() string {
 }
 
 // ExceedsAge indicates how many snapshots in the set are older than the
-// specified number of days.
+// specified number of days. Unlike the ExceedsAge method for
+// SnapshotSummarySets, this method focuses specifically on individual
+// snapshots.
 func (sss SnapshotSummarySet) ExceedsAge(days int) int {
 
 	var numExceeded int
@@ -191,41 +193,62 @@ func (sss SnapshotSummarySet) ExceedsAge(days int) int {
 }
 
 // ExceedsSize indicates how many snapshots in the set are larger than the
-// specified size in GB.
+// specified size in GB. Unlike the ExceedsSize method for
+// SnapshotSummarySets, this method focuses specifically on individual
+// snapshot size.
 func (sss SnapshotSummarySet) ExceedsSize(sizeGB int) int {
 
-	var numExceeded int
+	var numSnapshotsExceeded int
 	for _, snap := range sss.Snapshots {
 		if snap.IsSizeExceeded(sizeGB) {
-			numExceeded++
+			numSnapshotsExceeded++
 		}
 	}
 
-	return numExceeded
+	return numSnapshotsExceeded
 }
 
-// ExceedsAge indicates how many snapshots in any of the sets are older
-// than the specified number of days.
-func (sss SnapshotSummarySets) ExceedsAge(days int) int {
+// Snapshots indicates how many snapshots are in all of the sets.
+func (sss SnapshotSummarySets) Snapshots() int {
 
-	var numExceeded int
+	var numSnapshots int
 	for _, set := range sss {
-		numExceeded += set.ExceedsAge(days)
+		numSnapshots += len(set.Snapshots)
 	}
 
-	return numExceeded
+	return numSnapshots
 }
 
-// ExceedsSize indicates how many snapshots in any of the sets are larger
-// than the specified size in GB.
-func (sss SnapshotSummarySets) ExceedsSize(sizeGB int) int {
+// ExceedsAge indicates how many sets and number of snapshots from all of
+// those sets are older than the specified number of days.
+func (sss SnapshotSummarySets) ExceedsAge(days int) (int, int) {
 
-	var numExceeded int
+	var setsExceeded int
+	var snapshotsExceeded int
 	for _, set := range sss {
-		numExceeded += set.ExceedsSize(sizeGB)
+		if set.ExceedsAge(days) > 1 {
+			setsExceeded++
+			snapshotsExceeded += set.ExceedsAge(days)
+		}
 	}
 
-	return numExceeded
+	return setsExceeded, snapshotsExceeded
+}
+
+// ExceedsSize indicates how many sets and number of snapshots from all of
+// those sets have cumulative snapshots larger than the specified size in GB.
+func (sss SnapshotSummarySets) ExceedsSize(sizeGB int) (int, int) {
+
+	var numSetsExceeded int
+	var numSnapshotsExceeded int
+	for _, set := range sss {
+		if set.Size() > (int64(sizeGB) * units.GB) {
+			numSetsExceeded++
+			numSnapshotsExceeded += len(set.Snapshots)
+		}
+	}
+
+	return numSetsExceeded, numSnapshotsExceeded
 }
 
 // HasNotYetExceededAge indicates whether any of the snapshots in any of the
@@ -800,32 +823,41 @@ func SnapshotsAgeOneLineCheckSummary(
 
 	case snapshotSets.IsAgeCriticalState():
 
+		vms, snapshots := snapshotSets.ExceedsAge(snapshotsAgeCritical)
+
 		return fmt.Sprintf(
-			"%s: %d snapshots older than %d days detected (evaluated %d VMs, %d Resource Pools)",
+			"%s: %d VMs with %d snapshots older than %d days detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
-			snapshotSets.ExceedsAge(snapshotsAgeCritical),
+			vms,
+			snapshots,
 			snapshotsAgeCritical,
 			len(evaluatedVMs),
+			snapshotSets.Snapshots(),
 			len(rps),
 		)
 
 	case snapshotSets.IsAgeWarningState():
 
+		vms, snapshots := snapshotSets.ExceedsAge(snapshotsAgeWarning)
+
 		return fmt.Sprintf(
-			"%s: %d snapshots older than %d days detected (evaluated %d VMs, %d Resource Pools)",
+			"%s: %d VMs with %d snapshots older than %d days detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
-			snapshotSets.ExceedsAge(snapshotsAgeWarning),
+			vms,
+			snapshots,
 			snapshotsAgeWarning,
 			len(evaluatedVMs),
+			snapshotSets.Snapshots(),
 			len(rps),
 		)
 
 	default:
 
 		return fmt.Sprintf(
-			"%s: No snapshots older than %d days detected (evaluated %d VMs, %d Resource Pools)",
+			"%s: No snapshots older than %d days detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
 			snapshotsAgeWarning,
+			snapshotSets.Snapshots(),
 			len(evaluatedVMs),
 			len(rps),
 		)
@@ -858,36 +890,44 @@ func SnapshotsSizeOneLineCheckSummary(
 
 	case snapshotSets.IsSizeCriticalState():
 
+		vms, snapshots := snapshotSets.ExceedsSize(snapshotsSizeCritical)
 		return fmt.Sprintf(
-			"%s: %d snapshots larger than %d %s detected (evaluated %d VMs, %d Resource Pools)",
+			"%s: %d VMs with combined snapshots (%d) exceeding %d %s detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
-			snapshotSets.ExceedsSize(snapshotsSizeCritical),
+			vms,
+			snapshots,
 			snapshotsSizeCritical,
 			snapshotThresholdTypeSizeSuffix,
 			len(evaluatedVMs),
+			snapshotSets.Snapshots(),
 			len(rps),
 		)
 
 	case snapshotSets.IsSizeWarningState():
 
+		vms, snapshots := snapshotSets.ExceedsSize(snapshotsSizeWarning)
+
 		return fmt.Sprintf(
-			"%s: %d snapshots larger than %d %s detected (evaluated %d VMs, %d Resource Pools)",
+			"%s: %d VMs with combined snapshots (%d) exceeding %d %s detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
-			snapshotSets.ExceedsSize(snapshotsSizeWarning),
+			vms,
+			snapshots,
 			snapshotsSizeWarning,
 			snapshotThresholdTypeSizeSuffix,
 			len(evaluatedVMs),
+			snapshotSets.Snapshots(),
 			len(rps),
 		)
 
 	default:
 
 		return fmt.Sprintf(
-			"%s: No snapshots larger than %d %s detected (evaluated %d VMs, %d Resource Pools)",
+			"%s: No VMs, each with combined snapshots exceeding %d %s detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
 			snapshotsSizeWarning,
 			snapshotThresholdTypeSizeSuffix,
 			len(evaluatedVMs),
+			snapshotSets.Snapshots(),
 			len(rps),
 		)
 
@@ -906,7 +946,6 @@ func writeSnapshotsListEntries(
 	snapshotSummarySets SnapshotSummarySets,
 ) {
 
-	// listEntryTemplate := "* %q [Age: %v, SnapSize: %v, Combined SnapSize: %v, Name: %q, SnapID: %v]\n"
 	listEntryTemplate := "* %q [Age: %v, Size (item: %v, sum: %v), Name: %q, ID: %v]\n"
 
 	fmt.Fprintf(
