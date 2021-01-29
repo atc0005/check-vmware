@@ -10,7 +10,6 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -31,8 +30,7 @@ func ValidateRPs(ctx context.Context, c *vim25.Client, includeRPs []string, excl
 	funcTimeStart := time.Now()
 
 	defer func(irps []string, erps []string) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute ValidateRPs func (and validate %d Resource Pools).\n",
 			time.Since(funcTimeStart),
 			len(irps)+len(erps),
@@ -147,8 +145,7 @@ func GetEligibleRPs(ctx context.Context, c *vim25.Client, includeRPs []string, e
 	var rps []mo.ResourcePool
 
 	defer func(rps *[]mo.ResourcePool) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetEligibleRPs func (and retrieve %d Resource Pools).\n",
 			time.Since(funcTimeStart),
 			len(*rps),
@@ -223,8 +220,7 @@ func GetRPByName(ctx context.Context, c *vim25.Client, rpName string, datacenter
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetRPByName func.\n",
 			time.Since(funcTimeStart),
 		)

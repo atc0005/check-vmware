@@ -34,6 +34,10 @@ func main() {
 	// defer this from the start so it is the last deferred function to run
 	defer nagiosExitState.ReturnCheckResults()
 
+	// Disable library debug logging output by default
+	// vsphere.EnableLogging()
+	vsphere.DisableLogging()
+
 	// Setup configuration by parsing user-provided flags. Note plugin type so
 	// that only applicable CLI flags are exposed and any plugin-specific
 	// settings are applied.
@@ -56,6 +60,11 @@ func main() {
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
+	}
+
+	// Enable library-level logging if debug logging level is enabled app-wide
+	if cfg.LoggingLevel == config.LogLevelDebug {
+		vsphere.EnableLogging()
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout())

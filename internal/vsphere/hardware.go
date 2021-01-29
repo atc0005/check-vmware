@@ -9,7 +9,6 @@ package vsphere
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -253,8 +252,7 @@ func VirtualHardwareOneLineCheckSummary(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute VirtualHardwareOneLineCheckSummary func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -304,8 +302,7 @@ func VirtualHardwareReport(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute VirtualHardwareReport func.\n",
 			time.Since(funcTimeStart),
 		)

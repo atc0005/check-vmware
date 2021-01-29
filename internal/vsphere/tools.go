@@ -9,7 +9,6 @@ package vsphere
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -28,8 +27,7 @@ func GetVMToolsStatusSummary(vms []mo.VirtualMachine) (string, int) {
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetVMToolsStatusSummary func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -88,8 +86,7 @@ func FilterVMsWithToolsIssues(vms []mo.VirtualMachine) []mo.VirtualMachine {
 	funcTimeStart := time.Now()
 
 	defer func(vms []mo.VirtualMachine, filteredVMs *[]mo.VirtualMachine) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterVMsWithToolsIssues func (for %d VMs, yielding %d VMs).\n",
 			time.Since(funcTimeStart),
 			len(vms),
@@ -114,8 +111,7 @@ func VMToolsOneLineCheckSummary(stateLabel string, vmsWithIssues []mo.VirtualMac
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute VMToolsOneLineCheckSummary func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -163,8 +159,7 @@ func VMToolsReport(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute VMToolsReport func.\n",
 			time.Since(funcTimeStart),
 		)

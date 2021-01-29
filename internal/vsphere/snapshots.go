@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"os"
 	"strings"
 	"time"
 
@@ -69,8 +67,7 @@ func FilterVMsWithSnapshots(vms []mo.VirtualMachine) []mo.VirtualMachine {
 	funcTimeStart := time.Now()
 
 	defer func(vms []mo.VirtualMachine, filteredVMs *[]mo.VirtualMachine) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterVMsWithSnapshots func (for %d VMs, yielding %d VMs).\n",
 			time.Since(funcTimeStart),
 			len(vms),
@@ -530,25 +527,13 @@ func NewSnapshotSummarySet(
 	snapshotsAgeWarning int,
 	snapshotsSizeCritical int,
 	snapshotsSizeWarning int,
-
-	// workaround until GH-76 is settled
-	debugPrint bool,
 ) SnapshotSummarySet {
 
 	// TODO: Return error if no snapshots are present?
 
-	// workaround until GH-76 is settled
-	var output io.Writer
-	switch debugPrint {
-	case true:
-		output = os.Stderr
-	case false:
-		output = ioutil.Discard
-	}
-
-	fmt.Fprintln(output, "Number of snapshot trees:", len(vm.Snapshot.RootSnapshotList))
+	logger.Println("Number of snapshot trees:", len(vm.Snapshot.RootSnapshotList))
 	if vm.Snapshot.CurrentSnapshot != nil {
-		fmt.Fprintln(output, "Active snapshot MOID:", vm.Snapshot.CurrentSnapshot)
+		logger.Println("Active snapshot MOID:", vm.Snapshot.CurrentSnapshot)
 	}
 
 	funcTimeStart := time.Now()
@@ -556,9 +541,7 @@ func NewSnapshotSummarySet(
 	var snapshots []SnapshotSummary
 
 	defer func(ss *[]SnapshotSummary) {
-		fmt.Fprintf(
-			// hard-coded for now; revisit with GH-76
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute NewSnapshotSummarySet func "+
 				"(and retrieve %d snapshot summaries).\n",
 			time.Since(funcTimeStart),
@@ -575,21 +558,20 @@ func NewSnapshotSummarySet(
 		}
 	}
 
-	fmt.Fprintf(output, "vmAllDiskFileKeys (%d): %v\n", len(vmAllDiskFileKeys), vmAllDiskFileKeys)
+	logger.Printf("vmAllDiskFileKeys (%d): %v\n", len(vmAllDiskFileKeys), vmAllDiskFileKeys)
 
 	// all files (vm.LayoutEx.File) attached to the virtual machine, indexed
 	// by file key (vm.LayoutEx.File.Key) to make retrieving the size for a
 	// specific file easier later
 	fileKeyMap := make(map[int32]types.VirtualMachineFileLayoutExFileInfo)
-	fmt.Fprintln(output, "Disk files (diskDescriptor, diskExtent) attached for Virtual Machine's current state:")
+	logger.Printf("Disk files (diskDescriptor, diskExtent) attached for Virtual Machine's current state:")
 	for _, fileLayout := range vm.LayoutEx.File {
 
 		fileKeyMap[fileLayout.Key] = fileLayout
 
 		// list disk files only
 		if fileLayout.Type == "diskDescriptor" || fileLayout.Type == "diskExtent" {
-			fmt.Fprintf(
-				output,
+			logger.Printf(
 				"* fileLayout [Name: %v, Size: %v (%s), Key: %v]\n",
 				fileLayout.Name,
 				fileLayout.Size,
@@ -609,16 +591,14 @@ func NewSnapshotSummarySet(
 
 		for _, snapTree := range snapTrees {
 
-			fmt.Fprintf(
-				output,
+			logger.Printf(
 				"Processing snapshot: [ID: %s, Name: %s, HasParent: %t]\n",
 				snapTree.Snapshot.Value,
 				snapTree.Name,
 				parent != nil,
 			)
 
-			fmt.Fprintf(
-				output,
+			logger.Printf(
 				"Active snapshot: %s\n",
 				vm.Snapshot.CurrentSnapshot.Value,
 			)
@@ -628,19 +608,17 @@ func NewSnapshotSummarySet(
 			parentSnapshotDiskFileKeys := make([]int32, 0, len(vmAllDiskFileKeys))
 			snapshotDiskFileKeys := make([]int32, 0, len(vmAllDiskFileKeys))
 
-			fmt.Fprintln(output, "Collecting snapshot disk, data file keys ...")
+			logger.Printf("Collecting snapshot disk, data file keys ...")
 			for _, snapLayout := range vm.LayoutEx.Snapshot {
 
 				// Evaluating snapshot layout for current snapshot tree.
 				if snapLayout.Key.Value == snapTree.Snapshot.Value {
 
-					fmt.Fprintln(
-						output,
+					logger.Println(
 						"Adding snapTree (vmsn, snapData) file key",
 						snapLayout.DataKey,
 					)
-					fmt.Fprintf(
-						output,
+					logger.Printf(
 						"snapLayout [Name: %v, Size: %v (%s), Key: %v]\n",
 						fileKeyMap[snapLayout.DataKey].Name,
 						fileKeyMap[snapLayout.DataKey].Size,
@@ -653,7 +631,7 @@ func NewSnapshotSummarySet(
 					// currently evaluating.
 					for _, snapLayoutExDisk := range snapLayout.Disk {
 						for _, link := range snapLayoutExDisk.Chain {
-							fmt.Fprintln(output, "Adding snapTree disk descriptor, extent file keys", link.FileKey)
+							logger.Println("Adding snapTree disk descriptor, extent file keys", link.FileKey)
 							snapshotDiskFileKeys = append(snapshotDiskFileKeys, link.FileKey...)
 						}
 					}
@@ -663,7 +641,7 @@ func NewSnapshotSummarySet(
 				if parent != nil && snapLayout.Key.Value == parent.Value {
 					for _, snapLayoutExDisk := range snapLayout.Disk {
 						for _, link := range snapLayoutExDisk.Chain {
-							fmt.Fprintln(output, "Adding parent disk descriptor, extent keys", link.FileKey)
+							logger.Println("Adding parent disk descriptor, extent keys", link.FileKey)
 							parentSnapshotDiskFileKeys = append(parentSnapshotDiskFileKeys, link.FileKey...)
 						}
 					}
@@ -680,11 +658,11 @@ func NewSnapshotSummarySet(
 			remainingDiskFiles := make([]int32, len(vmAllDiskFileKeys))
 			copy(remainingDiskFiles, vmAllDiskFileKeys)
 
-			// fmt.Fprintln(output, "Current snapshotDiskFileKeys:", snapshotDiskFileKeys)
-			// fmt.Fprintln(output, "Current allSnapshotKeys:", allSnapshotKeys)
-			// fmt.Fprintln(output, "")
-			// fmt.Fprintln(output, "Current vmAllDiskFileKeys:", vmAllDiskFileKeys)
-			// fmt.Fprintln(output, "Current remainingDiskFiles:", remainingDiskFiles)
+			// logger.Printf("Current snapshotDiskFileKeys:", snapshotDiskFileKeys)
+			// logger.Printf("Current allSnapshotKeys:", allSnapshotKeys)
+			// logger.Printf("")
+			// logger.Printf("Current vmAllDiskFileKeys:", vmAllDiskFileKeys)
+			// logger.Printf("Current remainingDiskFiles:", remainingDiskFiles)
 
 			// Conditionally prune disk files not directly associated with the
 			// unique snapshot tree we are evaluating
@@ -696,10 +674,10 @@ func NewSnapshotSummarySet(
 				// file keys from the list of snapshot file keys. This leaves
 				// the snapshot data file as the sole file key in the list.
 
-				fmt.Fprintln(output, "Removing file keys for attached VM disks from list for current snapshot tree ...")
+				logger.Printf("Removing file keys for attached VM disks from list for current snapshot tree ...")
 
 				for _, key := range vmAllDiskFileKeys {
-					fmt.Fprintf(output, "Removing key %d\n", key)
+					logger.Printf("Removing key %d\n", key)
 					removeFileKey(&snapshotDiskFileKeys, key)
 				}
 
@@ -710,24 +688,22 @@ func NewSnapshotSummarySet(
 				// the snapshot file keys associated with the fixed snapshot
 				// state.
 
-				fmt.Fprintln(
-					output,
+				logger.Printf(
 					"Removing parent snapshot disk file keys from list for current snapshot tree ...",
 				)
 				for _, key := range parentSnapshotDiskFileKeys {
-					fmt.Fprintf(output, "Removing key %d\n", key)
+					logger.Printf("Removing key %d\n", key)
 					removeFileKey(&snapshotDiskFileKeys, key)
 
 				}
 
 			}
 
-			fmt.Fprintln(
-				output,
+			logger.Println(
 				"Remaining file keys in list for current snapshot tree:",
 				snapshotDiskFileKeys,
 			)
-			fmt.Fprintln(output, "Computing snapshot size (using remaining snapshot tree file keys)")
+			logger.Printf("Computing snapshot size (using remaining snapshot tree file keys)")
 			for _, fileKey := range snapshotDiskFileKeys {
 				snapshotSize += fileKeyMap[fileKey].Size
 			}
@@ -738,19 +714,18 @@ func NewSnapshotSummarySet(
 			// allows for measuring and including the growth from the last
 			// fixed snapshot to the present state.
 			if snapTree.Snapshot.Value == vm.Snapshot.CurrentSnapshot.Value {
-				fmt.Fprintln(output, "allSnapshotKeys:", allSnapshotKeys)
+				logger.Println("allSnapshotKeys:", allSnapshotKeys)
 				for _, fileKey := range allSnapshotKeys {
 					removeFileKey(&remainingDiskFiles, fileKey)
 				}
-				fmt.Fprintln(output, "remainingDiskFiles:", remainingDiskFiles)
-				fmt.Fprintln(output, "Updating computed snapshot size (using keys from remainingDiskFiles)")
+				logger.Println("remainingDiskFiles:", remainingDiskFiles)
+				logger.Println("Updating computed snapshot size (using keys from remainingDiskFiles)")
 				for _, fileKey := range remainingDiskFiles {
 					snapshotSize += fileKeyMap[fileKey].Size
 				}
 			}
 
-			fmt.Fprintf(
-				output,
+			logger.Printf(
 				"Size [bytes: %v, HR: %s] calculated for %s snapshot\n\n\n",
 				snapshotSize,
 				units.ByteSize(snapshotSize),
@@ -786,9 +761,9 @@ func NewSnapshotSummarySet(
 		setSize += snap.Size
 	}
 
-	fmt.Fprintln(output, "setSize for VM ", vm.Name, ":", setSize)
-	fmt.Fprintln(output, "setSizeWarningState for VM ", vm.Name, ":", ExceedsSize(setSize, int64(snapshotsSizeWarning)))
-	fmt.Fprintln(output, "setSizeCriticalState for VM ", vm.Name, ":", ExceedsSize(setSize, int64(snapshotsSizeCritical)))
+	logger.Println("setSize for VM ", vm.Name, ":", setSize)
+	logger.Println("setSizeWarningState for VM ", vm.Name, ":", ExceedsSize(setSize, int64(snapshotsSizeWarning)))
+	logger.Println("setSizeCriticalState for VM ", vm.Name, ":", ExceedsSize(setSize, int64(snapshotsSizeCritical)))
 
 	return SnapshotSummarySet{
 		VM:                   vm.Self,
@@ -815,8 +790,7 @@ func SnapshotsAgeOneLineCheckSummary(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute SnapshotsAgeOneLineCheckSummary func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -874,8 +848,7 @@ func SnapshotsSizeOneLineCheckSummary(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute SnapshotsSizeOneLineCheckSummary func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -1168,8 +1141,7 @@ func SnapshotsAgeReport(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute SnapshotsAgeReport func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -1226,8 +1198,7 @@ func SnapshotsSizeReport(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute SnapshotsSizeReport func.\n",
 			time.Since(funcTimeStart),
 		)

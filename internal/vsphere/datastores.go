@@ -11,7 +11,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -100,8 +99,7 @@ func GetDatastores(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo
 	var dss []mo.Datastore
 
 	defer func(dss *[]mo.Datastore) {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetDatastores func (and retrieve %d Datastores).\n",
 			time.Since(funcTimeStart),
 			len(*dss),
@@ -131,8 +129,7 @@ func GetDatastoreByName(ctx context.Context, c *vim25.Client, dsName string, dat
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute GetDatastoreByName func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -157,8 +154,7 @@ func FilterDatastoreByName(dss []mo.Datastore, dsName string) (mo.Datastore, err
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterDatastoreByName func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -189,8 +185,7 @@ func FilterDatastoreByID(dss []mo.Datastore, dsID string) (mo.Datastore, error) 
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute FilterDatastoreByID func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -248,8 +243,7 @@ func DatastoreUsageOneLineCheckSummary(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute DatastoreUsageOneLineCheckSummary func.\n",
 			time.Since(funcTimeStart),
 		)
@@ -282,8 +276,7 @@ func DatastoreUsageReport(
 	funcTimeStart := time.Now()
 
 	defer func() {
-		fmt.Fprintf(
-			os.Stderr,
+		logger.Printf(
 			"It took %v to execute DatastoreUsageReport func.\n",
 			time.Since(funcTimeStart),
 		)
