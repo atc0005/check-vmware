@@ -26,6 +26,23 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.5.1] - 2021-01-29
+
+### Overview
+
+- Bug fixes
+- built using Go 1.15.7
+
+### Changed
+
+- `internal/vsphere` package logging output disabled by default, exposed via
+  `debug` logging level (user configurable)
+
+### Fixed
+
+- snapshots size plugin properly detects `WARNING` cumulative size state, but
+  unhelpfully notes 0 (individual) snapshots exceeding size
+
 ## [v0.5.0] - 2021-01-27
 
 ### Overview
@@ -244,7 +261,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.5.1...HEAD
+[v0.5.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.5.1
 [v0.5.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.5.0
 [v0.4.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.3
 [v0.4.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.2
