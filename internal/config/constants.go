@@ -72,7 +72,7 @@ const (
 
 	// Intentionally set low to trigger validation failure if not specified by
 	// the end user.
-	defaultVCPUsMaxAllowedAllowed int = 0
+	defaultVCPUsMaxAllowed int = 0
 
 	// Default timeout (in seconds) used when connecting to a remote server
 	defaultConnectTimeout int = 10
