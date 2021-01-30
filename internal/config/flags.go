@@ -97,8 +97,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.VCPUsAllocatedCritical, "vcpus-critical", defaultVCPUsAllocatedCritical, vCPUsAllocatedCriticalFlagHelp)
 		flag.IntVar(&c.VCPUsAllocatedCritical, "vc", defaultVCPUsAllocatedCritical, vCPUsAllocatedCriticalFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.VCPUsMaxAllowed, "vcpus-max-allowed", defaultVCPUsMaxAllowedAllowed, vCPUsAllocatedMaxAllowedFlagHelp)
-		flag.IntVar(&c.VCPUsMaxAllowed, "vcma", defaultVCPUsMaxAllowedAllowed, vCPUsAllocatedMaxAllowedFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VCPUsMaxAllowed, "vcpus-max-allowed", defaultVCPUsMaxAllowed, vCPUsAllocatedMaxAllowedFlagHelp)
+		flag.IntVar(&c.VCPUsMaxAllowed, "vcma", defaultVCPUsMaxAllowed, vCPUsAllocatedMaxAllowedFlagHelp+" (shorthand)")
 
 	case pluginType.VirtualHardwareVersion:
 
