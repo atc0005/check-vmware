@@ -25,6 +25,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_datastore`](#check_vmware_datastore)
     - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age)
     - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size)
+    - [`check_vmware_rps_memory`](#check_vmware_rps_memory)
   - [Features](#features)
   - [Changelog](#changelog)
   - [Requirements](#requirements)
@@ -40,6 +41,7 @@ or endorsed by VMware, Inc.
       - [`check_vmware_datastore`](#check_vmware_datastore-1)
       - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age-1)
       - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size-1)
+      - [`check_vmware_rps_memory`](#check_vmware_rps_memory-1)
     - [Command-line arguments](#command-line-arguments)
       - [`check_vmware_tools`](#check_vmware_tools-2)
       - [`check_vmware_vcpus`](#check_vmware_vcpus-2)
@@ -48,6 +50,7 @@ or endorsed by VMware, Inc.
       - [`check_vmware_datastore`](#check_vmware_datastore-2)
       - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age-2)
       - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size-2)
+      - [`check_vmware_rps_memory`](#check_vmware_rps_memory-2)
     - [Configuration file](#configuration-file)
   - [Contrib](#contrib)
   - [Examples](#examples)
@@ -72,6 +75,9 @@ or endorsed by VMware, Inc.
     - [`check_vmware_snapshots_size` Nagios plugin](#check_vmware_snapshots_size-nagios-plugin)
       - [CLI invocation](#cli-invocation-6)
       - [Command definition](#command-definition-6)
+    - [`check_vmware_rps_memory` Nagios plugin](#check_vmware_rps_memory-nagios-plugin)
+      - [CLI invocation](#cli-invocation-7)
+      - [Command definition](#command-definition-7)
   - [License](#license)
   - [References](#references)
 
@@ -97,6 +103,7 @@ This repo contains various tools used to monitor/validate VMware environments.
 | `check_vmware_datastore`      | Alpha  | Nagios plugin used to monitor datastore usage.                                      |
 | `check_vmware_snapshots_age`  | Alpha  | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
 | `check_vmware_snapshots_size` | Alpha  | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
+| `check_vmware_rps_memory`     | Alpha  | Nagios plugin used to monitor memory usage across Resource Pools.                   |
 
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
@@ -224,6 +231,14 @@ Thresholds for `CRITICAL` and `WARNING` age values have usable defaults, but
 may require adjustment for your environment. See the [configuration
 options](#configuration-options) section for details.
 
+### `check_vmware_rps_memory`
+
+Nagios plugin used to monitor memory usage across Resource Pools.
+
+Thresholds for `CRITICAL` and `WARNING` memory usage have usable defaults, but
+max memory usage is required before this plugin can be used. See the
+[configuration options](#configuration-options) section for details.
+
 ## Features
 
 - Multiple plugins for monitoring VMware vSphere environments (standalone ESXi
@@ -235,6 +250,7 @@ options](#configuration-options) section for details.
   - Datastore usage
   - Snapshots age
   - Snapshots size
+  - Resource Pools: Memory usage
 
 - Optional, leveled logging using `rs/zerolog` package
   - JSON-format output (to `stderr`)
@@ -314,6 +330,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_datastore/`
      - `go build -mod=vendor ./cmd/check_vmware_snapshots_age/`
      - `go build -mod=vendor ./cmd/check_vmware_snapshots_size/`
+     - `go build -mod=vendor ./cmd/check_vmware_rps_memory/`
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
@@ -331,6 +348,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_datastore/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_age/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_size/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_rps_memory/`
    - if using `go build`
      - look in `/tmp/check-vmware/`
 1. Review [configuration options](#configuration-options),
@@ -396,6 +414,14 @@ been tested.
 | `OK`         | Ideal state, snapshots size within bounds.                                          |
 | `WARNING`    | Cumulative snapshots size for a VM crossed user-specified threshold for this state. |
 | `CRITICAL`   | Cumulative snapshots size for a VM crossed user-specified threshold for this state. |
+
+#### `check_vmware_rps_memory`
+
+| Nagios State | Description                                                     |
+| ------------ | --------------------------------------------------------------- |
+| `OK`         | Ideal state, memory usage across Resources Pools within bounds. |
+| `WARNING`    | Memory usage crossed user-specified threshold for this state.   |
+| `CRITICAL`   | Memory usage crossed user-specified threshold for this state.   |
 
 ### Command-line arguments
 
@@ -556,6 +582,27 @@ been tested.
 | `ignore-vm`           | No       |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                                                                                           |
 | `sc`, `size-critical` | No       | `40`    | No     | *size in GB as positive whole number*                                   | Specifies the cumulative size in GB of all snapshots for a Virtual Machine when a CRITICAL threshold is reached.                                                                                                                                                                                                           |
 | `sw`, `size-warning`  | No       | `20`    | No     | *size in GB as positive whole number*                                   | Specifies the cumulative size in GB of all snapshots for a Virtual Machine when a WARNING threshold is reached.                                                                                                                                                                                                            |
+
+#### `check_vmware_rps_memory`
+
+| Flag                        | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                |
+| --------------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `branding`                  | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
+| `h`, `help`                 | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
+| `v`, `version`              | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
+| `ll`, `log-level`           | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `p`, `port`                 | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
+| `t`, `timeout`              | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
+| `s`, `server`               | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
+| `u`, `username`             | **Yes**  |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                                                                                                                                |
+| `pw`, `password`            | **Yes**  |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                                                                                                                                   |
+| `domain`                    | No       |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                                                                                                                         |
+| `trust-cert`                | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                                                                                                                                      |
+| `include-rp`                | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
+| `exclude-rp`                | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                                                                                                                             |
+| `mma`, `memory-max-allowed` | **Yes**  | `0`     | No     | *positive whole number of vCPUs*                                        | Specifies the maximum amount of memory that we are allowed to consume in GB (as a whole number) in the target VMware environment across all specified Resource Pools. VMs that are running outside of resource pools are not considered in these calculations.                                                             |
+| `mc`, `memory-use-critical` | No       | `95`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of memory use (as a whole number) across all specified Resource Pools when a CRITICAL threshold is reached.                                                                                                                                                                                       |
+| `mw`, `memory-use-warning`  | No       | `100`   | No     | *percentage as positive whole number*                                   | Specifies the percentage of memory use (as a whole number) across all specified Resource Pools when a WARNING threshold is reached.                                                                                                                                                                                        |
 
 ### Configuration file
 
@@ -928,6 +975,54 @@ Of note:
 define command{
     command_name    check_vmware_snapshots_size
     command_line    /usr/lib/nagios/plugins/check_vmware_snapshots_size --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --size-warning '$ARG4$' --size-critical '$ARG5$' --trust-cert --log-level info
+    }
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+### `check_vmware_rps_memory` Nagios plugin
+
+#### CLI invocation
+
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_rps_memory --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --exclude-rp "Desktops" --memory-use-warning 80 --memory-use-critical 95  --memory-max-allowed 320 --trust-cert --log-level info
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+Of note:
+
+- The resource pool named `Desktops` is excluded from evaluation.
+  - this results in *all other* resource pools visible to the specified user
+    account being used for evaluation
+  - VMs *outside* of a Resource Pool (visible to the specified user account
+    or not) do not contribute to memory usage calculations
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
+
+#### Command definition
+
+NOTE: This is the inverse of the command-line example for this plugin; only
+specified Resource Pools are evaluated.
+
+```shell
+# /etc/nagios-plugins/config/vmware-resource-pools.cfg
+
+# This variation of the command does not allow exclusions
+define command{
+    command_name    check_vmware_resource_pools_include_pools
+    command_line    /usr/lib/nagios/plugins/check_vmware_rps_memory --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --memory-use-warning '$ARG4$' --memory-use-critical '$ARG5$' --memory-max-allowed '$ARG6$' --include-rp '$ARG7$' --trust-cert  --log-level info
     }
 ```
 

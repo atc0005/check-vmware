@@ -84,6 +84,15 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
 
+		flag.IntVar(&c.ResourcePoolsMemoryUseWarning, "memory-use-warning", defaultMemoryUseWarning, resourcePoolsMemoryUseWarningFlagHelp)
+		flag.IntVar(&c.ResourcePoolsMemoryUseWarning, "mw", defaultMemoryUseWarning, resourcePoolsMemoryUseWarningFlagHelp+" (shorthand)")
+
+		flag.IntVar(&c.ResourcePoolsMemoryUseCritical, "memory-use-critical", defaultMemoryUseCritical, resourcePoolsMemoryUseCriticalFlagHelp)
+		flag.IntVar(&c.ResourcePoolsMemoryUseCritical, "mc", defaultMemoryUseCritical, resourcePoolsMemoryUseCriticalFlagHelp+" (shorthand)")
+
+		flag.IntVar(&c.ResourcePoolsMemoryMaxAllowed, "memory-max-allowed", defaultResourcePoolsMemoryMaxAllowed, resourcePoolsMemoryMaxAllowedFlagHelp)
+		flag.IntVar(&c.ResourcePoolsMemoryMaxAllowed, "mma", defaultResourcePoolsMemoryMaxAllowed, resourcePoolsMemoryMaxAllowedFlagHelp+" (shorthand)")
+
 	case pluginType.VirtualCPUsAllocation:
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
