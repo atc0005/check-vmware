@@ -32,6 +32,8 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Snapshots size
 
+• Resource Pools: Memory usage
+
 USAGE
 
 See our main README for supported settings and examples.

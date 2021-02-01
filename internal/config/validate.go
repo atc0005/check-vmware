@@ -104,11 +104,38 @@ func (c Config) validate(pluginType PluginType) error {
 
 	case pluginType.ResourcePoolsMemory:
 
+		if c.ResourcePoolsMemoryMaxAllowed < 1 {
+			return fmt.Errorf(
+				"invalid value specified for maximum memory usage allowed: %d",
+				c.ResourcePoolsMemoryMaxAllowed,
+			)
+		}
+
+		if c.ResourcePoolsMemoryUseCritical < 1 {
+			return fmt.Errorf(
+				"invalid memory usage CRITICAL threshold number: %d",
+				c.ResourcePoolsMemoryUseCritical,
+			)
+		}
+
+		if c.ResourcePoolsMemoryUseWarning < 1 {
+			return fmt.Errorf(
+				"invalid memory usage WARNING threshold number: %d",
+				c.ResourcePoolsMemoryUseWarning,
+			)
+		}
+
+		if c.ResourcePoolsMemoryUseCritical < c.ResourcePoolsMemoryUseWarning {
+			return fmt.Errorf(
+				"memory usage critical threshold set lower than warning threshold",
+			)
+		}
+
 	case pluginType.VirtualCPUsAllocation:
 
 		if c.VCPUsMaxAllowed < 1 {
 			return fmt.Errorf(
-				"invalid maximum number of vCPUs allowed: %d",
+				"invalid value specified for maximum number of vCPUs allowed: %d",
 				c.VCPUsMaxAllowed,
 			)
 		}

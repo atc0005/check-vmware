@@ -44,6 +44,9 @@ const (
 	snapshotsAgeWarningFlagHelp                     string = "Specifies the age of a snapshot in days when a WARNING threshold is reached."
 	snapshotsSizeCriticalFlagHelp                   string = "Specifies the cumulative size in GB of all snapshots for a Virtual Machine when a CRITICAL threshold is reached."
 	snapshotsSizeWarningFlagHelp                    string = "Specifies the cumulative size in GB of all snapshots for a Virtual Machine when a WARNING threshold is reached."
+	resourcePoolsMemoryMaxAllowedFlagHelp           string = "Specifies the maximum amount of memory that we are allowed to consume in GB (as a whole number) in the target VMware environment across all specified Resource Pools. VMs that are running outside of resource pools are not considered in these calculations."
+	resourcePoolsMemoryUseCriticalFlagHelp          string = "Specifies the percentage of memory use (as a whole number) across all specified Resource Pools when a CRITICAL threshold is reached."
+	resourcePoolsMemoryUseWarningFlagHelp           string = "Specifies the percentage of memory use (as a whole number) across all specified Resource Pools when a WARNING threshold is reached."
 )
 
 // Default flag settings if not overridden by user input
@@ -69,10 +72,13 @@ const (
 	defaultSnapshotsAgeWarning          int    = 1
 	defaultSnapshotsSizeCritical        int    = 40 // size in GB
 	defaultSnapshotsSizeWarning         int    = 20 // size in GB
+	defaultMemoryUseCritical            int    = 95
+	defaultMemoryUseWarning             int    = 80
 
 	// Intentionally set low to trigger validation failure if not specified by
 	// the end user.
-	defaultVCPUsMaxAllowed int = 0
+	defaultVCPUsMaxAllowed               int = 0
+	defaultResourcePoolsMemoryMaxAllowed int = 0
 
 	// Default timeout (in seconds) used when connecting to a remote server
 	defaultConnectTimeout int = 10

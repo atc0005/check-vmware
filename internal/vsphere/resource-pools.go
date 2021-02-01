@@ -9,17 +9,24 @@ package vsphere
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/atc0005/check-vmware/internal/textutils"
+	"github.com/atc0005/go-nagios"
 
+	"github.com/vmware/govmomi/units"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 )
+
+// ErrResourcePoolMemoryUsageThresholdCrossed indicates that specified
+// resource pools have exceeded a given threshold
+var ErrResourcePoolMemoryUsageThresholdCrossed = errors.New("memory usage exceeds specified threshold")
 
 // ValidateRPs is responsible for receiving two lists of resource pools,
 // explicitly "included" (aka, "whitelisted") and explicitly "excluded" (aka,
@@ -235,4 +242,163 @@ func GetRPByName(ctx context.Context, c *vim25.Client, rpName string, datacenter
 
 	return rPool, nil
 
+}
+
+// MemoryUsedPercentage is a helper function used to calculate the current
+// memory usage as a percentage of the specified maximum memory allowed to be
+// used.
+func MemoryUsedPercentage(
+	aggregateMemoryUsage int64,
+	maxMemoryUsageInGB int,
+) float64 {
+	aggregateMemoryUsageInGB := float64(aggregateMemoryUsage) / units.GB
+	memoryPercentageUsedOfAllowed := (aggregateMemoryUsageInGB / float64(maxMemoryUsageInGB)) * 100
+
+	return memoryPercentageUsedOfAllowed
+}
+
+// RPMemoryUsageOneLineCheckSummary is used to generate a one-line Nagios
+// service check results summary. This is the line most prominent in
+// notifications.
+func RPMemoryUsageOneLineCheckSummary(
+	stateLabel string,
+	aggregateMemoryUsage int64,
+	maxMemoryUsageInGB int,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute RPMemoryUsageOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	memoryPercentageUsedOfAllowed := MemoryUsedPercentage(aggregateMemoryUsage, maxMemoryUsageInGB)
+	memoryUsageMax := (int64(maxMemoryUsageInGB) * units.GB)
+
+	switch {
+
+	case aggregateMemoryUsage > memoryUsageMax:
+		memoryOverage := aggregateMemoryUsage - memoryUsageMax
+		return fmt.Sprintf(
+			"%s: %s memory used (%.1f%%); %s more allocated than "+
+				"%s allowed (evaluated %d Resource Pools)",
+			stateLabel,
+			units.ByteSize(aggregateMemoryUsage),
+			memoryPercentageUsedOfAllowed,
+			units.ByteSize(memoryOverage),
+			units.ByteSize(memoryUsageMax),
+			len(rps),
+		)
+
+	default:
+		memoryRemaining := memoryUsageMax - aggregateMemoryUsage
+		return fmt.Sprintf(
+			"%s: %s memory used (%.1f%%); %s (%0.1f%%) more remaining from %s allowed"+
+				" (evaluated %d Resource Pools)",
+			stateLabel,
+			units.ByteSize(aggregateMemoryUsage),
+			memoryPercentageUsedOfAllowed,
+			units.ByteSize(memoryRemaining),
+			float64(100)-memoryPercentageUsedOfAllowed,
+			units.ByteSize(memoryUsageMax),
+			len(rps),
+		)
+
+	}
+}
+
+// ResourcePoolsMemoryReport generates a summary of memory usage associated
+// with specified Resource Pools along with various verbose details intended
+// to aid in troubleshooting check results at a glance. This information is
+// provided for use with the Long Service Output field commonly displayed on
+// the detailed service check results display in the web UI or in the body of
+// many notifications.
+func ResourcePoolsMemoryReport(
+	c *vim25.Client,
+	aggregateMemoryUsage int64,
+	maxMemoryUsageInGB int,
+	includeRPs []string,
+	excludeRPs []string,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute ResourcePoolsMemoryReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	var report strings.Builder
+
+	fmt.Fprintf(
+		&report,
+		"Memory usage by Resource Pool:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+	for _, rp := range rps {
+		rpMemoryPercentageUsed := MemoryUsedPercentage(rp.Runtime.Memory.OverallUsage, maxMemoryUsageInGB)
+		fmt.Fprintf(
+			&report,
+			"* %s (%s, %0.1f%%)%s",
+			rp.Name,
+			units.ByteSize(rp.Runtime.Memory.OverallUsage),
+			rpMemoryPercentageUsed,
+			nagios.CheckOutputEOL,
+		)
+
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* vSphere environment: %s%s",
+		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
+		len(includeRPs),
+		strings.Join(includeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
+		len(excludeRPs),
+		strings.Join(excludeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	rpNames := make([]string, len(rps))
+	for i := range rps {
+		rpNames[i] = rps[i].Name
+	}
+
+	fmt.Fprintf(
+		&report,
+		"* Resource Pools evaluated (%d): [%v]%s",
+		len(rpNames),
+		strings.Join(rpNames, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	return report.String()
 }

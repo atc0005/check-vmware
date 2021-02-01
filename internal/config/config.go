@@ -176,6 +176,23 @@ type Config struct {
 	// environment.
 	VCPUsMaxAllowed int
 
+	// ResourcePoolsMemoryUseWarning specifies the percentage of memory use
+	// (as a whole number) across all specified Resource Pools when a WARNING
+	// threshold is reached.
+	ResourcePoolsMemoryUseWarning int
+
+	// ResourcePoolsMemoryUseCritical specifies the percentage of memory use
+	// (as a whole number) across all specified Resource Pools when a CRITICAL
+	// threshold is reached.
+	ResourcePoolsMemoryUseCritical int
+
+	// ResourcePoolsMemoryMaxAllowed specifies the maximum amount of memory
+	// that we are allowed to consume in GB (as a whole number) in the target
+	// VMware environment across all specified Resource Pools. VMs that are
+	// running outside of resource pools are not considered in these
+	// calculations.
+	ResourcePoolsMemoryMaxAllowed int
+
 	// DatastoreUsageWarning specifies the percentage of a datastore's storage
 	// usage (as a whole number) when a WARNING threshold is reached.
 	DatastoreUsageWarning int
