@@ -8,6 +8,7 @@
 package vsphere
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -16,6 +17,10 @@ import (
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 )
+
+// ErrVCPUsUsageThresholdCrossed indicates that specified
+// vCPUs allocation has exceeded a given threshold
+var ErrVCPUsUsageThresholdCrossed = errors.New("vCPUS allocation exceeds specified threshold")
 
 // VirtualCPUsOneLineCheckSummary is used to generate a one-line Nagios
 // service check results summary. This is the line most prominent in

@@ -248,12 +248,7 @@ func main() {
 			Int("vms_filtered", len(filteredVMs)).
 			Msg("vCPUs allocation")
 
-		nagiosExitState.LastError = fmt.Errorf(
-			"%d of %d vCPUs allocated (%0.1f%% more than allowed)",
-			vCPUsAllocated,
-			cfg.VCPUsMaxAllowed,
-			vCPUsPercentageUsedOfAllowed,
-		)
+		nagiosExitState.LastError = vsphere.ErrVCPUsUsageThresholdCrossed
 
 		nagiosExitState.ServiceOutput = vsphere.VirtualCPUsOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
@@ -287,12 +282,7 @@ func main() {
 			Int("vms_filtered", len(filteredVMs)).
 			Msg("vCPUs allocation warning")
 
-		nagiosExitState.LastError = fmt.Errorf(
-			"%d of %d vCPUs allocated (%0.1f%% more than allowed)",
-			vCPUsAllocated,
-			cfg.VCPUsMaxAllowed,
-			vCPUsPercentageUsedOfAllowed,
-		)
+		nagiosExitState.LastError = vsphere.ErrVCPUsUsageThresholdCrossed
 
 		nagiosExitState.ServiceOutput = vsphere.VirtualCPUsOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
