@@ -195,10 +195,13 @@ func main() {
 
 	var aggregateMemoryUsage int64
 	for _, rp := range resourcePools {
-		aggregateMemoryUsage += rp.Runtime.Memory.OverallUsage
+		// Per vSphere API docs, `rp.Runtime.Memory.OverallUsage` was
+		// deprecated in v6.5, so we use `hostMemoryUsage` instead.
+		rpMemoryUsage := rp.Summary.GetResourcePoolSummary().QuickStats.HostMemoryUsage * units.MB
+		aggregateMemoryUsage += rpMemoryUsage
 		log.Debug().
 			Str("resource_pool_name", rp.Name).
-			Str("resource_pool_memory_usage", units.ByteSize(rp.Runtime.Memory.OverallUsage).String()).
+			Str("resource_pool_memory_usage", units.ByteSize(rpMemoryUsage).String()).
 			Msg("")
 	}
 

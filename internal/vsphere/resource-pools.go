@@ -344,12 +344,13 @@ func ResourcePoolsMemoryReport(
 		nagios.CheckOutputEOL,
 	)
 	for _, rp := range rps {
-		rpMemoryPercentageUsed := MemoryUsedPercentage(rp.Runtime.Memory.OverallUsage, maxMemoryUsageInGB)
+		rpMemoryUsage := rp.Summary.GetResourcePoolSummary().QuickStats.HostMemoryUsage * units.MB
+		rpMemoryPercentageUsed := MemoryUsedPercentage(rpMemoryUsage, maxMemoryUsageInGB)
 		fmt.Fprintf(
 			&report,
 			"* %s (%s, %0.1f%%)%s",
 			rp.Name,
-			units.ByteSize(rp.Runtime.Memory.OverallUsage),
+			units.ByteSize(rpMemoryUsage),
 			rpMemoryPercentageUsed,
 			nagios.CheckOutputEOL,
 		)
