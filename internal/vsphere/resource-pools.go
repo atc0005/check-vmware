@@ -297,7 +297,7 @@ func RPMemoryUsageOneLineCheckSummary(
 	default:
 		memoryRemaining := memoryUsageMax - aggregateMemoryUsage
 		return fmt.Sprintf(
-			"%s: %s memory used (%.1f%%); %s (%0.1f%%) more remaining from %s allowed"+
+			"%s: %s memory used (%.1f%%); %s (%0.1f%%) remaining of %s allowed"+
 				" (evaluated %d Resource Pools)",
 			stateLabel,
 			units.ByteSize(aggregateMemoryUsage),
