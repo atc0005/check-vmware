@@ -284,7 +284,7 @@ func RPMemoryUsageOneLineCheckSummary(
 	case aggregateMemoryUsage > memoryUsageMax:
 		memoryOverage := aggregateMemoryUsage - memoryUsageMax
 		return fmt.Sprintf(
-			"%s: %s memory used (%.1f%%); %s more allocated than "+
+			"%s: %s memory used (%.1f%%); %s more used than "+
 				"%s allowed (evaluated %d Resource Pools)",
 			stateLabel,
 			units.ByteSize(aggregateMemoryUsage),
