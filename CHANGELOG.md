@@ -26,6 +26,31 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.6.0] - 2021-02-01
+
+### Overview
+
+- New plugin
+- Bug fixes
+- built using Go 1.15.7
+
+### Added
+
+- New plugin: `check_vmware_rps_memory`
+
+### Changed
+
+- `check_vmware_vcpus`
+  - Adjust errors listing to use fixed error for crossing vCPUs allocation
+    thresholds vs dynamically generated details (GH-104, GH-108)
+    - the dynamic version mostly duplicated what the one-line summary was
+      already conveying
+
+### Fixed
+
+- Fix variable name with stutter
+- `check_vmware_datastore` command definition template uses wrong plugin name
+
 ## [v0.5.1] - 2021-01-29
 
 ### Overview
@@ -261,7 +286,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.6.0...HEAD
+[v0.6.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.6.0
 [v0.5.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.5.1
 [v0.5.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.5.0
 [v0.4.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.4.3
