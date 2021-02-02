@@ -26,6 +26,17 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.6.1] - 2021-02-02
+
+### Overview
+
+- Bug fix
+- built using Go 1.15.7
+
+### Fixed
+
+- Snapshots age evaluation counts misreported (swapped VMs, snapshots)
+
 ## [v0.6.0] - 2021-02-01
 
 ### Overview
@@ -286,7 +297,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.6.1...HEAD
+[v0.6.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.6.1
 [v0.6.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.6.0
 [v0.5.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.5.1
 [v0.5.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.5.0
