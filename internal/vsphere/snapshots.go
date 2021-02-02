@@ -857,8 +857,8 @@ func SnapshotsAgeOneLineCheckSummary(
 			"%s: No snapshots older than %d days detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
 			snapshotsAgeWarning,
-			snapshotSets.Snapshots(),
 			len(evaluatedVMs),
+			snapshotSets.Snapshots(),
 			len(rps),
 		)
 
