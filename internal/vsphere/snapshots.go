@@ -18,6 +18,10 @@ import (
 // specified age threshold
 var ErrSnapshotAgeThresholdCrossed = errors.New("snapshot exceeds specified age threshold")
 
+// ErrSnapshotCountThresholdCrossed indicates that a snapshot set for a single
+// VM has exceeded a specified count threshold.
+var ErrSnapshotCountThresholdCrossed = errors.New("snapshots exceed specified count threshold")
+
 // ErrSnapshotSizeThresholdCrossed indicates that a snapshot is larger than a
 // specified size threshold
 var ErrSnapshotSizeThresholdCrossed = errors.New("snapshot exceeds specified size threshold")
@@ -84,6 +88,18 @@ func FilterVMsWithSnapshots(vms []mo.VirtualMachine) []mo.VirtualMachine {
 
 	return vmsWithSnapshots
 
+}
+
+// SnapshotThresholds represents the specific thresholds used to determine
+// whether one or many snapshots are considered to be in a CRITICAL or WARNING
+// state.
+type SnapshotThresholds struct {
+	AgeCritical   int
+	AgeWarning    int
+	SizeCritical  int
+	SizeWarning   int
+	CountCritical int
+	CountWarning  int
 }
 
 // SnapshotSummary is intended to be a summary of the most commonly used
@@ -154,6 +170,16 @@ type SnapshotSummarySet struct {
 	// WARNING state based on cumulative size of all snapshots in the set
 	// crossing snapshot size threshold.
 	setSizeCriticalState bool
+
+	// setCountWarningState indicates whether this snapshot set is considered
+	// in a WARNING state based on total number of snapshots in the set
+	// crossing snapshot count threshold.
+	setCountWarningState bool
+
+	// setCountCriticalState indicates whether this snapshot set is considered
+	// in a CRITICAL state based on total number of snapshots in the set
+	// crossing snapshot count threshold.
+	setCountCriticalState bool
 }
 
 // SnapshotSummarySets is a collection of SnapshotSummarySet types for bulk
@@ -235,6 +261,45 @@ func (sss SnapshotSummarySets) ExceedsAge(days int) (int, int) {
 	return setsExceeded, snapshotsExceeded
 }
 
+// ExcessSnapshots indicates how many sets have excess snapshots, how many excess
+// snapshots there are and how many total snapshots there are.
+func (sss SnapshotSummarySets) ExcessSnapshots(count int) (int, int, int) {
+
+	var setsExceeded int
+	var snapshotsExceeded int
+	var snapshotsTotal int
+	for _, set := range sss {
+		if len(set.Snapshots) > count {
+			setsExceeded++
+			snapshotsTotal += len(set.Snapshots)
+
+			// Excess snapshots calculated from number of snapshots minus the
+			// number permitted/specified, if positive.
+			exceeded := len(set.Snapshots) - count
+			if exceeded > 0 {
+				snapshotsExceeded += exceeded
+			}
+		}
+	}
+
+	return setsExceeded, snapshotsExceeded, snapshotsTotal
+}
+
+// FilterByCount returns a SnapshotSummarySets value containing only sets
+// which have snapshots in excess of the specified number.
+func (sss SnapshotSummarySets) FilterByCount(count int) SnapshotSummarySets {
+
+	var sets SnapshotSummarySets
+
+	for _, set := range sss {
+		if len(set.Snapshots) > count {
+			sets = append(sets, set)
+		}
+	}
+
+	return sets
+}
+
 // ExceedsSize indicates how many sets and number of snapshots from all of
 // those sets have cumulative snapshots larger than the specified size in GB.
 func (sss SnapshotSummarySets) ExceedsSize(sizeGB int) (int, int) {
@@ -260,6 +325,29 @@ func (sss SnapshotSummarySets) HasNotYetExceededAge(days int) bool {
 			if !ExceedsAge(snapSummary.createTime, days) {
 				return true
 			}
+		}
+	}
+
+	return false
+}
+
+// HasNotYetExceededCount indicates whether any of the sets have yet to exceed
+// the threshold for the specified number of snapshots.
+func (sss SnapshotSummarySets) HasNotYetExceededCount(count int) bool {
+
+	for _, set := range sss {
+		switch {
+
+		// the snapshot set should not have been included; no actual snapshots
+		// are present
+		case len(set.Snapshots) == 0:
+			continue
+
+		// handles cases where there is just one snapshot and the threshold is
+		// 1 and more common cases where snapshots are present and the
+		// threshold is something more realistic such as 4 or more snapshots
+		case len(set.Snapshots) <= count:
+			return true
 		}
 	}
 
@@ -352,25 +440,39 @@ func (ss SnapshotSummary) IsSizeCriticalState() bool {
 	return ss.sizeCriticalState
 }
 
-// IsWarningState indicates whether the snapshot set has exceeded age or size
-// WARNING thresholds.
+// IsWarningState indicates whether the snapshot set has exceeded age, size or
+// count WARNING thresholds.
 func (sss SnapshotSummarySet) IsWarningState() bool {
+
+	// evaluate Age and Size state for each snapshot in the set
 	for i := range sss.Snapshots {
 		if sss.Snapshots[i].IsWarningState() {
 			return true
 		}
 	}
 
+	// evaluate Size and Count state for the set
+	if sss.setSizeWarningState || sss.setCountWarningState {
+		return true
+	}
+
 	return false
 }
 
-// IsCriticalState indicates whether the snapshot set has exceeded age or size
-// CRITICAL thresholds.
+// IsCriticalState indicates whether the snapshot set has exceeded age, size
+// or count CRITICAL thresholds.
 func (sss SnapshotSummarySet) IsCriticalState() bool {
+
+	// evaluate Age and Size state for each snapshot in the set
 	for i := range sss.Snapshots {
 		if sss.Snapshots[i].IsCriticalState() {
 			return true
 		}
+	}
+
+	// evaluate Size and Count state for the set
+	if sss.setSizeCriticalState || sss.setCountCriticalState {
+		return true
 	}
 
 	return false
@@ -400,6 +502,18 @@ func (sss SnapshotSummarySet) IsAgeCriticalState() bool {
 	return false
 }
 
+// IsCountWarningState indicates whether the snapshot set has exceeded the
+// snapshots count WARNING threshold.
+func (sss SnapshotSummarySet) IsCountWarningState() bool {
+	return sss.setCountWarningState
+}
+
+// IsCountCriticalState indicates whether the snapshot set has exceeded the
+// snapshots count CRITICAL threshold.
+func (sss SnapshotSummarySet) IsCountCriticalState() bool {
+	return sss.setCountCriticalState
+}
+
 // IsSizeWarningState indicates whether the snapshot set has exceeded the
 // size WARNING threshold.
 func (sss SnapshotSummarySet) IsSizeWarningState() bool {
@@ -412,8 +526,8 @@ func (sss SnapshotSummarySet) IsSizeCriticalState() bool {
 	return sss.setSizeCriticalState
 }
 
-// IsWarningState indicates whether the snapshot sets have exceeded age or
-// size WARNING thresholds.
+// IsWarningState indicates whether the snapshot sets have exceeded age, size
+// or count WARNING thresholds.
 func (sss SnapshotSummarySets) IsWarningState() bool {
 	for i := range sss {
 		if sss[i].IsWarningState() {
@@ -424,8 +538,8 @@ func (sss SnapshotSummarySets) IsWarningState() bool {
 	return false
 }
 
-// IsCriticalState indicates whether the snapshot sets have exceeded age or
-// size CRITICAL thresholds.
+// IsCriticalState indicates whether the snapshot sets have exceeded age, size
+// or count CRITICAL thresholds.
 func (sss SnapshotSummarySets) IsCriticalState() bool {
 	for i := range sss {
 		if sss[i].IsCriticalState() {
@@ -453,6 +567,30 @@ func (sss SnapshotSummarySets) IsAgeWarningState() bool {
 func (sss SnapshotSummarySets) IsAgeCriticalState() bool {
 	for i := range sss {
 		if sss[i].IsAgeCriticalState() {
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsCountWarningState indicates whether the snapshot sets have exceeded the
+// count WARNING threshold.
+func (sss SnapshotSummarySets) IsCountWarningState() bool {
+	for i := range sss {
+		if sss[i].IsCountWarningState() {
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsCountCriticalState indicates whether the snapshot sets have exceeded the
+// count CRITICAL threshold.
+func (sss SnapshotSummarySets) IsCountCriticalState() bool {
+	for i := range sss {
+		if sss[i].IsCountCriticalState() {
 			return true
 		}
 	}
@@ -546,10 +684,7 @@ func ListVMSnapshots(vm mo.VirtualMachine, w io.Writer) {
 // associated with a specified VirtualMachine.
 func NewSnapshotSummarySet(
 	vm mo.VirtualMachine,
-	snapshotsAgeCritical int,
-	snapshotsAgeWarning int,
-	snapshotsSizeCritical int,
-	snapshotsSizeWarning int,
+	snapshotThresholds SnapshotThresholds,
 ) SnapshotSummarySet {
 
 	// TODO: Return error if no snapshots are present?
@@ -763,10 +898,10 @@ func NewSnapshotSummarySet(
 				Description:       snapTree.Description,
 				Size:              snapshotSize,
 				createTime:        snapTree.CreateTime,
-				ageWarningState:   ExceedsAge(snapTree.CreateTime, snapshotsAgeWarning),
-				ageCriticalState:  ExceedsAge(snapTree.CreateTime, snapshotsAgeCritical),
-				sizeWarningState:  ExceedsSize(snapshotSize, int64(snapshotsSizeCritical)),
-				sizeCriticalState: ExceedsSize(snapshotSize, int64(snapshotsSizeWarning)),
+				ageWarningState:   ExceedsAge(snapTree.CreateTime, snapshotThresholds.AgeWarning),
+				ageCriticalState:  ExceedsAge(snapTree.CreateTime, snapshotThresholds.AgeCritical),
+				sizeWarningState:  ExceedsSize(snapshotSize, int64(snapshotThresholds.SizeWarning)),
+				sizeCriticalState: ExceedsSize(snapshotSize, int64(snapshotThresholds.SizeCritical)),
 			})
 
 			if snapTree.ChildSnapshotList != nil {
@@ -785,15 +920,17 @@ func NewSnapshotSummarySet(
 	}
 
 	logger.Println("setSize for VM ", vm.Name, ":", setSize)
-	logger.Println("setSizeWarningState for VM ", vm.Name, ":", ExceedsSize(setSize, int64(snapshotsSizeWarning)))
-	logger.Println("setSizeCriticalState for VM ", vm.Name, ":", ExceedsSize(setSize, int64(snapshotsSizeCritical)))
+	logger.Println("setSizeWarningState for VM ", vm.Name, ":", ExceedsSize(setSize, int64(snapshotThresholds.SizeWarning)))
+	logger.Println("setSizeCriticalState for VM ", vm.Name, ":", ExceedsSize(setSize, int64(snapshotThresholds.SizeCritical)))
 
 	return SnapshotSummarySet{
-		VM:                   vm.Self,
-		VMName:               vm.Name,
-		Snapshots:            snapshots,
-		setSizeWarningState:  ExceedsSize(setSize, int64(snapshotsSizeWarning)),
-		setSizeCriticalState: ExceedsSize(setSize, int64(snapshotsSizeCritical)),
+		VM:                    vm.Self,
+		VMName:                vm.Name,
+		Snapshots:             snapshots,
+		setSizeWarningState:   ExceedsSize(setSize, int64(snapshotThresholds.SizeWarning)),
+		setSizeCriticalState:  ExceedsSize(setSize, int64(snapshotThresholds.SizeCritical)),
+		setCountWarningState:  len(snapshots) > snapshotThresholds.CountWarning,
+		setCountCriticalState: len(snapshots) > snapshotThresholds.CountCritical,
 	}
 
 }
@@ -804,8 +941,7 @@ func NewSnapshotSummarySet(
 func SnapshotsAgeOneLineCheckSummary(
 	stateLabel string,
 	snapshotSets SnapshotSummarySets,
-	snapshotsAgeCritical int,
-	snapshotsAgeWarning int,
+	snapshotThresholds SnapshotThresholds,
 	evaluatedVMs []mo.VirtualMachine,
 	rps []mo.ResourcePool,
 ) string {
@@ -823,14 +959,14 @@ func SnapshotsAgeOneLineCheckSummary(
 
 	case snapshotSets.IsAgeCriticalState():
 
-		vms, snapshots := snapshotSets.ExceedsAge(snapshotsAgeCritical)
+		vms, snapshots := snapshotSets.ExceedsAge(snapshotThresholds.AgeCritical)
 
 		return fmt.Sprintf(
 			"%s: %d VMs with %d snapshots older than %d days detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
 			vms,
 			snapshots,
-			snapshotsAgeCritical,
+			snapshotThresholds.AgeCritical,
 			len(evaluatedVMs),
 			snapshotSets.Snapshots(),
 			len(rps),
@@ -838,14 +974,14 @@ func SnapshotsAgeOneLineCheckSummary(
 
 	case snapshotSets.IsAgeWarningState():
 
-		vms, snapshots := snapshotSets.ExceedsAge(snapshotsAgeWarning)
+		vms, snapshots := snapshotSets.ExceedsAge(snapshotThresholds.AgeWarning)
 
 		return fmt.Sprintf(
 			"%s: %d VMs with %d snapshots older than %d days detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
 			vms,
 			snapshots,
-			snapshotsAgeWarning,
+			snapshotThresholds.AgeWarning,
 			len(evaluatedVMs),
 			snapshotSets.Snapshots(),
 			len(rps),
@@ -856,7 +992,73 @@ func SnapshotsAgeOneLineCheckSummary(
 		return fmt.Sprintf(
 			"%s: No snapshots older than %d days detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
-			snapshotsAgeWarning,
+			snapshotThresholds.AgeWarning,
+			len(evaluatedVMs),
+			snapshotSets.Snapshots(),
+			len(rps),
+		)
+
+	}
+}
+
+// SnapshotsCountOneLineCheckSummary is used to generate a one-line Nagios
+// service check results summary. This is the line most prominent in
+// notifications.
+func SnapshotsCountOneLineCheckSummary(
+	stateLabel string,
+	snapshotSets SnapshotSummarySets,
+	snapshotThresholds SnapshotThresholds,
+	evaluatedVMs []mo.VirtualMachine,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute SnapshotsCountOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	switch {
+
+	case snapshotSets.IsCountCriticalState():
+
+		vms, snapsExcess, _ := snapshotSets.ExcessSnapshots(snapshotThresholds.CountCritical)
+
+		return fmt.Sprintf(
+			"%s: %d VMs with snapshots count greater than %d; %d excess snapshots detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
+			stateLabel,
+			vms,
+			snapshotThresholds.CountCritical,
+			snapsExcess,
+			len(evaluatedVMs),
+			snapshotSets.Snapshots(),
+			len(rps),
+		)
+
+	case snapshotSets.IsCountWarningState():
+
+		vms, snapsExcess, _ := snapshotSets.ExcessSnapshots(snapshotThresholds.CountWarning)
+
+		return fmt.Sprintf(
+			"%s: %d VMs with snapshots count greater than %d; %d excess snapshots detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
+			stateLabel,
+			vms,
+			snapshotThresholds.CountWarning,
+			snapsExcess,
+			len(evaluatedVMs),
+			snapshotSets.Snapshots(),
+			len(rps),
+		)
+
+	default:
+
+		return fmt.Sprintf(
+			"%s: No VMs with snapshots count greater than %d detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
+			stateLabel,
+			snapshotThresholds.CountWarning,
 			len(evaluatedVMs),
 			snapshotSets.Snapshots(),
 			len(rps),
@@ -871,8 +1073,7 @@ func SnapshotsAgeOneLineCheckSummary(
 func SnapshotsSizeOneLineCheckSummary(
 	stateLabel string,
 	snapshotSets SnapshotSummarySets,
-	snapshotsSizeCritical int,
-	snapshotsSizeWarning int,
+	snapshotThresholds SnapshotThresholds,
 	evaluatedVMs []mo.VirtualMachine,
 	rps []mo.ResourcePool,
 ) string {
@@ -890,13 +1091,13 @@ func SnapshotsSizeOneLineCheckSummary(
 
 	case snapshotSets.IsSizeCriticalState():
 
-		vms, snapshots := snapshotSets.ExceedsSize(snapshotsSizeCritical)
+		vms, snapshots := snapshotSets.ExceedsSize(snapshotThresholds.SizeCritical)
 		return fmt.Sprintf(
 			"%s: %d VMs with combined snapshots (%d) exceeding %d %s detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
 			vms,
 			snapshots,
-			snapshotsSizeCritical,
+			snapshotThresholds.SizeCritical,
 			snapshotThresholdTypeSizeSuffix,
 			len(evaluatedVMs),
 			snapshotSets.Snapshots(),
@@ -905,14 +1106,14 @@ func SnapshotsSizeOneLineCheckSummary(
 
 	case snapshotSets.IsSizeWarningState():
 
-		vms, snapshots := snapshotSets.ExceedsSize(snapshotsSizeWarning)
+		vms, snapshots := snapshotSets.ExceedsSize(snapshotThresholds.SizeWarning)
 
 		return fmt.Sprintf(
 			"%s: %d VMs with combined snapshots (%d) exceeding %d %s detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
 			vms,
 			snapshots,
-			snapshotsSizeWarning,
+			snapshotThresholds.SizeWarning,
 			snapshotThresholdTypeSizeSuffix,
 			len(evaluatedVMs),
 			snapshotSets.Snapshots(),
@@ -924,7 +1125,7 @@ func SnapshotsSizeOneLineCheckSummary(
 		return fmt.Sprintf(
 			"%s: No VMs, each with combined snapshots exceeding %d %s detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
-			snapshotsSizeWarning,
+			snapshotThresholds.SizeWarning,
 			snapshotThresholdTypeSizeSuffix,
 			len(evaluatedVMs),
 			snapshotSets.Snapshots(),
@@ -950,7 +1151,7 @@ func writeSnapshotsListEntries(
 
 	fmt.Fprintf(
 		w,
-		"Snapshots exceeding WARNING (%d%s) or CRITICAL (%d%s) %s thresholds:%s%s",
+		"Snapshots exceeding WARNING (%d %s) or CRITICAL (%d %s) %s thresholds:%s%s",
 		snapshotWarningThreshold,
 		unitSuffix,
 		snapshotCriticalThreshold,
@@ -979,6 +1180,32 @@ func writeSnapshotsListEntries(
 						snap.MOID,
 					)
 				}
+			}
+		}
+
+	case unitName == snapshotThresholdTypeCount &&
+		(snapshotSummarySets.IsCountCriticalState() ||
+			snapshotSummarySets.IsCountWarningState()):
+
+		// filter to sets with at least WARNING level threshold exceptions
+		// (should catch CRITICAL exceptions as well)
+		setsWithExcessSnaps := snapshotSummarySets.FilterByCount(snapshotWarningThreshold)
+
+		// list all snapshots since we're only dealing with exceptions at this
+		// point
+		for _, snapSet := range setsWithExcessSnaps {
+			for _, snap := range snapSet.Snapshots {
+				fmt.Fprintf(
+					w,
+					listEntryTemplate,
+					snap.VMName,
+					snap.Age(),
+					snap.SizeHR(),
+					snapSet.SizeHR(),
+					snap.Name,
+					snap.MOID,
+				)
+
 			}
 		}
 
@@ -1023,6 +1250,26 @@ func writeSnapshotsListEntries(
 			for _, snap := range snapSet.Snapshots {
 				if !(snap.IsAgeCriticalState() ||
 					snap.IsAgeWarningState()) {
+					fmt.Fprintf(
+						w,
+						listEntryTemplate,
+						snap.VMName,
+						snap.Age(),
+						snap.SizeHR(),
+						snapSet.SizeHR(),
+						snap.Name,
+						snap.MOID,
+					)
+				}
+			}
+		}
+
+	case unitName == snapshotThresholdTypeCount &&
+		snapshotSummarySets.HasNotYetExceededCount(snapshotWarningThreshold):
+
+		for _, snapSet := range snapshotSummarySets {
+			if !(snapSet.IsCountCriticalState() || snapSet.IsCountWarningState()) {
+				for _, snap := range snapSet.Snapshots {
 					fmt.Fprintf(
 						w,
 						listEntryTemplate,
@@ -1165,8 +1412,7 @@ func writeSnapshotsReportFooter(
 func SnapshotsAgeReport(
 	c *vim25.Client,
 	snapshotSummarySets SnapshotSummarySets,
-	snapshotsAgeCritical int,
-	snapshotsAgeWarning int,
+	snapshotThresholds SnapshotThresholds,
 	allVMs []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
 	vmsWithIssues []mo.VirtualMachine,
@@ -1190,8 +1436,8 @@ func SnapshotsAgeReport(
 
 	writeSnapshotsListEntries(
 		&report,
-		snapshotsAgeCritical,
-		snapshotsAgeWarning,
+		snapshotThresholds.AgeCritical,
+		snapshotThresholds.AgeWarning,
 		snapshotThresholdTypeAgeSuffix,
 		snapshotThresholdTypeAge,
 		snapshotSummarySets,
@@ -1222,8 +1468,7 @@ func SnapshotsAgeReport(
 func SnapshotsSizeReport(
 	c *vim25.Client,
 	snapshotSummarySets SnapshotSummarySets,
-	snapshotsSizeCritical int,
-	snapshotsSizeWarning int,
+	snapshotThresholds SnapshotThresholds,
 	allVMs []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
 	vmsWithIssues []mo.VirtualMachine,
@@ -1247,10 +1492,67 @@ func SnapshotsSizeReport(
 
 	writeSnapshotsListEntries(
 		&report,
-		snapshotsSizeCritical,
-		snapshotsSizeWarning,
+		snapshotThresholds.SizeCritical,
+		snapshotThresholds.SizeWarning,
 		snapshotThresholdTypeSizeSuffix,
 		snapshotThresholdTypeSize,
+		snapshotSummarySets,
+	)
+
+	// Generate common footer information, send to strings Builder
+	writeSnapshotsReportFooter(
+		c,
+		&report,
+		allVMs,
+		evaluatedVMs,
+		vmsWithIssues,
+		vmsToExclude,
+		evalPoweredOffVMs,
+		includeRPs,
+		excludeRPs,
+		rps,
+	)
+
+	return report.String()
+}
+
+// SnapshotsCountReport generates a summary of snapshot details along with
+// various verbose details intended to aid in troubleshooting check results at
+// a glance. This information is provided for use with the Long Service Output
+// field commonly displayed on the detailed service check results display in
+// the web UI or in the body of many notifications.
+func SnapshotsCountReport(
+	c *vim25.Client,
+	snapshotSummarySets SnapshotSummarySets,
+	snapshotThresholds SnapshotThresholds,
+	allVMs []mo.VirtualMachine,
+	evaluatedVMs []mo.VirtualMachine,
+	vmsWithIssues []mo.VirtualMachine,
+	vmsToExclude []string,
+	evalPoweredOffVMs bool,
+	includeRPs []string,
+	excludeRPs []string,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute SnapshotsCountReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	var report strings.Builder
+
+	// TODO: See if it's feasible to merge with writeSnapshotsListEntries later
+	writeSnapshotsListEntries(
+		&report,
+		snapshotThresholds.CountCritical,
+		snapshotThresholds.CountWarning,
+		snapshotThresholdTypeCountSuffix,
+		snapshotThresholdTypeCount,
 		snapshotSummarySets,
 	)
 

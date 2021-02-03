@@ -34,6 +34,7 @@ var ErrVersionRequested = errors.New("version information requested")
 type PluginType struct {
 	Tools                  bool
 	SnapshotsAge           bool
+	SnapshotsCount         bool
 	SnapshotsSize          bool
 	DatastoresSize         bool
 	ResourcePoolsMemory    bool
@@ -216,6 +217,14 @@ type Config struct {
 	// SnapshotsAgeCritical specifies the age of a snapshot in days when a
 	// CRITICAL threshold is reached.
 	SnapshotsAgeCritical int
+
+	// SnapshotsCountWarning specifies the number of snapshots per VM when a
+	// WARNING threshold is reached.
+	SnapshotsCountWarning int
+
+	// SnapshotsCountCritical specifies the number of snapshots per VM when a
+	// CRITICAL threshold is reached.
+	SnapshotsCountCritical int
 
 	// IgnoreMissingCustomAttribute indicates whether a host or datastore
 	// missing the specified Custom Attribute should be ignored.

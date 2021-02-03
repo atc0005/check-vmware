@@ -48,6 +48,34 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+	case pluginType.SnapshotsCount:
+
+		if c.SnapshotsCountWarning < 0 {
+			return fmt.Errorf(
+				"invalid snapshot count WARNING threshold number: %d",
+				c.SnapshotsCountWarning,
+			)
+		}
+
+		if c.SnapshotsCountCritical < 0 {
+			return fmt.Errorf(
+				"invalid snapshot count CRITICAL threshold number: %d",
+				c.SnapshotsCountCritical,
+			)
+		}
+
+		if c.SnapshotsCountCritical < c.SnapshotsCountWarning {
+			return fmt.Errorf(
+				"critical threshold set lower than warning threshold",
+			)
+		}
+
+		if c.SnapshotsCountCritical == c.SnapshotsCountWarning {
+			return fmt.Errorf(
+				"critical threshold set equal to warning threshold",
+			)
+		}
+
 	case pluginType.SnapshotsSize:
 
 		if c.SnapshotsSizeWarning < 0 {

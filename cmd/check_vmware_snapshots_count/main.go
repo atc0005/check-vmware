@@ -39,7 +39,7 @@ func main() {
 	// Setup configuration by parsing user-provided flags. Note plugin type so
 	// that only applicable CLI flags are exposed and any plugin-specific
 	// settings are applied.
-	cfg, cfgErr := config.New(config.PluginType{SnapshotsSize: true})
+	cfg, cfgErr := config.New(config.PluginType{SnapshotsCount: true})
 	switch {
 	case errors.Is(cfgErr, config.ErrVersionRequested):
 		fmt.Println(config.Version())
@@ -72,13 +72,13 @@ func main() {
 	// content is shown in the detailed web UI and in notifications generated
 	// by Nagios.
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
-		"snapshots of %d GB (combined size) present",
-		cfg.SnapshotsSizeCritical,
+		"more than %d snapshots present",
+		cfg.SnapshotsCountCritical,
 	)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
-		"snapshots of %d GB (combined size) present",
-		cfg.SnapshotsSizeWarning,
+		"more than %d snapshots present",
+		cfg.SnapshotsCountWarning,
 	)
 
 	if cfg.EmitBranding {
@@ -90,8 +90,8 @@ func main() {
 		Str("included_resource_pools", cfg.IncludedResourcePools.String()).
 		Str("excluded_resource_pools", cfg.ExcludedResourcePools.String()).
 		Str("ignored_vms", cfg.IgnoredVMs.String()).
-		Int("snapshots_size_critical", cfg.SnapshotsSizeCritical).
-		Int("snapshots_size_warning", cfg.SnapshotsSizeWarning).
+		Int("snapshots_count_critical", cfg.SnapshotsCountCritical).
+		Int("snapshots_count_warning", cfg.SnapshotsCountWarning).
 		Logger()
 
 	log.Debug().Msg("Logging into vSphere environment")
@@ -219,8 +219,8 @@ func main() {
 	snapshotSets := make(vsphere.SnapshotSummarySets, 0, len(vmsWithSnapshots))
 
 	snapshotThresholds := vsphere.SnapshotThresholds{
-		SizeCritical: cfg.SnapshotsSizeCritical,
-		SizeWarning:  cfg.SnapshotsSizeWarning,
+		CountCritical: cfg.SnapshotsCountCritical,
+		CountWarning:  cfg.SnapshotsCountWarning,
 	}
 
 	for _, vm := range vmsWithSnapshots {
@@ -238,18 +238,20 @@ func main() {
 
 	switch {
 
-	case snapshotSets.IsSizeCriticalState():
+	case snapshotSets.IsCountCriticalState():
 
-		vmsWithLargeCumulativeSnapshots, largeSnapshots := snapshotSets.ExceedsSize(cfg.SnapshotsSizeCritical)
+		numVMsWithExcessSnaps, numExcessSnaps, snapshotsTotal :=
+			snapshotSets.ExcessSnapshots(cfg.SnapshotsCountCritical)
 
 		log.Error().
-			Int("num_vms_with_critical_snapshots", vmsWithLargeCumulativeSnapshots).
-			Int("num_snapshots_size_critical", largeSnapshots).
-			Msg("Snapshot sets contain a snapshot which exceeds specified size in GB")
+			Int("num_vms_with_critical_num_snapshots", numVMsWithExcessSnaps).
+			Int("num_snapshots_in_excess", numExcessSnaps).
+			Int("num_snapshots_total", snapshotsTotal).
+			Msg("Snapshot sets exceed number of specified (permitted) snapshots per VM")
 
-		nagiosExitState.LastError = vsphere.ErrSnapshotSizeThresholdCrossed
+		nagiosExitState.LastError = vsphere.ErrSnapshotCountThresholdCrossed
 
-		nagiosExitState.ServiceOutput = vsphere.SnapshotsSizeOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.SnapshotsCountOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
 			snapshotSets,
 			snapshotThresholds,
@@ -257,7 +259,7 @@ func main() {
 			resourcePools,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.SnapshotsSizeReport(
+		nagiosExitState.LongServiceOutput = vsphere.SnapshotsCountReport(
 			c.Client,
 			snapshotSets,
 			snapshotThresholds,
@@ -275,18 +277,20 @@ func main() {
 
 		return
 
-	case snapshotSets.IsSizeWarningState():
+	case snapshotSets.IsCountWarningState():
 
-		vmsWithLargeCumulativeSnapshots, largeSnapshots := snapshotSets.ExceedsSize(cfg.SnapshotsSizeWarning)
+		numVMsWithExcessSnaps, numExcessSnaps, snapshotsTotal :=
+			snapshotSets.ExcessSnapshots(cfg.SnapshotsCountWarning)
 
 		log.Error().
-			Int("num_vms_with_warning_snapshots", vmsWithLargeCumulativeSnapshots).
-			Int("num_snapshots_size_warning", largeSnapshots).
-			Msg("Snapshot sets contain a snapshot which exceeds specified size in GB")
+			Int("num_vms_with_warning_num_snapshots", numVMsWithExcessSnaps).
+			Int("num_snapshots_in_excess", numExcessSnaps).
+			Int("num_snapshots_total", snapshotsTotal).
+			Msg("Snapshot sets exceed number of specified (permitted) snapshots per VM")
 
-		nagiosExitState.LastError = vsphere.ErrSnapshotSizeThresholdCrossed
+		nagiosExitState.LastError = vsphere.ErrSnapshotCountThresholdCrossed
 
-		nagiosExitState.ServiceOutput = vsphere.SnapshotsSizeOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.SnapshotsCountOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
 			snapshotSets,
 			snapshotThresholds,
@@ -294,7 +298,7 @@ func main() {
 			resourcePools,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.SnapshotsSizeReport(
+		nagiosExitState.LongServiceOutput = vsphere.SnapshotsCountReport(
 			c.Client,
 			snapshotSets,
 			snapshotThresholds,
@@ -316,7 +320,7 @@ func main() {
 
 		nagiosExitState.LastError = nil
 
-		nagiosExitState.ServiceOutput = vsphere.SnapshotsSizeOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.SnapshotsCountOneLineCheckSummary(
 			nagios.StateOKLabel,
 			snapshotSets,
 			snapshotThresholds,
@@ -324,7 +328,7 @@ func main() {
 			resourcePools,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.SnapshotsSizeReport(
+		nagiosExitState.LongServiceOutput = vsphere.SnapshotsCountReport(
 			c.Client,
 			snapshotSets,
 			snapshotThresholds,

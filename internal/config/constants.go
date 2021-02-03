@@ -42,6 +42,8 @@ const (
 	datacenterNameFlagHelp                          string = "Specifies the name of a vSphere Datacenter. If not specified, applicable plugins will attempt to use the default datacenter found in the vSphere environment. Not applicable to standalone ESXi hosts."
 	snapshotsAgeCriticalFlagHelp                    string = "Specifies the age of a snapshot in days when a CRITICAL threshold is reached."
 	snapshotsAgeWarningFlagHelp                     string = "Specifies the age of a snapshot in days when a WARNING threshold is reached."
+	snapshotsCountCriticalFlagHelp                  string = "Specifies the number of snapshots per VM when a CRITICAL threshold is reached."
+	snapshotsCountWarningFlagHelp                   string = "Specifies the number of snapshots per VM when a WARNING threshold is reached."
 	snapshotsSizeCriticalFlagHelp                   string = "Specifies the cumulative size in GB of all snapshots for a Virtual Machine when a CRITICAL threshold is reached."
 	snapshotsSizeWarningFlagHelp                    string = "Specifies the cumulative size in GB of all snapshots for a Virtual Machine when a WARNING threshold is reached."
 	resourcePoolsMemoryMaxAllowedFlagHelp           string = "Specifies the maximum amount of memory that we are allowed to consume in GB (as a whole number) in the target VMware environment across all specified Resource Pools. VMs that are running outside of resource pools are not considered in these calculations."
@@ -70,6 +72,8 @@ const (
 	defaultDatacenterName               string = ""
 	defaultSnapshotsAgeCritical         int    = 2
 	defaultSnapshotsAgeWarning          int    = 1
+	defaultSnapshotsCountCritical       int    = 25 // max is 32
+	defaultSnapshotsCountWarning        int    = 4  // recommended cap is 3-4
 	defaultSnapshotsSizeCritical        int    = 40 // size in GB
 	defaultSnapshotsSizeWarning         int    = 20 // size in GB
 	defaultMemoryUseCritical            int    = 95
@@ -109,6 +113,7 @@ const (
 const (
 	PluginTypeTools                    string = "vmware-tools"
 	PluginTypeSnapshotsAge             string = "snapshots-age"
+	PluginTypeSnapshotsCount           string = "snapshots-count"
 	PluginTypeSnapshotsSize            string = "snapshots-size"
 	PluginTypeDatastoresSize           string = "datastore-size"
 	PluginTypeResourcePoolsMemory      string = "resource-pools-memory"

@@ -46,6 +46,27 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.SnapshotsAgeCritical, "ac", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp)
 		flag.IntVar(&c.SnapshotsAgeCritical, "age-critical", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp)
 
+	case pluginType.SnapshotsCount:
+
+		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+
+		// NOTE: This plugin is hard-coded to evaluate powered off and powered
+		// on VMs equally. I'm not sure whether ignoring powered off VMs by
+		// default makes sense for this particular plugin.
+		//
+		// Please share your feedback on this GitHub issue if you feel differently:
+		// https://github.com/atc0005/check-vmware/issues/79
+		//
+		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+
+		flag.IntVar(&c.SnapshotsCountWarning, "cw", defaultSnapshotsCountWarning, snapshotsCountWarningFlagHelp)
+		flag.IntVar(&c.SnapshotsCountWarning, "count-warning", defaultSnapshotsCountWarning, snapshotsCountWarningFlagHelp)
+
+		flag.IntVar(&c.SnapshotsCountCritical, "cc", defaultSnapshotsCountCritical, snapshotsCountCriticalFlagHelp)
+		flag.IntVar(&c.SnapshotsCountCritical, "count-critical", defaultSnapshotsCountCritical, snapshotsCountCriticalFlagHelp)
+
 	case pluginType.SnapshotsSize:
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
