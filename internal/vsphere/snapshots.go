@@ -226,7 +226,7 @@ func (sss SnapshotSummarySets) ExceedsAge(days int) (int, int) {
 	var setsExceeded int
 	var snapshotsExceeded int
 	for _, set := range sss {
-		if set.ExceedsAge(days) > 1 {
+		if set.ExceedsAge(days) >= 1 {
 			setsExceeded++
 			snapshotsExceeded += set.ExceedsAge(days)
 		}
