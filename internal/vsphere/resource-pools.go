@@ -264,6 +264,7 @@ func RPMemoryUsageOneLineCheckSummary(
 	stateLabel string,
 	aggregateMemoryUsage int64,
 	maxMemoryUsageInGB int,
+	clusterMemoryInGB int64,
 	rps []mo.ResourcePool,
 ) string {
 
@@ -277,31 +278,38 @@ func RPMemoryUsageOneLineCheckSummary(
 	}()
 
 	memoryPercentageUsedOfAllowed := MemoryUsedPercentage(aggregateMemoryUsage, maxMemoryUsageInGB)
+	memoryPercentageUsedOfClusterCapacity := MemoryUsedPercentage(
+		aggregateMemoryUsage,
+		int(clusterMemoryInGB),
+	)
 	memoryUsageMax := (int64(maxMemoryUsageInGB) * units.GB)
 
 	switch {
 
 	case aggregateMemoryUsage > memoryUsageMax:
-		memoryOverage := aggregateMemoryUsage - memoryUsageMax
 		return fmt.Sprintf(
-			"%s: %s memory used (%.1f%%); %s more used than "+
-				"%s allowed (evaluated %d Resource Pools)",
+			"%s: %s (%.1f%%) memory used of %s allowed, "+
+				"%.2f%% of %s total capacity (evaluated %d Resource Pools)",
 			stateLabel,
 			units.ByteSize(aggregateMemoryUsage),
 			memoryPercentageUsedOfAllowed,
-			units.ByteSize(memoryOverage),
 			units.ByteSize(memoryUsageMax),
+			memoryPercentageUsedOfClusterCapacity,
+			units.ByteSize(clusterMemoryInGB*units.GB),
 			len(rps),
 		)
 
 	default:
 		memoryRemaining := memoryUsageMax - aggregateMemoryUsage
 		return fmt.Sprintf(
-			"%s: %s memory used (%.1f%%); %s (%0.1f%%) remaining of %s allowed"+
-				" (evaluated %d Resource Pools)",
+			"%s: %s memory used (%0.1f%%), %.2f%% of %s total capacity; "+
+				"%s (%0.1f%%) of %s remaining "+
+				"(evaluated %d Resource Pools)",
 			stateLabel,
 			units.ByteSize(aggregateMemoryUsage),
 			memoryPercentageUsedOfAllowed,
+			memoryPercentageUsedOfClusterCapacity,
+			units.ByteSize(clusterMemoryInGB*units.GB),
 			units.ByteSize(memoryRemaining),
 			float64(100)-memoryPercentageUsedOfAllowed,
 			units.ByteSize(memoryUsageMax),
@@ -321,6 +329,7 @@ func ResourcePoolsMemoryReport(
 	c *vim25.Client,
 	aggregateMemoryUsage int64,
 	maxMemoryUsageInGB int,
+	clusterMemoryInGB int64,
 	includeRPs []string,
 	excludeRPs []string,
 	rps []mo.ResourcePool,
@@ -346,15 +355,19 @@ func ResourcePoolsMemoryReport(
 	for _, rp := range rps {
 		rpMemoryUsage := rp.Summary.GetResourcePoolSummary().QuickStats.HostMemoryUsage * units.MB
 		rpMemoryPercentageUsed := MemoryUsedPercentage(rpMemoryUsage, maxMemoryUsageInGB)
+		memoryPercentageUsedOfClusterCapacity := MemoryUsedPercentage(
+			rpMemoryUsage,
+			int(clusterMemoryInGB),
+		)
 		fmt.Fprintf(
 			&report,
-			"* %s (%s, %0.1f%%)%s",
+			"* %s [Pool: (%s, %0.1f%%), Cluster: (%.2f%%)]%s",
 			rp.Name,
 			units.ByteSize(rpMemoryUsage),
 			rpMemoryPercentageUsed,
+			memoryPercentageUsedOfClusterCapacity,
 			nagios.CheckOutputEOL,
 		)
-
 	}
 
 	fmt.Fprintf(

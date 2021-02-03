@@ -58,6 +58,8 @@ func getHostSystemPropsSubset() []string {
 	// https://code.vmware.com/apis/1067/vsphere
 	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.HostSystem.html
 	return []string{
+		"hardware", // memory capacity
+		"runtime",  // connection, power state details
 		"summary",
 		"vm",
 		"name",

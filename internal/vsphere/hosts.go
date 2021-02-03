@@ -14,8 +14,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/vmware/govmomi/units"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 // GetHostSystems accepts a context, a connected client and a boolean value
@@ -140,5 +142,87 @@ func FilterHostSystemByID(hss []mo.HostSystem, hsID string) (mo.HostSystem, erro
 		"error: failed to retrieve HostSystem using provided id %q",
 		hsID,
 	)
+
+}
+
+// GetHostSystemsTotalMemory returns the total memory capacity for all
+// HostSystems. Unless requested, offline or otherwise unavailable hosts are
+// included for evaluation based on the assumption that offline hosts are
+// offline for only a brief time and should still be considered part of
+// overall cluster capacity.
+func GetHostSystemsTotalMemory(ctx context.Context, c *vim25.Client, excludeOffline bool) (int64, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute GetHostSystemTotalMemory func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	clusterHosts, err := GetHostSystems(ctx, c, true)
+	if err != nil {
+		return 0, fmt.Errorf(
+			"failed to gather total memory capacity for host systems: %w",
+			err,
+		)
+	}
+
+	var clusterMemory int64
+	for _, host := range clusterHosts {
+
+		// Evaluate offline systems by default, unless requested otherwise.
+		if excludeOffline {
+
+			logger.Printf("Checking host %s availability ... \n", host.Name)
+
+			switch {
+
+			case host.Runtime.PowerState == types.HostSystemPowerStatePoweredOn &&
+				host.Runtime.ConnectionState == types.HostSystemConnectionStateConnected:
+				// desired state, no other limiting factors detected
+
+			case host.Runtime.InMaintenanceMode:
+				logger.Printf("Host %s is in maintenance mode, skipping evaluation ...\n", host.Name)
+				continue
+
+			case host.Runtime.InQuarantineMode != nil && *host.Runtime.InQuarantineMode:
+				logger.Printf("Host %s is in quarantine mode, skipping evaluation ...\n", host.Name)
+				continue
+
+			case host.Runtime.PowerState == types.HostSystemPowerStatePoweredOff:
+				logger.Printf("Host %s is powered off, skipping evaluation ...\n", host.Name)
+				continue
+
+			case host.Runtime.PowerState == types.HostSystemPowerStateStandBy:
+				logger.Printf("Host %s is in standby, skipping evaluation ...\n", host.Name)
+				continue
+
+			case host.Runtime.ConnectionState == types.HostSystemConnectionStateDisconnected:
+				logger.Printf("Host %s is disconnected, skipping evaluation ...\n", host.Name)
+				continue
+
+			case host.Runtime.ConnectionState == types.HostSystemConnectionStateNotResponding:
+				logger.Printf("Host %s is not responding, skipping evaluation ...\n", host.Name)
+				continue
+
+			default:
+				logger.Printf("Host %s is in an UNKNOWN state, skipping evaluation ...\n", host.Name)
+				continue
+
+			}
+		}
+
+		logger.Printf(
+			"Host %s has %s memory capacity.\n",
+			host.Name,
+			units.ByteSize(host.Hardware.MemorySize),
+		)
+
+		clusterMemory += host.Hardware.MemorySize
+	}
+
+	return clusterMemory, nil
 
 }

@@ -205,6 +205,37 @@ func main() {
 			Msg("")
 	}
 
+	clusterMemory, getMemErr := vsphere.GetHostSystemsTotalMemory(ctx, c.Client, false)
+	if getMemErr != nil {
+		log.Error().Err(getMemErr).Msg(
+			"error retrieving hosts memory capacity",
+		)
+
+		nagiosExitState.LastError = getMemErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error retrieving memory capacity of hosts from %q",
+			nagios.StateCRITICALLabel,
+			cfg.Server,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+		return
+	}
+
+	clusterMemoryInGB := clusterMemory / units.GB
+	memoryPercentageUsedOfClusterCapacity := vsphere.MemoryUsedPercentage(
+		aggregateMemoryUsage,
+		int(clusterMemoryInGB),
+	)
+
+	log.Debug().
+		Int64("cluster_memory_bytes", clusterMemory).
+		Int64("cluster_memory_gb", clusterMemoryInGB).
+		Str("cluster_memory_hr", units.ByteSize(clusterMemory).String()).
+		Float64("percent_memory_used_from_cluster_raw", memoryPercentageUsedOfClusterCapacity).
+		Str("percent_memory_used_from_cluster_hr", fmt.Sprintf("%0.2f", memoryPercentageUsedOfClusterCapacity)).
+		Msg("")
+
 	log.Debug().
 		Int64("aggregate_memory_usage_raw", aggregateMemoryUsage).
 		Str("aggregate_memory_usage_human_readable", units.ByteSize(aggregateMemoryUsage).String()).
@@ -239,6 +270,7 @@ func main() {
 			nagios.StateCRITICALLabel,
 			aggregateMemoryUsage,
 			cfg.ResourcePoolsMemoryMaxAllowed,
+			clusterMemoryInGB,
 			resourcePools,
 		)
 
@@ -246,6 +278,7 @@ func main() {
 			c.Client,
 			aggregateMemoryUsage,
 			cfg.ResourcePoolsMemoryMaxAllowed,
+			clusterMemoryInGB,
 			cfg.IncludedResourcePools,
 			cfg.ExcludedResourcePools,
 			resourcePools,
@@ -268,6 +301,7 @@ func main() {
 			nagios.StateWARNINGLabel,
 			aggregateMemoryUsage,
 			cfg.ResourcePoolsMemoryMaxAllowed,
+			clusterMemoryInGB,
 			resourcePools,
 		)
 
@@ -275,6 +309,7 @@ func main() {
 			c.Client,
 			aggregateMemoryUsage,
 			cfg.ResourcePoolsMemoryMaxAllowed,
+			clusterMemoryInGB,
 			cfg.IncludedResourcePools,
 			cfg.ExcludedResourcePools,
 			resourcePools,
@@ -292,6 +327,7 @@ func main() {
 			nagios.StateOKLabel,
 			aggregateMemoryUsage,
 			cfg.ResourcePoolsMemoryMaxAllowed,
+			clusterMemoryInGB,
 			resourcePools,
 		)
 
@@ -299,6 +335,7 @@ func main() {
 			c.Client,
 			aggregateMemoryUsage,
 			cfg.ResourcePoolsMemoryMaxAllowed,
+			clusterMemoryInGB,
 			cfg.IncludedResourcePools,
 			cfg.ExcludedResourcePools,
 			resourcePools,
