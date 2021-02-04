@@ -26,6 +26,37 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.7.0] - 2021-02-04
+
+### Overview
+
+- New plugin
+- Bug fixes
+- Misc adjustments to output
+- built using Go 1.15.7
+
+### Added
+
+- New plugin: `check_vmware_snapshots_count`
+
+### Changed
+
+- `check_vmware_rp_memory` plugin
+  - one-line summary tweaks
+    - list usage percentage of total capacity as aggregate value for all
+      specified resource pools
+    - attempt to make message more concise
+    - drop explicit "overage" detail, rely on implied overage in total memory
+      usage percentage
+  - extended output
+    - list usage percentage of total capacity per-Resource Pool
+- Review and update threshold listings in extended output
+
+### Fixed
+
+- Fix invalid `ExceedsAge` logic
+- `check_vmware_snapshots_age`: Misreported VMs, snapshots count
+
 ## [v0.6.1] - 2021-02-02
 
 ### Overview
@@ -297,7 +328,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.7.0...HEAD
+[v0.7.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.7.0
 [v0.6.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.6.1
 [v0.6.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.6.0
 [v0.5.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.5.1
