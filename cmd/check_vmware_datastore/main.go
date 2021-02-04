@@ -72,12 +72,12 @@ func main() {
 	// content is shown in the detailed web UI and in notifications generated
 	// by Nagios.
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
-		"%d%% of datastore usage allocated",
+		"%d%% datastore usage",
 		cfg.DatastoreUsageCritical,
 	)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
-		"%d%% of datastore usage allocated",
+		"%d%% datastore usage",
 		cfg.DatastoreUsageWarning,
 	)
 
