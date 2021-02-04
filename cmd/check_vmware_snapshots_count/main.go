@@ -72,12 +72,12 @@ func main() {
 	// content is shown in the detailed web UI and in notifications generated
 	// by Nagios.
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
-		"more than %d snapshots present",
+		"%d snapshots present",
 		cfg.SnapshotsCountCritical,
 	)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
-		"more than %d snapshots present",
+		"%d snapshots present",
 		cfg.SnapshotsCountWarning,
 	)
 
