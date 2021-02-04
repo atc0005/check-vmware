@@ -111,6 +111,7 @@ func main() {
 
 		return
 	}
+	log.Debug().Msg("Successfully logged into vSphere environment")
 
 	// At this point we're logged in, ready to retrieve a list of VMs. If
 	// specified, we should limit VMs based on include/exclude lists. First,
