@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/atc0005/go-nagios"
+	"github.com/vmware/govmomi/vim25/mo"
 
 	"github.com/atc0005/check-vmware/internal/config"
 	"github.com/atc0005/check-vmware/internal/vsphere"
@@ -176,7 +177,11 @@ func main() {
 		Msg("")
 
 	log.Debug().Msg("Retrieving vms from eligible resource pools")
-	vms, getVMsErr := vsphere.GetVMsFromRPs(ctx, c.Client, resourcePools, true)
+	rpEntityVals := make([]mo.ManagedEntity, 0, len(resourcePools))
+	for i := range resourcePools {
+		rpEntityVals = append(rpEntityVals, resourcePools[i].ManagedEntity)
+	}
+	vms, getVMsErr := vsphere.GetVMsFromContainer(ctx, c.Client, true, rpEntityVals...)
 	if getVMsErr != nil {
 		log.Error().Err(getVMsErr).Msg(
 			"error retrieving list of VMs from resource pools list",
