@@ -39,7 +39,7 @@ func main() {
 	// Setup configuration by parsing user-provided flags. Note plugin type so
 	// that only applicable CLI flags are exposed and any plugin-specific
 	// settings are applied.
-	cfg, cfgErr := config.New(config.PluginType{DatastoresSize: true})
+	cfg, cfgErr := config.New(config.PluginType{HostSystemMemory: true})
 	switch {
 	case errors.Is(cfgErr, config.ErrVersionRequested):
 		fmt.Println(config.Version())
@@ -72,13 +72,13 @@ func main() {
 	// content is shown in the detailed web UI and in notifications generated
 	// by Nagios.
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
-		"%d%% datastore usage",
-		cfg.DatastoreUsageCritical,
+		"%d%% memory usage",
+		cfg.HostSystemMemoryUseCritical,
 	)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
-		"%d%% datastore usage",
-		cfg.DatastoreUsageWarning,
+		"%d%% memory usage",
+		cfg.HostSystemMemoryUseWarning,
 	)
 
 	if cfg.EmitBranding {
@@ -92,12 +92,10 @@ func main() {
 	}
 
 	log := cfg.Log.With().
-		Str("included_resource_pools", cfg.IncludedResourcePools.String()).
-		Str("excluded_resource_pools", cfg.ExcludedResourcePools.String()).
-		Str("datastore_name", cfg.DatastoreName).
+		Str("host_system_name", cfg.HostSystemName).
 		Str("datacenter_name", dcName).
-		Int("datastore_critical_usage", cfg.DatastoreUsageCritical).
-		Int("datastore_warning_usage", cfg.DatastoreUsageWarning).
+		Int("host_system_memory_critical_usage", cfg.HostSystemMemoryUseCritical).
+		Int("host_system_memory_warning_usage", cfg.HostSystemMemoryUseWarning).
 		Logger()
 
 	log.Debug().Msg("Logging into vSphere environment")
@@ -128,118 +126,119 @@ func main() {
 	}()
 
 	// At this point we're logged in, ready to retrieve the requested
-	// datastore.
+	// HostSystem.
 
-	log.Debug().Msg("Retrieving datastore by name")
-	datastore, dsFetchErr := vsphere.GetDatastoreByName(
+	log.Debug().Msg("Retrieving host by name")
+	hostSystem, hsFetchErr := vsphere.GetHostSystemByName(
 		ctx,
 		c.Client,
-		cfg.DatastoreName,
+		cfg.HostSystemName,
 		cfg.DatacenterName,
 		true,
 	)
-	if dsFetchErr != nil {
-		log.Error().Err(dsFetchErr).Msg(
-			"error retrieving requested datastore",
+	if hsFetchErr != nil {
+		log.Error().Err(hsFetchErr).Msg(
+			"error retrieving requested host",
 		)
 
-		nagiosExitState.LastError = dsFetchErr
+		nagiosExitState.LastError = hsFetchErr
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"%s: Error retrieving datastore %q",
+			"%s: Error retrieving host %q",
 			nagios.StateCRITICALLabel,
-			cfg.DatastoreName,
+			cfg.HostSystemName,
 		)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
 	}
+	log.Debug().Msg("Successfully retrieved host by name")
 
-	log.Debug().Msg("Successfully retrieved datastore by name")
-
-	log.Debug().Msg("Generating datastore usage summary")
-	dsUsage := vsphere.NewDatastoreUsageSummary(
-		datastore,
-		cfg.DatastoreUsageCritical,
-		cfg.DatastoreUsageWarning,
+	log.Debug().Msg("Generating host usage summary")
+	hsUsage := vsphere.NewHostSystemUsageSummary(
+		hostSystem,
+		cfg.HostSystemMemoryUseCritical,
+		cfg.HostSystemMemoryUseWarning,
 	)
 
 	log.Debug().
-		Str("datastore_name", datastore.Name).
-		Float64("datastore_usage_used_percentage", dsUsage.StorageUsedPercent).
-		Float64("datastore_usage_remaining_percentage", dsUsage.StorageRemainingPercent).
-		Str("datastore_storage_total", units.ByteSize(dsUsage.StorageTotal).String()).
-		Str("datastore_storage_used", units.ByteSize(dsUsage.StorageUsed).String()).
-		Str("datastore_storage_remaining", units.ByteSize(dsUsage.StorageRemaining).String()).
-		Int("datastore_critical_threshold", dsUsage.CriticalThreshold).
-		Int("datastore_warning_threshold", dsUsage.WarningThreshold).
-		Msg("Datastore usage summary")
+		Str("host_system_name", hostSystem.Name).
+		Float64("host_system_usage_used_percentage", hsUsage.MemoryUsedPercent).
+		Float64("host_system_usage_remaining_percentage", hsUsage.MemoryRemainingPercent).
+		Str("host_system_memory_total", units.ByteSize(hsUsage.MemoryTotal).String()).
+		Str("host_system_memory_used", units.ByteSize(hsUsage.MemoryUsed).String()).
+		Str("host_system_memory_remaining", units.ByteSize(hsUsage.MemoryRemaining).String()).
+		Int("host_system_critical_threshold", hsUsage.CriticalThreshold).
+		Int("host_system_warning_threshold", hsUsage.WarningThreshold).
+		Msg("HostSystem memory usage summary")
 
-	log.Debug().Msg("Retrieving VMs for datastore")
-	dsVMs, dsVMsFetchErr := vsphere.GetVMsFromDatastore(ctx, c.Client, datastore, true)
-	if dsVMsFetchErr != nil {
-		log.Error().Err(dsFetchErr).Msg(
-			"error retrieving VirtualMachines from datastore",
+	log.Debug().Msg("Retrieving VMs for host")
+	hsVMs, hsVMsFetchErr := vsphere.GetVMsFromContainer(ctx, c.Client, true, hostSystem.ManagedEntity)
+	if hsVMsFetchErr != nil {
+		log.Error().Err(hsVMsFetchErr).Msg(
+			"error retrieving VirtualMachines from host",
 		)
 
-		nagiosExitState.LastError = dsVMsFetchErr
+		nagiosExitState.LastError = hsVMsFetchErr
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"%s: Error retrieving VirtualMachines from datastore %q",
+			"%s: Error retrieving VirtualMachines from host %q",
 			nagios.StateCRITICALLabel,
-			cfg.DatastoreName,
+			cfg.HostSystemName,
 		)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
 	}
 
-	log.Debug().Msg("Evaluating datastore usage state")
+	log.Debug().Msg("Evaluating host memory usage state")
 	switch {
-	case dsUsage.IsCriticalState():
+	case hsUsage.IsCriticalState():
 
 		log.Error().
-			Str("datastore_name", datastore.Name).
-			Float64("datastore_usage_used_percentage", dsUsage.StorageUsedPercent).
-			Float64("datastore_usage_remaining_percentage", dsUsage.StorageRemainingPercent).
-			Str("datastore_storage_remaining", units.ByteSize(dsUsage.StorageRemaining).String()).
-			Msg("Datastore usage CRITICAL")
+			Str("host_name", hostSystem.Name).
+			Float64("host_system_usage_used_percentage", hsUsage.MemoryUsedPercent).
+			Float64("host_system_usage_remaining_percentage", hsUsage.MemoryRemainingPercent).
+			Str("host_system_memory_remaining", units.ByteSize(hsUsage.MemoryRemaining).String()).
+			Msg("host memory usage threshold crossed")
 
-		nagiosExitState.LastError = vsphere.ErrDatastoreUsageThresholdCrossed
+		nagiosExitState.LastError = vsphere.ErrHostSystemMemoryUsageThresholdCrossed
 
-		nagiosExitState.ServiceOutput = vsphere.DatastoreUsageOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
-			dsUsage,
+			hsUsage,
+			hsVMs,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
+		nagiosExitState.LongServiceOutput = vsphere.HostSystemMemoryUsageReport(
 			c.Client,
-			dsUsage,
-			dsVMs,
+			hsUsage,
+			hsVMs,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
 
-	case dsUsage.IsWarningState():
+	case hsUsage.IsWarningState():
 
 		log.Error().
-			Str("datastore_name", datastore.Name).
-			Float64("datastore_usage_used_percentage", dsUsage.StorageUsedPercent).
-			Float64("datastore_usage_remaining_percentage", dsUsage.StorageRemainingPercent).
-			Str("datastore_storage_remaining", units.ByteSize(dsUsage.StorageRemaining).String()).
-			Msg("Datastore usage CRITICAL")
+			Str("host_name", hostSystem.Name).
+			Float64("host_usage_used_percentage", hsUsage.MemoryUsedPercent).
+			Float64("host_usage_remaining_percentage", hsUsage.MemoryRemainingPercent).
+			Str("host_memory_remaining", units.ByteSize(hsUsage.MemoryRemaining).String()).
+			Msg("host memory usage threshold crossed")
 
-		nagiosExitState.LastError = vsphere.ErrDatastoreUsageThresholdCrossed
+		nagiosExitState.LastError = vsphere.ErrHostSystemMemoryUsageThresholdCrossed
 
-		nagiosExitState.ServiceOutput = vsphere.DatastoreUsageOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
-			dsUsage,
+			hsUsage,
+			hsVMs,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
+		nagiosExitState.LongServiceOutput = vsphere.HostSystemMemoryUsageReport(
 			c.Client,
-			dsUsage,
-			dsVMs,
+			hsUsage,
+			hsVMs,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
@@ -248,17 +247,20 @@ func main() {
 
 	default:
 
+		log.Debug().Msg("Host memory usage thresholds not exceeded")
+
 		nagiosExitState.LastError = nil
 
-		nagiosExitState.ServiceOutput = vsphere.DatastoreUsageOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
 			nagios.StateOKLabel,
-			dsUsage,
+			hsUsage,
+			hsVMs,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
+		nagiosExitState.LongServiceOutput = vsphere.HostSystemMemoryUsageReport(
 			c.Client,
-			dsUsage,
-			dsVMs,
+			hsUsage,
+			hsVMs,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode

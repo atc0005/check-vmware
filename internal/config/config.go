@@ -41,9 +41,10 @@ type PluginType struct {
 	VirtualCPUsAllocation  bool
 	VirtualHardwareVersion bool
 	Host2Datastores2VMs    bool
+	HostSystemMemory       bool
 
 	// TODO:
-	// - Hosts (memory, CPU usage)
+	// - Hosts (CPU usage)
 	// - vCenter/server time (NTP)
 
 }
@@ -155,6 +156,20 @@ type Config struct {
 	// DatacenterName is the name of a Datacenter in the associated vSphere
 	// inventory. Not applicable to standline ESXi hosts.
 	DatacenterName string
+
+	// HostSystemName is the name of an ESXi host/server in the associated
+	// vSphere inventory.
+	HostSystemName string
+
+	// HostSystemMemoryUseWarning specifies the percentage of memory use (as a
+	// whole number) for the specified ESXi host when a WARNING threshold is
+	// reached.
+	HostSystemMemoryUseWarning int
+
+	// HostSystemMemoryUseCritical specifies the percentage of memory use (as
+	// a whole number) for the specified ESXi host when a CRITICAL threshold
+	// is reached.
+	HostSystemMemoryUseCritical int
 
 	// Port is the TCP port used by the certifcate-enabled service.
 	Port int

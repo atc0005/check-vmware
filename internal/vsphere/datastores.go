@@ -23,13 +23,9 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
-// ErrDatastoreUsageCriticalLevel indicates that Datastore usage has crossed
-// the CRITICAL level threshold.
-var ErrDatastoreUsageCriticalLevel = errors.New("datastore usage critical level")
-
-// ErrDatastoreUsageWarningLevel indicates that Datastore usage has crossed
-// the CRITICAL level threshold.
-var ErrDatastoreUsageWarningLevel = errors.New("datastore usage warning level")
+// ErrDatastoreUsageThresholdCrossed indicates that specified
+// resource pools have exceeded a given threshold
+var ErrDatastoreUsageThresholdCrossed = errors.New("datastore usage exceeds specified threshold")
 
 // DatastoreIDToNameIndex maps a Datastore's ID value to its name.
 type DatastoreIDToNameIndex map[string]string
