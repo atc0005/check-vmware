@@ -101,6 +101,9 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 	case pluginType.SnapshotsAge:
 		appDescription = PluginTypeSnapshotsAge
 
+	case pluginType.SnapshotsCount:
+		appDescription = PluginTypeSnapshotsCount
+
 	case pluginType.SnapshotsSize:
 		appDescription = PluginTypeSnapshotsSize
 

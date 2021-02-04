@@ -24,6 +24,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms)
     - [`check_vmware_datastore`](#check_vmware_datastore)
     - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age)
+    - [`check_vmware_snapshots_count`](#check_vmware_snapshots_count)
     - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size)
     - [`check_vmware_rps_memory`](#check_vmware_rps_memory)
   - [Features](#features)
@@ -40,6 +41,7 @@ or endorsed by VMware, Inc.
       - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-1)
       - [`check_vmware_datastore`](#check_vmware_datastore-1)
       - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age-1)
+      - [`check_vmware_snapshots_count`](#check_vmware_snapshots_count-1)
       - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size-1)
       - [`check_vmware_rps_memory`](#check_vmware_rps_memory-1)
     - [Command-line arguments](#command-line-arguments)
@@ -49,6 +51,7 @@ or endorsed by VMware, Inc.
       - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-2)
       - [`check_vmware_datastore`](#check_vmware_datastore-2)
       - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age-2)
+      - [`check_vmware_snapshots_count`](#check_vmware_snapshots_count-2)
       - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size-2)
       - [`check_vmware_rps_memory`](#check_vmware_rps_memory-2)
     - [Configuration file](#configuration-file)
@@ -72,12 +75,15 @@ or endorsed by VMware, Inc.
     - [`check_vmware_snapshots_age` Nagios plugin](#check_vmware_snapshots_age-nagios-plugin)
       - [CLI invocation](#cli-invocation-5)
       - [Command definition](#command-definition-5)
-    - [`check_vmware_snapshots_size` Nagios plugin](#check_vmware_snapshots_size-nagios-plugin)
+    - [`check_vmware_snapshots_count` Nagios plugin](#check_vmware_snapshots_count-nagios-plugin)
       - [CLI invocation](#cli-invocation-6)
       - [Command definition](#command-definition-6)
-    - [`check_vmware_rps_memory` Nagios plugin](#check_vmware_rps_memory-nagios-plugin)
+    - [`check_vmware_snapshots_size` Nagios plugin](#check_vmware_snapshots_size-nagios-plugin)
       - [CLI invocation](#cli-invocation-7)
       - [Command definition](#command-definition-7)
+    - [`check_vmware_rps_memory` Nagios plugin](#check_vmware_rps_memory-nagios-plugin)
+      - [CLI invocation](#cli-invocation-8)
+      - [Command definition](#command-definition-8)
   - [License](#license)
   - [References](#references)
 
@@ -94,16 +100,17 @@ VMware, Inc.
 
 This repo contains various tools used to monitor/validate VMware environments.
 
-| Tool Name                     | Status | Description                                                                         |
-| ----------------------------- | ------ | ----------------------------------------------------------------------------------- |
-| `check_vmware_tools`          | Alpha  | Nagios plugin used to monitor VMware Tools installations.                           |
-| `check_vmware_vcpus`          | Alpha  | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
-| `check_vmware_vhw`            | Alpha  | Nagios plugin used to monitor virtual hardware versions.                            |
-| `check_vmware_hs2ds2vms`      | Alpha  | Nagios plugin used to monitor host/datastore/vm pairings.                           |
-| `check_vmware_datastore`      | Alpha  | Nagios plugin used to monitor datastore usage.                                      |
-| `check_vmware_snapshots_age`  | Alpha  | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
-| `check_vmware_snapshots_size` | Alpha  | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
-| `check_vmware_rps_memory`     | Alpha  | Nagios plugin used to monitor memory usage across Resource Pools.                   |
+| Tool Name                      | Status | Description                                                                         |
+| ------------------------------ | ------ | ----------------------------------------------------------------------------------- |
+| `check_vmware_tools`           | Alpha  | Nagios plugin used to monitor VMware Tools installations.                           |
+| `check_vmware_vcpus`           | Alpha  | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
+| `check_vmware_vhw`             | Alpha  | Nagios plugin used to monitor virtual hardware versions.                            |
+| `check_vmware_hs2ds2vms`       | Alpha  | Nagios plugin used to monitor host/datastore/vm pairings.                           |
+| `check_vmware_datastore`       | Alpha  | Nagios plugin used to monitor datastore usage.                                      |
+| `check_vmware_snapshots_age`   | Alpha  | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
+| `check_vmware_snapshots_count` | Alpha  | Nagios plugin used to monitor the count of Virtual Machine snapshots.               |
+| `check_vmware_snapshots_size`  | Alpha  | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
+| `check_vmware_rps_memory`      | Alpha  | Nagios plugin used to monitor memory usage across Resource Pools.                   |
 
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
@@ -208,6 +215,29 @@ Thresholds for `CRITICAL` and `WARNING` age values have usable defaults, but
 may require adjustment for your environment. See the [configuration
 options](#configuration-options) section for details.
 
+### `check_vmware_snapshots_count`
+
+Nagios plugin used to monitor the number of snapshots per Virtual Machine.
+
+Monitor the number of snapshots for each Virtual Machine. VMware recommends
+using no more than 3 or 4 snapshots per Virtual Machine and only for a limited
+duration. A maximum of 32 snapshots per Virtual Machine are supported. See
+<https://kb.vmware.com/s/article/1025279> for more information.
+
+The current design of this plugin is to evaluate *all* Virtual Machines,
+whether powered off or powered on. If you have a use case for evaluating
+*only* powered on VMs by default, please [add a comment to
+GH-79](https://github.com/atc0005/check-vmware/issues/79) providing some
+details for your use-case. In our environment, I have yet to see a need to
+*only* evaluate powered on VMs for old snapshots. For cases where the
+snapshots needed to be ignored, we added the VM to the ignore list. We then
+relied on datastore usage monitoring to let us know when space was becoming an
+issue.
+
+Thresholds for `CRITICAL` and `WARNING` count values have usable defaults, but
+may require adjustment for your environment. See the [configuration
+options](#configuration-options) section for details.
+
 ### `check_vmware_snapshots_size`
 
 Nagios plugin used to monitor the **cumulative** size of snapshots for each
@@ -249,6 +279,7 @@ max memory usage is required before this plugin can be used. See the
   - Host/Datastore/Virtual Machine pairings (using provided Custom Attribute)
   - Datastore usage
   - Snapshots age
+  - Snapshots count
   - Snapshots size
   - Resource Pools: Memory usage
 
@@ -329,6 +360,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_hs2ds2vms/`
      - `go build -mod=vendor ./cmd/check_vmware_datastore/`
      - `go build -mod=vendor ./cmd/check_vmware_snapshots_age/`
+     - `go build -mod=vendor ./cmd/check_vmware_snapshots_count/`
      - `go build -mod=vendor ./cmd/check_vmware_snapshots_size/`
      - `go build -mod=vendor ./cmd/check_vmware_rps_memory/`
    - for all supported platforms (where `make` is installed)
@@ -347,6 +379,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_hs2ds2vms/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_datastore/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_age/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_count/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_size/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_rps_memory/`
    - if using `go build`
@@ -406,6 +439,14 @@ been tested.
 | `OK`         | Ideal state, snapshots age within bounds.                      |
 | `WARNING`    | Snapshots age crossed user-specified threshold for this state. |
 | `CRITICAL`   | Snapshots age crossed user-specified threshold for this state. |
+
+#### `check_vmware_snapshots_count`
+
+| Nagios State | Description                                                             |
+| ------------ | ----------------------------------------------------------------------- |
+| `OK`         | Ideal state, snapshots count per VM within bounds.                      |
+| `WARNING`    | Snapshots count per VM crossed user-specified threshold for this state. |
+| `CRITICAL`   | Snapshots count per VM crossed user-specified threshold for this state. |
 
 #### `check_vmware_snapshots_size`
 
@@ -561,6 +602,27 @@ been tested.
 | `ignore-vm`          | No       |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                                                                                           |
 | `ac`, `age-critical` | No       | `2`     | No     | *age in days as positive whole number*                                  | Specifies the age of a snapshot in days when a CRITICAL threshold is reached.                                                                                                                                                                                                                                              |
 | `aw`, `age-warning`  | No       | `1`     | No     | *age in days as positive whole number*                                  | Specifies the age of a snapshot in days when a WARNING threshold is reached.                                                                                                                                                                                                                                               |
+
+#### `check_vmware_snapshots_count`
+
+| Flag                   | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                |
+| ---------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `branding`             | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
+| `h`, `help`            | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
+| `v`, `version`         | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
+| `ll`, `log-level`      | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `p`, `port`            | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
+| `t`, `timeout`         | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
+| `s`, `server`          | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
+| `u`, `username`        | **Yes**  |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                                                                                                                                |
+| `pw`, `password`       | **Yes**  |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                                                                                                                                   |
+| `domain`               | No       |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                                                                                                                         |
+| `trust-cert`           | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                                                                                                                                      |
+| `include-rp`           | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
+| `exclude-rp`           | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                                                                                                                             |
+| `ignore-vm`            | No       |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                                                                                           |
+| `cc`, `count-critical` | No       | `4`     | No     | *count as positive whole number*                                        | Specifies the number of snapshots per VM when a CRITICAL threshold is reached.                                                                                                                                                                                                                                             |
+| `cw`, `count-warning`  | No       | `25`    | No     | *count as positive whole number*                                        | Specifies the number of snapshots per VM when a WARNING threshold is reached.                                                                                                                                                                                                                                              |
 
 #### `check_vmware_snapshots_size`
 
@@ -933,6 +995,48 @@ Of note:
 define command{
     command_name    check_vmware_snapshots_age
     command_line    /usr/lib/nagios/plugins/check_vmware_snapshots_age --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --age-warning '$ARG4$' --age-critical '$ARG5$' --trust-cert --log-level info
+    }
+```
+
+### `check_vmware_snapshots_count` Nagios plugin
+
+#### CLI invocation
+
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_snapshots_count --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --count-warning 4 --count-critical 25 --trust-cert --log-level info
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+Of note:
+
+- No Resource Pools are explicitly *included* or *excluded*
+  - this results in *all* Resource Pools visible to the specified user account
+    being used for evaluation
+  - this also results in *all* VMs *outside* of a Resource Pool visible to the
+    specified user account being used for evaluation
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
+
+#### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-snapshots-count.cfg
+
+# Look at all pools, all VMs, do not evaluate any VMs that are powered off.
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally.
+define command{
+    command_name    check_vmware_snapshots_count
+    command_line    /usr/lib/nagios/plugins/check_vmware_snapshots_count --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --count-warning '$ARG4$' --count-critical '$ARG5$' --trust-cert --log-level info
     }
 ```
 

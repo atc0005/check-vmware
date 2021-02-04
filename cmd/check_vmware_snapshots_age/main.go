@@ -218,6 +218,11 @@ func main() {
 	log.Debug().Msg("Build snapshot sets for bulk processing")
 	snapshotSets := make(vsphere.SnapshotSummarySets, 0, len(vmsWithSnapshots))
 
+	snapshotThresholds := vsphere.SnapshotThresholds{
+		AgeCritical: cfg.SnapshotsAgeCritical,
+		AgeWarning:  cfg.SnapshotsAgeWarning,
+	}
+
 	for _, vm := range vmsWithSnapshots {
 
 		log.Debug().Str("vm", vm.Name).Msg("Evaluating snapshots for VM")
@@ -226,10 +231,7 @@ func main() {
 			snapshotSets,
 			vsphere.NewSnapshotSummarySet(
 				vm,
-				cfg.SnapshotsAgeCritical,
-				cfg.SnapshotsAgeWarning,
-				cfg.SnapshotsSizeCritical,
-				cfg.SnapshotsSizeWarning,
+				snapshotThresholds,
 			),
 		)
 	}
@@ -250,8 +252,7 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsAgeOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			snapshotThresholds,
 			filteredVMs,
 			resourcePools,
 		)
@@ -259,8 +260,7 @@ func main() {
 		nagiosExitState.LongServiceOutput = vsphere.SnapshotsAgeReport(
 			c.Client,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			snapshotThresholds,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,
@@ -289,8 +289,7 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsAgeOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			snapshotThresholds,
 			filteredVMs,
 			resourcePools,
 		)
@@ -298,8 +297,7 @@ func main() {
 		nagiosExitState.LongServiceOutput = vsphere.SnapshotsAgeReport(
 			c.Client,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			snapshotThresholds,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,
@@ -321,8 +319,7 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsAgeOneLineCheckSummary(
 			nagios.StateOKLabel,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			snapshotThresholds,
 			filteredVMs,
 			resourcePools,
 		)
@@ -330,8 +327,7 @@ func main() {
 		nagiosExitState.LongServiceOutput = vsphere.SnapshotsAgeReport(
 			c.Client,
 			snapshotSets,
-			cfg.SnapshotsAgeCritical,
-			cfg.SnapshotsAgeWarning,
+			snapshotThresholds,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,

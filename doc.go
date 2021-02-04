@@ -30,6 +30,8 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Snapshots age
 
+• Snapshots count
+
 • Snapshots size
 
 • Resource Pools: Memory usage

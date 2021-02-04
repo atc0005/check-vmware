@@ -37,12 +37,14 @@ const (
 
 // used with snapshots reports that provide Long Service Output
 const (
-	snapshotThresholdTypeAge  string = "age"
-	snapshotThresholdTypeSize string = "size"
+	snapshotThresholdTypeAge   string = "age"
+	snapshotThresholdTypeCount string = "count"
+	snapshotThresholdTypeSize  string = "size"
 )
 
 // used with snapshots reports that provide Long Service Output
 const (
-	snapshotThresholdTypeAgeSuffix  string = "d"
-	snapshotThresholdTypeSizeSuffix string = "GB"
+	snapshotThresholdTypeAgeSuffix   string = "day"
+	snapshotThresholdTypeCountSuffix string = "snapshots"
+	snapshotThresholdTypeSizeSuffix  string = "GB"
 )
