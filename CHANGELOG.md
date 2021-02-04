@@ -26,6 +26,26 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.8.0] - 2021-02-04
+
+### Overview
+
+- New plugin
+- Bug fixes
+- Minor tweaks
+- built using Go 1.15.7
+
+### Added
+
+- New plugin: `check_vmware_host_memory`
+
+### Changed
+
+- Remove doc comments regarding hidden resource pool from
+  `vc1.example.com.cfg` Nagios host configuration file
+  - this topic is already covered by the main README file
+  - some details have changed slightly since the remarks were written
+
 ## [v0.7.0] - 2021-02-04
 
 ### Overview
@@ -328,7 +348,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.8.0...HEAD
+[v0.8.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.8.0
 [v0.7.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.7.0
 [v0.6.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.6.1
 [v0.6.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.6.0
