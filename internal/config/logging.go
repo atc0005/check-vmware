@@ -119,6 +119,9 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 	case pluginType.Host2Datastores2VMs:
 		appDescription = PluginTypeHostDatastoreVMsPairings
 
+	case pluginType.HostSystemMemory:
+		appDescription = PluginTypeHostSystemMemory
+
 	case pluginType.Tools:
 		appDescription = PluginTypeTools
 

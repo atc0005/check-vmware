@@ -9,16 +9,85 @@ package vsphere
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/units"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 )
+
+// ErrHostSystemMemoryUsageThresholdCrossed indicates that specified host
+// memory usage has exceeded a given threshold
+var ErrHostSystemMemoryUsageThresholdCrossed = errors.New("host memory usage exceeds specified threshold")
+
+// HostSystemSummary tracks usage details for a specific HostSystem.
+type HostSystemSummary struct {
+	HostSystem             mo.HostSystem
+	MemoryUsedPercent      float64
+	MemoryRemainingPercent float64
+
+	// MemoryUsed is the amount of memory used by the host in bytes.
+	MemoryUsed int64
+
+	// MemoryUsed is the amount of memory remaining to the host in bytes.
+	MemoryRemaining int64
+
+	// MemoryTotal is the total amount of memory for the host in bytes.
+	MemoryTotal       int64
+	CriticalThreshold int
+	WarningThreshold  int
+}
+
+// NewHostSystemUsageSummary receives a Datastore and generates summary
+// information used to determine if usage levels have crossed user-specified
+// thresholds.
+func NewHostSystemUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) HostSystemSummary {
+
+	// total memory in bytes
+	memoryTotal := hs.Hardware.MemorySize
+
+	// memory used in bytes
+	memoryUsed := int64(hs.Summary.QuickStats.OverallMemoryUsage) * units.MB
+
+	// memory remaining in bytes
+	memoryRemaining := memoryTotal - memoryUsed
+
+	memoryRemainingPercentage := float64(memoryRemaining) / float64(memoryTotal) * 100
+	memoryUsedPercentage := 100 - memoryRemainingPercentage
+
+	hsUsage := HostSystemSummary{
+		HostSystem:             hs,
+		MemoryUsedPercent:      memoryUsedPercentage,
+		MemoryRemainingPercent: memoryRemainingPercentage,
+		MemoryUsed:             memoryUsed,
+		MemoryRemaining:        memoryRemaining,
+		MemoryTotal:            memoryTotal,
+		CriticalThreshold:      criticalThreshold,
+		WarningThreshold:       warningThreshold,
+	}
+
+	return hsUsage
+
+}
+
+// IsWarningState indicates whether HostSystem memory usage has crossed the
+// WARNING level threshold.
+func (hss HostSystemSummary) IsWarningState() bool {
+	return hss.MemoryUsedPercent < float64(hss.CriticalThreshold) &&
+		hss.MemoryUsedPercent >= float64(hss.WarningThreshold)
+}
+
+// IsCriticalState indicates whether HostSystem memory usage has crossed the
+// CRITICAL level threshold.
+func (hss HostSystemSummary) IsCriticalState() bool {
+	return hss.MemoryUsedPercent >= float64(hss.CriticalThreshold)
+}
 
 // GetHostSystems accepts a context, a connected client and a boolean value
 // indicating whether a subset of properties per HostSystem are retrieved. A
@@ -225,4 +294,216 @@ func GetHostSystemsTotalMemory(ctx context.Context, c *vim25.Client, excludeOffl
 
 	return clusterMemory, nil
 
+}
+
+// HostSystemMemoryUsageOneLineCheckSummary is used to generate a one-line
+// Nagios service check results summary. This is the line most prominent in
+// notifications.
+//
+// TODO: List VMs count
+func HostSystemMemoryUsageOneLineCheckSummary(
+	stateLabel string,
+	hsUsageSummary HostSystemSummary,
+	hsVMs []mo.VirtualMachine,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute HostSystemMemoryUsageOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	// drop any powered off/suspected VMs from our list
+	hsVMs = FilterVMsByPowerState(hsVMs, false)
+
+	var vmsMemUsedBytes int64 // int64 used to prevent int32 overflow
+	for _, vm := range hsVMs {
+
+		// vm.Summary.QuickStats.HostMemoryUsage == memory usage in MB
+		vmsMemUsedBytes += int64(vm.Summary.QuickStats.HostMemoryUsage) * units.MB
+	}
+
+	vmsMemUsedPercentOfHost := (float64(vmsMemUsedBytes) / float64(hsUsageSummary.MemoryTotal)) * 100
+
+	summaryTemplate := "%s: Host %s using %s (%.2f%%) of %s with %s (%.2f%%) remaining (%d visible VMs using %s (%.2f%%) memory)"
+	// summaryTemplate := "%s: Host %s memory usage is %.2f%% (%s) of %s with %s remaining (%d visible VMs using %s (%.2f%%) memory)"
+	// summaryTemplate := "%s: Host %s memory usage is %.2f%% of %s with %s remaining [WARNING: %d%% , CRITICAL: %d%%]"
+
+	return fmt.Sprintf(
+		summaryTemplate,
+		stateLabel,
+		hsUsageSummary.HostSystem.Name,
+		units.ByteSize(hsUsageSummary.MemoryUsed),
+		hsUsageSummary.MemoryUsedPercent,
+		units.ByteSize(hsUsageSummary.MemoryTotal),
+		units.ByteSize(hsUsageSummary.MemoryRemaining),
+		hsUsageSummary.MemoryRemainingPercent,
+		len(hsVMs),
+		units.ByteSize(vmsMemUsedBytes),
+		vmsMemUsedPercentOfHost,
+	)
+
+}
+
+// HostSystemMemoryUsageReport generates a summary of HostSystem memory usage
+// along with various verbose details intended to aid in troubleshooting check
+// results at a glance. This information is provided for use with the Long
+// Service Output field commonly displayed on the detailed service check
+// results display in the web UI or in the body of many notifications.
+func HostSystemMemoryUsageReport(
+	c *vim25.Client,
+	hsUsageSummary HostSystemSummary,
+	hsVMs []mo.VirtualMachine,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute HostSystemMemoryUsageReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	var report strings.Builder
+
+	var vmsMemUsedBytes int64 // int64 used to prevent int32 overflow
+	var vmsPoweredOn int
+	var vmsPoweredOff int
+	for _, vm := range hsVMs {
+
+		// vm.Summary.QuickStats.HostMemoryUsage == memory usage in MB
+		vmsMemUsedBytes += int64(vm.Summary.QuickStats.HostMemoryUsage) * units.MB
+
+		switch {
+		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn:
+			vmsPoweredOn++
+		default:
+			vmsPoweredOff++
+		}
+
+	}
+
+	vmsMemUsedPercentOfHost := (float64(vmsMemUsedBytes) / float64(hsUsageSummary.MemoryTotal)) * 100
+
+	fmt.Fprintf(
+		&report,
+		"Host Summary:%s%s"+
+			"* Name: %s%s"+
+			"* Memory%s"+
+			"** Used by all VMs: %s (%.2f%%)%s"+
+			"** Used by visible VMs: %s (%.2f%%)%s"+
+			"** Remaining: %s (%.2f%%)%s"+
+			"* VMs%s"+
+			"** Visible: %d%s"+
+			"** Running: %d%s"+
+			"** Off: %d%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		hsUsageSummary.HostSystem.Name,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		units.ByteSize(hsUsageSummary.MemoryUsed),
+		hsUsageSummary.MemoryUsedPercent,
+		nagios.CheckOutputEOL,
+		units.ByteSize(vmsMemUsedBytes),
+		vmsMemUsedPercentOfHost,
+		nagios.CheckOutputEOL,
+		units.ByteSize(hsUsageSummary.MemoryRemaining),
+		hsUsageSummary.MemoryRemainingPercent,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		len(hsVMs),
+		nagios.CheckOutputEOL,
+		vmsPoweredOn,
+		nagios.CheckOutputEOL,
+		vmsPoweredOff,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"%sVMs on host consuming memory (descending order):%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	sort.Slice(hsVMs, func(i, j int) bool {
+		return hsVMs[i].Summary.QuickStats.HostMemoryUsage > hsVMs[j].Summary.QuickStats.HostMemoryUsage
+	})
+
+	for _, vm := range hsVMs {
+		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
+			hostMemUsedBytes := int64(vm.Summary.QuickStats.HostMemoryUsage) * units.MB
+			vmPercentOfHostMemUsed := float64(hostMemUsedBytes) / float64(hsUsageSummary.MemoryTotal) * 100
+			fmt.Fprintf(
+				&report,
+				"* %s (Memory: %v, Host Memory Usage: %2.2f%%)%s",
+				vm.Name,
+				units.ByteSize(hostMemUsedBytes),
+				vmPercentOfHostMemUsed,
+				nagios.CheckOutputEOL,
+			)
+		}
+	}
+
+	if vmsPoweredOn == 0 {
+		fmt.Fprintf(
+			&report,
+			"* None (visible)%s",
+			nagios.CheckOutputEOL,
+		)
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%sVMs on host not consuming memory:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	sort.Slice(hsVMs, func(i, j int) bool {
+		return strings.ToLower(hsVMs[i].Name) < strings.ToLower(hsVMs[j].Name)
+	})
+
+	for _, vm := range hsVMs {
+		if vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn {
+			fmt.Fprintf(
+				&report,
+				"* %s%s",
+				vm.Name,
+				nagios.CheckOutputEOL,
+			)
+		}
+	}
+
+	if vmsPoweredOff == 0 {
+		fmt.Fprintf(
+			&report,
+			"* None (visible)%s",
+			nagios.CheckOutputEOL,
+		)
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* vSphere environment: %s%s",
+		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	return report.String()
 }

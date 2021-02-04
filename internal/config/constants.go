@@ -49,6 +49,9 @@ const (
 	resourcePoolsMemoryMaxAllowedFlagHelp           string = "Specifies the maximum amount of memory that we are allowed to consume in GB (as a whole number) in the target VMware environment across all specified Resource Pools. VMs that are running outside of resource pools are not considered in these calculations."
 	resourcePoolsMemoryUseCriticalFlagHelp          string = "Specifies the percentage of memory use (as a whole number) across all specified Resource Pools when a CRITICAL threshold is reached."
 	resourcePoolsMemoryUseWarningFlagHelp           string = "Specifies the percentage of memory use (as a whole number) across all specified Resource Pools when a WARNING threshold is reached."
+	hostSystemMemoryUseCriticalFlagHelp             string = "Specifies the percentage of memory use (as a whole number) when a CRITICAL threshold is reached."
+	hostSystemMemoryUseWarningFlagHelp              string = "Specifies the percentage of memory use (as a whole number) when a WARNING threshold is reached."
+	hostSystemNameFlagHelp                          string = "ESXi host/server name as it is found within the vSphere inventory."
 )
 
 // Default flag settings if not overridden by user input
@@ -76,8 +79,11 @@ const (
 	defaultSnapshotsCountWarning        int    = 4  // recommended cap is 3-4
 	defaultSnapshotsSizeCritical        int    = 40 // size in GB
 	defaultSnapshotsSizeWarning         int    = 20 // size in GB
-	defaultMemoryUseCritical            int    = 95
-	defaultMemoryUseWarning             int    = 80
+	defaultHostSystemName               string = ""
+
+	// default memory usage values for Resource Pools and ESXi Host systems
+	defaultMemoryUseCritical int = 95
+	defaultMemoryUseWarning  int = 80
 
 	// Intentionally set low to trigger validation failure if not specified by
 	// the end user.
@@ -119,4 +125,5 @@ const (
 	PluginTypeResourcePoolsMemory      string = "resource-pools-memory"
 	PluginTypeVirtualCPUsAllocation    string = "virtual-cpus-allocation"
 	PluginTypeHostDatastoreVMsPairings string = "host-to-ds-to-vms"
+	PluginTypeHostSystemMemory         string = "host-system-memory"
 )

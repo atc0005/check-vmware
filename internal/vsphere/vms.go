@@ -55,6 +55,55 @@ func GetVMs(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.Virtua
 	return vms, nil
 }
 
+// GetVMsFromContainer receives one or many ManagedEntity values for Folder,
+// Datacenter, ComputeResource, ResourcePool, or HostSystem types and returns
+// a list of VirtualMachine object references.
+//
+// The propsSubset boolean value indicates whether a subset of properties per
+// VirtualMachine are retrieved. If requested, a subset of all available
+// properties will be retrieved (faster) instead of recursively fetching all
+// properties (about 2x as slow). A collection of VirtualMachines with
+// requested properties is returned or nil and an error, if one occurs.
+func GetVMsFromContainer(ctx context.Context, c *vim25.Client, propsSubset bool, objs ...mo.ManagedEntity) ([]mo.VirtualMachine, error) {
+
+	funcTimeStart := time.Now()
+
+	// declare this early so that we can grab a pointer to it in order to
+	// access the entries later
+	var vms []mo.VirtualMachine
+
+	defer func(vms *[]mo.VirtualMachine) {
+		logger.Printf(
+			"It took %v to execute GetVMsFromContainers func (and retrieve %d VMs).\n",
+			time.Since(funcTimeStart),
+			len(*vms),
+		)
+	}(&vms)
+
+	for _, obj := range objs {
+
+		err := getObjects(ctx, c, &vms, obj.Reference(), propsSubset)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to retrieve VirtualMachines from object: %s: %w",
+				obj.Name,
+				err,
+			)
+		}
+	}
+
+	// remove any potential duplicate entries which could occur if we are
+	// evaluating the (default, hidden) 'Resources' Resource Pool
+	vms = dedupeVMs(vms)
+
+	sort.Slice(vms, func(i, j int) bool {
+		return strings.ToLower(vms[i].Name) < strings.ToLower(vms[j].Name)
+	})
+
+	return vms, nil
+
+}
+
 // GetVMsFromRPs receives a list of ResourcePool object references and returns
 // a list of VirtualMachine object references. The propsSubset boolean value
 // indicates whether a subset of properties per VirtualMachine are retrieved.
