@@ -105,6 +105,7 @@ func main() {
 
 		return
 	}
+	log.Debug().Msg("Successfully logged into vSphere environment")
 
 	defer func() {
 		if err := c.Logout(ctx); err != nil {
