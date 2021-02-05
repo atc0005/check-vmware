@@ -52,6 +52,8 @@ const (
 	hostSystemMemoryUseCriticalFlagHelp             string = "Specifies the percentage of memory use (as a whole number) when a CRITICAL threshold is reached."
 	hostSystemMemoryUseWarningFlagHelp              string = "Specifies the percentage of memory use (as a whole number) when a WARNING threshold is reached."
 	hostSystemNameFlagHelp                          string = "ESXi host/server name as it is found within the vSphere inventory."
+	hostSystemCPUUseCriticalFlagHelp                string = "Specifies the percentage of CPU use (as a whole number) when a CRITICAL threshold is reached."
+	hostSystemCPUUseWarningFlagHelp                 string = "Specifies the percentage of CPU use (as a whole number) when a WARNING threshold is reached."
 )
 
 // Default flag settings if not overridden by user input
@@ -84,6 +86,10 @@ const (
 	// default memory usage values for Resource Pools and ESXi Host systems
 	defaultMemoryUseCritical int = 95
 	defaultMemoryUseWarning  int = 80
+
+	// HostSystem CPU usage thresholds
+	defaultCPUUseCritical int = 95
+	defaultCPUUseWarning  int = 80
 
 	// Intentionally set low to trigger validation failure if not specified by
 	// the end user.
@@ -126,4 +132,5 @@ const (
 	PluginTypeVirtualCPUsAllocation    string = "virtual-cpus-allocation"
 	PluginTypeHostDatastoreVMsPairings string = "host-to-ds-to-vms"
 	PluginTypeHostSystemMemory         string = "host-system-memory"
+	PluginTypeHostSystemCPU            string = "host-system-cpu"
 )

@@ -53,6 +53,7 @@ contrib
         │   └── config
         │       ├── send2teams.cfg
         │       ├── vmware-datastores.cfg
+        │       ├── vmware-host-cpu.cfg
         │       ├── vmware-host-datastore-vms-pairings.cfg
         │       ├── vmware-host-memory.cfg
         │       ├── vmware-resource-pools.cfg
@@ -88,7 +89,7 @@ contrib
             ├── nagios.cfg
             └── resource.cfg
 
-13 directories, 28 files
+13 directories, 29 files
 ```
 
 ### Overview

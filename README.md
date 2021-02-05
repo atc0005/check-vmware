@@ -28,6 +28,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size)
     - [`check_vmware_rps_memory`](#check_vmware_rps_memory)
     - [`check_vmware_host_memory`](#check_vmware_host_memory)
+    - [`check_vmware_host_cpu`](#check_vmware_host_cpu)
   - [Features](#features)
   - [Changelog](#changelog)
   - [Requirements](#requirements)
@@ -46,6 +47,7 @@ or endorsed by VMware, Inc.
       - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size-1)
       - [`check_vmware_rps_memory`](#check_vmware_rps_memory-1)
       - [`check_vmware_host_memory`](#check_vmware_host_memory-1)
+      - [`check_vmware_host_cpu`](#check_vmware_host_cpu-1)
     - [Command-line arguments](#command-line-arguments)
       - [`check_vmware_tools`](#check_vmware_tools-2)
       - [`check_vmware_vcpus`](#check_vmware_vcpus-2)
@@ -57,6 +59,7 @@ or endorsed by VMware, Inc.
       - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size-2)
       - [`check_vmware_rps_memory`](#check_vmware_rps_memory-2)
       - [`check_vmware_host_memory`](#check_vmware_host_memory-2)
+      - [`check_vmware_host_cpu`](#check_vmware_host_cpu-2)
     - [Configuration file](#configuration-file)
   - [Contrib](#contrib)
   - [Examples](#examples)
@@ -90,6 +93,9 @@ or endorsed by VMware, Inc.
     - [`check_vmware_host_memory` Nagios plugin](#check_vmware_host_memory-nagios-plugin)
       - [CLI invocation](#cli-invocation-9)
       - [Command definition](#command-definition-9)
+    - [`check_vmware_host_cpu` Nagios plugin](#check_vmware_host_cpu-nagios-plugin)
+      - [CLI invocation](#cli-invocation-10)
+      - [Command definition](#command-definition-10)
   - [License](#license)
   - [References](#references)
 
@@ -118,6 +124,7 @@ This repo contains various tools used to monitor/validate VMware environments.
 | `check_vmware_snapshots_size`  | Alpha  | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
 | `check_vmware_rps_memory`      | Alpha  | Nagios plugin used to monitor memory usage across Resource Pools.                   |
 | `check_vmware_host_memory`     | Alpha  | Nagios plugin used to monitor memory usage for a specific ESXi host system.         |
+| `check_vmware_host_cpu`        | Alpha  | Nagios plugin used to monitor CPU usage for a specific ESXi host system.            |
 
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
@@ -288,6 +295,18 @@ Thresholds for `CRITICAL` and `WARNING` memory usage have usable defaults, but
 max memory usage is required before this plugin can be used. See the
 [configuration options](#configuration-options) section for details.
 
+### `check_vmware_host_cpu`
+
+Nagios plugin used to monitor ESXi host CPU usage.
+
+In addition to reporting current host CPU usage, this plugin also reports
+which VMs are on the host (running or not), how much CPU each VM is using
+as a fixed value and as a percentage of the host's total CPU capacity.
+
+Thresholds for `CRITICAL` and `WARNING` CPU usage have usable defaults, but
+may require adjustment for your environment. See the [configuration
+options](#configuration-options) section for details.
+
 ## Features
 
 - Multiple plugins for monitoring VMware vSphere environments (standalone ESXi
@@ -302,6 +321,7 @@ max memory usage is required before this plugin can be used. See the
   - Snapshots size
   - Resource Pools: Memory usage
   - Host Memory usage
+  - Host CPU usage
 
 - Optional, leveled logging using `rs/zerolog` package
   - JSON-format output (to `stderr`)
@@ -384,6 +404,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_snapshots_size/`
      - `go build -mod=vendor ./cmd/check_vmware_rps_memory/`
      - `go build -mod=vendor ./cmd/check_vmware_host_memory/`
+     - `go build -mod=vendor ./cmd/check_vmware_host_cpu/`
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
@@ -404,6 +425,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_size/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_rps_memory/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_host_memory/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_host_cpu/`
    - if using `go build`
      - look in `/tmp/check-vmware/`
 1. Review [configuration options](#configuration-options),
@@ -493,6 +515,14 @@ been tested.
 | `OK`         | Ideal state, memory usage for the specified ESXi host system is within bounds. |
 | `WARNING`    | Memory usage crossed user-specified threshold for this state.                  |
 | `CRITICAL`   | Memory usage crossed user-specified threshold for this state.                  |
+
+#### `check_vmware_host_cpu`
+
+| Nagios State | Description                                                                 |
+| ------------ | --------------------------------------------------------------------------- |
+| `OK`         | Ideal state, CPU usage for the specified ESXi host system is within bounds. |
+| `WARNING`    | CPU usage crossed user-specified threshold for this state.                  |
+| `CRITICAL`   | CPU usage crossed user-specified threshold for this state.                  |
 
 ### Command-line arguments
 
@@ -715,6 +745,26 @@ been tested.
 | `host-name`                   | **Yes**  |         | No     | *valid ESXi host name*                                                  | ESXi host/server name as it is found within the vSphere inventory.                                                                                                                                     |
 | `mc`, `memory-usage-critical` | No       | `95`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of memory use (as a whole number) when a CRITICAL threshold is reached.                                                                                                       |
 | `mw`, `memory-usage-warning`  | No       | `80`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of memory use (as a whole number) when a WARNING threshold is reached.                                                                                                        |
+
+#### `check_vmware_host_cpu`
+
+| Flag                       | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                            |
+| -------------------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `branding`                 | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                   |
+| `h`, `help`                | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                 |
+| `v`, `version`             | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                          |
+| `ll`, `log-level`          | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                              |
+| `p`, `port`                | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                     |
+| `t`, `timeout`             | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                 |
+| `s`, `server`              | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                             |
+| `u`, `username`            | **Yes**  |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                            |
+| `pw`, `password`           | **Yes**  |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                               |
+| `domain`                   | No       |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                     |
+| `trust-cert`               | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                  |
+| `dc-name`                  | No       |         | No     | *valid vSphere datacenter name*                                         | Specifies the name of a vSphere Datacenter. If not specified, applicable plugins will attempt to use the default datacenter found in the vSphere environment. Not applicable to standalone ESXi hosts. |
+| `host-name`                | **Yes**  |         | No     | *valid ESXi host name*                                                  | ESXi host/server name as it is found within the vSphere inventory.                                                                                                                                     |
+| `cc`, `cpu-usage-critical` | No       | `95`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of CPU use (as a whole number) when a CRITICAL threshold is reached.                                                                                                          |
+| `cw`, `cpu-usage-warning`  | No       | `80`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of CPU use (as a whole number) when a WARNING threshold is reached.                                                                                                           |
 
 ### Configuration file
 
@@ -1219,6 +1269,44 @@ Of note:
 define command{
     command_name    check_vmware_host_memory
     command_line    /usr/lib/nagios/plugins/check_vmware_host_memory --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --memory-usage-warning '$ARG4$' --memory-usage-critical '$ARG5$' --host-name '$ARG6$' --trust-cert  --log-level info
+    }
+```
+
+### `check_vmware_host_cpu` Nagios plugin
+
+#### CLI invocation
+
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_host_cpu --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --host-name "esx1.example.com" --cpu-usage-warning 80 --cpu-usage-critical 95 --trust-cert --log-level info
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+Of note:
+
+- The host name is specified (via `host-name` flag) using the exact value
+  shown in the vSphere inventory (e.g., `esx1.example.com`)
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
+
+#### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-host-cpu.cfg
+
+# Look at a specific host and explicitly provide custom WARNING and CRITICAL
+# threshold values.
+define command{
+    command_name    check_vmware_host_cpu
+    command_line    /usr/lib/nagios/plugins/check_vmware_host_cpu --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --cpu-usage-warning '$ARG4$' --cpu-usage-critical '$ARG5$' --host-name '$ARG6$' --trust-cert  --log-level info
     }
 ```
 

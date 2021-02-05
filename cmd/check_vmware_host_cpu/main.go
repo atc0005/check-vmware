@@ -13,7 +13,6 @@ import (
 	"fmt"
 
 	"github.com/atc0005/go-nagios"
-	"github.com/vmware/govmomi/units"
 
 	"github.com/atc0005/check-vmware/internal/config"
 	"github.com/atc0005/check-vmware/internal/vsphere"
@@ -39,7 +38,7 @@ func main() {
 	// Setup configuration by parsing user-provided flags. Note plugin type so
 	// that only applicable CLI flags are exposed and any plugin-specific
 	// settings are applied.
-	cfg, cfgErr := config.New(config.PluginType{HostSystemMemory: true})
+	cfg, cfgErr := config.New(config.PluginType{HostSystemCPU: true})
 	switch {
 	case errors.Is(cfgErr, config.ErrVersionRequested):
 		fmt.Println(config.Version())
@@ -72,13 +71,13 @@ func main() {
 	// content is shown in the detailed web UI and in notifications generated
 	// by Nagios.
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
-		"%d%% memory usage",
-		cfg.HostSystemMemoryUseCritical,
+		"%d%% CPU usage",
+		cfg.HostSystemCPUUseCritical,
 	)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
-		"%d%% memory usage",
-		cfg.HostSystemMemoryUseWarning,
+		"%d%% CPU usage",
+		cfg.HostSystemCPUUseWarning,
 	)
 
 	if cfg.EmitBranding {
@@ -94,8 +93,8 @@ func main() {
 	log := cfg.Log.With().
 		Str("host_system_name", cfg.HostSystemName).
 		Str("datacenter_name", dcName).
-		Int("host_system_memory_critical_usage", cfg.HostSystemMemoryUseCritical).
-		Int("host_system_memory_warning_usage", cfg.HostSystemMemoryUseWarning).
+		Int("host_system_cpu_critical_usage", cfg.HostSystemCPUUseCritical).
+		Int("host_system_cpu_warning_usage", cfg.HostSystemCPUUseWarning).
 		Logger()
 
 	log.Debug().Msg("Logging into vSphere environment")
@@ -154,23 +153,23 @@ func main() {
 	}
 	log.Debug().Msg("Successfully retrieved host by name")
 
-	log.Debug().Msg("Generating host memory usage summary")
-	hsUsage := vsphere.NewHostSystemMemoryUsageSummary(
+	log.Debug().Msg("Generating host CPU usage summary")
+	hsUsage := vsphere.NewHostSystemCPUUsageSummary(
 		hostSystem,
-		cfg.HostSystemMemoryUseCritical,
-		cfg.HostSystemMemoryUseWarning,
+		cfg.HostSystemCPUUseCritical,
+		cfg.HostSystemCPUUseWarning,
 	)
 
 	log.Debug().
 		Str("host_system_name", hostSystem.Name).
-		Float64("host_system_memory_used_percentage", hsUsage.MemoryUsedPercent).
-		Float64("host_system_memory_remaining_percentage", hsUsage.MemoryRemainingPercent).
-		Str("host_system_memory_total", units.ByteSize(hsUsage.MemoryTotal).String()).
-		Str("host_system_memory_used", units.ByteSize(hsUsage.MemoryUsed).String()).
-		Str("host_system_memory_remaining", units.ByteSize(hsUsage.MemoryRemaining).String()).
+		Float64("host_system_cpu_used_percentage", hsUsage.CPUUsedPercent).
+		Float64("host_system_cpu_remaining_percentage", hsUsage.CPURemainingPercent).
+		Str("host_system_cpu_total", vsphere.CPUSpeed(hsUsage.CPUTotal).String()).
+		Str("host_system_cpu_used", vsphere.CPUSpeed(hsUsage.CPUUsed).String()).
+		Str("host_system_cpu_remaining", vsphere.CPUSpeed(hsUsage.CPURemaining).String()).
 		Int("host_system_critical_threshold", hsUsage.CriticalThreshold).
 		Int("host_system_warning_threshold", hsUsage.WarningThreshold).
-		Msg("HostSystem memory usage summary")
+		Msg("HostSystem CPU usage summary")
 
 	log.Debug().Msg("Retrieving VMs for host")
 	hsVMs, hsVMsFetchErr := vsphere.GetVMsFromContainer(ctx, c.Client, true, hostSystem.ManagedEntity)
@@ -190,26 +189,26 @@ func main() {
 		return
 	}
 
-	log.Debug().Msg("Evaluating host memory usage state")
+	log.Debug().Msg("Evaluating host CPU usage state")
 	switch {
 	case hsUsage.IsCriticalState():
 
 		log.Error().
 			Str("host_name", hostSystem.Name).
-			Float64("host_system_usage_used_percentage", hsUsage.MemoryUsedPercent).
-			Float64("host_system_usage_remaining_percentage", hsUsage.MemoryRemainingPercent).
-			Str("host_system_memory_remaining", units.ByteSize(hsUsage.MemoryRemaining).String()).
-			Msg("host memory usage threshold crossed")
+			Float64("host_system_usage_used_percentage", hsUsage.CPUUsedPercent).
+			Float64("host_system_usage_remaining_percentage", hsUsage.CPURemainingPercent).
+			Str("host_system_cpu_remaining", vsphere.CPUSpeed(hsUsage.CPURemaining).String()).
+			Msg("host CPU usage threshold crossed")
 
-		nagiosExitState.LastError = vsphere.ErrHostSystemMemoryUsageThresholdCrossed
+		nagiosExitState.LastError = vsphere.ErrHostSystemCPUUsageThresholdCrossed
 
-		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.HostSystemCPUUsageOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
 			hsUsage,
 			hsVMs,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.HostSystemMemoryUsageReport(
+		nagiosExitState.LongServiceOutput = vsphere.HostSystemCPUUsageReport(
 			c.Client,
 			hsUsage,
 			hsVMs,
@@ -223,20 +222,20 @@ func main() {
 
 		log.Error().
 			Str("host_name", hostSystem.Name).
-			Float64("host_usage_used_percentage", hsUsage.MemoryUsedPercent).
-			Float64("host_usage_remaining_percentage", hsUsage.MemoryRemainingPercent).
-			Str("host_memory_remaining", units.ByteSize(hsUsage.MemoryRemaining).String()).
-			Msg("host memory usage threshold crossed")
+			Float64("host_cpu_usage_used_percentage", hsUsage.CPUUsedPercent).
+			Float64("host_cpu_usage_remaining_percentage", hsUsage.CPURemainingPercent).
+			Str("host_cpu_remaining", vsphere.CPUSpeed(hsUsage.CPURemaining).String()).
+			Msg("host CPU usage threshold crossed")
 
-		nagiosExitState.LastError = vsphere.ErrHostSystemMemoryUsageThresholdCrossed
+		nagiosExitState.LastError = vsphere.ErrHostSystemCPUUsageThresholdCrossed
 
-		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.HostSystemCPUUsageOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
 			hsUsage,
 			hsVMs,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.HostSystemMemoryUsageReport(
+		nagiosExitState.LongServiceOutput = vsphere.HostSystemCPUUsageReport(
 			c.Client,
 			hsUsage,
 			hsVMs,
@@ -248,17 +247,17 @@ func main() {
 
 	default:
 
-		log.Debug().Msg("Host memory usage thresholds not exceeded")
+		log.Debug().Msg("Host CPU usage thresholds not exceeded")
 
 		nagiosExitState.LastError = nil
 
-		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.HostSystemCPUUsageOneLineCheckSummary(
 			nagios.StateOKLabel,
 			hsUsage,
 			hsVMs,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.HostSystemMemoryUsageReport(
+		nagiosExitState.LongServiceOutput = vsphere.HostSystemCPUUsageReport(
 			c.Client,
 			hsUsage,
 			hsVMs,

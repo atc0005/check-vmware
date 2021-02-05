@@ -156,6 +156,32 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+	case pluginType.HostSystemCPU:
+
+		if c.HostSystemName == "" {
+			return fmt.Errorf("host name not provided")
+		}
+
+		if c.HostSystemCPUUseCritical < 1 {
+			return fmt.Errorf(
+				"invalid host CPU usage (percentage as whole number) CRITICAL threshold number: %d",
+				c.HostSystemCPUUseCritical,
+			)
+		}
+
+		if c.HostSystemCPUUseWarning < 1 {
+			return fmt.Errorf(
+				"invalid host CPU usage (percentage as whole number) WARNING threshold number: %d",
+				c.HostSystemCPUUseWarning,
+			)
+		}
+
+		if c.HostSystemCPUUseCritical < c.HostSystemCPUUseWarning {
+			return fmt.Errorf(
+				"critical threshold set lower than warning threshold",
+			)
+		}
+
 	case pluginType.ResourcePoolsMemory:
 
 		if c.ResourcePoolsMemoryMaxAllowed < 1 {

@@ -33,6 +33,7 @@ WHAT 					= check_vmware_tools \
 							check_vmware_snapshots_size \
 							check_vmware_rps_memory \
 							check_vmware_host_memory \
+							check_vmware_host_cpu \
 
 
 # What package holds the "version" variable used in branding/version output?
