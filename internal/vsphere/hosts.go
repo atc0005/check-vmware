@@ -56,13 +56,13 @@ type HostSystemCPUSummary struct {
 	CPURemainingPercent float64
 
 	// CPUUsed is the amount of CPU used by the host in Hz.
-	CPUUsed int64
+	CPUUsed float64
 
 	// CPURemaining is the amount of CPU capacity remaining to the host in Hz.
-	CPURemaining int64
+	CPURemaining float64
 
 	// CPUTotal is the total amount of CPU capacity for the host in Hz.
-	CPUTotal          int64
+	CPUTotal          float64
 	CriticalThreshold int
 	WarningThreshold  int
 }
@@ -107,14 +107,14 @@ func NewHostSystemCPUUsageSummary(hs mo.HostSystem, criticalThreshold int, warni
 	numCPUCores := hs.Summary.Hardware.NumCpuCores
 
 	// base value in MHz, convert to Hz
-	cpuUsage := int64(hs.Summary.QuickStats.OverallCpuUsage) * MHz
-	cpuSpeedPerCore := int64(hs.Summary.Hardware.CpuMhz) * MHz
+	cpuUsage := float64(hs.Summary.QuickStats.OverallCpuUsage) * MHz
+	cpuSpeedPerCore := float64(hs.Summary.Hardware.CpuMhz) * MHz
 
 	// capacity in Hz
-	cpuTotalCapacity := (int64(numCPUCores) * cpuSpeedPerCore)
+	cpuTotalCapacity := (float64(numCPUCores) * cpuSpeedPerCore)
 	cpuRemainingCapacity := cpuTotalCapacity - cpuUsage
 
-	cpuUsagePercent := float64(cpuUsage) / float64(cpuTotalCapacity) * 100
+	cpuUsagePercent := cpuUsage / cpuTotalCapacity * 100
 	cpuCapacityRemainingPercent := 100 - cpuUsagePercent
 
 	hsUsage := HostSystemCPUSummary{
@@ -602,7 +602,7 @@ func HostSystemCPUUsageOneLineCheckSummary(
 		vmsCPUUsage += int64(vm.Summary.QuickStats.OverallCpuUsage) * MHz
 	}
 
-	vmsMemUsedPercentOfHost := (float64(vmsCPUUsage) / float64(hsUsageSummary.CPUTotal)) * 100
+	vmsMemUsedPercentOfHost := (float64(vmsCPUUsage) / hsUsageSummary.CPUTotal) * 100
 
 	// summaryTemplate := "%s: Host %s CPU usage is %s (%.2f%%) of %s with %s (%.2f%%) remaining (%d visible VMs using %s (%.2f%%) memory)"
 	summaryTemplate := "%s: Host %s using %s (%.2f%%) of %s with %s (%.2f%%) remaining CPU capacity (%d visible VMs using %s (%.2f%%) CPU)"
@@ -664,7 +664,7 @@ func HostSystemCPUUsageReport(
 
 	}
 
-	vmsCPUUsedPercentOfHost := (float64(vmsCPUUsage) / float64(hsUsageSummary.CPUTotal)) * 100
+	vmsCPUUsedPercentOfHost := (float64(vmsCPUUsage) / hsUsageSummary.CPUTotal) * 100
 
 	fmt.Fprintf(
 		&report,
@@ -716,7 +716,7 @@ func HostSystemCPUUsageReport(
 	for _, vm := range hsVMs {
 		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
 			hostCPUUsed := int64(vm.Summary.QuickStats.OverallCpuUsage) * MHz
-			vmPercentOfHostCPUUsed := (float64(hostCPUUsed) / float64(hsUsageSummary.CPUTotal)) * 100
+			vmPercentOfHostCPUUsed := (float64(hostCPUUsed) / hsUsageSummary.CPUTotal) * 100
 			fmt.Fprintf(
 				&report,
 				"* %s (CPU: %s, Host CPU Usage: %2.2f%%)%s",
