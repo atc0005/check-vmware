@@ -26,6 +26,25 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.9.0] - 2021-02-07
+
+### Overview
+
+- New plugin
+- built using Go 1.15.8
+
+### Added
+
+- New plugin: `check_vmware_host_cpu`
+
+### Changed
+
+- Dependencies
+  - built using Go 1.15.8
+    - Statically linked
+    - Windows (x86, x64)
+    - Linux (x86, x64)
+
 ## [v0.8.0] - 2021-02-04
 
 ### Overview
@@ -348,7 +367,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.9.0...HEAD
+[v0.9.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.9.0
 [v0.8.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.8.0
 [v0.7.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.7.0
 [v0.6.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.6.1
