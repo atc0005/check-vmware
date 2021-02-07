@@ -42,9 +42,9 @@ type PluginType struct {
 	VirtualHardwareVersion bool
 	Host2Datastores2VMs    bool
 	HostSystemMemory       bool
+	HostSystemCPU          bool
 
 	// TODO:
-	// - Hosts (CPU usage)
 	// - vCenter/server time (NTP)
 
 }
@@ -170,6 +170,16 @@ type Config struct {
 	// a whole number) for the specified ESXi host when a CRITICAL threshold
 	// is reached.
 	HostSystemMemoryUseCritical int
+
+	// HostSystemCPUUseWarning specifies the percentage of CPU use (as a whole
+	// number) for the specified ESXi host when a WARNING threshold is
+	// reached.
+	HostSystemCPUUseWarning int
+
+	// HostSystemCPUUseCritical specifies the percentage of CPU use (as a
+	// whole number) for the specified ESXi host when a CRITICAL threshold is
+	// reached.
+	HostSystemCPUUseCritical int
 
 	// Port is the TCP port used by the certifcate-enabled service.
 	Port int

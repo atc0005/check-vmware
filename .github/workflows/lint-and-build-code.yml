@@ -92,3 +92,4 @@ jobs:
           go build -v -mod=vendor ./cmd/check_vmware_snapshots_size
           go build -v -mod=vendor ./cmd/check_vmware_rps_memory
           go build -v -mod=vendor ./cmd/check_vmware_host_memory
+          go build -v -mod=vendor ./cmd/check_vmware_host_cpu

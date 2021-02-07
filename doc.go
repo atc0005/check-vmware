@@ -38,6 +38,8 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Host Memory usage
 
+• Host CPU usage
+
 USAGE
 
 See our main README for supported settings and examples.

@@ -122,6 +122,9 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 	case pluginType.HostSystemMemory:
 		appDescription = PluginTypeHostSystemMemory
 
+	case pluginType.HostSystemCPU:
+		appDescription = PluginTypeHostSystemCPU
+
 	case pluginType.Tools:
 		appDescription = PluginTypeTools
 

@@ -26,8 +26,13 @@ import (
 // memory usage has exceeded a given threshold
 var ErrHostSystemMemoryUsageThresholdCrossed = errors.New("host memory usage exceeds specified threshold")
 
-// HostSystemSummary tracks usage details for a specific HostSystem.
-type HostSystemSummary struct {
+// ErrHostSystemCPUUsageThresholdCrossed indicates that specified host CPU
+// usage has exceeded a given threshold
+var ErrHostSystemCPUUsageThresholdCrossed = errors.New("host CPU usage exceeds specified threshold")
+
+// HostSystemMemorySummary tracks memory usage details for a specific
+// HostSystem.
+type HostSystemMemorySummary struct {
 	HostSystem             mo.HostSystem
 	MemoryUsedPercent      float64
 	MemoryRemainingPercent float64
@@ -44,10 +49,28 @@ type HostSystemSummary struct {
 	WarningThreshold  int
 }
 
-// NewHostSystemUsageSummary receives a Datastore and generates summary
+// HostSystemCPUSummary tracks CPU usage details for a specific HostSystem.
+type HostSystemCPUSummary struct {
+	HostSystem          mo.HostSystem
+	CPUUsedPercent      float64
+	CPURemainingPercent float64
+
+	// CPUUsed is the amount of CPU used by the host in Hz.
+	CPUUsed int64
+
+	// CPURemaining is the amount of CPU capacity remaining to the host in Hz.
+	CPURemaining int64
+
+	// CPUTotal is the total amount of CPU capacity for the host in Hz.
+	CPUTotal          int64
+	CriticalThreshold int
+	WarningThreshold  int
+}
+
+// NewHostSystemMemoryUsageSummary receives a HostSystem and generates summary
 // information used to determine if usage levels have crossed user-specified
 // thresholds.
-func NewHostSystemUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) HostSystemSummary {
+func NewHostSystemMemoryUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) HostSystemMemorySummary {
 
 	// total memory in bytes
 	memoryTotal := hs.Hardware.MemorySize
@@ -61,7 +84,7 @@ func NewHostSystemUsageSummary(hs mo.HostSystem, criticalThreshold int, warningT
 	memoryRemainingPercentage := float64(memoryRemaining) / float64(memoryTotal) * 100
 	memoryUsedPercentage := 100 - memoryRemainingPercentage
 
-	hsUsage := HostSystemSummary{
+	hsUsage := HostSystemMemorySummary{
 		HostSystem:             hs,
 		MemoryUsedPercent:      memoryUsedPercentage,
 		MemoryRemainingPercent: memoryRemainingPercentage,
@@ -76,17 +99,63 @@ func NewHostSystemUsageSummary(hs mo.HostSystem, criticalThreshold int, warningT
 
 }
 
+// NewHostSystemCPUUsageSummary receives a HostSystem and generates summary
+// information used to determine if usage levels have crossed user-specified
+// thresholds.
+func NewHostSystemCPUUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) HostSystemCPUSummary {
+
+	numCPUCores := hs.Summary.Hardware.NumCpuCores
+
+	// base value in MHz, convert to Hz
+	cpuUsage := int64(hs.Summary.QuickStats.OverallCpuUsage) * MHz
+	cpuSpeedPerCore := int64(hs.Summary.Hardware.CpuMhz) * MHz
+
+	// capacity in Hz
+	cpuTotalCapacity := (int64(numCPUCores) * cpuSpeedPerCore)
+	cpuRemainingCapacity := cpuTotalCapacity - cpuUsage
+
+	cpuUsagePercent := float64(cpuUsage) / float64(cpuTotalCapacity) * 100
+	cpuCapacityRemainingPercent := 100 - cpuUsagePercent
+
+	hsUsage := HostSystemCPUSummary{
+		HostSystem:          hs,
+		CPUUsedPercent:      cpuUsagePercent,
+		CPURemainingPercent: cpuCapacityRemainingPercent,
+		CPUUsed:             cpuUsage,
+		CPURemaining:        cpuRemainingCapacity,
+		CPUTotal:            cpuTotalCapacity,
+		CriticalThreshold:   criticalThreshold,
+		WarningThreshold:    warningThreshold,
+	}
+
+	return hsUsage
+
+}
+
 // IsWarningState indicates whether HostSystem memory usage has crossed the
 // WARNING level threshold.
-func (hss HostSystemSummary) IsWarningState() bool {
+func (hss HostSystemMemorySummary) IsWarningState() bool {
 	return hss.MemoryUsedPercent < float64(hss.CriticalThreshold) &&
 		hss.MemoryUsedPercent >= float64(hss.WarningThreshold)
 }
 
 // IsCriticalState indicates whether HostSystem memory usage has crossed the
 // CRITICAL level threshold.
-func (hss HostSystemSummary) IsCriticalState() bool {
+func (hss HostSystemMemorySummary) IsCriticalState() bool {
 	return hss.MemoryUsedPercent >= float64(hss.CriticalThreshold)
+}
+
+// IsWarningState indicates whether HostSystem CPU usage has crossed the
+// WARNING level threshold.
+func (hss HostSystemCPUSummary) IsWarningState() bool {
+	return hss.CPUUsedPercent < float64(hss.CriticalThreshold) &&
+		hss.CPUUsedPercent >= float64(hss.WarningThreshold)
+}
+
+// IsCriticalState indicates whether HostSystem CPU usage has crossed the
+// CRITICAL level threshold.
+func (hss HostSystemCPUSummary) IsCriticalState() bool {
+	return hss.CPUUsedPercent >= float64(hss.CriticalThreshold)
 }
 
 // GetHostSystems accepts a context, a connected client and a boolean value
@@ -299,11 +368,9 @@ func GetHostSystemsTotalMemory(ctx context.Context, c *vim25.Client, excludeOffl
 // HostSystemMemoryUsageOneLineCheckSummary is used to generate a one-line
 // Nagios service check results summary. This is the line most prominent in
 // notifications.
-//
-// TODO: List VMs count
 func HostSystemMemoryUsageOneLineCheckSummary(
 	stateLabel string,
-	hsUsageSummary HostSystemSummary,
+	hsUsageSummary HostSystemMemorySummary,
 	hsVMs []mo.VirtualMachine,
 ) string {
 
@@ -316,7 +383,7 @@ func HostSystemMemoryUsageOneLineCheckSummary(
 		)
 	}()
 
-	// drop any powered off/suspected VMs from our list
+	// drop any powered off/suspended VMs from our list
 	hsVMs = FilterVMsByPowerState(hsVMs, false)
 
 	var vmsMemUsedBytes int64 // int64 used to prevent int32 overflow
@@ -355,7 +422,7 @@ func HostSystemMemoryUsageOneLineCheckSummary(
 // results display in the web UI or in the body of many notifications.
 func HostSystemMemoryUsageReport(
 	c *vim25.Client,
-	hsUsageSummary HostSystemSummary,
+	hsUsageSummary HostSystemMemorySummary,
 	hsVMs []mo.VirtualMachine,
 ) string {
 
@@ -462,6 +529,216 @@ func HostSystemMemoryUsageReport(
 	fmt.Fprintf(
 		&report,
 		"%sVMs on host not consuming memory:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	sort.Slice(hsVMs, func(i, j int) bool {
+		return strings.ToLower(hsVMs[i].Name) < strings.ToLower(hsVMs[j].Name)
+	})
+
+	for _, vm := range hsVMs {
+		if vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn {
+			fmt.Fprintf(
+				&report,
+				"* %s%s",
+				vm.Name,
+				nagios.CheckOutputEOL,
+			)
+		}
+	}
+
+	if vmsPoweredOff == 0 {
+		fmt.Fprintf(
+			&report,
+			"* None (visible)%s",
+			nagios.CheckOutputEOL,
+		)
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* vSphere environment: %s%s",
+		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	return report.String()
+}
+
+// HostSystemCPUUsageOneLineCheckSummary is used to generate a one-line
+// Nagios service check results summary. This is the line most prominent in
+// notifications.
+func HostSystemCPUUsageOneLineCheckSummary(
+	stateLabel string,
+	hsUsageSummary HostSystemCPUSummary,
+	hsVMs []mo.VirtualMachine,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute HostSystemCPUUsageOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	// drop any powered off/suspended VMs from our list
+	hsVMs = FilterVMsByPowerState(hsVMs, false)
+
+	var vmsCPUUsage int64
+	for _, vm := range hsVMs {
+		// usage in MHz, convert to Hz
+		vmsCPUUsage += int64(vm.Summary.QuickStats.OverallCpuUsage) * MHz
+	}
+
+	vmsMemUsedPercentOfHost := (float64(vmsCPUUsage) / float64(hsUsageSummary.CPUTotal)) * 100
+
+	// summaryTemplate := "%s: Host %s CPU usage is %s (%.2f%%) of %s with %s (%.2f%%) remaining (%d visible VMs using %s (%.2f%%) memory)"
+	summaryTemplate := "%s: Host %s using %s (%.2f%%) of %s with %s (%.2f%%) remaining CPU capacity (%d visible VMs using %s (%.2f%%) CPU)"
+
+	return fmt.Sprintf(
+		summaryTemplate,
+		stateLabel,
+		hsUsageSummary.HostSystem.Name,
+		CPUSpeed(hsUsageSummary.CPUUsed),
+		hsUsageSummary.CPUUsedPercent,
+		CPUSpeed(hsUsageSummary.CPUTotal),
+		CPUSpeed(hsUsageSummary.CPURemaining),
+		hsUsageSummary.CPURemainingPercent,
+		len(hsVMs),
+		CPUSpeed(vmsCPUUsage),
+		vmsMemUsedPercentOfHost,
+	)
+
+}
+
+// HostSystemCPUUsageReport generates a summary of HostSystem CPU usage along
+// with various verbose details intended to aid in troubleshooting check
+// results at a glance. This information is provided for use with the Long
+// Service Output field commonly displayed on the detailed service check
+// results display in the web UI or in the body of many notifications.
+func HostSystemCPUUsageReport(
+	c *vim25.Client,
+	hsUsageSummary HostSystemCPUSummary,
+	hsVMs []mo.VirtualMachine,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute HostSystemCPUUsageReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	var report strings.Builder
+
+	var vmsCPUUsage int64
+	var vmsPoweredOn int
+	var vmsPoweredOff int
+	for _, vm := range hsVMs {
+
+		// usage in MHz, convert to Hz
+		vmCPUUsage := int64(vm.Summary.QuickStats.OverallCpuUsage) * MHz
+		vmsCPUUsage += vmCPUUsage
+		logger.Printf("VM %s used %s \n", vm.Name, CPUSpeed(vmCPUUsage))
+
+		switch {
+		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn:
+			vmsPoweredOn++
+		default:
+			vmsPoweredOff++
+		}
+
+	}
+
+	vmsCPUUsedPercentOfHost := (float64(vmsCPUUsage) / float64(hsUsageSummary.CPUTotal)) * 100
+
+	fmt.Fprintf(
+		&report,
+		"Host Summary:%s%s"+
+			"* Name: %s%s"+
+			"* CPU%s"+
+			"** Used by all VMs: %s (%.2f%%)%s"+
+			"** Used by visible VMs: %s (%.2f%%)%s"+
+			"** Remaining: %s (%.2f%%)%s"+
+			"* VMs%s"+
+			"** Visible: %d%s"+
+			"** Running: %d%s"+
+			"** Off: %d%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		hsUsageSummary.HostSystem.Name,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		CPUSpeed(hsUsageSummary.CPUUsed),
+		hsUsageSummary.CPUUsedPercent,
+		nagios.CheckOutputEOL,
+		CPUSpeed(vmsCPUUsage),
+		vmsCPUUsedPercentOfHost,
+		nagios.CheckOutputEOL,
+		CPUSpeed(hsUsageSummary.CPURemaining),
+		hsUsageSummary.CPURemainingPercent,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		len(hsVMs),
+		nagios.CheckOutputEOL,
+		vmsPoweredOn,
+		nagios.CheckOutputEOL,
+		vmsPoweredOff,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"%sVMs on host consuming CPU (descending order):%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	sort.Slice(hsVMs, func(i, j int) bool {
+		return hsVMs[i].Summary.QuickStats.OverallCpuUsage > hsVMs[j].Summary.QuickStats.OverallCpuUsage
+	})
+
+	for _, vm := range hsVMs {
+		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
+			hostCPUUsed := int64(vm.Summary.QuickStats.OverallCpuUsage) * MHz
+			vmPercentOfHostCPUUsed := (float64(hostCPUUsed) / float64(hsUsageSummary.CPUTotal)) * 100
+			fmt.Fprintf(
+				&report,
+				"* %s (CPU: %s, Host CPU Usage: %2.2f%%)%s",
+				vm.Name,
+				CPUSpeed(hostCPUUsed),
+				vmPercentOfHostCPUUsed,
+				nagios.CheckOutputEOL,
+			)
+		}
+	}
+
+	if vmsPoweredOn == 0 {
+		fmt.Fprintf(
+			&report,
+			"* None (visible)%s",
+			nagios.CheckOutputEOL,
+		)
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%sVMs on host not consuming CPU:%s%s",
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
