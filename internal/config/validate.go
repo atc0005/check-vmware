@@ -104,6 +104,34 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+	case pluginType.VirtualMachinePowerCycleUptime:
+
+		if c.VMPowerCycleUptimeWarning < 0 {
+			return fmt.Errorf(
+				"invalid VM power cycle uptime WARNING threshold number: %d",
+				c.VMPowerCycleUptimeWarning,
+			)
+		}
+
+		if c.VMPowerCycleUptimeCritical < 0 {
+			return fmt.Errorf(
+				"invalid VM power cycle uptime CRITICAL threshold number: %d",
+				c.VMPowerCycleUptimeCritical,
+			)
+		}
+
+		if c.VMPowerCycleUptimeCritical < c.VMPowerCycleUptimeWarning {
+			return fmt.Errorf(
+				"critical threshold set lower than warning threshold",
+			)
+		}
+
+		if c.VMPowerCycleUptimeCritical == c.VMPowerCycleUptimeWarning {
+			return fmt.Errorf(
+				"critical threshold set equal to warning threshold",
+			)
+		}
+
 	case pluginType.DatastoresSize:
 
 		if c.DatastoreName == "" {

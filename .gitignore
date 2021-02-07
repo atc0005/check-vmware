@@ -27,3 +27,4 @@ scratch/
 /check_vmware_rps_memory
 /check_vmware_host_memory
 /check_vmware_host_cpu
+/check_vmware_vm_power_uptime

@@ -125,6 +125,9 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 	case pluginType.HostSystemCPU:
 		appDescription = PluginTypeHostSystemCPU
 
+	case pluginType.VirtualMachinePowerCycleUptime:
+		appDescription = PluginTypeVirtualMachinePowerCycleUptime
+
 	case pluginType.Tools:
 		appDescription = PluginTypeTools
 

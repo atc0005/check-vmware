@@ -40,6 +40,8 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Host CPU usage
 
+• Virtual Machine (power cycle) uptime
+
 USAGE
 
 See our main README for supported settings and examples.
