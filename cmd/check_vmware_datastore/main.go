@@ -213,8 +213,8 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
 			c.Client,
-			dsUsage,
 			dsVMs,
+			dsUsage,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
@@ -239,8 +239,8 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
 			c.Client,
-			dsUsage,
 			dsVMs,
+			dsUsage,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
@@ -258,8 +258,8 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
 			c.Client,
-			dsUsage,
 			dsVMs,
+			dsUsage,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode

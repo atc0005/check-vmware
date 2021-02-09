@@ -570,8 +570,8 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.H2D2VMsOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
-			vmDatastoresPairingIssues,
 			filteredVMs,
+			vmDatastoresPairingIssues,
 			resourcePools,
 		)
 
@@ -610,8 +610,8 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.H2D2VMsOneLineCheckSummary(
 			nagios.StateOKLabel,
-			vmDatastoresPairingIssues,
 			filteredVMs,
+			vmDatastoresPairingIssues,
 			resourcePools,
 		)
 

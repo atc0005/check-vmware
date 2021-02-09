@@ -370,8 +370,8 @@ func GetHostSystemsTotalMemory(ctx context.Context, c *vim25.Client, excludeOffl
 // notifications.
 func HostSystemMemoryUsageOneLineCheckSummary(
 	stateLabel string,
-	hsUsageSummary HostSystemMemorySummary,
 	hsVMs []mo.VirtualMachine,
+	hsUsageSummary HostSystemMemorySummary,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -422,8 +422,8 @@ func HostSystemMemoryUsageOneLineCheckSummary(
 // results display in the web UI or in the body of many notifications.
 func HostSystemMemoryUsageReport(
 	c *vim25.Client,
-	hsUsageSummary HostSystemMemorySummary,
 	hsVMs []mo.VirtualMachine,
+	hsUsageSummary HostSystemMemorySummary,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -580,8 +580,8 @@ func HostSystemMemoryUsageReport(
 // notifications.
 func HostSystemCPUUsageOneLineCheckSummary(
 	stateLabel string,
-	hsUsageSummary HostSystemCPUSummary,
 	hsVMs []mo.VirtualMachine,
+	hsUsageSummary HostSystemCPUSummary,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -630,8 +630,8 @@ func HostSystemCPUUsageOneLineCheckSummary(
 // results display in the web UI or in the body of many notifications.
 func HostSystemCPUUsageReport(
 	c *vim25.Client,
-	hsUsageSummary HostSystemCPUSummary,
 	hsVMs []mo.VirtualMachine,
+	hsUsageSummary HostSystemCPUSummary,
 ) string {
 
 	funcTimeStart := time.Now()

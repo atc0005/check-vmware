@@ -368,8 +368,8 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 // check results summary. This is the line most prominent in notifications.
 func H2D2VMsOneLineCheckSummary(
 	stateLabel string,
-	vmDatastoresPairingIssues VMToMismatchedDatastoreNames,
 	evaluatedVMs []mo.VirtualMachine,
+	vmDatastoresPairingIssues VMToMismatchedDatastoreNames,
 	rps []mo.ResourcePool,
 ) string {
 

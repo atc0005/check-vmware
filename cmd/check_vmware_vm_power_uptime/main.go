@@ -237,8 +237,8 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.VMPowerCycleUptimeOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
-			uptimeSummary,
 			filteredVMs,
+			uptimeSummary,
 			resourcePools,
 		)
 
@@ -268,8 +268,8 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.VMPowerCycleUptimeOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
-			uptimeSummary,
 			filteredVMs,
+			uptimeSummary,
 			resourcePools,
 		)
 
@@ -299,8 +299,8 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.VMPowerCycleUptimeOneLineCheckSummary(
 			nagios.StateOKLabel,
-			uptimeSummary,
 			filteredVMs,
+			uptimeSummary,
 			resourcePools,
 		)
 
