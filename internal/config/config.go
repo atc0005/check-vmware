@@ -32,17 +32,18 @@ var ErrVersionRequested = errors.New("version information requested")
 // the plugin types are incompatible with each other, though some flags are
 // common to all types.
 type PluginType struct {
-	Tools                  bool
-	SnapshotsAge           bool
-	SnapshotsCount         bool
-	SnapshotsSize          bool
-	DatastoresSize         bool
-	ResourcePoolsMemory    bool
-	VirtualCPUsAllocation  bool
-	VirtualHardwareVersion bool
-	Host2Datastores2VMs    bool
-	HostSystemMemory       bool
-	HostSystemCPU          bool
+	Tools                          bool
+	SnapshotsAge                   bool
+	SnapshotsCount                 bool
+	SnapshotsSize                  bool
+	DatastoresSize                 bool
+	ResourcePoolsMemory            bool
+	VirtualCPUsAllocation          bool
+	VirtualHardwareVersion         bool
+	Host2Datastores2VMs            bool
+	HostSystemMemory               bool
+	HostSystemCPU                  bool
+	VirtualMachinePowerCycleUptime bool
 
 	// TODO:
 	// - vCenter/server time (NTP)
@@ -250,6 +251,14 @@ type Config struct {
 	// SnapshotsCountCritical specifies the number of snapshots per VM when a
 	// CRITICAL threshold is reached.
 	SnapshotsCountCritical int
+
+	// VMPowerCycleUptimeWarning specifies the power cycle (off/on) uptime in
+	// days per VM when a WARNING threshold is reached.
+	VMPowerCycleUptimeWarning int
+
+	// VMPowerCycleUptimeCritical specifies the power cycle (off/on) uptime in
+	// days per VM when a CRITICAL threshold is reached.
+	VMPowerCycleUptimeCritical int
 
 	// IgnoreMissingCustomAttribute indicates whether a host or datastore
 	// missing the specified Custom Attribute should be ignored.

@@ -54,6 +54,8 @@ const (
 	hostSystemNameFlagHelp                          string = "ESXi host/server name as it is found within the vSphere inventory."
 	hostSystemCPUUseCriticalFlagHelp                string = "Specifies the percentage of CPU use (as a whole number) when a CRITICAL threshold is reached."
 	hostSystemCPUUseWarningFlagHelp                 string = "Specifies the percentage of CPU use (as a whole number) when a WARNING threshold is reached."
+	vmPowerCycleUptimeCriticalFlagHelp              string = "Specifies the power cycle (off/on) uptime in days per VM when a CRITICAL threshold is reached."
+	vmPowerCycleUptimeWarningFlagHelp               string = "Specifies the power cycle (off/on) uptime in days per VM when a WARNING threshold is reached."
 )
 
 // Default flag settings if not overridden by user input
@@ -82,6 +84,8 @@ const (
 	defaultSnapshotsSizeCritical        int    = 40 // size in GB
 	defaultSnapshotsSizeWarning         int    = 20 // size in GB
 	defaultHostSystemName               string = ""
+	defaultVMPowerCycleUptimeCritical   int    = 90
+	defaultVMPowerCycleUptimeWarning    int    = 60
 
 	// default memory usage values for Resource Pools and ESXi Host systems
 	defaultMemoryUseCritical int = 95
@@ -123,14 +127,15 @@ const (
 
 // Plugin types provided by this project.
 const (
-	PluginTypeTools                    string = "vmware-tools"
-	PluginTypeSnapshotsAge             string = "snapshots-age"
-	PluginTypeSnapshotsCount           string = "snapshots-count"
-	PluginTypeSnapshotsSize            string = "snapshots-size"
-	PluginTypeDatastoresSize           string = "datastore-size"
-	PluginTypeResourcePoolsMemory      string = "resource-pools-memory"
-	PluginTypeVirtualCPUsAllocation    string = "virtual-cpus-allocation"
-	PluginTypeHostDatastoreVMsPairings string = "host-to-ds-to-vms"
-	PluginTypeHostSystemMemory         string = "host-system-memory"
-	PluginTypeHostSystemCPU            string = "host-system-cpu"
+	PluginTypeTools                          string = "vmware-tools"
+	PluginTypeSnapshotsAge                   string = "snapshots-age"
+	PluginTypeSnapshotsCount                 string = "snapshots-count"
+	PluginTypeSnapshotsSize                  string = "snapshots-size"
+	PluginTypeDatastoresSize                 string = "datastore-size"
+	PluginTypeResourcePoolsMemory            string = "resource-pools-memory"
+	PluginTypeVirtualCPUsAllocation          string = "virtual-cpus-allocation"
+	PluginTypeHostDatastoreVMsPairings       string = "host-to-ds-to-vms"
+	PluginTypeHostSystemMemory               string = "host-system-memory"
+	PluginTypeHostSystemCPU                  string = "host-system-cpu"
+	PluginTypeVirtualMachinePowerCycleUptime string = "vm-power-uptime"
 )

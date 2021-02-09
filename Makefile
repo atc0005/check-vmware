@@ -34,6 +34,7 @@ WHAT 					= check_vmware_tools \
 							check_vmware_rps_memory \
 							check_vmware_host_memory \
 							check_vmware_host_cpu \
+							check_vmware_vm_power_uptime \
 
 
 # What package holds the "version" variable used in branding/version output?

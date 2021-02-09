@@ -9,16 +9,50 @@ package vsphere
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/atc0005/check-vmware/internal/textutils"
+	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 )
+
+// ErrVirtualMachinePowerCycleUptimeThresholdCrossed indicates that specified
+// Virtual Machine power cycle thresholds have been exceeeded.
+var ErrVirtualMachinePowerCycleUptimeThresholdCrossed = errors.New("power cycle uptime exceeds specified threshold")
+
+// VirtualMachinePowerCycleUptimeStatus tracks VirtualMachines with power
+// cycle uptimes that exceed specified thresholds.
+type VirtualMachinePowerCycleUptimeStatus struct {
+	VMsCritical       []mo.VirtualMachine
+	VMsWarning        []mo.VirtualMachine
+	WarningThreshold  int
+	CriticalThreshold int
+}
+
+// VMNames returns a list of sorted VirtualMachine names which have exceeded
+// specified power cycle uptime thresholds.
+func (vpcs VirtualMachinePowerCycleUptimeStatus) VMNames() string {
+	vmNames := make([]string, 0, len(vpcs.VMsCritical)+len(vpcs.VMsWarning))
+
+	for _, vm := range vpcs.VMsWarning {
+		vmNames = append(vmNames, vm.Name)
+	}
+	for _, vm := range vpcs.VMsCritical {
+		vmNames = append(vmNames, vm.Name)
+	}
+
+	sort.Slice(vmNames, func(i, j int) bool {
+		return strings.ToLower(vmNames[i]) < strings.ToLower(vmNames[j])
+	})
+
+	return strings.Join(vmNames, ", ")
+}
 
 // GetVMs accepts a context, a connected client and a boolean value indicating
 // whether a subset of properties per VirtualMachine are retrieved. If
@@ -323,6 +357,40 @@ func FilterVMsByPowerState(vms []mo.VirtualMachine, includePoweredOff bool) []mo
 
 }
 
+// FilterVMsByPowerCycleUptime filters the provided collection of
+// VirtualMachines to just those with WARNING or CRITICAL values based on
+// provided thresholds.
+func FilterVMsByPowerCycleUptime(vms []mo.VirtualMachine, warningThreshold int, criticalThreshold int) []mo.VirtualMachine {
+
+	// setup early so we can reference it from deferred stats output
+	var vmsWithIssues []mo.VirtualMachine
+
+	funcTimeStart := time.Now()
+
+	defer func(vms []mo.VirtualMachine, filteredVMs *[]mo.VirtualMachine) {
+		logger.Printf(
+			"It took %v to execute FilterVMsByPowerCycleUptime func (for %d VMs, yielding %d VMs).\n",
+			time.Since(funcTimeStart),
+			len(vms),
+			len(*filteredVMs),
+		)
+	}(vms, &vmsWithIssues)
+
+	for _, vm := range vms {
+		uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
+		uptimeDays := uptime.Hours() / 24
+
+		// compare against the WARNING threshold as that will net VMs with
+		// CRITICAL state as well.
+		if uptimeDays > float64(warningThreshold) {
+			vmsWithIssues = append(vmsWithIssues, vm)
+		}
+	}
+
+	return vmsWithIssues
+
+}
+
 // dedupeVMs receives a list of VirtualMachine values potentially containing
 // one or more duplicate values and returns a new list of unique
 // VirtualMachine values.
@@ -353,4 +421,243 @@ func dedupeVMs(vmsList []mo.VirtualMachine) []mo.VirtualMachine {
 	}
 
 	return vmsList[:j]
+}
+
+// GetVMPowerCycleUptimeStatusSummary accepts a list of VirtualMachines and
+// threshold values and generates a collection of VirtualMachines that exceeds
+// given thresholds along with those given thresholds.
+func GetVMPowerCycleUptimeStatusSummary(
+	vms []mo.VirtualMachine,
+	warningThreshold int,
+	criticalThreshold int,
+) VirtualMachinePowerCycleUptimeStatus {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute GetVMPowerCycleUptimeStatusSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	var vmsCritical []mo.VirtualMachine
+	var vmsWarning []mo.VirtualMachine
+
+	for _, vm := range vms {
+
+		uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
+		uptimeDays := uptime.Hours() / 24
+
+		switch {
+		case uptimeDays > float64(criticalThreshold):
+			vmsCritical = append(vmsCritical, vm)
+
+		case uptimeDays > float64(warningThreshold):
+			vmsWarning = append(vmsWarning, vm)
+
+		}
+
+	}
+
+	return VirtualMachinePowerCycleUptimeStatus{
+		VMsCritical:       vmsCritical,
+		VMsWarning:        vmsWarning,
+		WarningThreshold:  warningThreshold,
+		CriticalThreshold: criticalThreshold,
+	}
+
+}
+
+// VMPowerCycleUptimeOneLineCheckSummary is used to generate a one-line Nagios
+// service check results summary. This is the line most prominent in
+// notifications.
+func VMPowerCycleUptimeOneLineCheckSummary(
+	stateLabel string,
+	uptimeSummary VirtualMachinePowerCycleUptimeStatus,
+	evaluatedVMs []mo.VirtualMachine,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VMPowerCycleUptimeOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	switch {
+	case len(uptimeSummary.VMsCritical) > 0:
+		return fmt.Sprintf(
+			"%s: %d VMs with power cycle uptime exceeding %d days detected (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			len(uptimeSummary.VMsCritical),
+			uptimeSummary.CriticalThreshold,
+			len(evaluatedVMs),
+			len(rps),
+		)
+
+	case len(uptimeSummary.VMsWarning) > 0:
+		return fmt.Sprintf(
+			"%s: %d VMs with power cycle uptime exceeding %d days detected (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			len(uptimeSummary.VMsWarning),
+			uptimeSummary.WarningThreshold,
+			len(evaluatedVMs),
+			len(rps),
+		)
+
+	default:
+
+		return fmt.Sprintf(
+			"%s: No VMs with power cycle uptime exceeding %d days detected (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			uptimeSummary.WarningThreshold,
+			len(evaluatedVMs),
+			len(rps),
+		)
+	}
+}
+
+// VMPowerCycleUptimeReport generates a summary of VMs which exceed power
+// cycle uptime thresholds along with various verbose details intended to aid
+// in troubleshooting check results at a glance. This information is provided
+// for use with the Long Service Output field commonly displayed on the
+// detailed service check results display in the web UI or in the body of many
+// notifications.
+func VMPowerCycleUptimeReport(
+	c *vim25.Client,
+	allVMs []mo.VirtualMachine,
+	evaluatedVMs []mo.VirtualMachine,
+	uptimeSummary VirtualMachinePowerCycleUptimeStatus,
+	vmsToExclude []string,
+	evalPoweredOffVMs bool,
+	includeRPs []string,
+	excludeRPs []string,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VMPowerCycleUptimeReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	rpNames := make([]string, len(rps))
+	for i := range rps {
+		rpNames[i] = rps[i].Name
+	}
+
+	var report strings.Builder
+
+	fmt.Fprintf(
+		&report,
+		"VMs with high power cycle uptime:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	switch {
+	case len(uptimeSummary.VMsCritical) > 0 || len(uptimeSummary.VMsWarning) > 0:
+
+		vmsWithHighUptime := make(
+			[]mo.VirtualMachine,
+			0,
+			len(uptimeSummary.VMsCritical)+len(uptimeSummary.VMsWarning),
+		)
+
+		vmsWithHighUptime = append(vmsWithHighUptime, uptimeSummary.VMsWarning...)
+		vmsWithHighUptime = append(vmsWithHighUptime, uptimeSummary.VMsCritical...)
+
+		sort.Slice(vmsWithHighUptime, func(i, j int) bool {
+			return vmsWithHighUptime[i].Summary.QuickStats.UptimeSeconds > vmsWithHighUptime[j].Summary.QuickStats.UptimeSeconds
+		})
+
+		for _, vm := range vmsWithHighUptime {
+
+			uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
+			uptimeDays := uptime.Hours() / 24
+
+			fmt.Fprintf(
+				&report,
+				"* %s: %.2f days%s",
+				vm.Name,
+				uptimeDays,
+				nagios.CheckOutputEOL,
+			)
+		}
+	default:
+
+		fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
+
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* vSphere environment: %s%s",
+		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* VMs (evaluated: %d, total: %d)%s",
+		len(evaluatedVMs),
+		len(allVMs),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Powered off VMs evaluated: %t%s",
+		evalPoweredOffVMs,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified VMs to exclude (%d): [%v]%s",
+		len(vmsToExclude),
+		strings.Join(vmsToExclude, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
+		len(includeRPs),
+		strings.Join(includeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
+		len(excludeRPs),
+		strings.Join(excludeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Resource Pools evaluated (%d): [%v]%s",
+		len(rpNames),
+		strings.Join(rpNames, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	return report.String()
 }
