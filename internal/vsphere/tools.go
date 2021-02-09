@@ -106,7 +106,12 @@ func FilterVMsWithToolsIssues(vms []mo.VirtualMachine) []mo.VirtualMachine {
 
 // VMToolsOneLineCheckSummary is used to generate a one-line Nagios service
 // check results summary. This is the line most prominent in notifications.
-func VMToolsOneLineCheckSummary(stateLabel string, vmsWithIssues []mo.VirtualMachine, evaluatedVMs []mo.VirtualMachine, rps []mo.ResourcePool) string {
+func VMToolsOneLineCheckSummary(
+	stateLabel string,
+	evaluatedVMs []mo.VirtualMachine,
+	vmsWithIssues []mo.VirtualMachine,
+	rps []mo.ResourcePool,
+) string {
 
 	funcTimeStart := time.Now()
 

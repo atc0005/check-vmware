@@ -474,8 +474,8 @@ func GetVMPowerCycleUptimeStatusSummary(
 // notifications.
 func VMPowerCycleUptimeOneLineCheckSummary(
 	stateLabel string,
-	uptimeSummary VirtualMachinePowerCycleUptimeStatus,
 	evaluatedVMs []mo.VirtualMachine,
+	uptimeSummary VirtualMachinePowerCycleUptimeStatus,
 	rps []mo.ResourcePool,
 ) string {
 

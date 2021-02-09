@@ -241,8 +241,8 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
 			hardwareVersionsIdx,
-			vmsWithOldHardware,
 			filteredVMs,
+			vmsWithOldHardware,
 			resourcePools,
 		)
 
@@ -272,8 +272,8 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 			nagios.StateOKLabel,
 			hardwareVersionsIdx,
-			vmsWithOldHardware,
 			filteredVMs,
+			vmsWithOldHardware,
 			resourcePools,
 		)
 

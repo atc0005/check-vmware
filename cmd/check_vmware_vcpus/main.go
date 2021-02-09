@@ -260,7 +260,8 @@ func main() {
 			nagios.StateCRITICALLabel,
 			vCPUsAllocated,
 			cfg.VCPUsMaxAllowed,
-			filteredVMs, resourcePools,
+			filteredVMs,
+			resourcePools,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.VirtualCPUsReport(
@@ -294,7 +295,8 @@ func main() {
 			nagios.StateWARNINGLabel,
 			vCPUsAllocated,
 			cfg.VCPUsMaxAllowed,
-			filteredVMs, resourcePools,
+			filteredVMs,
+			resourcePools,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.VirtualCPUsReport(
@@ -322,7 +324,8 @@ func main() {
 			nagios.StateOKLabel,
 			vCPUsAllocated,
 			cfg.VCPUsMaxAllowed,
-			filteredVMs, resourcePools,
+			filteredVMs,
+			resourcePools,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.VirtualCPUsReport(

@@ -265,8 +265,8 @@ func DatastoreUsageOneLineCheckSummary(
 // the web UI or in the body of many notifications.
 func DatastoreUsageReport(
 	c *vim25.Client,
-	dsUsageSummary DatastoreUsageSummary,
 	dsVMs []mo.VirtualMachine,
+	dsUsageSummary DatastoreUsageSummary,
 ) string {
 
 	funcTimeStart := time.Now()

@@ -227,8 +227,8 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.VMToolsOneLineCheckSummary(
 			stateLabel,
-			vmsWithIssues,
 			filteredVMs,
+			vmsWithIssues,
 			resourcePools,
 		)
 
@@ -261,8 +261,8 @@ func main() {
 
 	nagiosExitState.ServiceOutput = vsphere.VMToolsOneLineCheckSummary(
 		nagios.StateOKLabel,
-		vmsWithIssues,
 		filteredVMs,
+		vmsWithIssues,
 		resourcePools,
 	)
 

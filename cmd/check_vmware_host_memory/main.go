@@ -205,14 +205,14 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.HostSystemMemoryUsageReport(
 			c.Client,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
@@ -232,14 +232,14 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.HostSystemMemoryUsageReport(
 			c.Client,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
@@ -254,14 +254,14 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
 			nagios.StateOKLabel,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.HostSystemMemoryUsageReport(
 			c.Client,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode

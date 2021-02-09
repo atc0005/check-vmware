@@ -244,8 +244,8 @@ func FilterVMsWithOldHardware(vms []mo.VirtualMachine, hwIndex HardwareVersionsI
 func VirtualHardwareOneLineCheckSummary(
 	stateLabel string,
 	hwvIndex HardwareVersionsIndex,
-	vmsWithIssues []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
+	vmsWithIssues []mo.VirtualMachine,
 	rps []mo.ResourcePool,
 ) string {
 

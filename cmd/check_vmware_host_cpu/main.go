@@ -204,14 +204,14 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.HostSystemCPUUsageOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.HostSystemCPUUsageReport(
 			c.Client,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
@@ -231,14 +231,14 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.HostSystemCPUUsageOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.HostSystemCPUUsageReport(
 			c.Client,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
@@ -253,14 +253,14 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.HostSystemCPUUsageOneLineCheckSummary(
 			nagios.StateOKLabel,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.HostSystemCPUUsageReport(
 			c.Client,
-			hsUsage,
 			hsVMs,
+			hsUsage,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
