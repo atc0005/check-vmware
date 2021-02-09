@@ -26,6 +26,22 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.10.0] - 2021-02-09
+
+### Overview
+
+- New plugin
+- Misc tweaks
+- built using Go 1.15.8
+
+### Added
+
+- New plugin: `check_vmware_vm_power_uptime`
+
+### Changed
+
+- minor refactor of summary and report functions
+
 ## [v0.9.0] - 2021-02-07
 
 ### Overview
@@ -367,7 +383,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.10.0...HEAD
+[v0.10.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.10.0
 [v0.9.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.9.0
 [v0.8.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.8.0
 [v0.7.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.7.0
