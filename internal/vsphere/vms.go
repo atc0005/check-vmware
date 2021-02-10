@@ -595,6 +595,36 @@ func VMPowerCycleUptimeReport(
 
 		fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
 
+		fmt.Fprintf(
+			&report,
+			"%sTop 10 VMs, not yet exceeding power cycle uptime thresholds:%s%s",
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+		)
+
+		sort.Slice(evaluatedVMs, func(i, j int) bool {
+			return evaluatedVMs[i].Summary.QuickStats.UptimeSeconds > evaluatedVMs[j].Summary.QuickStats.UptimeSeconds
+		})
+
+		sampleStop := len(evaluatedVMs)
+		if len(evaluatedVMs) > 10 {
+			sampleStop = 10
+		}
+		for _, vm := range evaluatedVMs[:sampleStop] {
+
+			uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
+			uptimeDays := uptime.Hours() / 24
+
+			fmt.Fprintf(
+				&report,
+				"* %s: %.2f days%s",
+				vm.Name,
+				uptimeDays,
+				nagios.CheckOutputEOL,
+			)
+		}
+
 	}
 
 	fmt.Fprintf(
