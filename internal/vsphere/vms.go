@@ -27,16 +27,19 @@ import (
 var ErrVirtualMachinePowerCycleUptimeThresholdCrossed = errors.New("power cycle uptime exceeds specified threshold")
 
 // VirtualMachinePowerCycleUptimeStatus tracks VirtualMachines with power
-// cycle uptimes that exceed specified thresholds.
+// cycle uptimes that exceed specified thresholds while retaining a list of
+// the VirtualMachines that have yet to exceed thresholds.
 type VirtualMachinePowerCycleUptimeStatus struct {
 	VMsCritical       []mo.VirtualMachine
 	VMsWarning        []mo.VirtualMachine
+	VMsOK             []mo.VirtualMachine
 	WarningThreshold  int
 	CriticalThreshold int
 }
 
 // VMNames returns a list of sorted VirtualMachine names which have exceeded
-// specified power cycle uptime thresholds.
+// specified power cycle uptime thresholds. VirtualMachines which have yet to
+// exceed specified thresholds are not listed.
 func (vpcs VirtualMachinePowerCycleUptimeStatus) VMNames() string {
 	vmNames := make([]string, 0, len(vpcs.VMsCritical)+len(vpcs.VMsWarning))
 
@@ -52,6 +55,28 @@ func (vpcs VirtualMachinePowerCycleUptimeStatus) VMNames() string {
 	})
 
 	return strings.Join(vmNames, ", ")
+}
+
+// TopTenOK is a helper method that returns at most ten VMs with the highest
+// power cycle uptime values that have yet to exceed specified thresholds.
+func (vpcs VirtualMachinePowerCycleUptimeStatus) TopTenOK() []mo.VirtualMachine {
+
+	// sort before we sample the VMs so that we only get the ones with highest
+	// power cycle uptime
+	sort.Slice(vpcs.VMsOK, func(i, j int) bool {
+		return vpcs.VMsOK[i].Summary.QuickStats.UptimeSeconds > vpcs.VMsOK[j].Summary.QuickStats.UptimeSeconds
+	})
+
+	sampleSize := len(vpcs.VMsOK)
+	if len(vpcs.VMsOK) > 10 {
+		sampleSize = 10
+	}
+
+	topTen := make([]mo.VirtualMachine, 0, sampleSize)
+	topTen = append(topTen, vpcs.VMsOK[:sampleSize]...)
+
+	return topTen
+
 }
 
 // GetVMs accepts a context, a connected client and a boolean value indicating
@@ -443,6 +468,7 @@ func GetVMPowerCycleUptimeStatusSummary(
 
 	var vmsCritical []mo.VirtualMachine
 	var vmsWarning []mo.VirtualMachine
+	var vmsOK []mo.VirtualMachine
 
 	for _, vm := range vms {
 
@@ -456,6 +482,9 @@ func GetVMPowerCycleUptimeStatusSummary(
 		case uptimeDays > float64(warningThreshold):
 			vmsWarning = append(vmsWarning, vm)
 
+		default:
+			vmsOK = append(vmsOK, vm)
+
 		}
 
 	}
@@ -463,6 +492,7 @@ func GetVMPowerCycleUptimeStatusSummary(
 	return VirtualMachinePowerCycleUptimeStatus{
 		VMsCritical:       vmsCritical,
 		VMsWarning:        vmsWarning,
+		VMsOK:             vmsOK,
 		WarningThreshold:  warningThreshold,
 		CriticalThreshold: criticalThreshold,
 	}
@@ -603,16 +633,8 @@ func VMPowerCycleUptimeReport(
 			nagios.CheckOutputEOL,
 		)
 
-		sort.Slice(evaluatedVMs, func(i, j int) bool {
-			return evaluatedVMs[i].Summary.QuickStats.UptimeSeconds > evaluatedVMs[j].Summary.QuickStats.UptimeSeconds
-		})
-
-		sampleStop := len(evaluatedVMs)
-		if len(evaluatedVMs) > 10 {
-			sampleStop = 10
-		}
-		for _, vm := range evaluatedVMs[:sampleStop] {
-
+		topTen := uptimeSummary.TopTenOK()
+		for _, vm := range topTen {
 			uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
 			uptimeDays := uptime.Hours() / 24
 
