@@ -212,15 +212,9 @@ func main() {
 
 	// here we diverge from other plugins
 
-	log.Debug().Msg("Filter VMs to those which cross power cycle uptime thresholds")
-	vmsWithHighUptime := vsphere.FilterVMsByPowerCycleUptime(
-		filteredVMs,
-		cfg.VMPowerCycleUptimeWarning,
-		cfg.VMPowerCycleUptimeCritical,
-	)
-
+	log.Debug().Msg("Generate VM power cycle uptime summary")
 	uptimeSummary := vsphere.GetVMPowerCycleUptimeStatusSummary(
-		vmsWithHighUptime,
+		filteredVMs,
 		cfg.VMPowerCycleUptimeWarning,
 		cfg.VMPowerCycleUptimeCritical,
 	)
