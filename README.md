@@ -21,6 +21,9 @@ or endorsed by VMware, Inc.
     - [`check_vmware_tools`](#check_vmware_tools)
     - [`check_vmware_vcpus`](#check_vmware_vcpus)
     - [`check_vmware_vhw`](#check_vmware_vhw)
+      - [Homogeneous version check](#homogeneous-version-check)
+      - [Outdated-by or threshold range check](#outdated-by-or-threshold-range-check)
+      - [Minimum required version check](#minimum-required-version-check)
     - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms)
     - [`check_vmware_datastore`](#check_vmware_datastore)
     - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age)
@@ -41,6 +44,9 @@ or endorsed by VMware, Inc.
       - [`check_vmware_tools`](#check_vmware_tools-1)
       - [`check_vmware_vcpus`](#check_vmware_vcpus-1)
       - [`check_vmware_vhw`](#check_vmware_vhw-1)
+        - [Homogeneous version check](#homogeneous-version-check-1)
+        - [Outdated-by or threshold range check](#outdated-by-or-threshold-range-check-1)
+        - [Minimum required version check](#minimum-required-version-check-1)
       - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-1)
       - [`check_vmware_datastore`](#check_vmware_datastore-1)
       - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age-1)
@@ -73,35 +79,42 @@ or endorsed by VMware, Inc.
       - [CLI invocation](#cli-invocation-1)
       - [Command definition](#command-definition-1)
     - [`check_vmware_vhw` Nagios plugin](#check_vmware_vhw-nagios-plugin)
-      - [CLI invocation](#cli-invocation-2)
-      - [Command definition](#command-definition-2)
+      - [Homogeneous version check](#homogeneous-version-check-2)
+        - [CLI invocation](#cli-invocation-2)
+        - [Command definition](#command-definition-2)
+      - [Outdated-by or threshold range check](#outdated-by-or-threshold-range-check-2)
+        - [CLI invocation](#cli-invocation-3)
+        - [Command definition](#command-definition-3)
+      - [Minimum required version check](#minimum-required-version-check-2)
+        - [CLI invocation](#cli-invocation-4)
+        - [Command definition](#command-definition-4)
     - [`check_vmware_hs2ds2vms` Nagios plugin](#check_vmware_hs2ds2vms-nagios-plugin)
-      - [CLI invocation](#cli-invocation-3)
-      - [Command definition](#command-definition-3)
-    - [`check_vmware_datastore` Nagios plugin](#check_vmware_datastore-nagios-plugin)
-      - [CLI invocation](#cli-invocation-4)
-      - [Command definition](#command-definition-4)
-    - [`check_vmware_snapshots_age` Nagios plugin](#check_vmware_snapshots_age-nagios-plugin)
       - [CLI invocation](#cli-invocation-5)
       - [Command definition](#command-definition-5)
-    - [`check_vmware_snapshots_count` Nagios plugin](#check_vmware_snapshots_count-nagios-plugin)
+    - [`check_vmware_datastore` Nagios plugin](#check_vmware_datastore-nagios-plugin)
       - [CLI invocation](#cli-invocation-6)
       - [Command definition](#command-definition-6)
-    - [`check_vmware_snapshots_size` Nagios plugin](#check_vmware_snapshots_size-nagios-plugin)
+    - [`check_vmware_snapshots_age` Nagios plugin](#check_vmware_snapshots_age-nagios-plugin)
       - [CLI invocation](#cli-invocation-7)
       - [Command definition](#command-definition-7)
-    - [`check_vmware_rps_memory` Nagios plugin](#check_vmware_rps_memory-nagios-plugin)
+    - [`check_vmware_snapshots_count` Nagios plugin](#check_vmware_snapshots_count-nagios-plugin)
       - [CLI invocation](#cli-invocation-8)
       - [Command definition](#command-definition-8)
-    - [`check_vmware_host_memory` Nagios plugin](#check_vmware_host_memory-nagios-plugin)
+    - [`check_vmware_snapshots_size` Nagios plugin](#check_vmware_snapshots_size-nagios-plugin)
       - [CLI invocation](#cli-invocation-9)
       - [Command definition](#command-definition-9)
-    - [`check_vmware_host_cpu` Nagios plugin](#check_vmware_host_cpu-nagios-plugin)
+    - [`check_vmware_rps_memory` Nagios plugin](#check_vmware_rps_memory-nagios-plugin)
       - [CLI invocation](#cli-invocation-10)
       - [Command definition](#command-definition-10)
-    - [`check_vmware_vm_power_uptime` Nagios plugin](#check_vmware_vm_power_uptime-nagios-plugin)
+    - [`check_vmware_host_memory` Nagios plugin](#check_vmware_host_memory-nagios-plugin)
       - [CLI invocation](#cli-invocation-11)
       - [Command definition](#command-definition-11)
+    - [`check_vmware_host_cpu` Nagios plugin](#check_vmware_host_cpu-nagios-plugin)
+      - [CLI invocation](#cli-invocation-12)
+      - [Command definition](#command-definition-12)
+    - [`check_vmware_vm_power_uptime` Nagios plugin](#check_vmware_vm_power_uptime-nagios-plugin)
+      - [CLI invocation](#cli-invocation-13)
+      - [Command definition](#command-definition-13)
   - [License](#license)
   - [References](#references)
 
@@ -161,17 +174,47 @@ but Max vCPUs allocation is required before this plugin can be used. See the
 
 Nagios plugin used to monitor virtual hardware versions.
 
-As of this writing, I am unaware of a way to query the current vSphere
-environment for the latest available hardware version. As a workaround for
-that lack of knowledge, this plugin applies an automatic baseline of "highest
-version discovered" across evaluated VMs. Any VMs with a hardware version not
-at that highest version are flagged as problematic. Please file an issue or
-open a discussion in this project's repo if you're aware of a way to directly
-query the desired value from the current vSphere environment.
+This plugin supports three monitoring modes:
+
+1. Homogeneous version check
+1. Minimum required version check
+1. Outdated-by or threshold range check
+
+#### Homogeneous version check
+
+As of this writing, I have yet to figure out how to implement support for
+querying the current vSphere environment for the latest available hardware
+version. [GH-130](https://github.com/atc0005/check-vmware/issues/130) is
+intended to add that support.
+
+As a workaround for that lack of support, this monitoring mode applies an
+automatic baseline of "highest version discovered" across evaluated VMs. Any
+VMs with a hardware version not at that highest version are flagged as
+problematic.
 
 Instead of trying to determine how far behind each VM is from the newest
-version, this plugin assumes that any deviation is a `WARNING` level issue.
-See GH-33 for future potential changes to this behavior.
+version, this monitoring mode assumes that any deviation is a `WARNING` state.
+
+#### Outdated-by or threshold range check
+
+This mode was implemented as part of
+[GH-33](https://github.com/atc0005/check-vmware/issues/33) and applies the
+standard WARNING and CRITICAL level threshold checks to determine the current
+plugin state. Any VM with virtual hardware older than the specified thresholds
+triggers the associated state. This mode is useful for catching VMs with
+outdated hardware outside of an acceptable range.
+
+The highest version used as a baseline for comparison is provided using the
+same logic as provided by the "homogeneous" version check: latest visible
+hardware version.
+
+#### Minimum required version check
+
+This mode was implemented as part of
+[GH-33](https://github.com/atc0005/check-vmware/issues/33) and requires that
+all hardware versions match or exceed the specified minimum hardware version.
+This monitoring mode assumes that any deviation is considered a `CRITICAL`
+state.
 
 ### `check_vmware_hs2ds2vms`
 
@@ -334,7 +377,10 @@ options](#configuration-options) section for details.
   hosts or vCenter instances) for select (or all) Resource Pools.
   - VMware Tools
   - Virtual CPU allocations
-  - Virtual hardware versions
+  - Virtual hardware versions (multiple modes)
+    - homogeneous version check
+    - outdated-by or threshold range check
+    - minimum required version check
   - Host/Datastore/Virtual Machine pairings (using provided Custom Attribute)
   - Datastore usage
   - Snapshots age
@@ -478,11 +524,32 @@ been tested.
 
 #### `check_vmware_vhw`
 
+This plugin supports multiple modes. Each mode applies slightly different
+logic for determining plugin state.
+
+##### Homogeneous version check
+
 | Nagios State | Description                                |
 | ------------ | ------------------------------------------ |
 | `OK`         | Ideal state, homogenous hardware versions. |
 | `WARNING`    | Non-homogenous hardware versions.          |
-| `CRITICAL`   | Not used by this plugin.                   |
+| `CRITICAL`   | Not used by this monitoring mode.          |
+
+##### Outdated-by or threshold range check
+
+| Nagios State | Description                                                        |
+| ------------ | ------------------------------------------------------------------ |
+| `OK`         | Ideal state, hardware versions within tolerance.                   |
+| `WARNING`    | Hardware versions crossed user-specified threshold for this state. |
+| `CRITICAL`   | Hardware versions crossed user-specified threshold for this state. |
+
+##### Minimum required version check
+
+| Nagios State | Description                                                       |
+| ------------ | ----------------------------------------------------------------- |
+| `OK`         | Ideal state, hardware versions within tolerance.                  |
+| `WARNING`    | Not used by this monitoring mode.                                 |
+| `CRITICAL`   | Hardware versions older than the minimum specified value present. |
 
 #### `check_vmware_hs2ds2vms`
 
@@ -608,23 +675,31 @@ been tested.
 
 #### `check_vmware_vhw`
 
-| Flag              | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                |
-| ----------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `branding`        | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
-| `h`, `help`       | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
-| `v`, `version`    | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level` | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
-| `p`, `port`       | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
-| `t`, `timeout`    | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
-| `s`, `server`     | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
-| `u`, `username`   | **Yes**  |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                                                                                                                                |
-| `pw`, `password`  | **Yes**  |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                                                                                                                                   |
-| `domain`          | No       |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                                                                                                                         |
-| `trust-cert`      | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                                                                                                                                      |
-| `include-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
-| `exclude-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                                                                                                                             |
-| `ignore-vm`       | No       |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                                                                                           |
-| `powered-off`     | No       | `false` | No     | `true`, `false`                                                         | Toggles evaluation of powered off VMs in addition to powered on VMs. Evaluation of powered off VMs is disabled by default.                                                                                                                                                                                                 |
+This plugin supports multiple monitoring modes. Each mode has options which
+are incompatible with the others. As of this writing these monitoring modes
+are *not* implemented as subcommands, though this may change in the future
+based on feedback.
+
+| Flag                          | Required  | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------------------------- | --------- | ------- | ------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `branding`                    | No        | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                                                                                          |
+| `h`, `help`                   | No        | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                                        |
+| `v`, `version`                | No        | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                                                 |
+| `ll`, `log-level`             | No        | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                                                     |
+| `p`, `port`                   | No        | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                                                                                            |
+| `t`, `timeout`                | No        | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                                                                                        |
+| `s`, `server`                 | **Yes**   |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                                                                                    |
+| `u`, `username`               | **Yes**   |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                                                                                                                                                                                                   |
+| `pw`, `password`              | **Yes**   |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                                                                                                                                                                                                      |
+| `domain`                      | No        |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                                                                                                                                                                                            |
+| `trust-cert`                  | No        | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                                                                                                                                                                                                         |
+| `include-rp`                  | No        |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation.                                                                    |
+| `exclude-rp`                  | No        |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                                                                                                                                                                                                |
+| `ignore-vm`                   | No        |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                                                                                                                                                              |
+| `powered-off`                 | No        | `false` | No     | `true`, `false`                                                         | Toggles evaluation of powered off VMs in addition to powered on VMs. Evaluation of powered off VMs is disabled by default.                                                                                                                                                                                                                                                                    |
+| `obw`, `outdated-by-warning`  | **Maybe** |         | No     | *positive whole number 1 or greater*                                    | If provided, this value is the WARNING threshold for outdated virtual hardware versions. If the current virtual hardware version for a VM is found to be more than this many versions older than the latest version a WARNING state is triggered. Required if specifying the CRITICAL threshold for outdated virtual hardware versions, incompatible with the minimum required version flag.  |
+| `obw`, `outdated-by-critical` | **Maybe** |         | No     | *positive whole number 1 or greater*                                    | If provided, this value is the CRITICAL threshold for outdated virtual hardware versions. If the current virtual hardware version for a VM is found to be more than this many versions older than the latest version a CRITICAL state is triggered. Required if specifying the WARNING threshold for outdated virtual hardware versions, incompatible with the minimum required version flag. |
+| `mv`, `minimum-version`       | **Maybe** |         | No     | *positive whole number greater than 3*                                  | If provided, this value is the minimum virtual hardware version accepted for each Virtual Machine. Any Virtual Machine not meeting this minimum value is considered to be in a CRITICAL state. Per [KB 1003746](https://kb.vmware.com/s/article/1003746), version 3 appears to be the oldest version supported. Incompatible with the CRITICAL and WARNING threshold flags.                   |
 
 #### `check_vmware_hs2ds2vms`
 
@@ -949,7 +1024,13 @@ command definitions and Nagios configuration files.
 
 ### `check_vmware_vhw` Nagios plugin
 
-#### CLI invocation
+This plugin supports three monitoring modes. Each is incompatible with the
+other, so an example is provided for each mode. See the [overview](#overview)
+section for further information.
+
+#### Homogeneous version check
+
+##### CLI invocation
 
 ```ShellSession
 /usr/lib/nagios/plugins/check_vmware_vhw --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --exclude-rp "Desktops" --ignore-vm "test1.example.com,redmine.example.com,TESTING-AC,RHEL7-TEST" --trust-cert --log-level info
@@ -962,6 +1043,7 @@ command definitions and Nagios configuration files.
 
 Of note:
 
+- This monitoring mode asserts that all hardware versions match.
 - The resource pool named `Desktops` is excluded from evaluation.
   - this results in *all other* resource pools visible to the specified user
     account being used for evaluation
@@ -981,7 +1063,7 @@ Of note:
   - this output is only seen (at least as of Nagios v3.x) when invoking the
     plugin directly via CLI (often for troubleshooting)
 
-#### Command definition
+##### Command definition
 
 ```shell
 # /etc/nagios-plugins/config/vmware-virtual-hardware.cfg
@@ -990,9 +1072,122 @@ Of note:
 # This variation of the command is most useful for environments where all VMs
 # are monitored equally.
 define command{
-    command_name    check_vmware_vhw
+    command_name    check_vmware_vhw_homogeneous
     command_line    /usr/lib/nagios/plugins/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --trust-cert --log-level info
     }
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+#### Outdated-by or threshold range check
+
+##### CLI invocation
+
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_vhw --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --exclude-rp "Desktops" --ignore-vm "test1.example.com,redmine.example.com,TESTING-AC,RHEL7-TEST" --outdated-by-warning 1 --outdated-by-critical 5 --trust-cert --log-level info
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+Of note:
+
+- Assuming that the latest hardware version is `15`, this monitoring mode
+  permits hardware versions as old as `14` without `WARNING` state and as old
+  as `10` without `CRITICAL` state change.
+- The resource pool named `Desktops` is excluded from evaluation.
+  - this results in *all other* resource pools visible to the specified user
+    account being used for evaluation
+  - this also results in *all* VMs *outside* of a Resource Pool visible to the
+    specified user account being used for evaluation
+- Multiple Virtual machines (vSphere inventory name, not OS hostname), are
+  ignored, regardless of which Resource Pool they are part of.
+  - `test1.example.com`
+  - `redmine.example.com`
+  - `TESTING-AC`
+  - `RHEL7-TEST`
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
+
+##### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-virtual-hardware.cfg
+
+# Look at all pools, all VMs, do not evaluate any VMs that are powered off.
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally.
+define command{
+    command_name    check_vmware_vhw_thresholds
+    command_line    /usr/lib/nagios/plugins/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --outdated-by-warning '$ARG4$' --outdated-by-critical '$ARG5$' --trust-cert --log-level info
+    }
+
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+#### Minimum required version check
+
+##### CLI invocation
+
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_vhw --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --exclude-rp "Desktops" --ignore-vm "test1.example.com,redmine.example.com,TESTING-AC,RHEL7-TEST" --minimum-version 15 --trust-cert --log-level info
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+Of note:
+
+- The minimum hardware version `15` is required, while newer versions are
+  permitted, older versions will trigger a plugin state change.
+- The resource pool named `Desktops` is excluded from evaluation.
+  - this results in *all other* resource pools visible to the specified user
+    account being used for evaluation
+  - this also results in *all* VMs *outside* of a Resource Pool visible to the
+    specified user account being used for evaluation
+- Multiple Virtual machines (vSphere inventory name, not OS hostname), are
+  ignored, regardless of which Resource Pool they are part of.
+  - `test1.example.com`
+  - `redmine.example.com`
+  - `TESTING-AC`
+  - `RHEL7-TEST`
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
+
+##### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-virtual-hardware.cfg
+
+# Look at all pools, all VMs, do not evaluate any VMs that are powered off.
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally.
+define command{
+    command_name    check_vmware_vhw_thresholds
+    command_line    /usr/lib/nagios/plugins/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --minimum-version '$ARG4$' --trust-cert --log-level info
+    }
+
 ```
 
 See the [configuration options](#configuration-options) section for all

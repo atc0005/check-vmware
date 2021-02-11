@@ -8,6 +8,7 @@
 package vsphere
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -18,6 +19,10 @@ import (
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 )
+
+// ErrVirtualHardwareOutdatedVersionsFound indicates that hardware versions
+// older than the minimum have been found.
+var ErrVirtualHardwareOutdatedVersionsFound = errors.New("outdated hardware versions found")
 
 // HardwareVersionsIndex is a map of hardware version to number of VMs present
 // with that hardware version. This index serves as just that, an index.
@@ -46,6 +51,14 @@ type HardwareVersion struct {
 
 // HardwareVersions represents a collection of HardwareVersion.
 type HardwareVersions []HardwareVersion
+
+// NewHardwareVersion creates a new HardwareVersion value using a provided
+// string with "vmx-" prefix (e.g., vmx-15).
+func NewHardwareVersion(verStr string) HardwareVersion {
+	return HardwareVersion{
+		value: verStr,
+	}
+}
 
 // Versions returns a collection of all HardwareVersion entries from the index.
 func (hvi HardwareVersionsIndex) Versions() HardwareVersions {
@@ -219,6 +232,21 @@ func (hvs HardwareVersions) VersionNumbers() []int {
 	return versionNums
 }
 
+// MeetsMinVersion accepts the minimum hardware version for all VMs and
+// indicates whether all hardware versions meet or exceed the minimum.
+func (hvs HardwareVersions) MeetsMinVersion(minVer int) bool {
+
+	hvs.VersionNumbers()
+	for _, num := range hvs.VersionNumbers() {
+		if num < minVer {
+			return false
+		}
+	}
+
+	return true
+
+}
+
 // FilterVMsWithOldHardware filters the provided collection of VirtualMachines
 // to just those with older hardware versions.
 func FilterVMsWithOldHardware(vms []mo.VirtualMachine, hwIndex HardwareVersionsIndex) []mo.VirtualMachine {
@@ -244,8 +272,8 @@ func FilterVMsWithOldHardware(vms []mo.VirtualMachine, hwIndex HardwareVersionsI
 func VirtualHardwareOneLineCheckSummary(
 	stateLabel string,
 	hwvIndex HardwareVersionsIndex,
+	minHardwareVersion int,
 	evaluatedVMs []mo.VirtualMachine,
-	vmsWithIssues []mo.VirtualMachine,
 	rps []mo.ResourcePool,
 ) string {
 
@@ -258,13 +286,31 @@ func VirtualHardwareOneLineCheckSummary(
 		)
 	}()
 
+	var outdatedVMs int
+	minHardwareVersionString := fmt.Sprintf(
+		"%s%d",
+		virtualHardwareVersionPrefix,
+		minHardwareVersion,
+	)
+	for _, vm := range evaluatedVMs {
+		if vm.Config.Version == minHardwareVersionString {
+			continue
+		}
+
+		hwVersion := NewHardwareVersion(vm.Config.Version)
+		hwVerNum := hwVersion.VersionNumber()
+		if hwVerNum < minHardwareVersion {
+			outdatedVMs++
+		}
+	}
+
 	switch {
-	case len(vmsWithIssues) > 0:
+	case outdatedVMs > 0:
 		return fmt.Sprintf(
 			"%s: %d VMs with hardware version older than %d (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
-			len(vmsWithIssues),
-			hwvIndex.Newest().VersionNumber(),
+			outdatedVMs,
+			minHardwareVersion,
 			len(evaluatedVMs),
 			len(rps),
 		)
@@ -272,8 +318,9 @@ func VirtualHardwareOneLineCheckSummary(
 	default:
 
 		return fmt.Sprintf(
-			"%s: No outlier hardware versions detected (evaluated %d VMs, %d Resource Pools)",
+			"%s: No hardware versions older than %d detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
+			minHardwareVersion,
 			len(evaluatedVMs),
 			len(rps),
 		)
@@ -289,9 +336,9 @@ func VirtualHardwareOneLineCheckSummary(
 func VirtualHardwareReport(
 	c *vim25.Client,
 	hwvIndex HardwareVersionsIndex,
+	minHardwareVersion int,
 	allVMs []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
-	vmsWithIssues []mo.VirtualMachine,
 	vmsToExclude []string,
 	evalPoweredOffVMs bool,
 	includeRPs []string,
@@ -315,11 +362,13 @@ func VirtualHardwareReport(
 
 	var report strings.Builder
 
-	// if we have more than one hardware version in the index, we have at
-	// least one outdated version to report
+	hardwareVersions := hwvIndex.Versions()
+	hardwareVersions.MeetsMinVersion(minHardwareVersion)
 
 	switch {
 
+	// if we have more than one hardware version in the index, we have at
+	// least one outdated version to report
 	case hwvIndex.Count() > 1:
 
 		fmt.Fprintf(
@@ -347,6 +396,27 @@ func VirtualHardwareReport(
 			)
 		}
 
+	default:
+
+		// homogenous
+
+		fmt.Fprintf(
+			&report,
+			"All evaluated VMs are at hardware version %d.%s",
+			hwvIndex.Newest().VersionNumber(),
+			nagios.CheckOutputEOL,
+		)
+
+	}
+
+	if !hardwareVersions.MeetsMinVersion(minHardwareVersion) {
+
+		minHardwareVersionString := fmt.Sprintf(
+			"%s%d",
+			virtualHardwareVersionPrefix,
+			minHardwareVersion,
+		)
+
 		fmt.Fprintf(
 			&report,
 			"%sVirtual Machines in need of upgrade:%s%s",
@@ -355,26 +425,27 @@ func VirtualHardwareReport(
 			nagios.CheckOutputEOL,
 		)
 
-		for _, vm := range vmsWithIssues {
-			fmt.Fprintf(
-				&report,
-				"* %s (%s) %s",
-				vm.Name,
-				vm.Config.Version,
-				nagios.CheckOutputEOL,
-			)
+		sort.Slice(evaluatedVMs, func(i, j int) bool {
+			return evaluatedVMs[i].Config.Version < evaluatedVMs[j].Config.Version
+		})
+
+		for _, vm := range evaluatedVMs {
+			if vm.Config.Version == minHardwareVersionString {
+				continue
+			}
+
+			hwVersion := NewHardwareVersion(vm.Config.Version)
+			hwVerNum := hwVersion.VersionNumber()
+			if hwVerNum < minHardwareVersion {
+				fmt.Fprintf(
+					&report,
+					"* %s (%s)%s",
+					vm.Name,
+					vm.Config.Version,
+					nagios.CheckOutputEOL,
+				)
+			}
 		}
-
-	default:
-
-		// homogenous
-
-		fmt.Fprintf(
-			&report,
-			"All evaluated VMs are at hardware version %d; no hardware upgrades needed.%s",
-			hwvIndex.Newest().VersionNumber(),
-			nagios.CheckOutputEOL,
-		)
 
 	}
 

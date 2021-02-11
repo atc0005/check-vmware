@@ -347,7 +347,81 @@ func (c Config) validate(pluginType PluginType) error {
 
 		}
 
+	case pluginType.VirtualHardwareVersion:
+
+		// assert that only one type of behavior is used for plugin
+		switch {
+
+		// homogeneous version checks
+		case c.VirtualHardwareMinimumVersion == defaultVirtualHardwareMinimumVersion &&
+			c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
+			c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning:
+
+		// minimum version check
+		case c.VirtualHardwareMinimumVersion != defaultVirtualHardwareMinimumVersion &&
+			c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
+			c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning:
+
+			// ESX 2.x, GSX Server 3.x, Workstation 4.x & 5.x, ...
+			// https://kb.vmware.com/s/article/1003746
+			if c.VirtualHardwareMinimumVersion < 3 {
+				return fmt.Errorf("invalid value specified for minimum virtual hardware version")
+			}
+
+		// outdated by version thresholds check; apply further validation
+		case c.VirtualHardwareMinimumVersion == defaultVirtualHardwareMinimumVersion &&
+			(c.VirtualHardwareOutdatedByCritical != defaultVirtualHardwareOutdatedByCritical ||
+				c.VirtualHardwareOutdatedByWarning != defaultVirtualHardwareOutdatedByWarning):
+
+			switch {
+			// user did not specify a value, do not apply further validation
+			// checks for this field
+			case c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical:
+
+			case c.VirtualHardwareOutdatedByCritical < 1:
+				return fmt.Errorf("invalid value specified for outdated by critical threshold")
+			}
+
+			switch {
+			// user did not specify a value, do not apply further validation
+			// checks for this field
+			case c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning:
+
+			case c.VirtualHardwareOutdatedByWarning < 1:
+				return fmt.Errorf("invalid value specified for outdated by warning threshold")
+			}
+
+			switch {
+			case c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning &&
+				c.VirtualHardwareOutdatedByCritical != defaultVirtualHardwareOutdatedByCritical:
+
+				return fmt.Errorf(
+					"outdated by critical threshold specified, but not warning threshold; both critical and warning thresholds must be set if using outdated-by plugin mode",
+				)
+
+			case c.VirtualHardwareOutdatedByWarning != defaultVirtualHardwareOutdatedByWarning &&
+				c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical:
+
+				return fmt.Errorf(
+					"outdated by warning threshold specified, but not critical threshold; both critical and warning thresholds must be set if using outdated-by plugin mode",
+				)
+			}
+
+			if c.VirtualHardwareOutdatedByCritical <= c.VirtualHardwareOutdatedByWarning {
+				return fmt.Errorf(
+					"outdated by critical threshold set lower than or equal to warning threshold",
+				)
+			}
+
+		default:
+
+			return fmt.Errorf("unsupported plugin mode requested")
+
+		}
+
 	}
+
+	// shared validation checks
 
 	if c.Server == "" {
 		return fmt.Errorf("server FQDN or IP Address not provided")
