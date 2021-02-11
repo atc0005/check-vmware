@@ -14,9 +14,13 @@ package vsphere
 // twice).
 const ParentResourcePool string = "Resources"
 
-const failedToUseFailedToFallback string = "error: failed to use provided datacenter, failed to fallback to default datacenter"
+const dcFailedToUseFailedToFallback string = "error: failed to use provided datacenter, failed to fallback to default datacenter"
 
 const dcNotProvidedFailedToFallback string = "error: datacenter not provided, failed to fallback to default datacenter"
+
+const crFailedToUseFailedToFallback string = "error: failed to use provided cluster to obtain compute resource, failed to fallback to default compute resource"
+
+const crNotProvidedFailedToFallback string = "error: cluster not provided, failed to fallback to default compute resource"
 
 // virtualHardwareVersionPrefix is used as a prefix for virtual hardware
 // versions used by VirtualMachines. Examples include vmx-15, vmx-14 and so on.

@@ -8,6 +8,7 @@
 package vsphere
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sort"
@@ -16,8 +17,12 @@ import (
 	"time"
 
 	"github.com/atc0005/go-nagios"
+	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/vim25"
+	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 // ErrVirtualHardwareOutdatedVersionsFound indicates that hardware versions
@@ -58,6 +63,127 @@ func NewHardwareVersion(verStr string) HardwareVersion {
 	return HardwareVersion{
 		value: verStr,
 	}
+}
+
+// DefaultHardwareVersion accepts optional host, cluster and datacenter names
+// and returns the default hardware version. If not specified, an attempt will
+// be made to use the default Datacenter and default ComputeResource (obtained
+// using cluster name). If a host name is supplied, it will be used to obtain
+// the default hardware version. If a host name and a cluster name are
+// provided, an error will be returned.
+//
+// The default version may not be the very latest version supported in the
+// cluster (e.g., v14 is the default, but v15 is the latest supported).
+func DefaultHardwareVersion(ctx context.Context, c *vim25.Client, hostName string, clusterName string, datacenterName string) (HardwareVersion, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute DefaultHardwareVersionfunc.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	if hostName != "" && clusterName != "" {
+		return HardwareVersion{}, fmt.Errorf(
+			"func DefaultHardwareVersion: only one of cluster or host name supported",
+		)
+	}
+
+	finder := find.NewFinder(c, true)
+
+	switch {
+	case datacenterName == "":
+		dc, findDCErr := finder.DefaultDatacenter(ctx)
+		if findDCErr != nil {
+			return HardwareVersion{},
+				fmt.Errorf("%s: %w", dcNotProvidedFailedToFallback, findDCErr)
+		}
+		finder.SetDatacenter(dc)
+
+	default:
+		dc, findDCErr := finder.DatacenterOrDefault(ctx, datacenterName)
+		if findDCErr != nil {
+			return HardwareVersion{},
+				fmt.Errorf("%s: %w", dcFailedToUseFailedToFallback, findDCErr)
+		}
+		finder.SetDatacenter(dc)
+	}
+
+	var computeResourceRef types.ManagedObjectReference
+	switch {
+	case clusterName == "":
+		cr, findCRErr := finder.DefaultComputeResource(ctx)
+		if findCRErr != nil {
+			return HardwareVersion{},
+				fmt.Errorf("%s: %w", crNotProvidedFailedToFallback, findCRErr)
+		}
+		computeResourceRef = cr.Reference()
+
+	default:
+		cr, findCRErr := finder.ComputeResourceOrDefault(ctx, clusterName)
+		if findCRErr != nil {
+			return HardwareVersion{},
+				fmt.Errorf("%s: %w", crFailedToUseFailedToFallback, findCRErr)
+		}
+		computeResourceRef = cr.Reference()
+	}
+
+	if hostName != "" {
+		hostSystem, err := GetHostSystemByName(
+			ctx, c, hostName, datacenterName, true,
+		)
+		if err != nil {
+			return HardwareVersion{}, fmt.Errorf(
+				"failed to obtain default hardware version for host %s: %w",
+				hostName,
+				err,
+			)
+		}
+
+		computeResourceRef = *hostSystem.Parent
+
+	}
+
+	var content []types.ObjectContent
+
+	envBrowserErr := property.DefaultCollector(c).RetrieveOne(
+		ctx,
+		computeResourceRef,
+		[]string{
+			"environmentBrowser",
+		},
+		&content,
+	)
+	if envBrowserErr != nil {
+		return HardwareVersion{}, fmt.Errorf(
+			"%s: %w",
+			"error creating environment browser",
+			envBrowserErr,
+		)
+	}
+
+	req := types.QueryConfigOptionEx{
+		This: content[0].PropSet[0].Val.(types.ManagedObjectReference),
+	}
+
+	if req.Spec == nil {
+		req.Spec = new(types.EnvironmentBrowserConfigOptionQuerySpec)
+	}
+
+	opt, optErr := methods.QueryConfigOptionEx(ctx, c, &req)
+	if optErr != nil {
+		return HardwareVersion{}, fmt.Errorf(
+			"%s: %w",
+			"error creating option",
+			optErr,
+		)
+
+	}
+
+	return NewHardwareVersion(opt.Returnval.Version), nil
+
 }
 
 // Versions returns a collection of all HardwareVersion entries from the index.
@@ -110,7 +236,7 @@ func (hvi HardwareVersionsIndex) Outdated() HardwareVersions {
 // formatted string in addition to the actual version number.
 func (hvi HardwareVersionsIndex) Newest() HardwareVersion {
 
-	keys := make([]string, len(hvi))
+	keys := make([]string, 0, len(hvi))
 	for k := range hvi {
 		keys = append(keys, k)
 	}
@@ -133,7 +259,7 @@ func (hvi HardwareVersionsIndex) Newest() HardwareVersion {
 // formatted string in addition to the actual version number.
 func (hvi HardwareVersionsIndex) Oldest() HardwareVersion {
 
-	keys := make([]string, len(hvi))
+	keys := make([]string, 0, len(hvi))
 	for k := range hvi {
 		keys = append(keys, k)
 	}
@@ -337,6 +463,7 @@ func VirtualHardwareReport(
 	c *vim25.Client,
 	hwvIndex HardwareVersionsIndex,
 	minHardwareVersion int,
+	defaultHardwareVersion HardwareVersion,
 	allVMs []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
 	vmsToExclude []string,
@@ -461,6 +588,30 @@ func VirtualHardwareReport(
 		&report,
 		"* vSphere environment: %s%s",
 		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Default Virtual Hardware Version: %d (%s) %s",
+		defaultHardwareVersion.VersionNumber(),
+		defaultHardwareVersion.String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Newest Virtual Hardware Version: %d (%s) %s",
+		hwvIndex.Newest().VersionNumber(),
+		hwvIndex.Newest().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Oldest Virtual Hardware Version: %d (%s) %s",
+		hwvIndex.Oldest().VersionNumber(),
+		hwvIndex.Oldest().String(),
 		nagios.CheckOutputEOL,
 	)
 

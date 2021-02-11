@@ -116,6 +116,9 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 	case pluginType.VirtualCPUsAllocation:
 		appDescription = PluginTypeVirtualCPUsAllocation
 
+	case pluginType.VirtualHardwareVersion:
+		appDescription = PluginTypeVirtualHardwareVersion
+
 	case pluginType.Host2Datastores2VMs:
 		appDescription = PluginTypeHostDatastoreVMsPairings
 

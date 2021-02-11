@@ -40,6 +40,7 @@ const (
 	datastoreUsageCriticalFlagHelp                  string = "Specifies the percentage of a datastore's storage usage (as a whole number) when a CRITICAL threshold is reached."
 	datastoreUsageWarningFlagHelp                   string = "Specifies the percentage of a datastore's storage usage (as a whole number) when a WARNING threshold is reached."
 	datacenterNameFlagHelp                          string = "Specifies the name of a vSphere Datacenter. If not specified, applicable plugins will attempt to use the default datacenter found in the vSphere environment. Not applicable to standalone ESXi hosts."
+	clusterNameFlagHelp                             string = "Specifies the name of a vSphere Cluster. If not specified, applicable plugins will attempt to use the default cluster found in the vSphere environment. Not applicable to standalone ESXi hosts."
 	snapshotsAgeCriticalFlagHelp                    string = "Specifies the age of a snapshot in days when a CRITICAL threshold is reached."
 	snapshotsAgeWarningFlagHelp                     string = "Specifies the age of a snapshot in days when a WARNING threshold is reached."
 	snapshotsCountCriticalFlagHelp                  string = "Specifies the number of snapshots per VM when a CRITICAL threshold is reached."
@@ -59,6 +60,7 @@ const (
 	virtualHardwareOutdatedByCriticalFlagHelp       string = "If provided, this value is the CRITICAL threshold for outdated virtual hardware versions. If the current virtual hardware version for a VM is found to be more than this many versions older than the latest version a CRITICAL state is triggered. Required if specifying the WARNING threshold for outdated virtual hardware versions."
 	virtualHardwareOutdatedByWarningFlagHelp        string = "If provided, this value is the WARNING threshold for outdated virtual hardware versions. If the current virtual hardware version for a VM is found to be more than this many versions older than the latest version a WARNING state is triggered. Required if specifying the CRITICAL threshold for outdated virtual hardware versions."
 	virtualHardwareMinimumVersionFlagHelp           string = "If provided, this value is the minimum virtual hardware version accepted for each Virtual Machine. Any Virtual Machine not meeting this minimum value is considered to be in a CRITICAL state. Per KB 1003746, version 3 appears to be the oldest version supported."
+	virtualHardwareDefaultIsMinimumFlagHelp         string = "If specified, the host or cluster default virtual hardware version is the minimum hardware version allowed. Any Virtual Machine not meeting this minimum value is considered to be in a WARNING state."
 )
 
 // Default flag settings if not overridden by user input
@@ -69,6 +71,7 @@ const (
 	defaultUsername                     string = ""
 	defaultPassword                     string = ""
 	defaultUserDomain                   string = ""
+	defaultClusterName                  string = ""
 	defaultPort                         int    = 443
 	defaultBranding                     bool   = false
 	defaultDisplayVersionAndExit        bool   = false
@@ -95,6 +98,10 @@ const (
 	defaultVirtualHardwareMinimumVersion     int = -1
 	defaultVirtualHardwareOutdatedByWarning  int = -1
 	defaultVirtualHardwareOutdatedByCritical int = -1
+
+	// Whether the default host or cluster hardware version is the minimum
+	// version allowed
+	defaultVirtualHardwareDefaultIsMinimum bool = false
 
 	// default memory usage values for Resource Pools and ESXi Host systems
 	defaultMemoryUseCritical int = 95
@@ -143,8 +150,19 @@ const (
 	PluginTypeDatastoresSize                 string = "datastore-size"
 	PluginTypeResourcePoolsMemory            string = "resource-pools-memory"
 	PluginTypeVirtualCPUsAllocation          string = "virtual-cpus-allocation"
+	PluginTypeVirtualHardwareVersion         string = "virtual-hardware-version"
 	PluginTypeHostDatastoreVMsPairings       string = "host-to-ds-to-vms"
 	PluginTypeHostSystemMemory               string = "host-system-memory"
 	PluginTypeHostSystemCPU                  string = "host-system-cpu"
 	PluginTypeVirtualMachinePowerCycleUptime string = "vm-power-uptime"
 )
+
+// Known limits
+// https://trainingrevolution.wordpress.com/2018/07/22/vmware-vsphere-6-7-character-limits-for-objects/
+const (
+	MaxClusterNameChars int = 80
+)
+
+// ThresholdNotUsed indicates that a plugin is not using a specific threshold.
+// This is visible in locations where Long Service Output text is displayed.
+const ThresholdNotUsed string = "Not used by this monitoring mode."

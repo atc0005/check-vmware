@@ -106,6 +106,10 @@ type Config struct {
 	// host or vCenter instance.
 	Domain string
 
+	// ClusterName is the name of the vSphere cluster where monitored objects
+	// reside.
+	ClusterName string
+
 	// LoggingLevel is the supported logging level for this application.
 	LoggingLevel string
 
@@ -277,6 +281,10 @@ type Config struct {
 	// version for a VM is found to be more than this many versions older than
 	// the latest version a CRITICAL state is triggered.
 	VirtualHardwareOutdatedByCritical int
+
+	// VirtualHardwareDefaultVersionIsMinimum indicates whether the host or
+	// cluster default hardware version is the minimum allowed.
+	VirtualHardwareDefaultVersionIsMinimum bool
 
 	// IgnoreMissingCustomAttribute indicates whether a host or datastore
 	// missing the specified Custom Attribute should be ignored.

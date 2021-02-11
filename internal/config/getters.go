@@ -93,7 +93,20 @@ func (c Config) VirtualHardwareApplyMinVersionCheck() bool {
 
 	return c.VirtualHardwareMinimumVersion != defaultVirtualHardwareMinimumVersion &&
 		c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
-		c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning
+		c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning &&
+		!c.VirtualHardwareDefaultVersionIsMinimum
+
+}
+
+// VirtualHardwareApplyDefaultIsMinVersionCheck indicates whether all virtual
+// machines are required to have the host or cluster default hardware version
+// or greater. This is only used if the other behaviors were not requested.
+func (c Config) VirtualHardwareApplyDefaultIsMinVersionCheck() bool {
+
+	return c.VirtualHardwareMinimumVersion == defaultVirtualHardwareMinimumVersion &&
+		c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
+		c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning &&
+		c.VirtualHardwareDefaultVersionIsMinimum
 
 }
 
@@ -104,8 +117,9 @@ func (c Config) VirtualHardwareApplyMinVersionCheck() bool {
 func (c Config) VirtualHardwareApplyOutdatedByVersionCheck() bool {
 
 	return c.VirtualHardwareMinimumVersion == defaultVirtualHardwareMinimumVersion &&
-		c.VirtualHardwareOutdatedByCritical != defaultVirtualHardwareOutdatedByCritical &&
-		c.VirtualHardwareOutdatedByWarning != defaultVirtualHardwareOutdatedByWarning
+		(c.VirtualHardwareOutdatedByCritical != defaultVirtualHardwareOutdatedByCritical ||
+			c.VirtualHardwareOutdatedByWarning != defaultVirtualHardwareOutdatedByWarning) &&
+		!c.VirtualHardwareDefaultVersionIsMinimum
 
 }
 
@@ -116,6 +130,7 @@ func (c Config) VirtualHardwareApplyHomogeneousVersionCheck() bool {
 
 	return c.VirtualHardwareMinimumVersion == defaultVirtualHardwareMinimumVersion &&
 		c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
-		c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning
+		c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning &&
+		!c.VirtualHardwareDefaultVersionIsMinimum
 
 }
