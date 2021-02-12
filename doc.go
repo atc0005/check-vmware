@@ -22,7 +22,7 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Virtual CPU allocations
 
-• Virtual hardware versions
+• Virtual hardware versions: homogenous, minimum required and outdated-by threshold range checks
 
 • Host/Datastore/Virtual Machine pairings (using provided Custom Attribute)
 

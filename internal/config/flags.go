@@ -182,6 +182,15 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
+		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, "outdated-by-warning", defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp)
+		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, "obw", defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp)
+
+		flag.IntVar(&c.VirtualHardwareOutdatedByCritical, "outdated-by-critical", defaultVirtualHardwareOutdatedByCritical, virtualHardwareOutdatedByCriticalFlagHelp)
+		flag.IntVar(&c.VirtualHardwareOutdatedByCritical, "obc", defaultVirtualHardwareOutdatedByCritical, virtualHardwareOutdatedByCriticalFlagHelp)
+
+		flag.IntVar(&c.VirtualHardwareMinimumVersion, "minimum-version", defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp)
+		flag.IntVar(&c.VirtualHardwareMinimumVersion, "mv", defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp)
+
 	case pluginType.Host2Datastores2VMs:
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)

@@ -260,6 +260,24 @@ type Config struct {
 	// days per VM when a CRITICAL threshold is reached.
 	VMPowerCycleUptimeCritical int
 
+	// VirtualHardwareMinimumVersion is the minimum virtual hardware version
+	// accepted for each Virtual Machine. Any Virtual Machine not meeting this
+	// minimum value is considered to be in a CRITICAL state. Per KB 1003746,
+	// version 3 appears to be the oldest version supported.
+	VirtualHardwareMinimumVersion int
+
+	// VirtualHardwareOutdatedByWarning specifies the WARNING threshold for
+	// outdated virtual hardware versions. If the current virtual hardware
+	// version for a VM is found to be more than this many versions older than
+	// the latest version a WARNING state is triggered.
+	VirtualHardwareOutdatedByWarning int
+
+	// VirtualHardwareOutdatedByCritical specifies the CRITICAL threshold for
+	// outdated virtual hardware versions. If the current virtual hardware
+	// version for a VM is found to be more than this many versions older than
+	// the latest version a CRITICAL state is triggered.
+	VirtualHardwareOutdatedByCritical int
+
 	// IgnoreMissingCustomAttribute indicates whether a host or datastore
 	// missing the specified Custom Attribute should be ignored.
 	IgnoreMissingCustomAttribute bool

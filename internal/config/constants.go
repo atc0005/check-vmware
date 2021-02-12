@@ -56,6 +56,9 @@ const (
 	hostSystemCPUUseWarningFlagHelp                 string = "Specifies the percentage of CPU use (as a whole number) when a WARNING threshold is reached."
 	vmPowerCycleUptimeCriticalFlagHelp              string = "Specifies the power cycle (off/on) uptime in days per VM when a CRITICAL threshold is reached."
 	vmPowerCycleUptimeWarningFlagHelp               string = "Specifies the power cycle (off/on) uptime in days per VM when a WARNING threshold is reached."
+	virtualHardwareOutdatedByCriticalFlagHelp       string = "If provided, this value is the CRITICAL threshold for outdated virtual hardware versions. If the current virtual hardware version for a VM is found to be more than this many versions older than the latest version a CRITICAL state is triggered. Required if specifying the WARNING threshold for outdated virtual hardware versions."
+	virtualHardwareOutdatedByWarningFlagHelp        string = "If provided, this value is the WARNING threshold for outdated virtual hardware versions. If the current virtual hardware version for a VM is found to be more than this many versions older than the latest version a WARNING state is triggered. Required if specifying the CRITICAL threshold for outdated virtual hardware versions."
+	virtualHardwareMinimumVersionFlagHelp           string = "If provided, this value is the minimum virtual hardware version accepted for each Virtual Machine. Any Virtual Machine not meeting this minimum value is considered to be in a CRITICAL state. Per KB 1003746, version 3 appears to be the oldest version supported."
 )
 
 // Default flag settings if not overridden by user input
@@ -86,6 +89,12 @@ const (
 	defaultHostSystemName               string = ""
 	defaultVMPowerCycleUptimeCritical   int    = 90
 	defaultVMPowerCycleUptimeWarning    int    = 60
+
+	// The default values are intentionally invalid to help determine whether
+	// the user has supplied values for the flags.
+	defaultVirtualHardwareMinimumVersion     int = -1
+	defaultVirtualHardwareOutdatedByWarning  int = -1
+	defaultVirtualHardwareOutdatedByCritical int = -1
 
 	// default memory usage values for Resource Pools and ESXi Host systems
 	defaultMemoryUseCritical int = 95

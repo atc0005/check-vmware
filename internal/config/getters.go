@@ -85,3 +85,37 @@ func (c Config) HostCASep() string {
 		return defaultCustomAttributePrefixSeparator
 	}
 }
+
+// VirtualHardwareApplyMinVersionCheck indicates whether all virtual machines
+// are required to have the specified minimum hardware version or greater.
+// This is only used if the other behaviors were not requested.
+func (c Config) VirtualHardwareApplyMinVersionCheck() bool {
+
+	return c.VirtualHardwareMinimumVersion != defaultVirtualHardwareMinimumVersion &&
+		c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
+		c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning
+
+}
+
+// VirtualHardwareApplyOutdatedByVersionCheck indicates whether the outdated
+// by CRITICAL and WARNING threshold checks are applied to assert that virtual
+// hardware versions are within the specified thresholds. This is only used if
+// the other behaviors were not requested.
+func (c Config) VirtualHardwareApplyOutdatedByVersionCheck() bool {
+
+	return c.VirtualHardwareMinimumVersion == defaultVirtualHardwareMinimumVersion &&
+		c.VirtualHardwareOutdatedByCritical != defaultVirtualHardwareOutdatedByCritical &&
+		c.VirtualHardwareOutdatedByWarning != defaultVirtualHardwareOutdatedByWarning
+
+}
+
+// VirtualHardwareApplyHomogeneousVersionCheck indicates whether the default
+// behavior of asserting that all virtual hardware versions are the same is
+// applied. This is only used if the other behaviors were not requested.
+func (c Config) VirtualHardwareApplyHomogeneousVersionCheck() bool {
+
+	return c.VirtualHardwareMinimumVersion == defaultVirtualHardwareMinimumVersion &&
+		c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
+		c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning
+
+}
