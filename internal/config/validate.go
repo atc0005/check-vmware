@@ -36,15 +36,9 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-		if c.SnapshotsAgeCritical < c.SnapshotsAgeWarning {
+		if c.SnapshotsAgeCritical <= c.SnapshotsAgeWarning {
 			return fmt.Errorf(
-				"critical threshold set lower than warning threshold",
-			)
-		}
-
-		if c.SnapshotsAgeCritical == c.SnapshotsAgeWarning {
-			return fmt.Errorf(
-				"critical threshold set equal to warning threshold",
+				"critical threshold set lower than or equal to warning threshold",
 			)
 		}
 
@@ -64,15 +58,9 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-		if c.SnapshotsCountCritical < c.SnapshotsCountWarning {
+		if c.SnapshotsCountCritical <= c.SnapshotsCountWarning {
 			return fmt.Errorf(
-				"critical threshold set lower than warning threshold",
-			)
-		}
-
-		if c.SnapshotsCountCritical == c.SnapshotsCountWarning {
-			return fmt.Errorf(
-				"critical threshold set equal to warning threshold",
+				"critical threshold set lower than or equal to warning threshold",
 			)
 		}
 
@@ -92,15 +80,9 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-		if c.SnapshotsSizeCritical < c.SnapshotsSizeWarning {
+		if c.SnapshotsSizeCritical <= c.SnapshotsSizeWarning {
 			return fmt.Errorf(
-				"critical threshold set lower than warning threshold",
-			)
-		}
-
-		if c.SnapshotsSizeCritical == c.SnapshotsSizeWarning {
-			return fmt.Errorf(
-				"critical threshold set equal to warning threshold",
+				"critical threshold set lower than or equal to warning threshold",
 			)
 		}
 
@@ -120,15 +102,9 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-		if c.VMPowerCycleUptimeCritical < c.VMPowerCycleUptimeWarning {
+		if c.VMPowerCycleUptimeCritical <= c.VMPowerCycleUptimeWarning {
 			return fmt.Errorf(
-				"critical threshold set lower than warning threshold",
-			)
-		}
-
-		if c.VMPowerCycleUptimeCritical == c.VMPowerCycleUptimeWarning {
-			return fmt.Errorf(
-				"critical threshold set equal to warning threshold",
+				"critical threshold set lower than or equal to warning threshold",
 			)
 		}
 
@@ -152,9 +128,9 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-		if c.DatastoreUsageCritical < c.DatastoreUsageWarning {
+		if c.DatastoreUsageCritical <= c.DatastoreUsageWarning {
 			return fmt.Errorf(
-				"datastore critical threshold set lower than warning threshold",
+				"datastore critical threshold set lower than or equal to warning threshold",
 			)
 		}
 
@@ -178,9 +154,9 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-		if c.HostSystemMemoryUseCritical < c.HostSystemMemoryUseWarning {
+		if c.HostSystemMemoryUseCritical <= c.HostSystemMemoryUseWarning {
 			return fmt.Errorf(
-				"critical threshold set lower than warning threshold",
+				"critical threshold set lower than or equal to warning threshold",
 			)
 		}
 
@@ -204,9 +180,9 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-		if c.HostSystemCPUUseCritical < c.HostSystemCPUUseWarning {
+		if c.HostSystemCPUUseCritical <= c.HostSystemCPUUseWarning {
 			return fmt.Errorf(
-				"critical threshold set lower than warning threshold",
+				"critical threshold set lower than or equal to warning threshold",
 			)
 		}
 
@@ -233,9 +209,9 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-		if c.ResourcePoolsMemoryUseCritical < c.ResourcePoolsMemoryUseWarning {
+		if c.ResourcePoolsMemoryUseCritical <= c.ResourcePoolsMemoryUseWarning {
 			return fmt.Errorf(
-				"memory usage critical threshold set lower than warning threshold",
+				"memory usage critical threshold set lower than or equal to warning threshold",
 			)
 		}
 
@@ -262,9 +238,9 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-		if c.VCPUsAllocatedCritical < c.VCPUsAllocatedWarning {
+		if c.VCPUsAllocatedCritical <= c.VCPUsAllocatedWarning {
 			return fmt.Errorf(
-				"vCPUs allocation critical threshold set lower than warning threshold",
+				"vCPUs allocation critical threshold set lower than or equal to warning threshold",
 			)
 		}
 
