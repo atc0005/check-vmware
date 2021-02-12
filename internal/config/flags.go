@@ -40,11 +40,11 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		//
 		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.IntVar(&c.SnapshotsAgeWarning, "aw", defaultSnapshotsAgeWarning, snapshotsAgeWarningFlagHelp)
 		flag.IntVar(&c.SnapshotsAgeWarning, "age-warning", defaultSnapshotsAgeWarning, snapshotsAgeWarningFlagHelp)
+		flag.IntVar(&c.SnapshotsAgeWarning, "aw", defaultSnapshotsAgeWarning, snapshotsAgeWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.SnapshotsAgeCritical, "ac", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp)
 		flag.IntVar(&c.SnapshotsAgeCritical, "age-critical", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp)
+		flag.IntVar(&c.SnapshotsAgeCritical, "ac", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.SnapshotsCount:
 
@@ -61,11 +61,11 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		//
 		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.IntVar(&c.SnapshotsCountWarning, "cw", defaultSnapshotsCountWarning, snapshotsCountWarningFlagHelp)
 		flag.IntVar(&c.SnapshotsCountWarning, "count-warning", defaultSnapshotsCountWarning, snapshotsCountWarningFlagHelp)
+		flag.IntVar(&c.SnapshotsCountWarning, "cw", defaultSnapshotsCountWarning, snapshotsCountWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.SnapshotsCountCritical, "cc", defaultSnapshotsCountCritical, snapshotsCountCriticalFlagHelp)
 		flag.IntVar(&c.SnapshotsCountCritical, "count-critical", defaultSnapshotsCountCritical, snapshotsCountCriticalFlagHelp)
+		flag.IntVar(&c.SnapshotsCountCritical, "cc", defaultSnapshotsCountCritical, snapshotsCountCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.SnapshotsSize:
 
@@ -82,11 +82,11 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		//
 		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.IntVar(&c.SnapshotsSizeWarning, "sw", defaultSnapshotsSizeWarning, snapshotsSizeWarningFlagHelp)
 		flag.IntVar(&c.SnapshotsSizeWarning, "size-warning", defaultSnapshotsSizeWarning, snapshotsSizeWarningFlagHelp)
+		flag.IntVar(&c.SnapshotsSizeWarning, "sw", defaultSnapshotsSizeWarning, snapshotsSizeWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.SnapshotsSizeCritical, "sc", defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp)
 		flag.IntVar(&c.SnapshotsSizeCritical, "size-critical", defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp)
+		flag.IntVar(&c.SnapshotsSizeCritical, "sc", defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.VirtualMachinePowerCycleUptime:
 
@@ -103,11 +103,11 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		//
 		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.IntVar(&c.VMPowerCycleUptimeWarning, "uw", defaultVMPowerCycleUptimeWarning, vmPowerCycleUptimeWarningFlagHelp)
 		flag.IntVar(&c.VMPowerCycleUptimeWarning, "uptime-warning", defaultVMPowerCycleUptimeWarning, vmPowerCycleUptimeWarningFlagHelp)
+		flag.IntVar(&c.VMPowerCycleUptimeWarning, "uw", defaultVMPowerCycleUptimeWarning, vmPowerCycleUptimeWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.VMPowerCycleUptimeCritical, "uc", defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp)
 		flag.IntVar(&c.VMPowerCycleUptimeCritical, "uptime-critical", defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp)
+		flag.IntVar(&c.VMPowerCycleUptimeCritical, "uc", defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.DatastoresSize:
 
@@ -183,13 +183,13 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
 		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, "outdated-by-warning", defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp)
-		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, "obw", defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp)
+		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, "obw", defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp+" (shorthand)")
 
 		flag.IntVar(&c.VirtualHardwareOutdatedByCritical, "outdated-by-critical", defaultVirtualHardwareOutdatedByCritical, virtualHardwareOutdatedByCriticalFlagHelp)
-		flag.IntVar(&c.VirtualHardwareOutdatedByCritical, "obc", defaultVirtualHardwareOutdatedByCritical, virtualHardwareOutdatedByCriticalFlagHelp)
+		flag.IntVar(&c.VirtualHardwareOutdatedByCritical, "obc", defaultVirtualHardwareOutdatedByCritical, virtualHardwareOutdatedByCriticalFlagHelp+" (shorthand)")
 
 		flag.IntVar(&c.VirtualHardwareMinimumVersion, "minimum-version", defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp)
-		flag.IntVar(&c.VirtualHardwareMinimumVersion, "mv", defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp)
+		flag.IntVar(&c.VirtualHardwareMinimumVersion, "mv", defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp+" (shorthand)")
 
 	case pluginType.Host2Datastores2VMs:
 
