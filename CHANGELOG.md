@@ -26,6 +26,33 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.11.0] - 2021-02-12
+
+### Overview
+
+- Bug fixes
+- Misc tweaks
+- built using Go 1.15.8
+
+### Changed
+
+- `check_vmware_vhw` plugin
+  - two new additional monitoring modes added
+    - minimum required version check
+    - outdated-by or threshold range check
+- CI build timeout adjusted from `20` to `40` minutes
+- `check_vmware_vm_power_update` plugin
+  - Extend check_vmware_vm_power_uptime to list 5-10 highest uptime VMs when
+    state is OK
+
+### Fixed
+
+- CI-driven Makefile builds timing out after v0.10.0 release
+- "shorthand" suffix missing for plugin-specific help output for short flag
+  options
+- Validation checks for CRITICAL/WARNING threshold checks does not (negative)
+  assert `CRITICAL <= WARNING`
+
 ## [v0.10.0] - 2021-02-09
 
 ### Overview
@@ -383,7 +410,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.11.0...HEAD
+[v0.11.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.11.0
 [v0.10.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.10.0
 [v0.9.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.9.0
 [v0.8.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.8.0
