@@ -378,14 +378,10 @@ func ResourcePoolsMemoryReport(
 		)
 	}
 
-	fmt.Fprintf(
-		&report,
-		"%sTop 10 memory consuming VMs (descending order):%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
+	poweredVMs := FilterVMsByPowerState(rpsVMs, false)
 
+	// collect powered on/off counts for all VMs associated with specified
+	// Resource Pools (e.g., stats display)
 	var vmsPoweredOn int
 	var vmsPoweredOff int
 	for _, vm := range rpsVMs {
@@ -395,12 +391,15 @@ func ResourcePoolsMemoryReport(
 		default:
 			vmsPoweredOff++
 		}
-
 	}
 
-	sort.Slice(rpsVMs, func(i, j int) bool {
-		return rpsVMs[i].Summary.QuickStats.HostMemoryUsage > rpsVMs[j].Summary.QuickStats.HostMemoryUsage
-	})
+	fmt.Fprintf(
+		&report,
+		"%sTen VMS consuming most memory:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
 
 	switch {
 	case vmsPoweredOn == 0:
@@ -413,27 +412,76 @@ func ResourcePoolsMemoryReport(
 
 	default:
 
+		sort.Slice(poweredVMs, func(i, j int) bool {
+			return poweredVMs[i].Summary.QuickStats.HostMemoryUsage > poweredVMs[j].Summary.QuickStats.HostMemoryUsage
+		})
+
 		// grab up to the first 10 VMs, presorted by most memory usage
-		sampleSize := len(rpsVMs)
+		sampleSize := len(poweredVMs)
 		if sampleSize > 10 {
 			sampleSize = 10
 		}
 
-		for _, vm := range rpsVMs[:sampleSize] {
-			if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
+		for _, vm := range poweredVMs[:sampleSize] {
+			hostMemUsedBytes := int64(vm.Summary.QuickStats.HostMemoryUsage) * units.MB
+			rpName := rpIDtoNameIdx[vm.ResourcePool.Value]
 
-				hostMemUsedBytes := int64(vm.Summary.QuickStats.HostMemoryUsage) * units.MB
-				rpName := rpIDtoNameIdx[vm.ResourcePool.Value]
+			fmt.Fprintf(
+				&report,
+				"* %s [Mem: %s, Pool: %s]%s",
+				vm.Name,
+				units.ByteSize(hostMemUsedBytes),
+				rpName,
+				nagios.CheckOutputEOL,
+			)
+		}
 
-				fmt.Fprintf(
-					&report,
-					"* %s [Mem: %s, Pool: %s]%s",
-					vm.Name,
-					units.ByteSize(hostMemUsedBytes),
-					rpName,
-					nagios.CheckOutputEOL,
-				)
-			}
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%sTen VMs most recently powered on:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	switch {
+	case len(poweredVMs) == 0:
+		fmt.Fprintf(
+			&report,
+			"* None (visible); %d powered off%s",
+			vmsPoweredOff,
+			nagios.CheckOutputEOL,
+		)
+
+	default:
+
+		sort.Slice(poweredVMs, func(i, j int) bool {
+			return poweredVMs[i].Summary.QuickStats.UptimeSeconds < poweredVMs[j].Summary.QuickStats.UptimeSeconds
+		})
+
+		// grab up to the first 10 VMs, presorted by least uptime
+		sampleSize := len(poweredVMs)
+		if sampleSize > 10 {
+			sampleSize = 10
+		}
+
+		for _, vm := range poweredVMs[:sampleSize] {
+			hostMemUsedBytes := int64(vm.Summary.QuickStats.HostMemoryUsage) * units.MB
+			uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
+			uptimeDays := uptime.Hours() / 24
+			rpName := rpIDtoNameIdx[vm.ResourcePool.Value]
+
+			fmt.Fprintf(
+				&report,
+				"* %s: [Uptime: %.2f days, Mem: %s, Pool: %s]%s",
+				vm.Name,
+				uptimeDays,
+				units.ByteSize(hostMemUsedBytes),
+				rpName,
+				nagios.CheckOutputEOL,
+			)
 		}
 
 	}
