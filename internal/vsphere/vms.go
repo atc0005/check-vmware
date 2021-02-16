@@ -667,7 +667,40 @@ func VMPowerCycleUptimeReport(
 		)
 
 		topTen := uptimeSummary.TopTenOK()
-		for _, vm := range topTen {
+		switch {
+		case len(topTen) == 0:
+			fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
+		default:
+			for _, vm := range topTen {
+				uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
+				uptimeDays := uptime.Hours() / 24
+
+				fmt.Fprintf(
+					&report,
+					"* %s: %.2f days%s",
+					vm.Name,
+					uptimeDays,
+					nagios.CheckOutputEOL,
+				)
+			}
+		}
+
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%sTen most recently started VMs:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	bottomTen := uptimeSummary.BottomTenOK()
+	switch {
+	case len(bottomTen) == 0:
+		fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
+	default:
+		for _, vm := range bottomTen {
 			uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
 			uptimeDays := uptime.Hours() / 24
 
@@ -679,7 +712,6 @@ func VMPowerCycleUptimeReport(
 				nagios.CheckOutputEOL,
 			)
 		}
-
 	}
 
 	fmt.Fprintf(
