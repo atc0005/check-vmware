@@ -26,6 +26,25 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.12.0] - 2021-02-16
+
+### Overview
+
+- Plugin improvements
+- built using Go 1.15.8
+
+### Changed
+
+- `check_vmware_vm_power_uptime` plugin
+  - list 10 most recently booted VMs in extended output
+- `check_vmware_rps_memory` plugin
+  - list 10 most recently booted VMs in extended output
+  - list 10 most memory consuming VMs in extended output
+
+### Fixed
+
+- Typo in plugin name in prior CHANGELOG version entry
+
 ## [v0.11.0] - 2021-02-12
 
 ### Overview
@@ -41,7 +60,7 @@ The following types of changes will be recorded in this file:
     - minimum required version check
     - outdated-by or threshold range check
 - CI build timeout adjusted from `20` to `40` minutes
-- `check_vmware_vm_power_update` plugin
+- `check_vmware_vm_power_uptime` plugin
   - Extend check_vmware_vm_power_uptime to list 5-10 highest uptime VMs when
     state is OK
 
@@ -410,7 +429,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.12.0...HEAD
+[v0.12.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.12.0
 [v0.11.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.11.0
 [v0.10.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.10.0
 [v0.9.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.9.0
