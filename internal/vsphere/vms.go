@@ -82,6 +82,36 @@ func (vpcs VirtualMachinePowerCycleUptimeStatus) TopTenOK() []mo.VirtualMachine 
 
 }
 
+// BottomTenOK is a helper method that returns at most ten VMs with the lowest
+// power cycle uptime values that have yet to exceed specified thresholds.
+// Only powered on VMs are considered.
+func (vpcs VirtualMachinePowerCycleUptimeStatus) BottomTenOK() []mo.VirtualMachine {
+
+	poweredOnVMs := FilterVMsByPowerState(vpcs.VMsOK, false)
+
+	// sort before we sample the VMs so that we only get the ones with lowest
+	// power cycle uptime; require that the VM be powered on in order to sort
+	// in the intended order.
+	sort.Slice(poweredOnVMs, func(i, j int) bool {
+		return poweredOnVMs[i].Summary.QuickStats.UptimeSeconds < poweredOnVMs[j].Summary.QuickStats.UptimeSeconds
+
+	})
+
+	sampleSize := len(poweredOnVMs)
+	switch {
+	case sampleSize > 10:
+		sampleSize = 10
+	case sampleSize == 0:
+		return []mo.VirtualMachine{}
+	}
+
+	bottomTen := make([]mo.VirtualMachine, 0, sampleSize)
+	bottomTen = append(bottomTen, vpcs.VMsOK[:sampleSize]...)
+
+	return bottomTen
+
+}
+
 // GetVMs accepts a context, a connected client and a boolean value indicating
 // whether a subset of properties per VirtualMachine are retrieved. If
 // requested, a subset of all available properties will be retrieved (faster)
