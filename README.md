@@ -329,6 +329,10 @@ options](#configuration-options) section for details.
 
 Nagios plugin used to monitor memory usage across Resource Pools.
 
+In addition to reporting memory usage for each Resource Pool, this plugin also
+reports the ten most recently booted VMs along with their memory usage. This
+is intended to help spot which VM is responsible for a state change alert.
+
 Thresholds for `CRITICAL` and `WARNING` memory usage have usable defaults, but
 max memory usage is required before this plugin can be used. See the
 [configuration options](#configuration-options) section for details.
@@ -364,8 +368,12 @@ Nagios plugin used to monitor Virtual Machine (power cycle) uptime.
 This is essentially the time since the VM was last powered off and then back
 on (e.g., for a snapshot).
 
-In addition to reporting current power cycle uptime, this plugin also reports
-which VMs are on the host (running or not) and the uptime for each.
+In addition to reporting current power cycle uptime, this plugin also reports:
+
+- which VMs have crossed thresholds (if any) and the uptime for each
+- which VMs have yet to cross thresholds (only if there are not any which
+  have) and the uptime for each
+- the ten most recently booted VMs
 
 Thresholds for `CRITICAL` and `WARNING` CPU usage have usable defaults, but
 may require adjustment for your environment. See the [configuration
