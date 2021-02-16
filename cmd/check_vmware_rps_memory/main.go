@@ -15,6 +15,7 @@ import (
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/units"
+	"github.com/vmware/govmomi/vim25/mo"
 
 	"github.com/atc0005/check-vmware/internal/config"
 	"github.com/atc0005/check-vmware/internal/vsphere"
@@ -257,6 +258,27 @@ func main() {
 		Int64("memory_remaining", memoryRemaining).
 		Msg("")
 
+	log.Debug().Msg("Retrieving vms from eligible resource pools")
+	rpEntityVals := make([]mo.ManagedEntity, 0, len(resourcePools))
+	for i := range resourcePools {
+		rpEntityVals = append(rpEntityVals, resourcePools[i].ManagedEntity)
+	}
+	vms, getVMsErr := vsphere.GetVMsFromContainer(ctx, c.Client, true, rpEntityVals...)
+	if getVMsErr != nil {
+		log.Error().Err(getVMsErr).Msg(
+			"error retrieving list of VMs from resource pools list",
+		)
+
+		nagiosExitState.LastError = getVMsErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error retrieving list of VMs from resource pools list",
+			nagios.StateCRITICALLabel,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+		return
+	}
+
 	switch {
 	case memoryPercentageUsedOfAllowed > float64(cfg.ResourcePoolsMemoryUseCritical):
 
@@ -283,6 +305,7 @@ func main() {
 			cfg.IncludedResourcePools,
 			cfg.ExcludedResourcePools,
 			resourcePools,
+			vms,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
@@ -314,6 +337,7 @@ func main() {
 			cfg.IncludedResourcePools,
 			cfg.ExcludedResourcePools,
 			resourcePools,
+			vms,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
@@ -340,6 +364,7 @@ func main() {
 			cfg.IncludedResourcePools,
 			cfg.ExcludedResourcePools,
 			resourcePools,
+			vms,
 		)
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
