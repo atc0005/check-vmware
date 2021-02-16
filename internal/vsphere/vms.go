@@ -68,8 +68,11 @@ func (vpcs VirtualMachinePowerCycleUptimeStatus) TopTenOK() []mo.VirtualMachine 
 	})
 
 	sampleSize := len(vpcs.VMsOK)
-	if len(vpcs.VMsOK) > 10 {
+	switch {
+	case sampleSize > 10:
 		sampleSize = 10
+	case sampleSize == 0:
+		return []mo.VirtualMachine{}
 	}
 
 	topTen := make([]mo.VirtualMachine, 0, sampleSize)
