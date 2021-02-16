@@ -106,7 +106,7 @@ func (vpcs VirtualMachinePowerCycleUptimeStatus) BottomTenOK() []mo.VirtualMachi
 	}
 
 	bottomTen := make([]mo.VirtualMachine, 0, sampleSize)
-	bottomTen = append(bottomTen, vpcs.VMsOK[:sampleSize]...)
+	bottomTen = append(bottomTen, poweredOnVMs[:sampleSize]...)
 
 	return bottomTen
 
