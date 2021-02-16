@@ -22,6 +22,7 @@ import (
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 // ErrResourcePoolMemoryUsageThresholdCrossed indicates that specified
@@ -333,6 +334,7 @@ func ResourcePoolsMemoryReport(
 	includeRPs []string,
 	excludeRPs []string,
 	rps []mo.ResourcePool,
+	rpsVMs []mo.VirtualMachine,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -346,6 +348,8 @@ func ResourcePoolsMemoryReport(
 
 	var report strings.Builder
 
+	rpIDtoNameIdx := make(map[string]string)
+
 	fmt.Fprintf(
 		&report,
 		"Memory usage by Resource Pool:%s%s",
@@ -353,6 +357,10 @@ func ResourcePoolsMemoryReport(
 		nagios.CheckOutputEOL,
 	)
 	for _, rp := range rps {
+
+		// gather MOID to Name mappings for later lookup
+		rpIDtoNameIdx[rp.Self.Value] = rp.Name
+
 		rpMemoryUsage := rp.Summary.GetResourcePoolSummary().QuickStats.HostMemoryUsage * units.MB
 		rpMemoryPercentageUsed := MemoryUsedPercentage(rpMemoryUsage, maxMemoryUsageInGB)
 		memoryPercentageUsedOfClusterCapacity := MemoryUsedPercentage(
@@ -368,6 +376,66 @@ func ResourcePoolsMemoryReport(
 			memoryPercentageUsedOfClusterCapacity,
 			nagios.CheckOutputEOL,
 		)
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%sTop 10 memory consuming VMs (descending order):%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	var vmsPoweredOn int
+	var vmsPoweredOff int
+	for _, vm := range rpsVMs {
+		switch {
+		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn:
+			vmsPoweredOn++
+		default:
+			vmsPoweredOff++
+		}
+
+	}
+
+	sort.Slice(rpsVMs, func(i, j int) bool {
+		return rpsVMs[i].Summary.QuickStats.HostMemoryUsage > rpsVMs[j].Summary.QuickStats.HostMemoryUsage
+	})
+
+	switch {
+	case vmsPoweredOn == 0:
+		fmt.Fprintf(
+			&report,
+			"* None (visible); %d powered off%s",
+			vmsPoweredOff,
+			nagios.CheckOutputEOL,
+		)
+
+	default:
+
+		// grab up to the first 10 VMs, presorted by most memory usage
+		sampleSize := len(rpsVMs)
+		if sampleSize > 10 {
+			sampleSize = 10
+		}
+
+		for _, vm := range rpsVMs[:sampleSize] {
+			if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
+
+				hostMemUsedBytes := int64(vm.Summary.QuickStats.HostMemoryUsage) * units.MB
+				rpName := rpIDtoNameIdx[vm.ResourcePool.Value]
+
+				fmt.Fprintf(
+					&report,
+					"* %s [Mem: %s, Pool: %s]%s",
+					vm.Name,
+					units.ByteSize(hostMemUsedBytes),
+					rpName,
+					nagios.CheckOutputEOL,
+				)
+			}
+		}
+
 	}
 
 	fmt.Fprintf(
