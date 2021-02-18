@@ -325,18 +325,44 @@ func (c Config) validate(pluginType PluginType) error {
 
 	case pluginType.VirtualHardwareVersion:
 
+		// optional flag; if not default value, assert known requirements
+		if c.ClusterName != defaultClusterName {
+			if len(c.ClusterName) > MaxClusterNameChars {
+				return fmt.Errorf(
+					"invalid cluster name specified; max supported length is %d, received %d",
+					MaxClusterNameChars,
+					len(c.ClusterName),
+				)
+			}
+		}
+
+		// both are optional flags, but only one at a time is supported
+		if c.ClusterName != defaultClusterName && c.HostSystemName != defaultHostSystemName {
+			return fmt.Errorf(
+				"only one of cluster or host name supported",
+			)
+		}
+
 		// assert that only one type of behavior is used for plugin
 		switch {
 
 		// homogeneous version checks
 		case c.VirtualHardwareMinimumVersion == defaultVirtualHardwareMinimumVersion &&
 			c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
-			c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning:
+			c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning &&
+			!c.VirtualHardwareDefaultVersionIsMinimum:
+
+		// host/cluster default is minimum version check
+		case c.VirtualHardwareMinimumVersion == defaultVirtualHardwareMinimumVersion &&
+			c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
+			c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning &&
+			c.VirtualHardwareDefaultVersionIsMinimum:
 
 		// minimum version check
 		case c.VirtualHardwareMinimumVersion != defaultVirtualHardwareMinimumVersion &&
 			c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
-			c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning:
+			c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning &&
+			!c.VirtualHardwareDefaultVersionIsMinimum:
 
 			// ESX 2.x, GSX Server 3.x, Workstation 4.x & 5.x, ...
 			// https://kb.vmware.com/s/article/1003746
@@ -347,7 +373,8 @@ func (c Config) validate(pluginType PluginType) error {
 		// outdated by version thresholds check; apply further validation
 		case c.VirtualHardwareMinimumVersion == defaultVirtualHardwareMinimumVersion &&
 			(c.VirtualHardwareOutdatedByCritical != defaultVirtualHardwareOutdatedByCritical ||
-				c.VirtualHardwareOutdatedByWarning != defaultVirtualHardwareOutdatedByWarning):
+				c.VirtualHardwareOutdatedByWarning != defaultVirtualHardwareOutdatedByWarning) &&
+			!c.VirtualHardwareDefaultVersionIsMinimum:
 
 			switch {
 			// user did not specify a value, do not apply further validation

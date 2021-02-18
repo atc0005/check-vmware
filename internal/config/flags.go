@@ -182,6 +182,10 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
+		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
+		flag.StringVar(&c.HostSystemName, "host-name", defaultHostSystemName, hostSystemNameFlagHelp)
+		flag.StringVar(&c.ClusterName, "cluster-name", defaultClusterName, clusterNameFlagHelp)
+
 		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, "outdated-by-warning", defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp)
 		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, "obw", defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp+" (shorthand)")
 
@@ -190,6 +194,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 		flag.IntVar(&c.VirtualHardwareMinimumVersion, "minimum-version", defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp)
 		flag.IntVar(&c.VirtualHardwareMinimumVersion, "mv", defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp+" (shorthand)")
+
+		flag.BoolVar(&c.VirtualHardwareDefaultVersionIsMinimum, "default-is-min-version", defaultVirtualHardwareDefaultIsMinimum, virtualHardwareDefaultIsMinimumFlagHelp)
+		flag.BoolVar(&c.VirtualHardwareDefaultVersionIsMinimum, "dimv", defaultVirtualHardwareDefaultIsMinimum, virtualHardwareDefaultIsMinimumFlagHelp+" (shorthand)")
 
 	case pluginType.Host2Datastores2VMs:
 

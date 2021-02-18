@@ -66,6 +66,7 @@ func getHostSystemPropsSubset() []string {
 		"datastore",
 		"customValue",
 		"availableField",
+		"parent", // used to obtain ComputeResource
 	}
 }
 func getDatastorePropsSubset() []string {
@@ -235,7 +236,7 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 	default:
 		dc, findDCErr := finder.DatacenterOrDefault(ctx, datacenter)
 		if findDCErr != nil {
-			return fmt.Errorf("%s: %w", failedToUseFailedToFallback, findDCErr)
+			return fmt.Errorf("%s: %w", dcFailedToUseFailedToFallback, findDCErr)
 		}
 		finder.SetDatacenter(dc)
 	}

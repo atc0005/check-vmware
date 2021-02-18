@@ -197,7 +197,33 @@ func main() {
 		Str("virtual_machines", strings.Join(vmNames, ", ")).
 		Msg("")
 
-	// here we diverge from other plugins
+		// here we diverge from other plugins
+
+	defaultHardwareVersion, getDefVerErr := vsphere.DefaultHardwareVersion(
+		ctx,
+		c.Client,
+		cfg.HostSystemName,
+		cfg.ClusterName,
+		cfg.DatacenterName,
+	)
+	if getDefVerErr != nil {
+		log.Error().Err(getDefVerErr).Msg(
+			"error retrieving default hardware version",
+		)
+
+		nagiosExitState.LastError = getDefVerErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error retrieving default hardware version",
+			nagios.StateCRITICALLabel,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+		return
+	}
+
+	log.Debug().
+		Int("default_hardware_version", defaultHardwareVersion.VersionNumber()).
+		Msg("")
 
 	hardwareVersionsIdx := make(vsphere.HardwareVersionsIndex)
 	for _, vm := range filteredVMs {
@@ -215,7 +241,7 @@ func main() {
 		// Record thresholds for use as Nagios "Long Service Output" content. This
 		// content is shown in the detailed web UI and in notifications generated
 		// by Nagios.
-		nagiosExitState.CriticalThreshold = "Not used by this monitoring mode."
+		nagiosExitState.CriticalThreshold = config.ThresholdNotUsed
 		nagiosExitState.WarningThreshold = "Non-homogenous hardware versions."
 
 		switch {
@@ -246,6 +272,7 @@ func main() {
 				c.Client,
 				hardwareVersionsIdx,
 				hardwareVersionsIdx.Newest().VersionNumber(),
+				defaultHardwareVersion,
 				vms,
 				filteredVMs,
 				cfg.IgnoredVMs,
@@ -277,6 +304,7 @@ func main() {
 				c.Client,
 				hardwareVersionsIdx,
 				hardwareVersionsIdx.Newest().VersionNumber(),
+				defaultHardwareVersion,
 				vms,
 				filteredVMs,
 				cfg.IgnoredVMs,
@@ -303,7 +331,7 @@ func main() {
 			"Hardware versions older than the minimum (%d) present.",
 			cfg.VirtualHardwareMinimumVersion,
 		)
-		nagiosExitState.WarningThreshold = "Not used by this monitoring mode."
+		nagiosExitState.WarningThreshold = config.ThresholdNotUsed
 
 		hardwareVersions := hardwareVersionsIdx.Versions()
 
@@ -332,6 +360,7 @@ func main() {
 				c.Client,
 				hardwareVersionsIdx,
 				cfg.VirtualHardwareMinimumVersion,
+				defaultHardwareVersion,
 				vms,
 				filteredVMs,
 				cfg.IgnoredVMs,
@@ -360,6 +389,93 @@ func main() {
 				c.Client,
 				hardwareVersionsIdx,
 				cfg.VirtualHardwareMinimumVersion,
+				defaultHardwareVersion,
+				vms,
+				filteredVMs,
+				cfg.IgnoredVMs,
+				cfg.PoweredOff,
+				cfg.IncludedResourcePools,
+				cfg.ExcludedResourcePools,
+				resourcePools,
+			)
+
+			nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
+
+			return
+		}
+
+	}
+
+	if cfg.VirtualHardwareApplyDefaultIsMinVersionCheck() {
+
+		// Record thresholds for use as Nagios "Long Service Output" content. This
+		// content is shown in the detailed web UI and in notifications generated
+		// by Nagios.
+		nagiosExitState.CriticalThreshold = config.ThresholdNotUsed
+
+		nagiosExitState.WarningThreshold = fmt.Sprintf(
+			"Hardware versions older than the default host or cluster (%d) present.",
+			defaultHardwareVersion.VersionNumber(),
+		)
+
+		hardwareVersions := hardwareVersionsIdx.Versions()
+
+		switch {
+		case !hardwareVersions.MeetsMinVersion(defaultHardwareVersion.VersionNumber()):
+
+			log.Error().
+				Int("vms_filtered", len(filteredVMs)).
+				Int("unique_hardware_versions", hardwareVersionsIdx.Count()).
+				Str("newest_hardware", hardwareVersionsIdx.Newest().String()).
+				Int("default_hardware_version", defaultHardwareVersion.VersionNumber()).
+				Str("outdated_hardware_list", strings.Join(
+					hardwareVersionsIdx.Outdated().VersionNames(), ", ")).
+				Msg("Virtual Hardware versions older than the host or cluster default version detected")
+
+			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
+
+			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
+				nagios.StateWARNINGLabel,
+				hardwareVersionsIdx,
+				defaultHardwareVersion.VersionNumber(),
+				filteredVMs,
+				resourcePools,
+			)
+
+			nagiosExitState.LongServiceOutput = vsphere.VirtualHardwareReport(
+				c.Client,
+				hardwareVersionsIdx,
+				defaultHardwareVersion.VersionNumber(),
+				defaultHardwareVersion,
+				vms,
+				filteredVMs,
+				cfg.IgnoredVMs,
+				cfg.PoweredOff,
+				cfg.IncludedResourcePools,
+				cfg.ExcludedResourcePools,
+				resourcePools,
+			)
+
+			nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
+
+			return
+
+		default:
+			nagiosExitState.LastError = nil
+
+			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
+				nagios.StateOKLabel,
+				hardwareVersionsIdx,
+				defaultHardwareVersion.VersionNumber(),
+				filteredVMs,
+				resourcePools,
+			)
+
+			nagiosExitState.LongServiceOutput = vsphere.VirtualHardwareReport(
+				c.Client,
+				hardwareVersionsIdx,
+				defaultHardwareVersion.VersionNumber(),
+				defaultHardwareVersion,
 				vms,
 				filteredVMs,
 				cfg.IgnoredVMs,
@@ -420,6 +536,7 @@ func main() {
 				c.Client,
 				hardwareVersionsIdx,
 				criticalThresholdVerNum,
+				defaultHardwareVersion,
 				vms,
 				filteredVMs,
 				cfg.IgnoredVMs,
@@ -457,6 +574,7 @@ func main() {
 				c.Client,
 				hardwareVersionsIdx,
 				warningThresholdVerNum,
+				defaultHardwareVersion,
 				vms,
 				filteredVMs,
 				cfg.IgnoredVMs,
@@ -485,6 +603,7 @@ func main() {
 				c.Client,
 				hardwareVersionsIdx,
 				warningThresholdVerNum,
+				defaultHardwareVersion,
 				vms,
 				filteredVMs,
 				cfg.IgnoredVMs,
