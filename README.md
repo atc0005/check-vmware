@@ -40,6 +40,11 @@ or endorsed by VMware, Inc.
     - [Building source code](#building-source-code)
     - [Running](#running)
   - [Installation](#installation)
+    - [From source](#from-source)
+    - [Using precompiled binaries](#using-precompiled-binaries)
+      - [Linux](#linux)
+      - [Windows](#windows)
+      - [Other operating systems](#other-operating-systems)
   - [Configuration options](#configuration-options)
     - [Threshold calculations](#threshold-calculations)
       - [`check_vmware_tools`](#check_vmware_tools-1)
@@ -445,13 +450,12 @@ been tested.
 
 ### Running
 
-- Windows 7, Server 2008R2 or later
-  - per official [Go install notes][go-docs-install]
-- Windows 10 Version 1909
-  - tested
-- Ubuntu Linux 16.04, 18.04
+- Windows 10
+- Ubuntu Linux 16.04+
 
 ## Installation
+
+### From source
 
 1. [Download][go-docs-download] Go
 1. [Install][go-docs-install] Go
@@ -523,6 +527,34 @@ been tested.
      - look in `/tmp/check-vmware/`
 1. Review [configuration options](#configuration-options),
    [`examples`](#examples) and [`contrib`](#contrib) sections usage details.
+
+### Using precompiled binaries
+
+#### Linux
+
+1. Download plugins from the [Latest
+   release](https://github.com/atc0005/check-vmware/releases/latest) that you
+   are interested in
+1. Review [configuration options](#configuration-options),
+   [`examples`](#examples) and [`contrib`](#contrib) sections usage details.
+
+#### Windows
+
+Note: As of the `v0.13.0` release, precompiled Windows binaries are no longer
+provided. This change was made primarily due to the lengthy build times
+required and the perception that most users of this project would not benefit
+from having them. If you *do* use Windows binaries or would like to (e.g., on
+a Windows system within a restricted environment that has access to your
+vSphere cluster or hosts), please provide feedback on
+[GH-160](https://github.com/atc0005/check-vmware/issues/160).
+
+#### Other operating systems
+
+As of the `v0.13.0` release, only Linux precompiled binaries are provided. If
+you would benefit from precompiled binaries for other platforms, please let us
+know by opening a new issue or responding to an existing issue with an
+up-vote. See <https://golang.org/doc/install/source> for a list of supported
+architectures and operating systems.
 
 ## Configuration options
 
