@@ -26,12 +26,65 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.13.0] - 2021-02-18
+
+### Overview
+
+- Plugin improvements
+- Bug fixes
+- built using Go 1.15.8
+- *shelve* building Windows binaries until feedback is provided
+
+### Breaking
+
+Precompiled Windows binaries have been discontinued. If this affects you,
+please provide feedback to
+[GH-160](https://github.com/atc0005/check-vmware/issues/160).
+
+See the build instructions in the project README file for other options.
+
+### Added
+
+- New monitoring mode for `check_vmware_vhw` plugin
+  - `Default is minimum required version`
+  - Asserts that all evaluated Virtual Machines meet or exceed the default
+    version specified by either a specified host or a specified cluster
+
+### Changed
+
+- Makefile
+  - add `clean` recipe for single OS builds (`linux`, `windows`) to match what
+    is already done for the `all` recipe
+
+- README
+  - Update coverage of installation steps
+  - Note shelving of `Windows` builds until feedback is received indicating
+    that others find them useful
+  - Add "other OSes" section inviting requests for precompiled binaries for
+    other supported OSes
+
+### Fixed
+
+- Missing plugin "type" in log messages due to missing constant/check in
+  logging setup
+- Invalid preallocaction of vhw slices used by `Oldest` and `Newest`
+  `HardwareVersionsIndex` methods
+- Add `Deprecated` section to v0.12.0 release entry of this CHANGELOG
+  - this matches the current Release entry for this project's GH repo (which
+    was previously labeled as Breaking)
+
 ## [v0.12.0] - 2021-02-16
 
 ### Overview
 
 - Plugin improvements
 - built using Go 1.15.8
+
+## Deprecated
+
+- Windows binaries are *likely* not going to be included in the next release
+  - if there is interest, they will continue to be provided
+  - see GH-160 for details (and to leave feedback)
 
 ### Changed
 
@@ -429,7 +482,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.13.0...HEAD
+[v0.13.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.13.0
 [v0.12.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.12.0
 [v0.11.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.11.0
 [v0.10.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.10.0
