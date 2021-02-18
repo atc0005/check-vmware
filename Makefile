@@ -174,7 +174,7 @@ all: clean windows linux
 
 .PHONY: windows
 ## windows: generates assets for Windows systems
-windows:
+windows: clean
 	@echo "Building release assets for windows ..."
 
 	@for target in $(WHAT); do \
@@ -194,7 +194,7 @@ windows:
 
 .PHONY: linux
 ## linux: generates assets for Linux distros
-linux:
+linux: clean
 	@echo "Building release assets for linux ..."
 
 	@for target in $(WHAT); do \
