@@ -279,7 +279,7 @@ func main() {
 			resourcePools,
 		)
 
-		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
 		return
 
