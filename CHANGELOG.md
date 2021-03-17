@@ -26,6 +26,28 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.13.1] - 2021-03-17
+
+### Overview
+
+- Bug fixes
+- built using Go 1.16.2
+  - Statically linked
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.15.8` to `1.16.2`
+  - `actions/setup-node`
+    - `v2.1.4` to `v2.1.5`
+
+### Fixed
+
+- `check_vmware_vm_power_uptime` plugin
+  - incorrect exit code returned for `WARNING` state
+
 ## [v0.13.0] - 2021-02-18
 
 ### Overview
@@ -482,7 +504,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.13.1...HEAD
+[v0.13.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.13.1
 [v0.13.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.13.0
 [v0.12.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.12.0
 [v0.11.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.11.0
