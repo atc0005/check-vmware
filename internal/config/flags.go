@@ -94,15 +94,6 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 
-		// NOTE: This plugin is hard-coded to evaluate powered off and powered
-		// on VMs equally. I'm not sure whether ignoring powered off VMs by
-		// default makes sense for this particular plugin.
-		//
-		// Please share your feedback on this GitHub issue if you feel differently:
-		// https://github.com/atc0005/check-vmware/issues/79
-		//
-		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
-
 		flag.IntVar(&c.VMPowerCycleUptimeWarning, "uptime-warning", defaultVMPowerCycleUptimeWarning, vmPowerCycleUptimeWarningFlagHelp)
 		flag.IntVar(&c.VMPowerCycleUptimeWarning, "uw", defaultVMPowerCycleUptimeWarning, vmPowerCycleUptimeWarningFlagHelp+" (shorthand)")
 
