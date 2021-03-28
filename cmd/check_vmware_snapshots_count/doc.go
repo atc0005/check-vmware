@@ -11,9 +11,9 @@ https://kb.vmware.com/s/article/1025279 for more information.
 
 The current design of this plugin is to evaluate *all* Virtual Machines,
 whether powered off or powered on. If you have a use case for evaluating
-*only* powered on VMs by default, please add a comment to
-https://github.com/atc0005/check-vmware/issues/79 providing some details for
-your use-case.
+*only* powered on VMs by default, please post it to
+https://github.com/atc0005/check-vmware/discussions/177 providing some details
+for your use-case.
 
 The output for this plugin is designed to provide the one-line summary needed
 by Nagios for quick identification of a problem while providing longer, more
