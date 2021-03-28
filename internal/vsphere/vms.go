@@ -481,6 +481,19 @@ func dedupeVMs(vmsList []mo.VirtualMachine) []mo.VirtualMachine {
 	return vmsList[:j]
 }
 
+// VMNames receives a list of VirtualMachine values and returns a new list of
+// VirtualMachine Name values.
+func VMNames(vmsList []mo.VirtualMachine) []string {
+
+	vmNames := make([]string, 0, len(vmsList))
+	for i := range vmsList {
+		vmNames = append(vmNames, vmsList[i].Name)
+	}
+
+	return vmNames
+
+}
+
 // GetVMPowerCycleUptimeStatusSummary accepts a list of VirtualMachines and
 // threshold values and generates a collection of VirtualMachines that exceeds
 // given thresholds along with those given thresholds.
