@@ -1690,7 +1690,7 @@ define command{
 #### CLI invocation
 
 ```ShellSession
-/usr/lib/nagios/plugins/check_vmware_vm_power_uptime --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --host-name "esx1.example.com" --uptime-warning 60 --uptime-critical 90 --trust-cert --log-level info
+/usr/lib/nagios/plugins/check_vmware_vm_power_uptime --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --uptime-warning 60 --uptime-critical 90 --trust-cert --log-level info
 ```
 
 See the [configuration options](#configuration-options) section for all
@@ -1700,8 +1700,6 @@ command definitions and Nagios configuration files.
 
 Of note:
 
-- The host name is specified (via `host-name` flag) using the exact value
-  shown in the vSphere inventory (e.g., `esx1.example.com`)
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
@@ -1715,11 +1713,12 @@ Of note:
 ```shell
 # /etc/nagios-plugins/config/vmware-vm-power-uptime.cfg
 
-# Look at a specific host and explicitly provide custom WARNING and CRITICAL
-# threshold values.
+# Look at all pools, all VMs, do not evaluate any VMs that are powered off.
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally.
 define command{
     command_name    check_vmware_vm_power_uptime
-    command_line    /usr/lib/nagios/plugins/check_vmware_vm_power_uptime --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --uptime-warning '$ARG4$' --uptime-critical '$ARG5$' --host-name '$ARG6$' --trust-cert  --log-level info
+    command_line    /usr/lib/nagios/plugins/check_vmware_vm_power_uptime --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --uptime-warning '$ARG4$' --uptime-critical '$ARG5$' --trust-cert  --log-level info
     }
 ```
 
