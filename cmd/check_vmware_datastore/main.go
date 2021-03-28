@@ -92,8 +92,6 @@ func main() {
 	}
 
 	log := cfg.Log.With().
-		Str("included_resource_pools", cfg.IncludedResourcePools.String()).
-		Str("excluded_resource_pools", cfg.ExcludedResourcePools.String()).
 		Str("datastore_name", cfg.DatastoreName).
 		Str("datacenter_name", dcName).
 		Int("datastore_critical_usage", cfg.DatastoreUsageCritical).
