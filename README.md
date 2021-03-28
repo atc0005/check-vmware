@@ -286,8 +286,8 @@ Nagios plugin used to monitor the age of Virtual Machine snapshots.
 
 The current design of this plugin is to evaluate *all* Virtual Machines,
 whether powered off or powered on. If you have a use case for evaluating
-*only* powered on VMs by default, please [add a comment to
-GH-79](https://github.com/atc0005/check-vmware/issues/79) providing some
+*only* powered on VMs by default, please [share it
+here](https://github.com/atc0005/check-vmware/discussions/177) providing some
 details for your use-case. In our environment, I have yet to see a need to
 *only* evaluate powered on VMs for old snapshots. For cases where the
 snapshots needed to be ignored, we added the VM to the ignore list. We then
@@ -309,8 +309,8 @@ duration. A maximum of 32 snapshots per Virtual Machine are supported. See
 
 The current design of this plugin is to evaluate *all* Virtual Machines,
 whether powered off or powered on. If you have a use case for evaluating
-*only* powered on VMs by default, please [add a comment to
-GH-79](https://github.com/atc0005/check-vmware/issues/79) providing some
+*only* powered on VMs by default, please [share it
+here](https://github.com/atc0005/check-vmware/discussions/177) providing some
 details for your use-case. In our environment, I have yet to see a need to
 *only* evaluate powered on VMs for old snapshots. For cases where the
 snapshots needed to be ignored, we added the VM to the ignore list. We then
@@ -332,8 +332,8 @@ result.
 
 The current design of this plugin is to evaluate *all* Virtual Machines,
 whether powered off or powered on. If you have a use case for evaluating
-*only* powered on VMs by default, please [add a comment to
-GH-79](https://github.com/atc0005/check-vmware/issues/79) providing some
+*only* powered on VMs by default, please [share it
+here](https://github.com/atc0005/check-vmware/discussions/177) providing some
 details for your use-case. In our environment, I have yet to see a need to
 *only* evaluate powered on VMs for old snapshots. For cases where the
 snapshots needed to be ignored, we added the VM to the ignore list. We then
