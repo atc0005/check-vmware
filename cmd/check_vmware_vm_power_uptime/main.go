@@ -202,13 +202,9 @@ func main() {
 	log.Debug().Msg("Filter VMs to specified power state")
 	filteredVMs = vsphere.FilterVMsByPowerState(filteredVMs, cfg.PoweredOff)
 
-	vmNames := make([]string, 0, len(filteredVMs))
-	for _, vm := range filteredVMs {
-		vmNames = append(vmNames, vm.Name)
-	}
 	log.Debug().
-		Str("virtual_machines", strings.Join(vmNames, ", ")).
-		Msg("")
+		Str("virtual_machines", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
+		Msg("Filtered VMs")
 
 	// here we diverge from other plugins
 
