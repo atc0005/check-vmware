@@ -62,7 +62,9 @@ contrib
         │       ├── vmware-snapshots-size.cfg
         │       ├── vmware-tools.cfg
         │       ├── vmware-vcpus.cfg
-        │       └── vmware-virtual-hardware.cfg
+        │       ├── vmware-virtual-hardware.cfg
+        │       ├── vmware-vm-disk-consolidation.cfg
+        │       └── vmware-vm-power-uptime.cfg
         └── nagios3
             ├── commands.cfg
             ├── conf
@@ -89,7 +91,7 @@ contrib
             ├── nagios.cfg
             └── resource.cfg
 
-13 directories, 29 files
+13 directories, 31 files
 ```
 
 ### Overview

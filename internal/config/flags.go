@@ -100,6 +100,23 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.VMPowerCycleUptimeCritical, "uptime-critical", defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp)
 		flag.IntVar(&c.VMPowerCycleUptimeCritical, "uc", defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp+" (shorthand)")
 
+	case pluginType.VirtualMachineDiskConsolidation:
+
+		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+
+		// NOTE: This plugin is hard-coded to evaluate powered off and powered
+		// on VMs equally. I'm not sure whether ignoring powered off VMs by
+		// default makes sense for this particular plugin.
+		//
+		// Please share your feedback here if you feel differently:
+		// https://github.com/atc0005/check-vmware/discussions/176
+		//
+		// Please expand on some use cases for ignoring powered off VMs by default.
+		//
+		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+
 	case pluginType.DatastoresSize:
 
 		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)

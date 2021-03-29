@@ -34,6 +34,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_host_memory`](#check_vmware_host_memory)
     - [`check_vmware_host_cpu`](#check_vmware_host_cpu)
     - [`check_vmware_vm_power_uptime`](#check_vmware_vm_power_uptime)
+    - [`check_vmware_vm_disk_consolidation`](#check_vmware_vm_disk_consolidation)
   - [Features](#features)
   - [Changelog](#changelog)
   - [Requirements](#requirements)
@@ -63,6 +64,7 @@ or endorsed by VMware, Inc.
       - [`check_vmware_host_memory`](#check_vmware_host_memory-1)
       - [`check_vmware_host_cpu`](#check_vmware_host_cpu-1)
       - [`check_vmware_vm_power_uptime`](#check_vmware_vm_power_uptime-1)
+      - [`check_vmware_vm_disk_consolidation`](#check_vmware_vm_disk_consolidation-1)
     - [Command-line arguments](#command-line-arguments)
       - [`check_vmware_tools`](#check_vmware_tools-2)
       - [`check_vmware_vcpus`](#check_vmware_vcpus-2)
@@ -76,6 +78,7 @@ or endorsed by VMware, Inc.
       - [`check_vmware_host_memory`](#check_vmware_host_memory-2)
       - [`check_vmware_host_cpu`](#check_vmware_host_cpu-2)
       - [`check_vmware_vm_power_uptime`](#check_vmware_vm_power_uptime-2)
+      - [`check_vmware_vm_disk_consolidation`](#check_vmware_vm_disk_consolidation-2)
     - [Configuration file](#configuration-file)
   - [Contrib](#contrib)
   - [Examples](#examples)
@@ -125,6 +128,9 @@ or endorsed by VMware, Inc.
     - [`check_vmware_vm_power_uptime` Nagios plugin](#check_vmware_vm_power_uptime-nagios-plugin)
       - [CLI invocation](#cli-invocation-14)
       - [Command definition](#command-definition-14)
+    - [`check_vmware_vm_disk_consolidation` Nagios plugin](#check_vmware_vm_disk_consolidation-nagios-plugin)
+      - [CLI invocation](#cli-invocation-15)
+      - [Command definition](#command-definition-15)
   - [License](#license)
   - [References](#references)
 
@@ -141,20 +147,21 @@ VMware, Inc.
 
 This repo contains various tools used to monitor/validate VMware environments.
 
-| Tool Name                      | Status | Description                                                                         |
-| ------------------------------ | ------ | ----------------------------------------------------------------------------------- |
-| `check_vmware_tools`           | Alpha  | Nagios plugin used to monitor VMware Tools installations.                           |
-| `check_vmware_vcpus`           | Alpha  | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
-| `check_vmware_vhw`             | Alpha  | Nagios plugin used to monitor virtual hardware versions.                            |
-| `check_vmware_hs2ds2vms`       | Alpha  | Nagios plugin used to monitor host/datastore/vm pairings.                           |
-| `check_vmware_datastore`       | Alpha  | Nagios plugin used to monitor datastore usage.                                      |
-| `check_vmware_snapshots_age`   | Alpha  | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
-| `check_vmware_snapshots_count` | Alpha  | Nagios plugin used to monitor the count of Virtual Machine snapshots.               |
-| `check_vmware_snapshots_size`  | Alpha  | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
-| `check_vmware_rps_memory`      | Alpha  | Nagios plugin used to monitor memory usage across Resource Pools.                   |
-| `check_vmware_host_memory`     | Alpha  | Nagios plugin used to monitor memory usage for a specific ESXi host system.         |
-| `check_vmware_host_cpu`        | Alpha  | Nagios plugin used to monitor CPU usage for a specific ESXi host system.            |
-| `check_vmware_vm_power_uptime` | Alpha  | Nagios plugin used to monitor VM power cycle uptime.                                |
+| Tool Name                            | Description                                                                         |
+| ------------------------------------ | ----------------------------------------------------------------------------------- |
+| `check_vmware_tools`                 | Nagios plugin used to monitor VMware Tools installations.                           |
+| `check_vmware_vcpus`                 | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
+| `check_vmware_vhw`                   | Nagios plugin used to monitor virtual hardware versions.                            |
+| `check_vmware_hs2ds2vms`             | Nagios plugin used to monitor host/datastore/vm pairings.                           |
+| `check_vmware_datastore`             | Nagios plugin used to monitor datastore usage.                                      |
+| `check_vmware_snapshots_age`         | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
+| `check_vmware_snapshots_count`       | Nagios plugin used to monitor the count of Virtual Machine snapshots.               |
+| `check_vmware_snapshots_size`        | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
+| `check_vmware_rps_memory`            | Nagios plugin used to monitor memory usage across Resource Pools.                   |
+| `check_vmware_host_memory`           | Nagios plugin used to monitor memory usage for a specific ESXi host system.         |
+| `check_vmware_host_cpu`              | Nagios plugin used to monitor CPU usage for a specific ESXi host system.            |
+| `check_vmware_vm_power_uptime`       | Nagios plugin used to monitor VM power cycle uptime.                                |
+| `check_vmware_vm_disk_consolidation` | Nagios plugin used to monitor VM disk consolidation status.                         |
 
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
@@ -398,6 +405,15 @@ Thresholds for `CRITICAL` and `WARNING` CPU usage have usable defaults, but
 may require adjustment for your environment. See the [configuration
 options](#configuration-options) section for details.
 
+### `check_vmware_vm_disk_consolidation`
+
+Nagios plugin used to monitor Virtual Machine disk consolidation status.
+
+The status of this property indicates whether one or more disks for a Virtual
+Machine require consolidation. This can happen when a snapshot is deleted, but
+its associated disk is not committed back to the base disk. This situation can
+cause backup failures and performance issues.
+
 ## Features
 
 - Multiple plugins for monitoring VMware vSphere environments (standalone ESXi
@@ -418,6 +434,7 @@ options](#configuration-options) section for details.
   - Host Memory usage
   - Host CPU usage
   - Virtual Machine (power cycle) uptime
+  - Virtual Machine disk consolidation status
 
 - Optional, leveled logging using `rs/zerolog` package
   - JSON-format output (to `stderr`)
@@ -501,6 +518,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_host_memory/`
      - `go build -mod=vendor ./cmd/check_vmware_host_cpu/`
      - `go build -mod=vendor ./cmd/check_vmware_vm_power_uptime/`
+     - `go build -mod=vendor ./cmd/check_vmware_vm_disk_consolidation/`
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
@@ -523,6 +541,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_host_memory/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_host_cpu/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_vm_power_uptime/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_vm_disk_consolidation/`
    - if using `go build`
      - look in `/tmp/check-vmware/`
 1. Review [configuration options](#configuration-options),
@@ -546,7 +565,7 @@ required and the perception that most users of this project would not benefit
 from having them. If you *do* use Windows binaries or would like to (e.g., on
 a Windows system within a restricted environment that has access to your
 vSphere cluster or hosts), please provide feedback on
-[GH-160](https://github.com/atc0005/check-vmware/issues/160).
+[GH-178](https://github.com/atc0005/check-vmware/discussions/178).
 
 #### Other operating systems
 
@@ -685,6 +704,14 @@ logic for determining plugin state.
 | `OK`         | Ideal state, VM power cycle uptime is within bounds.                   |
 | `WARNING`    | VM power cycle uptime crossed user-specified threshold for this state. |
 | `CRITICAL`   | VM power cycle uptime crossed user-specified threshold for this state. |
+
+#### `check_vmware_vm_disk_consolidation`
+
+| Nagios State | Description                                    |
+| ------------ | ---------------------------------------------- |
+| `OK`         | Ideal state, VM disk consolidation not needed. |
+| `WARNING`    | Not used by this plugin.                       |
+| `CRITICAL`   | Disk consolidation needed for one or more VMs. |
 
 ### Command-line arguments
 
@@ -960,6 +987,25 @@ based on feedback.
 | `ignore-vm`             | No       |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                                                                                           |
 | `uc`, `uptime-critical` | No       | `90`    | No     | *days as positive whole number*                                         | Specifies the power cycle (off/on) uptime in days per VM when a CRITICAL threshold is reached.                                                                                                                                                                                                                             |
 | `uw`, `uptime-warning`  | No       | `60`    | No     | *days as positive whole number*                                         | Specifies the power cycle (off/on) uptime in days per VM when a WARNING threshold is reached.                                                                                                                                                                                                                              |
+
+#### `check_vmware_vm_disk_consolidation`
+
+| Flag              | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                |
+| ----------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `branding`        | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
+| `h`, `help`       | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
+| `v`, `version`    | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
+| `ll`, `log-level` | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `p`, `port`       | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
+| `t`, `timeout`    | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
+| `s`, `server`     | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
+| `u`, `username`   | **Yes**  |         | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                                                                                                                                                |
+| `pw`, `password`  | **Yes**  |         | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                                                                                                                                                   |
+| `domain`          | No       |         | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                                                                                                                                         |
+| `trust-cert`      | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                                                                                                                                      |
+| `include-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
+| `exclude-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                                                                                                                             |
+| `ignore-vm`       | No       |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                                                                                           |
 
 ### Configuration file
 
@@ -1719,6 +1765,43 @@ Of note:
 define command{
     command_name    check_vmware_vm_power_uptime
     command_line    /usr/lib/nagios/plugins/check_vmware_vm_power_uptime --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --uptime-warning '$ARG4$' --uptime-critical '$ARG5$' --trust-cert  --log-level info
+    }
+```
+
+### `check_vmware_vm_disk_consolidation` Nagios plugin
+
+#### CLI invocation
+
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_vm_disk_consolidation --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com  --trust-cert --log-level info
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+Of note:
+
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
+
+#### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-vm-disk-consolidation.cfg
+
+# Look at all pools, all VMs, do not evaluate any VMs that are powered off.
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally.
+define command{
+    command_name    check_vmware_vm_disk_consolidation
+    command_line    /usr/lib/nagios/plugins/check_vmware_vm_disk_consolidation --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info
     }
 ```
 
