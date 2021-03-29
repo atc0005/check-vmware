@@ -30,6 +30,10 @@ var ErrVirtualMachinePowerCycleUptimeThresholdCrossed = errors.New("power cycle 
 // is needed for one or more Virtual Machines.
 var ErrVirtualMachineDiskConsolidationNeeded = errors.New("disk consolidation needed")
 
+// ErrVirtualMachineInteractiveResponseNeeded indicates that an interactive
+// response is needed for one or more Virtual Machines.
+var ErrVirtualMachineInteractiveResponseNeeded = errors.New("interactive response needed")
+
 // VirtualMachinePowerCycleUptimeStatus tracks VirtualMachines with power
 // cycle uptimes that exceed specified thresholds while retaining a list of
 // the VirtualMachines that have yet to exceed thresholds.
@@ -928,6 +932,191 @@ func VMDiskConsolidationReport(
 		// https://github.com/atc0005/check-vmware/discussions/176
 		//
 		// Please expand on some use cases for ignoring powered off VMs by default.
+		true,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified VMs to exclude (%d): [%v]%s",
+		len(vmsToExclude),
+		strings.Join(vmsToExclude, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
+		len(includeRPs),
+		strings.Join(includeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
+		len(excludeRPs),
+		strings.Join(excludeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Resource Pools evaluated (%d): [%v]%s",
+		len(rpNames),
+		strings.Join(rpNames, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	return report.String()
+}
+
+// VMInteractiveQuestionOneLineCheckSummary is used to generate a one-line
+// Nagios service check results summary. This is the line most prominent in
+// notifications.
+func VMInteractiveQuestionOneLineCheckSummary(
+	stateLabel string,
+	evaluatedVMs []mo.VirtualMachine,
+	vmsNeedingResponse []mo.VirtualMachine,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VMInteractiveQuestionOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	switch {
+	case len(vmsNeedingResponse) > 0:
+		return fmt.Sprintf(
+			"%s: %d VMs requiring interactive response detected (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			len(vmsNeedingResponse),
+			len(evaluatedVMs),
+			len(rps),
+		)
+
+	default:
+
+		return fmt.Sprintf(
+			"%s: No VMs requiring interactive response detected (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			len(evaluatedVMs),
+			len(rps),
+		)
+	}
+}
+
+// VMInteractiveQuestionReport generates a summary of VMs which require an
+// interactive response along with various verbose details intended to aid in
+// troubleshooting check results at a glance. This information is provided for
+// use with the Long Service Output field commonly displayed on the detailed
+// service check results display in the web UI or in the body of many
+// notifications.
+func VMInteractiveQuestionReport(
+	c *vim25.Client,
+	allVMs []mo.VirtualMachine,
+	evaluatedVMs []mo.VirtualMachine,
+	vmsNeedingResponse []mo.VirtualMachine,
+	vmsToExclude []string,
+	evalPoweredOffVMs bool,
+	includeRPs []string,
+	excludeRPs []string,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VMInteractiveQuestionReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	rpNames := make([]string, len(rps))
+	for i := range rps {
+		rpNames[i] = rps[i].Name
+	}
+
+	var report strings.Builder
+
+	fmt.Fprintf(
+		&report,
+		"VMs requiring disk consolidation:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	switch {
+	case len(vmsNeedingResponse) > 0:
+
+		sort.Slice(vmsNeedingResponse, func(i, j int) bool {
+			return vmsNeedingResponse[i].Name < vmsNeedingResponse[j].Name
+		})
+
+		for _, vm := range vmsNeedingResponse {
+
+			var question string
+			switch {
+			case vm.Summary.Runtime.Question.Text != "":
+				question = vm.Summary.Runtime.Question.Text
+			default:
+				question = "unknown"
+			}
+
+			fmt.Fprintf(
+				&report,
+				"* %s (%q)%s",
+				vm.Name,
+				question,
+				nagios.CheckOutputEOL,
+			)
+		}
+
+	default:
+
+		fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
+
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* vSphere environment: %s%s",
+		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* VMs (evaluated: %d, total: %d)%s",
+		len(evaluatedVMs),
+		len(allVMs),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Powered off VMs evaluated: %t%s",
+		// NOTE: This plugin is used to detect Virtual Machines which are
+		// blocked from execution due to an interactive question. At this
+		// stage you could argue that they are neither "on" nor "off", but
+		// instead are in an in-between state, though it is likely that
+		// vSphere would considered them to be in an "off" state,
+		// transitioning to an "on" state. Either way, we report here that
+		// both powered on and powered off VMs are evaluated for simplicity.
 		true,
 		nagios.CheckOutputEOL,
 	)

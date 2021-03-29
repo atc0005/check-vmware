@@ -44,6 +44,8 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Virtual Machine disk consolidation status
 
+• Virtual Machine interactive question status
+
 USAGE
 
 See our main README for supported settings and examples.

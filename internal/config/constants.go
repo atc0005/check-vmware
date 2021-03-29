@@ -156,6 +156,7 @@ const (
 	PluginTypeHostSystemCPU                  string = "host-system-cpu"
 	PluginTypeVirtualMachinePowerCycleUptime string = "vm-power-uptime"
 	PluginTypeDiskConsolidation              string = "disk-consolidation"
+	PluginTypeInteractiveQuestion            string = "interactive-question"
 )
 
 // Known limits
