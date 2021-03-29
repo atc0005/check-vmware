@@ -42,6 +42,8 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Virtual Machine (power cycle) uptime
 
+• Virtual Machine disk consolidation status
+
 USAGE
 
 See our main README for supported settings and examples.

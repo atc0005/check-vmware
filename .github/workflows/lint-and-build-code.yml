@@ -94,3 +94,4 @@ jobs:
           go build -v -mod=vendor ./cmd/check_vmware_host_memory
           go build -v -mod=vendor ./cmd/check_vmware_host_cpu
           go build -v -mod=vendor ./cmd/check_vmware_vm_power_uptime
+          go build -v -mod=vendor ./cmd/check_vmware_vm_disk_consolidation

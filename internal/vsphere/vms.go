@@ -23,8 +23,12 @@ import (
 )
 
 // ErrVirtualMachinePowerCycleUptimeThresholdCrossed indicates that specified
-// Virtual Machine power cycle thresholds have been exceeeded.
+// Virtual Machine power cycle thresholds have been exceeded.
 var ErrVirtualMachinePowerCycleUptimeThresholdCrossed = errors.New("power cycle uptime exceeds specified threshold")
+
+// ErrVirtualMachineDiskConsolidationNeeded indicates that disk consolidation
+// is needed for one or more Virtual Machines.
+var ErrVirtualMachineDiskConsolidationNeeded = errors.New("disk consolidation needed")
 
 // VirtualMachinePowerCycleUptimeStatus tracks VirtualMachines with power
 // cycle uptimes that exceed specified thresholds while retaining a list of
@@ -754,6 +758,177 @@ func VMPowerCycleUptimeReport(
 		&report,
 		"* Powered off VMs evaluated: %t%s",
 		evalPoweredOffVMs,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified VMs to exclude (%d): [%v]%s",
+		len(vmsToExclude),
+		strings.Join(vmsToExclude, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
+		len(includeRPs),
+		strings.Join(includeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
+		len(excludeRPs),
+		strings.Join(excludeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Resource Pools evaluated (%d): [%v]%s",
+		len(rpNames),
+		strings.Join(rpNames, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	return report.String()
+}
+
+// VMDiskConsolidationOneLineCheckSummary is used to generate a one-line Nagios
+// service check results summary. This is the line most prominent in
+// notifications.
+func VMDiskConsolidationOneLineCheckSummary(
+	stateLabel string,
+	evaluatedVMs []mo.VirtualMachine,
+	vmsNeedingConsolidation []mo.VirtualMachine,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VMDiskConsolidationOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	switch {
+	case len(vmsNeedingConsolidation) > 0:
+		return fmt.Sprintf(
+			"%s: %d VMs requiring disk consolidation detected (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			len(vmsNeedingConsolidation),
+			len(evaluatedVMs),
+			len(rps),
+		)
+
+	default:
+
+		return fmt.Sprintf(
+			"%s: No VMs requiring disk consolidation detected (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			len(evaluatedVMs),
+			len(rps),
+		)
+	}
+}
+
+// VMDiskConsolidationReport generates a summary of VMs which require disk
+// consolidation along with various verbose details intended to aid in
+// troubleshooting check results at a glance. This information is provided for
+// use with the Long Service Output field commonly displayed on the detailed
+// service check results display in the web UI or in the body of many
+// notifications.
+func VMDiskConsolidationReport(
+	c *vim25.Client,
+	allVMs []mo.VirtualMachine,
+	evaluatedVMs []mo.VirtualMachine,
+	vmsNeedingConsolidation []mo.VirtualMachine,
+	vmsToExclude []string,
+	evalPoweredOffVMs bool,
+	includeRPs []string,
+	excludeRPs []string,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VMDiskConsolidationReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	rpNames := make([]string, len(rps))
+	for i := range rps {
+		rpNames[i] = rps[i].Name
+	}
+
+	var report strings.Builder
+
+	fmt.Fprintf(
+		&report,
+		"VMs requiring disk consolidation:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	switch {
+	case len(vmsNeedingConsolidation) > 0:
+
+		sort.Slice(vmsNeedingConsolidation, func(i, j int) bool {
+			return vmsNeedingConsolidation[i].Name < vmsNeedingConsolidation[j].Name
+		})
+
+		for _, vm := range vmsNeedingConsolidation {
+			fmt.Fprintf(&report, "* %s%s", vm.Name, nagios.CheckOutputEOL)
+		}
+
+	default:
+
+		fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
+
+	}
+
+	fmt.Fprintf(
+		&report,
+		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* vSphere environment: %s%s",
+		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* VMs (evaluated: %d, total: %d)%s",
+		len(evaluatedVMs),
+		len(allVMs),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Powered off VMs evaluated: %t%s",
+		// NOTE: This plugin is hard-coded to evaluate powered off and powered
+		// on VMs equally. I'm not sure whether ignoring powered off VMs by
+		// default makes sense for this particular plugin.
+		//
+		// Please share your feedback here if you feel differently:
+		// https://github.com/atc0005/check-vmware/discussions/176
+		//
+		// Please expand on some use cases for ignoring powered off VMs by default.
+		true,
 		nagios.CheckOutputEOL,
 	)
 
