@@ -26,6 +26,57 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.14.0] - 2021-03-29
+
+### Overview
+
+- New plugin
+- Misc tweaks
+- Bug fixes
+- built using Go 1.16.2
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- New plugin: `check_vmware_disk_consolidation`
+
+### Changed
+
+- README
+  - remove `Status` column from plugin table
+  - replace GH issue links with GH discussion links
+    - GH-160 to GH-178
+    - GH-79 to GH-176
+
+- `check_vmware_vhw` plugin
+  - thresholds output text adjusted
+
+- Refactoring
+  - very minor tweaks, much, much more to do
+
+- Dependencies
+  - `rs/zerolog`
+    - `v1.20.0` to `v1.21.0`
+  - `vmware/govmomi`
+    - `v0.24.0` to `v0.24.1`
+
+### Fixed
+
+- Doc comments
+  - typo
+  - copy/paste/forget
+
+- `contrib`
+  - multiple mistakes in `vc1.example.com.cfg` host config file
+
+- `check_vmware_datastore` plugin
+  - remove `included_resource_pools` and `excluded_resource_pools` fields from
+    log messages as they do not apply to this plugin
+
+- README
+  - invalid `host-name` flag used in `check_vmware_vm_power_update` examples
+
 ## [v0.13.1] - 2021-03-17
 
 ### Overview
@@ -504,7 +555,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.13.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.14.0...HEAD
+[v0.14.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.14.0
 [v0.13.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.13.1
 [v0.13.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.13.0
 [v0.12.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.12.0
