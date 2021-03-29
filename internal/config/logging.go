@@ -131,8 +131,8 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 	case pluginType.VirtualMachinePowerCycleUptime:
 		appDescription = PluginTypeVirtualMachinePowerCycleUptime
 
-	case pluginType.VirtualMachineDiskConsolidation:
-		appDescription = PluginTypeVirtualMachineDiskConsolidation
+	case pluginType.DiskConsolidation:
+		appDescription = PluginTypeDiskConsolidation
 
 	case pluginType.Tools:
 		appDescription = PluginTypeTools
