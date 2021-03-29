@@ -53,6 +53,7 @@ contrib
         │   └── config
         │       ├── send2teams.cfg
         │       ├── vmware-datastores.cfg
+        │       ├── vmware-disk-consolidation.cfg
         │       ├── vmware-host-cpu.cfg
         │       ├── vmware-host-datastore-vms-pairings.cfg
         │       ├── vmware-host-memory.cfg
@@ -63,7 +64,6 @@ contrib
         │       ├── vmware-tools.cfg
         │       ├── vmware-vcpus.cfg
         │       ├── vmware-virtual-hardware.cfg
-        │       ├── vmware-vm-disk-consolidation.cfg
         │       └── vmware-vm-power-uptime.cfg
         └── nagios3
             ├── commands.cfg

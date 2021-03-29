@@ -34,7 +34,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_host_memory`](#check_vmware_host_memory)
     - [`check_vmware_host_cpu`](#check_vmware_host_cpu)
     - [`check_vmware_vm_power_uptime`](#check_vmware_vm_power_uptime)
-    - [`check_vmware_vm_disk_consolidation`](#check_vmware_vm_disk_consolidation)
+    - [`check_vmware_disk_consolidation`](#check_vmware_disk_consolidation)
   - [Features](#features)
   - [Changelog](#changelog)
   - [Requirements](#requirements)
@@ -64,7 +64,7 @@ or endorsed by VMware, Inc.
       - [`check_vmware_host_memory`](#check_vmware_host_memory-1)
       - [`check_vmware_host_cpu`](#check_vmware_host_cpu-1)
       - [`check_vmware_vm_power_uptime`](#check_vmware_vm_power_uptime-1)
-      - [`check_vmware_vm_disk_consolidation`](#check_vmware_vm_disk_consolidation-1)
+      - [`check_vmware_disk_consolidation`](#check_vmware_disk_consolidation-1)
     - [Command-line arguments](#command-line-arguments)
       - [`check_vmware_tools`](#check_vmware_tools-2)
       - [`check_vmware_vcpus`](#check_vmware_vcpus-2)
@@ -78,7 +78,7 @@ or endorsed by VMware, Inc.
       - [`check_vmware_host_memory`](#check_vmware_host_memory-2)
       - [`check_vmware_host_cpu`](#check_vmware_host_cpu-2)
       - [`check_vmware_vm_power_uptime`](#check_vmware_vm_power_uptime-2)
-      - [`check_vmware_vm_disk_consolidation`](#check_vmware_vm_disk_consolidation-2)
+      - [`check_vmware_disk_consolidation`](#check_vmware_disk_consolidation-2)
     - [Configuration file](#configuration-file)
   - [Contrib](#contrib)
   - [Examples](#examples)
@@ -128,7 +128,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_vm_power_uptime` Nagios plugin](#check_vmware_vm_power_uptime-nagios-plugin)
       - [CLI invocation](#cli-invocation-14)
       - [Command definition](#command-definition-14)
-    - [`check_vmware_vm_disk_consolidation` Nagios plugin](#check_vmware_vm_disk_consolidation-nagios-plugin)
+    - [`check_vmware_disk_consolidation` Nagios plugin](#check_vmware_disk_consolidation-nagios-plugin)
       - [CLI invocation](#cli-invocation-15)
       - [Command definition](#command-definition-15)
   - [License](#license)
@@ -147,21 +147,21 @@ VMware, Inc.
 
 This repo contains various tools used to monitor/validate VMware environments.
 
-| Tool Name                            | Description                                                                         |
-| ------------------------------------ | ----------------------------------------------------------------------------------- |
-| `check_vmware_tools`                 | Nagios plugin used to monitor VMware Tools installations.                           |
-| `check_vmware_vcpus`                 | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
-| `check_vmware_vhw`                   | Nagios plugin used to monitor virtual hardware versions.                            |
-| `check_vmware_hs2ds2vms`             | Nagios plugin used to monitor host/datastore/vm pairings.                           |
-| `check_vmware_datastore`             | Nagios plugin used to monitor datastore usage.                                      |
-| `check_vmware_snapshots_age`         | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
-| `check_vmware_snapshots_count`       | Nagios plugin used to monitor the count of Virtual Machine snapshots.               |
-| `check_vmware_snapshots_size`        | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
-| `check_vmware_rps_memory`            | Nagios plugin used to monitor memory usage across Resource Pools.                   |
-| `check_vmware_host_memory`           | Nagios plugin used to monitor memory usage for a specific ESXi host system.         |
-| `check_vmware_host_cpu`              | Nagios plugin used to monitor CPU usage for a specific ESXi host system.            |
-| `check_vmware_vm_power_uptime`       | Nagios plugin used to monitor VM power cycle uptime.                                |
-| `check_vmware_vm_disk_consolidation` | Nagios plugin used to monitor VM disk consolidation status.                         |
+| Tool Name                         | Description                                                                         |
+| --------------------------------- | ----------------------------------------------------------------------------------- |
+| `check_vmware_tools`              | Nagios plugin used to monitor VMware Tools installations.                           |
+| `check_vmware_vcpus`              | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
+| `check_vmware_vhw`                | Nagios plugin used to monitor virtual hardware versions.                            |
+| `check_vmware_hs2ds2vms`          | Nagios plugin used to monitor host/datastore/vm pairings.                           |
+| `check_vmware_datastore`          | Nagios plugin used to monitor datastore usage.                                      |
+| `check_vmware_snapshots_age`      | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
+| `check_vmware_snapshots_count`    | Nagios plugin used to monitor the count of Virtual Machine snapshots.               |
+| `check_vmware_snapshots_size`     | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
+| `check_vmware_rps_memory`         | Nagios plugin used to monitor memory usage across Resource Pools.                   |
+| `check_vmware_host_memory`        | Nagios plugin used to monitor memory usage for a specific ESXi host system.         |
+| `check_vmware_host_cpu`           | Nagios plugin used to monitor CPU usage for a specific ESXi host system.            |
+| `check_vmware_vm_power_uptime`    | Nagios plugin used to monitor VM power cycle uptime.                                |
+| `check_vmware_disk_consolidation` | Nagios plugin used to monitor VM disk consolidation status.                         |
 
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
@@ -405,7 +405,7 @@ Thresholds for `CRITICAL` and `WARNING` CPU usage have usable defaults, but
 may require adjustment for your environment. See the [configuration
 options](#configuration-options) section for details.
 
-### `check_vmware_vm_disk_consolidation`
+### `check_vmware_disk_consolidation`
 
 Nagios plugin used to monitor Virtual Machine disk consolidation status.
 
@@ -518,7 +518,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_host_memory/`
      - `go build -mod=vendor ./cmd/check_vmware_host_cpu/`
      - `go build -mod=vendor ./cmd/check_vmware_vm_power_uptime/`
-     - `go build -mod=vendor ./cmd/check_vmware_vm_disk_consolidation/`
+     - `go build -mod=vendor ./cmd/check_vmware_disk_consolidation/`
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
@@ -541,7 +541,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_host_memory/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_host_cpu/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_vm_power_uptime/`
-     - look in `/tmp/check-vmware/release_assets/check_vmware_vm_disk_consolidation/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_disk_consolidation/`
    - if using `go build`
      - look in `/tmp/check-vmware/`
 1. Review [configuration options](#configuration-options),
@@ -705,7 +705,7 @@ logic for determining plugin state.
 | `WARNING`    | VM power cycle uptime crossed user-specified threshold for this state. |
 | `CRITICAL`   | VM power cycle uptime crossed user-specified threshold for this state. |
 
-#### `check_vmware_vm_disk_consolidation`
+#### `check_vmware_disk_consolidation`
 
 | Nagios State | Description                                    |
 | ------------ | ---------------------------------------------- |
@@ -988,7 +988,7 @@ based on feedback.
 | `uc`, `uptime-critical` | No       | `90`    | No     | *days as positive whole number*                                         | Specifies the power cycle (off/on) uptime in days per VM when a CRITICAL threshold is reached.                                                                                                                                                                                                                             |
 | `uw`, `uptime-warning`  | No       | `60`    | No     | *days as positive whole number*                                         | Specifies the power cycle (off/on) uptime in days per VM when a WARNING threshold is reached.                                                                                                                                                                                                                              |
 
-#### `check_vmware_vm_disk_consolidation`
+#### `check_vmware_disk_consolidation`
 
 | Flag              | Required | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                |
 | ----------------- | -------- | ------- | ------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1768,12 +1768,12 @@ define command{
     }
 ```
 
-### `check_vmware_vm_disk_consolidation` Nagios plugin
+### `check_vmware_disk_consolidation` Nagios plugin
 
 #### CLI invocation
 
 ```ShellSession
-/usr/lib/nagios/plugins/check_vmware_vm_disk_consolidation --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com  --trust-cert --log-level info
+/usr/lib/nagios/plugins/check_vmware_disk_consolidation --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com  --trust-cert --log-level info
 ```
 
 See the [configuration options](#configuration-options) section for all
@@ -1794,14 +1794,14 @@ Of note:
 #### Command definition
 
 ```shell
-# /etc/nagios-plugins/config/vmware-vm-disk-consolidation.cfg
+# /etc/nagios-plugins/config/vmware-disk-consolidation.cfg
 
 # Look at all pools, all VMs, do not evaluate any VMs that are powered off.
 # This variation of the command is most useful for environments where all VMs
 # are monitored equally.
 define command{
-    command_name    check_vmware_vm_disk_consolidation
-    command_line    /usr/lib/nagios/plugins/check_vmware_vm_disk_consolidation --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info
+    command_name    check_vmware_disk_consolidation
+    command_line    /usr/lib/nagios/plugins/check_vmware_disk_consolidation --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info
     }
 ```
 
