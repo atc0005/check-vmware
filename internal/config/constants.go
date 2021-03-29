@@ -143,19 +143,19 @@ const (
 
 // Plugin types provided by this project.
 const (
-	PluginTypeTools                           string = "vmware-tools"
-	PluginTypeSnapshotsAge                    string = "snapshots-age"
-	PluginTypeSnapshotsCount                  string = "snapshots-count"
-	PluginTypeSnapshotsSize                   string = "snapshots-size"
-	PluginTypeDatastoresSize                  string = "datastore-size"
-	PluginTypeResourcePoolsMemory             string = "resource-pools-memory"
-	PluginTypeVirtualCPUsAllocation           string = "virtual-cpus-allocation"
-	PluginTypeVirtualHardwareVersion          string = "virtual-hardware-version"
-	PluginTypeHostDatastoreVMsPairings        string = "host-to-ds-to-vms"
-	PluginTypeHostSystemMemory                string = "host-system-memory"
-	PluginTypeHostSystemCPU                   string = "host-system-cpu"
-	PluginTypeVirtualMachinePowerCycleUptime  string = "vm-power-uptime"
-	PluginTypeVirtualMachineDiskConsolidation string = "vm-disk-consolidation"
+	PluginTypeTools                          string = "vmware-tools"
+	PluginTypeSnapshotsAge                   string = "snapshots-age"
+	PluginTypeSnapshotsCount                 string = "snapshots-count"
+	PluginTypeSnapshotsSize                  string = "snapshots-size"
+	PluginTypeDatastoresSize                 string = "datastore-size"
+	PluginTypeResourcePoolsMemory            string = "resource-pools-memory"
+	PluginTypeVirtualCPUsAllocation          string = "virtual-cpus-allocation"
+	PluginTypeVirtualHardwareVersion         string = "virtual-hardware-version"
+	PluginTypeHostDatastoreVMsPairings       string = "host-to-ds-to-vms"
+	PluginTypeHostSystemMemory               string = "host-system-memory"
+	PluginTypeHostSystemCPU                  string = "host-system-cpu"
+	PluginTypeVirtualMachinePowerCycleUptime string = "vm-power-uptime"
+	PluginTypeDiskConsolidation              string = "disk-consolidation"
 )
 
 // Known limits

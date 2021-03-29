@@ -100,7 +100,7 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.VMPowerCycleUptimeCritical, "uptime-critical", defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp)
 		flag.IntVar(&c.VMPowerCycleUptimeCritical, "uc", defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp+" (shorthand)")
 
-	case pluginType.VirtualMachineDiskConsolidation:
+	case pluginType.DiskConsolidation:
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)

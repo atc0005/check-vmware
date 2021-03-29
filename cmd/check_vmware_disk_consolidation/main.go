@@ -40,7 +40,7 @@ func main() {
 	// Setup configuration by parsing user-provided flags. Note plugin type so
 	// that only applicable CLI flags are exposed and any plugin-specific
 	// settings are applied.
-	cfg, cfgErr := config.New(config.PluginType{VirtualMachineDiskConsolidation: true})
+	cfg, cfgErr := config.New(config.PluginType{DiskConsolidation: true})
 	switch {
 	case errors.Is(cfgErr, config.ErrVersionRequested):
 		fmt.Println(config.Version())

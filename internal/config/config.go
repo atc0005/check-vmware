@@ -32,19 +32,19 @@ var ErrVersionRequested = errors.New("version information requested")
 // the plugin types are incompatible with each other, though some flags are
 // common to all types.
 type PluginType struct {
-	Tools                           bool
-	SnapshotsAge                    bool
-	SnapshotsCount                  bool
-	SnapshotsSize                   bool
-	DatastoresSize                  bool
-	ResourcePoolsMemory             bool
-	VirtualCPUsAllocation           bool
-	VirtualHardwareVersion          bool
-	Host2Datastores2VMs             bool
-	HostSystemMemory                bool
-	HostSystemCPU                   bool
-	VirtualMachinePowerCycleUptime  bool
-	VirtualMachineDiskConsolidation bool
+	Tools                          bool
+	SnapshotsAge                   bool
+	SnapshotsCount                 bool
+	SnapshotsSize                  bool
+	DatastoresSize                 bool
+	ResourcePoolsMemory            bool
+	VirtualCPUsAllocation          bool
+	VirtualHardwareVersion         bool
+	Host2Datastores2VMs            bool
+	HostSystemMemory               bool
+	HostSystemCPU                  bool
+	VirtualMachinePowerCycleUptime bool
+	DiskConsolidation              bool
 
 	// TODO:
 	// - vCenter/server time (NTP)
