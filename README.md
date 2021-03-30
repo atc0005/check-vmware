@@ -168,6 +168,7 @@ This repo contains various tools used to monitor/validate VMware environments.
 | `check_vmware_host_cpu`           | Nagios plugin used to monitor CPU usage for a specific ESXi host system.            |
 | `check_vmware_vm_power_uptime`    | Nagios plugin used to monitor VM power cycle uptime.                                |
 | `check_vmware_disk_consolidation` | Nagios plugin used to monitor VM disk consolidation status.                         |
+| `check_vmware_question`           | Nagios plugin used to monitor VM interactive question status.                       |
 
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
