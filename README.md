@@ -1796,9 +1796,8 @@ Of note:
 ```shell
 # /etc/nagios-plugins/config/vmware-disk-consolidation.cfg
 
-# Look at all pools, all VMs, do not evaluate any VMs that are powered off.
-# This variation of the command is most useful for environments where all VMs
-# are monitored equally.
+# Look at all pools, all VMs. This variation of the command is most useful for
+# environments where all VMs are monitored equally.
 define command{
     command_name    check_vmware_disk_consolidation
     command_line    /usr/lib/nagios/plugins/check_vmware_disk_consolidation --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info
