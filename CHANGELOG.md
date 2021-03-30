@@ -26,6 +26,24 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.1] - 2021-03-30
+
+### Overview
+
+- Bug fixes
+- built using Go 1.16.2
+  - Statically linked
+  - Linux (x86, x64)
+
+### Fixed
+
+- CHANGELOG
+  - Fix `Deprecated` section header level for v0.15.0 release entry of this
+    CHANGELOG
+
+- `check_vmware_question` plugin
+  - invalid threshold text/label
+
 ## [v0.15.0] - 2021-03-30
 
 ### Overview
@@ -49,7 +67,7 @@ The following types of changes will be recorded in this file:
 ### Fixed
 
 - CHANGELOG
-  - Fix `Deprecated` section header lvel for v0.12.0 release entry of this
+  - Fix `Deprecated` section header level for v0.12.0 release entry of this
     CHANGELOG
 
 - `contrib`
@@ -596,7 +614,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.15.1...HEAD
+[v0.15.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.1
 [v0.15.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.0
 [v0.14.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.14.0
 [v0.13.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.13.1
