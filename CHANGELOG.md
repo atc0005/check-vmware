@@ -40,7 +40,7 @@ The following types of changes will be recorded in this file:
 
 - New plugin: `check_vmware_question`
 
-## Deprecated
+### Deprecated
 
 - 32-bit binaries are *likely* going to be dropped from future releases
   - if there is interest, they will continue to be provided
