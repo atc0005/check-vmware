@@ -72,7 +72,7 @@ func main() {
 	// Record thresholds for use as Nagios "Long Service Output" content. This
 	// content is shown in the detailed web UI and in notifications generated
 	// by Nagios.
-	nagiosExitState.CriticalThreshold = "Disk consolidation needed for one or more Virtual Machines."
+	nagiosExitState.CriticalThreshold = "One or more Virtual Machines blocked by an interactive question"
 
 	nagiosExitState.WarningThreshold = config.ThresholdNotUsed
 
