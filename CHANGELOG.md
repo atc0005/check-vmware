@@ -26,6 +26,47 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.0] - 2021-03-30
+
+### Overview
+
+- New plugin
+- Bug fixes
+- built using Go 1.16.2
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- New plugin: `check_vmware_question`
+
+## Deprecated
+
+- 32-bit binaries are *likely* going to be dropped from future releases
+  - if there is interest, they will continue to be provided
+  - see GH-192 for details (and to leave feedback)
+
+### Fixed
+
+- CHANGELOG
+  - Fix `Deprecated` section header lvel for v0.12.0 release entry of this
+    CHANGELOG
+
+- `contrib`
+  - multiple mistakes in `vc1.example.com.cfg` host config file
+    - missing service group
+    - referenced wrong service group
+    - service description in consistent with existing entries
+  - `vmware-disk-consolidation` command definition doc comments regarding
+    powered on/off VM state evaluation incorrect
+
+- internal constants do not reflect `check_vmware_disk_consolidation` plugin
+  rename
+
+- README
+  - `vmware-disk-consolidation` command definition doc comments regarding
+    powered on/off VM state evaluation incorrect
+
 ## [v0.14.0] - 2021-03-29
 
 ### Overview
@@ -153,7 +194,7 @@ See the build instructions in the project README file for other options.
 - Plugin improvements
 - built using Go 1.15.8
 
-## Deprecated
+### Deprecated
 
 - Windows binaries are *likely* not going to be included in the next release
   - if there is interest, they will continue to be provided
@@ -555,7 +596,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.15.0...HEAD
+[v0.15.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.0
 [v0.14.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.14.0
 [v0.13.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.13.1
 [v0.13.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.13.0
