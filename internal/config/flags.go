@@ -117,6 +117,12 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		//
 		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
+	case pluginType.InteractiveQuestion:
+
+		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+
 	case pluginType.DatastoresSize:
 
 		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)

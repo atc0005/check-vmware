@@ -45,6 +45,7 @@ type PluginType struct {
 	HostSystemCPU                  bool
 	VirtualMachinePowerCycleUptime bool
 	DiskConsolidation              bool
+	InteractiveQuestion            bool
 
 	// TODO:
 	// - vCenter/server time (NTP)

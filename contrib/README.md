@@ -57,6 +57,7 @@ contrib
         │       ├── vmware-host-cpu.cfg
         │       ├── vmware-host-datastore-vms-pairings.cfg
         │       ├── vmware-host-memory.cfg
+        │       ├── vmware-interactive-question.cfg
         │       ├── vmware-resource-pools.cfg
         │       ├── vmware-snapshots-age.cfg
         │       ├── vmware-snapshots-count.cfg
@@ -91,7 +92,7 @@ contrib
             ├── nagios.cfg
             └── resource.cfg
 
-13 directories, 31 files
+13 directories, 32 files
 ```
 
 ### Overview

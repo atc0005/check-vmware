@@ -134,6 +134,9 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 	case pluginType.DiskConsolidation:
 		appDescription = PluginTypeDiskConsolidation
 
+	case pluginType.InteractiveQuestion:
+		appDescription = PluginTypeInteractiveQuestion
+
 	case pluginType.Tools:
 		appDescription = PluginTypeTools
 
