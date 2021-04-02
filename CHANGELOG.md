@@ -28,6 +28,8 @@ The following types of changes will be recorded in this file:
 
 ## [v0.15.2] - 2021-04-02
 
+### Overview
+
 - Bug fixes
 - built using Go 1.16.3
   - Statically linked
