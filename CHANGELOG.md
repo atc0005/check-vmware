@@ -26,6 +26,27 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.2] - 2021-04-02
+
+- Bug fixes
+- built using Go 1.16.3
+  - Statically linked
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.2` to `1.16.3`
+
+### Fixed
+
+- linting
+  - fieldalignment: struct with X pointer bytes could be Y (govet)
+  - `golangci/golangci-lint`
+    - replace deprecated `maligned` linter with `govet: fieldalignment`
+    - replace deprecated `scopelint` linter with `exportloopref`
+
 ## [v0.15.1] - 2021-03-30
 
 ### Overview
@@ -614,7 +635,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.15.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.15.2...HEAD
+[v0.15.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.2
 [v0.15.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.1
 [v0.15.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.0
 [v0.14.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.14.0
