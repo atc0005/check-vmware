@@ -43,8 +43,8 @@ var ErrHostDatastorePairingFailed = errors.New("failed to compile host/datastore
 // occur if the datastore for a VM is in a user-specified ignored datastores
 // list.
 type ErrHostDatastoreIdxIDToNameLookupFailed struct {
-	DatastoreID string
 	Err         error
+	DatastoreID string
 }
 
 func (dsIDFail ErrHostDatastoreIdxIDToNameLookupFailed) Error() string {

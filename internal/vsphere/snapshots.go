@@ -106,6 +106,9 @@ type SnapshotThresholds struct {
 // snapshot details for a specific VirtualMachine snapshot.
 type SnapshotSummary struct {
 
+	// createTime is when the snapshot was created.
+	createTime time.Time
+
 	// Name of the snapshot in human readable format.
 	Name string
 
@@ -115,8 +118,7 @@ type SnapshotSummary struct {
 	// Description of the snapshot in human readable format.
 	Description string
 
-	// createTime is when the snapshot was created.
-	createTime time.Time
+	VMName string
 
 	// Size is the size of the snapshot.
 	Size int64
@@ -140,8 +142,6 @@ type SnapshotSummary struct {
 	// sizeCriticalState indicates whether this snapshot is considered in a
 	// CRITICAL state based on crossing snapshot size threshold.
 	sizeCriticalState bool
-
-	VMName string
 }
 
 // SnapshotSummarySet ties a collection of snapshot summary values to a

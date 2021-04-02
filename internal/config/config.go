@@ -168,6 +168,27 @@ type Config struct {
 	// vSphere inventory.
 	HostSystemName string
 
+	// IncludedResourcePools lists resource pools that are explicitly
+	// monitored. Specifying list values automatically excludes VirtualMachine
+	// objects outside a Resource Pool.
+	IncludedResourcePools multiValueStringFlag
+
+	// ExcludedResourcePools lists resource pools that are explicitly ignored
+	// or excluded from being monitored.
+	ExcludedResourcePools multiValueStringFlag
+
+	// IgnoredVM is a list of VMs that are explicitly ignored or excluded
+	// from being monitored.
+	IgnoredVMs multiValueStringFlag
+
+	// IgnoredDatastores is a list of datastore names for Datastores that are
+	// allowed to be associated with a VirtualMachine that are not associated
+	// with its current host.
+	IgnoredDatastores multiValueStringFlag
+
+	// Log is an embedded zerolog Logger initialized via config.New().
+	Log zerolog.Logger
+
 	// HostSystemMemoryUseWarning specifies the percentage of memory use (as a
 	// whole number) for the specified ESXi host when a WARNING threshold is
 	// reached.
@@ -309,27 +330,6 @@ type Config struct {
 	// ShowVersion is a flag indicating whether the user opted to display only
 	// the version string and then immediately exit the application.
 	ShowVersion bool
-
-	// IncludedResourcePools lists resource pools that are explicitly
-	// monitored. Specifying list values automatically excludes VirtualMachine
-	// objects outside a Resource Pool.
-	IncludedResourcePools multiValueStringFlag
-
-	// ExcludedResourcePools lists resource pools that are explicitly ignored
-	// or excluded from being monitored.
-	ExcludedResourcePools multiValueStringFlag
-
-	// IgnoredVM is a list of VMs that are explicitly ignored or excluded
-	// from being monitored.
-	IgnoredVMs multiValueStringFlag
-
-	// IgnoredDatastores is a list of datastore names for Datastores that are
-	// allowed to be associated with a VirtualMachine that are not associated
-	// with its current host.
-	IgnoredDatastores multiValueStringFlag
-
-	// Log is an embedded zerolog Logger initialized via config.New().
-	Log zerolog.Logger
 }
 
 // Usage is a custom override for the default Help text provided by the flag
