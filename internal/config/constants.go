@@ -61,6 +61,9 @@ const (
 	virtualHardwareOutdatedByWarningFlagHelp        string = "If provided, this value is the WARNING threshold for outdated virtual hardware versions. If the current virtual hardware version for a VM is found to be more than this many versions older than the latest version a WARNING state is triggered. Required if specifying the CRITICAL threshold for outdated virtual hardware versions."
 	virtualHardwareMinimumVersionFlagHelp           string = "If provided, this value is the minimum virtual hardware version accepted for each Virtual Machine. Any Virtual Machine not meeting this minimum value is considered to be in a CRITICAL state. Per KB 1003746, version 3 appears to be the oldest version supported."
 	virtualHardwareDefaultIsMinimumFlagHelp         string = "If specified, the host or cluster default virtual hardware version is the minimum hardware version allowed. Any Virtual Machine not meeting this minimum value is considered to be in a WARNING state."
+	includedAlarmEntityTypesFlagHelp                string = "If specified, triggered alarms will only be evaluated if the associated entity type (e.g., Datastore) matches one of the provided values."
+	excludedAlarmEntityTypesFlagHelp                string = "If specified, triggered alarms will only be evaluated if the associated entity type (e.g., Datastore) does NOT match one of the provided values."
+	evaluateAcknowledgedTriggeredAlarmFlagHelp      string = "Toggles evaluation of acknowledged triggered alarms in addition to unacknowledged triggered alarms. Evaluation of acknowledged alarms is disabled by default."
 )
 
 // Default flag settings if not overridden by user input
@@ -76,6 +79,7 @@ const (
 	defaultBranding                     bool   = false
 	defaultDisplayVersionAndExit        bool   = false
 	defaultPoweredOff                   bool   = false
+	defaultEvaluateAcknowledgedAlarms   bool   = false
 	defaultVCPUsAllocatedCritical       int    = 100
 	defaultVCPUsAllocatedWarning        int    = 95
 	defaultIgnoreMissingCustomAttribute bool   = false
@@ -157,6 +161,7 @@ const (
 	PluginTypeVirtualMachinePowerCycleUptime string = "vm-power-uptime"
 	PluginTypeDiskConsolidation              string = "disk-consolidation"
 	PluginTypeInteractiveQuestion            string = "interactive-question"
+	PluginTypeAlarms                         string = "alarms"
 )
 
 // Known limits

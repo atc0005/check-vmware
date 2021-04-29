@@ -30,3 +30,5 @@ scratch/
 /check_vmware_vm_power_uptime
 /check_vmware_disk_consolidation
 /check_vmware_question
+/check_vmware_alarms
+

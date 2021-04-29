@@ -123,6 +123,13 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 
+	case pluginType.Alarms:
+
+		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
+		flag.Var(&c.IncludedAlarmEntityTypes, "include-type", includedAlarmEntityTypesFlagHelp)
+		flag.Var(&c.ExcludedAlarmEntityTypes, "exclude-type", excludedAlarmEntityTypesFlagHelp)
+		flag.BoolVar(&c.EvaluateAcknowledgedAlarms, "eval-acknowledged", defaultEvaluateAcknowledgedAlarms, evaluateAcknowledgedTriggeredAlarmFlagHelp)
+
 	case pluginType.DatastoresSize:
 
 		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
