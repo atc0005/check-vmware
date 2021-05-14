@@ -134,19 +134,21 @@ const (
 func (l Level) String() string {
 	switch l {
 	case TraceLevel:
-		return "trace"
+		return LevelTraceValue
 	case DebugLevel:
-		return "debug"
+		return LevelDebugValue
 	case InfoLevel:
-		return "info"
+		return LevelInfoValue
 	case WarnLevel:
-		return "warn"
+		return LevelWarnValue
 	case ErrorLevel:
-		return "error"
+		return LevelErrorValue
 	case FatalLevel:
-		return "fatal"
+		return LevelFatalValue
 	case PanicLevel:
-		return "panic"
+		return LevelPanicValue
+	case Disabled:
+		return "disabled"
 	case NoLevel:
 		return ""
 	}
@@ -171,6 +173,8 @@ func ParseLevel(levelStr string) (Level, error) {
 		return FatalLevel, nil
 	case LevelFieldMarshalFunc(PanicLevel):
 		return PanicLevel, nil
+	case LevelFieldMarshalFunc(Disabled):
+		return Disabled, nil
 	case LevelFieldMarshalFunc(NoLevel):
 		return NoLevel, nil
 	}
@@ -388,7 +392,7 @@ func (l *Logger) Log() *Event {
 // Arguments are handled in the manner of fmt.Print.
 func (l *Logger) Print(v ...interface{}) {
 	if e := l.Debug(); e.Enabled() {
-		e.Msg(fmt.Sprint(v...))
+		e.CallerSkipFrame(1).Msg(fmt.Sprint(v...))
 	}
 }
 
@@ -396,7 +400,7 @@ func (l *Logger) Print(v ...interface{}) {
 // Arguments are handled in the manner of fmt.Printf.
 func (l *Logger) Printf(format string, v ...interface{}) {
 	if e := l.Debug(); e.Enabled() {
-		e.Msg(fmt.Sprintf(format, v...))
+		e.CallerSkipFrame(1).Msg(fmt.Sprintf(format, v...))
 	}
 }
 
@@ -408,7 +412,7 @@ func (l Logger) Write(p []byte) (n int, err error) {
 		// Trim CR added by stdlog.
 		p = p[0 : n-1]
 	}
-	l.Log().Msg(string(p))
+	l.Log().CallerSkipFrame(1).Msg(string(p))
 	return
 }
 
@@ -420,7 +424,7 @@ func (l *Logger) newEvent(level Level, done func(string)) *Event {
 	e := newEvent(l.w, level)
 	e.done = done
 	e.ch = l.hooks
-	if level != NoLevel {
+	if level != NoLevel && LevelFieldName != "" {
 		e.Str(LevelFieldName, LevelFieldMarshalFunc(level))
 	}
 	if l.context != nil && len(l.context) > 1 {
