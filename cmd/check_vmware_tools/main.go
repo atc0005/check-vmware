@@ -96,7 +96,7 @@ func main() {
 		cfg.Username, cfg.Domain, cfg.Password,
 	)
 	if loginErr != nil {
-		log.Error().Err(loginErr).Msg("error logging into %s")
+		log.Error().Err(loginErr).Msgf("error logging into %s", cfg.Server)
 
 		nagiosExitState.LastError = loginErr
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
