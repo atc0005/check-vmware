@@ -82,6 +82,9 @@ func getDatastorePropsSubset() []string {
 	}
 }
 
+// getObjects retrieves one or more objects, filtered by the provided
+// container type ManagedObjectReference. An error is returned if the provided
+// ManagedObjectReference is not for a supported container type.
 func getObjects(ctx context.Context, c *vim25.Client, dst interface{}, objRef types.ManagedObjectReference, propsSubset bool) error {
 
 	funcTimeStart := time.Now()
