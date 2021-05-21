@@ -26,6 +26,33 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.3] - 2021-05-21
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- built using Go 1.16.4
+  - Statically linked
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.3` to `1.16.4`
+  - `rs/zerolog`
+    - `v1.21.0` to `v1.22.0`
+  - `vmware/govmomi`
+    - `v0.24.1` to `v0.25.0`
+
+### Fixed
+
+- Login error message does not interpolate server value as intended
+- Missing section header in CHANGELOG
+- Stray newline breaks intended README Table of Contents ordering
+- Doc comments missing from `getObjects` func
+
 ## [v0.15.2] - 2021-04-02
 
 ### Overview
@@ -637,7 +664,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.15.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.15.3...HEAD
+[v0.15.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.3
 [v0.15.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.2
 [v0.15.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.1
 [v0.15.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.0
