@@ -1047,7 +1047,7 @@ func VMInteractiveQuestionReport(
 
 	fmt.Fprintf(
 		&report,
-		"VMs requiring disk consolidation:%s%s",
+		"VMs requiring interactive response:%s%s",
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 	)
