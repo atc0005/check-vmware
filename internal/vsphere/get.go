@@ -81,6 +81,22 @@ func getDatastorePropsSubset() []string {
 		"availableField",
 	}
 }
+func getDatacenterPropsSubset() []string {
+	// https://code.vmware.com/apis/1067/vsphere
+	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.Datacenter.html
+	return []string{
+		"name",
+		"overallStatus",
+		"triggeredAlarmState",
+	}
+}
+func getAlarmPropsSubset() []string {
+	// https://code.vmware.com/apis/1067/vsphere
+	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.alarm.Alarm.html
+	return []string{
+		"info",
+	}
+}
 
 // getObjects retrieves one or more objects, filtered by the provided
 // container type ManagedObjectReference. An error is returned if the provided
@@ -124,6 +140,28 @@ func getObjects(ctx context.Context, c *vim25.Client, dst interface{}, objRef ty
 	}
 
 	switch u := dst.(type) {
+	case *[]mo.Datacenter:
+		defer func() {
+			objCount = len(*u)
+		}()
+
+		objKind = "Datacenter"
+
+		if propsSubset {
+			props = getDatacenterPropsSubset()
+		}
+
+	case *[]mo.Alarm:
+		defer func() {
+			objCount = len(*u)
+		}()
+
+		objKind = "Alarm"
+
+		if propsSubset {
+			props = getAlarmPropsSubset()
+		}
+
 	case *[]mo.Datastore:
 		defer func() {
 			objCount = len(*u)
@@ -181,6 +219,7 @@ func getObjects(ctx context.Context, c *vim25.Client, dst interface{}, objRef ty
 
 	}
 
+	// FIXME: Should this filter to a specific datacenter? See GH-219.
 	v, err := m.CreateContainerView(
 		ctx,
 		objRef,

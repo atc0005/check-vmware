@@ -37,6 +37,7 @@ WHAT 					= check_vmware_tools \
 							check_vmware_vm_power_uptime \
 							check_vmware_disk_consolidation \
 							check_vmware_question \
+							check_vmware_alarms \
 
 
 # What package holds the "version" variable used in branding/version output?

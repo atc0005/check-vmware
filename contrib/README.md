@@ -44,7 +44,7 @@ Here are the current config files and structure as illustrated by the `tree`
 command:
 
 ```ShellSession
-$ tree contrib
+$ tree contrib | sed 's/ / /g'
 contrib
 ├── README.md
 └── nagios
@@ -52,6 +52,7 @@ contrib
         ├── nagios-plugins
         │   └── config
         │       ├── send2teams.cfg
+        │       ├── vmware-alarms.cfg
         │       ├── vmware-datastores.cfg
         │       ├── vmware-disk-consolidation.cfg
         │       ├── vmware-host-cpu.cfg
@@ -92,7 +93,7 @@ contrib
             ├── nagios.cfg
             └── resource.cfg
 
-13 directories, 32 files
+13 directories, 33 files
 ```
 
 ### Overview

@@ -34,6 +34,7 @@ or endorsed by VMware, Inc.
   - [`check_vmware_vm_power_uptime`](#check_vmware_vm_power_uptime)
   - [`check_vmware_disk_consolidation`](#check_vmware_disk_consolidation)
   - [`check_vmware_question`](#check_vmware_question)
+  - [`check_vmware_alarms`](#check_vmware_alarms)
 - [Features](#features)
 - [Changelog](#changelog)
 - [Requirements](#requirements)
@@ -65,6 +66,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_vm_power_uptime`](#check_vmware_vm_power_uptime-1)
     - [`check_vmware_disk_consolidation`](#check_vmware_disk_consolidation-1)
     - [`check_vmware_question`](#check_vmware_question-1)
+    - [`check_vmware_alarms`](#check_vmware_alarms-1)
   - [Command-line arguments](#command-line-arguments)
     - [`check_vmware_tools`](#check_vmware_tools-2)
     - [`check_vmware_vcpus`](#check_vmware_vcpus-2)
@@ -80,6 +82,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_vm_power_uptime`](#check_vmware_vm_power_uptime-2)
     - [`check_vmware_disk_consolidation`](#check_vmware_disk_consolidation-2)
     - [`check_vmware_question`](#check_vmware_question-2)
+    - [`check_vmware_alarms`](#check_vmware_alarms-2)
   - [Configuration file](#configuration-file)
 - [Contrib](#contrib)
 - [Examples](#examples)
@@ -135,6 +138,9 @@ or endorsed by VMware, Inc.
   - [`check_vmware_question` Nagios plugin](#check_vmware_question-nagios-plugin)
     - [CLI invocation](#cli-invocation-16)
     - [Command definition](#command-definition-16)
+  - [`check_vmware_alarms` Nagios plugin](#check_vmware_alarms-nagios-plugin)
+    - [CLI invocation](#cli-invocation-17)
+    - [Command definition](#command-definition-17)
 - [License](#license)
 - [References](#references)
 
@@ -167,6 +173,7 @@ This repo contains various tools used to monitor/validate VMware environments.
 | `check_vmware_vm_power_uptime`    | Nagios plugin used to monitor VM power cycle uptime.                                |
 | `check_vmware_disk_consolidation` | Nagios plugin used to monitor VM disk consolidation status.                         |
 | `check_vmware_question`           | Nagios plugin used to monitor VM interactive question status.                       |
+| `check_vmware_alarms`             | Nagios plugin used to monitor for Triggered Alarms in one or more datacenters.      |
 
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
@@ -175,8 +182,10 @@ more detailed information for use in email and Teams notifications
 
 Some plugins provide optional support to limit evaluation of VMs to specific
 Resource Pools (explicitly including or excluding) and power states (on or
-off). See the [configuration options](#configuration-options),
-[examples](#examples) and [contrib](#contrib) sections for more information.
+off). Other plugins support similar filtering options (e.g., `Acknowledged`
+state of Triggered Alarms). See the [configuration
+options](#configuration-options), [examples](#examples) and
+[contrib](#contrib) sections for more information.
 
 ### `check_vmware_tools`
 
@@ -430,6 +439,16 @@ The status of this property indicates whether an interactive question is
 blocking the virtual machine's execution. While a Virtual Machine is in this
 state it is not available for normal use.
 
+### `check_vmware_alarms`
+
+Nagios plugin used to monitor for Triggered Alarms in one or more datacenters.
+
+This plugin monitors one or more datacenters for Triggered Alarms. These
+alarms can be explicitly *included* or *excluded* based on Acknowledged status
+or the [Managed Entity type][vsphere-managed-object-reference] (e.g.,
+`Datastore`, `VirtualMachine`). Future enhancements are planned to expand
+filtering capabilities. See GH-220 for additional details.
+
 ## Features
 
 - Multiple plugins for monitoring VMware vSphere environments (standalone ESXi
@@ -452,6 +471,7 @@ state it is not available for normal use.
   - Virtual Machine (power cycle) uptime
   - Virtual Machine disk consolidation status
   - Virtual Machine interactive question status
+  - Triggered Alarms in one or more datacenters
 
 - Optional, leveled logging using `rs/zerolog` package
   - JSON-format output (to `stderr`)
@@ -477,6 +497,7 @@ been tested.
 ### Building source code
 
 - Go 1.14+
+  - dependent on current upstream `vmware/govmomi` library
 - GCC
   - if building with custom options (as the provided `Makefile` does)
 - `make`
@@ -537,6 +558,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_vm_power_uptime/`
      - `go build -mod=vendor ./cmd/check_vmware_disk_consolidation/`
      - `go build -mod=vendor ./cmd/check_vmware_question/`
+     - `go build -mod=vendor ./cmd/check_vmware_alarms/`
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
@@ -561,6 +583,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_vm_power_uptime/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_disk_consolidation/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_question/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_alarms/`
    - if using `go build`
      - look in `/tmp/check-vmware/`
 1. Review [configuration options](#configuration-options),
@@ -739,6 +762,14 @@ logic for determining plugin state.
 | `OK`         | Ideal state, no VMs require an interactive response.     |
 | `WARNING`    | Not used by this plugin.                                 |
 | `CRITICAL`   | An interactive response is required for one or more VMs. |
+
+#### `check_vmware_alarms`
+
+| Nagios State | Description                                             |
+| ------------ | ------------------------------------------------------- |
+| `OK`         | Ideal state, no non-excluded Triggered Alarms detected. |
+| `WARNING`    | One or more non-excluded alarms with a red status.      |
+| `CRITICAL`   | One or more non-excluded alarms with a yellow status.   |
 
 ### Command-line arguments
 
@@ -1052,6 +1083,26 @@ based on feedback.
 | `include-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
 | `exclude-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                                                                                                                             |
 | `ignore-vm`       | No       |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                                                                                           |
+
+#### `check_vmware_alarms`
+
+| Flag                | Required | Default | Repeat | Possible                                                                 | Description                                                                                                                                                                                            |
+| ------------------- | -------- | ------- | ------ | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `branding`          | No       | `false` | No     | `branding`                                                               | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                   |
+| `h`, `help`         | No       | `false` | No     | `h`, `help`                                                              | Show Help text along with the list of supported flags.                                                                                                                                                 |
+| `v`, `version`      | No       | `false` | No     | `v`, `version`                                                           | Whether to display application version and then immediately exit application.                                                                                                                          |
+| `ll`, `log-level`   | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace`  | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                              |
+| `p`, `port`         | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                       | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                     |
+| `t`, `timeout`      | No       | `10`    | No     | *positive whole number of seconds*                                       | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                 |
+| `s`, `server`       | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                              | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                             |
+| `u`, `username`     | **Yes**  |         | No     | *valid username*                                                         | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                            |
+| `pw`, `password`    | **Yes**  |         | No     | *valid password*                                                         | Password used to login to ESXi host or vCenter instance.                                                                                                                                               |
+| `domain`            | No       |         | No     | *valid user domain*                                                      | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                     |
+| `trust-cert`        | No       | `false` | No     | `true`, `false`                                                          | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                  |
+| `dc-name`           | No       |         | No     | *valid vSphere datacenter name*                                          | Specifies the name of a vSphere Datacenter. If not specified, applicable plugins will attempt to use the default datacenter found in the vSphere environment. Not applicable to standalone ESXi hosts. |
+| `include-type`      | No       |         | No     | [*valid managed object type keywords*][vsphere-managed-object-reference] | If specified, triggered alarms will only be evaluated if the associated entity type (e.g., `Datastore`) matches one of the provided values.                                                            |
+| `exclude-type`      | No       |         | No     | [*valid managed object type keywords*][vsphere-managed-object-reference] | If specified, triggered alarms will only be evaluated if the associated entity type (e.g., `Datastore`) does NOT match one of the provided values.                                                     |
+| `eval-acknowledged` | No       | `false` | No     | `true`, `false`                                                          | Toggles evaluation of acknowledged triggered alarms in addition to unacknowledged triggered alarms. Evaluation of acknowledged alarms is disabled by default.                                          |
 
 ### Configuration file
 
@@ -1886,6 +1937,49 @@ define command{
     }
 ```
 
+### `check_vmware_alarms` Nagios plugin
+
+#### CLI invocation
+
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_alarms --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com  --trust-cert --log-level info
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+Of note:
+
+- Triggered alarms are evaluated for all detected datacenters
+  - due to lack of specified datacenter name
+- Triggered alarms are evaluated for all [managed object
+  types][vsphere-managed-object-reference]
+  - due to lack of explicit exclusions or inclusions
+- Triggered alarms that where previously acknowledged are ignored
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Logging is enabled at the `info` level.
+  - this output is sent to `stderr` by default, which Nagios ignores
+  - this output is only seen (at least as of Nagios v3.x) when invoking the
+    plugin directly via CLI (often for troubleshooting)
+
+#### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-alarms.cfg
+
+# Look at triggered alarms for all managed object types (e.g., Datastore
+# and VirtualMachine) only, across all detected datacenters, do not evaluate
+# any triggered alarms which have been previously acknowledged.
+define command{
+    command_name    check_vmware_alarms
+    command_line    /usr/lib/nagios/plugins/check_vmware_alarms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --include-type '$ARG4' --trust-cert --log-level info
+    }
+```
+
 ## License
 
 From the [LICENSE](LICENSE) file:
@@ -1942,5 +2036,7 @@ SOFTWARE.
 [go-docs-download]: <https://golang.org/dl>  "Download Go"
 
 [go-docs-install]: <https://golang.org/doc/install>  "Install Go"
+
+[vsphere-managed-object-reference]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vmodl.ManagedObjectReference.html> "Data Object - ManagedObjectReference(vmodl.ManagedObjectReference)"
 
 <!-- []: PLACEHOLDER "DESCRIPTION_HERE" -->

@@ -46,6 +46,7 @@ type PluginType struct {
 	VirtualMachinePowerCycleUptime bool
 	DiskConsolidation              bool
 	InteractiveQuestion            bool
+	Alarms                         bool
 
 	// TODO:
 	// - vCenter/server time (NTP)
@@ -186,6 +187,14 @@ type Config struct {
 	// with its current host.
 	IgnoredDatastores multiValueStringFlag
 
+	// IncludedAlarmEntityTypes is a list of entity types for Alarms that will
+	// be evaluated.
+	IncludedAlarmEntityTypes multiValueStringFlag
+
+	// ExcludedAlarmEntityTypes is a list of entity types for Alarms that will
+	// be excluded from evaluation.
+	ExcludedAlarmEntityTypes multiValueStringFlag
+
 	// Log is an embedded zerolog Logger initialized via config.New().
 	Log zerolog.Logger
 
@@ -316,6 +325,10 @@ type Config struct {
 	// PoweredOff indicates whether powered off VMs are evaluated in addition
 	// to powered on VMs.
 	PoweredOff bool
+
+	// EvaluateAcknowledgedAlarms indicates whether acknowledged triggered
+	// alarms are evaluated in addition to unacknowledged ones.
+	EvaluateAcknowledgedAlarms bool
 
 	// Whether the certificate should be trusted as-is without validation.
 	TrustCert bool

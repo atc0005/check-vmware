@@ -46,6 +46,8 @@ hosts or vCenter instances) for select (or all) Resource Pools.
 
 • Virtual Machine interactive question status
 
+• Triggered Alarms in one or more datacenters
+
 USAGE
 
 See our main README for supported settings and examples.

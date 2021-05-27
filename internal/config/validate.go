@@ -422,6 +422,16 @@ func (c Config) validate(pluginType PluginType) error {
 
 		}
 
+	case pluginType.Alarms:
+
+		// only one of these options may be used
+		if len(c.IncludedAlarmEntityTypes) > 0 && len(c.ExcludedAlarmEntityTypes) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-type",
+				"exclude-type",
+			)
+		}
 	}
 
 	// shared validation checks
