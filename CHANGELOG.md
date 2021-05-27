@@ -26,6 +26,25 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.16.0] - 2021-05-27
+
+### Overview
+
+- New plugin
+- Bug fix
+- built using Go 1.16.4
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- New plugin: `check_vmware_alarms`
+
+### Fixed
+
+- check_vmware_question plugin incorrectly labels VMs as requiring an
+  interactive response as needing disk consolidation
+
 ## [v0.15.3] - 2021-05-21
 
 ### Overview
@@ -664,7 +683,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.15.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.16.0...HEAD
+[v0.16.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.16.0
 [v0.15.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.3
 [v0.15.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.2
 [v0.15.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.1
