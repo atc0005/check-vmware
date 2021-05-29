@@ -1976,7 +1976,7 @@ Of note:
 # any triggered alarms which have been previously acknowledged.
 define command{
     command_name    check_vmware_alarms
-    command_line    /usr/lib/nagios/plugins/check_vmware_alarms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --include-type '$ARG4' --trust-cert --log-level info
+    command_line    /usr/lib/nagios/plugins/check_vmware_alarms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --trust-cert --log-level info
     }
 ```
 
