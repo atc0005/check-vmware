@@ -18,7 +18,6 @@ import (
 	"github.com/atc0005/check-vmware/internal/textutils"
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi"
-	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
@@ -342,86 +341,37 @@ func (tas TriggeredAlarms) NumOKState() int {
 
 }
 
-// GetTriggeredAlarms accepts the name of a datacenter and a boolean value
-// indicating whether only a subset of properties for the datacenter and
-// alarms should be returned. If requested, a subset of all available
-// properties will be retrieved (faster) instead of recursively fetching all
-// properties (about 2x as slow). If the datacenter name is an empty string
-// then an attempt will be made to retrieve alarms from all datacenters.
-func GetTriggeredAlarms(ctx context.Context, c *govmomi.Client, datacenter string, propsSubset bool) (TriggeredAlarms, error) {
-
+// GetTriggeredAlarms accepts a list of Datacenters and a boolean value
+// indicating whether only a subset of properties for datacenters and alarms
+// should be returned. If requested, a subset of all available properties will
+// be retrieved (faster) instead of recursively fetching all properties (about
+// 2x as slow). Any TriggeredAlarms found are returned or an error if an empty
+// list is provided or if there are issues retrieving properties for any
+// TriggeredAlarms.
+func GetTriggeredAlarms(ctx context.Context, c *govmomi.Client, datacenters []mo.Datacenter, propsSubset bool) (TriggeredAlarms, error) {
+	//
 	funcTimeStart := time.Now()
 
 	// declare this early so that we can grab a pointer to it in order to
 	// access the entries later
 	var alarms TriggeredAlarms
 
-	defer func(alarms *TriggeredAlarms) {
+	defer func(alarms *TriggeredAlarms, dcs []mo.Datacenter) {
 		logger.Printf(
-			"It took %v to execute GetTriggeredAlarms func (and retrieve %d Alarms).\n",
+			"It took %v to execute GetTriggeredAlarms func (and retrieve %d Triggered Alarms from %d Datacenters).\n",
 			time.Since(funcTimeStart),
 			len(*alarms),
+			len(dcs),
 		)
-	}(&alarms)
+	}(&alarms, datacenters)
 
-	// If not datacenter specified, get all datacenters, otherwise attempt to
-	// use the one specified.
-	var dcs []mo.Datacenter
-	switch {
-	case datacenter == "":
-		logger.Println("empty datacenter value provided")
-
-		err := getObjects(ctx, c.Client, &dcs, c.ServiceContent.RootFolder, propsSubset)
-		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve Datacenters: %w", err)
-		}
-
-	default:
-
-		logger.Println("user specified datacenter value")
-
-		m := view.NewManager(c.Client)
-
-		// Create a view of Datacenter objects
-		v, createViewErr := m.CreateContainerView(
-			ctx,
-			c.ServiceContent.RootFolder,
-			[]string{
-				"Datacenter",
-			},
-			true,
-		)
-		if createViewErr != nil {
-			return nil, createViewErr
-		}
-
-		defer func() {
-			// Per vSphere Web Services SDK Programming Guide - VMware vSphere 7.0
-			// Update 1:
-			//
-			// A best practice when using views is to call the DestroyView()
-			// method when a view is no longer needed. This practice frees memory
-			// on the server.
-			if err := v.Destroy(ctx); err != nil {
-				logger.Println("Error occurred while destroying view")
-			}
-		}()
-
-		var dcProps []string
-
-		if propsSubset {
-			dcProps = getDatacenterPropsSubset()
-		}
-
-		retrieveErr := v.Retrieve(ctx, []string{"Datacenter"}, dcProps, &dcs)
-		if retrieveErr != nil {
-			return nil, retrieveErr
-		}
-
+	if datacenters == nil {
+		return TriggeredAlarms{}, fmt.Errorf("empty datacenters list provided")
 	}
 
-	// Fetch all triggered AlarmState values
-	for _, dc := range dcs {
+	// Fetch all triggered AlarmState values for applicable datacenters.
+	for _, dc := range datacenters {
+
 		for _, alarmState := range dc.TriggeredAlarmState {
 
 			var alarm mo.Alarm
@@ -431,11 +381,13 @@ func GetTriggeredAlarms(ctx context.Context, c *govmomi.Client, datacenter strin
 				alarmProps = getAlarmPropsSubset()
 			}
 
+			// Fetch Alarm definition associated with Triggered Alarm
 			err := c.RetrieveOne(ctx, alarmState.Alarm, alarmProps, &alarm)
 			if err != nil {
 				return nil, err
 			}
 
+			// Fetch ManagedEntity associated with TriggeredAlarm
 			var entity mo.ManagedEntity
 			err = c.RetrieveOne(ctx, alarmState.Entity, nil, &entity)
 			if err != nil {
@@ -541,9 +493,10 @@ func FilterTriggeredAlarmsByEntityType(triggeredAlarms TriggeredAlarms, includeT
 		return triggeredAlarms
 
 	// if we're not limiting the triggered alarm by entity type, return the
-	// collection as-is.
+	// entire collection.
 	case len(includeTypes) == 0 && len(excludeTypes) == 0:
-		return triggeredAlarms
+		filteredTriggeredAlarms = triggeredAlarms
+		return filteredTriggeredAlarms
 	}
 
 	switch {
@@ -684,6 +637,8 @@ func AlarmsReport(
 	includedAlarmEntityTypes []string,
 	excludedAlarmEntityTypes []string,
 	evalAcknowledgedAlarms bool,
+	specifiedDatacenters []string,
+	datacentersEvaluated []string,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -804,7 +759,23 @@ func AlarmsReport(
 
 	fmt.Fprintf(
 		&report,
+		"* Datacenters specified (%d): [%v]%s",
+		len(specifiedDatacenters),
+		strings.Join(specifiedDatacenters, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
 		"* Datacenters evaluated (%d): [%v]%s",
+		len(datacentersEvaluated),
+		strings.Join(datacentersEvaluated, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Datacenters with Triggered Alarms (%d): [%v]%s",
 		len(allAlarms.Datacenters()),
 		strings.Join(allAlarms.Datacenters(), ", "),
 		nagios.CheckOutputEOL,
