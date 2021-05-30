@@ -125,7 +125,7 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.Alarms:
 
-		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
+		flag.Var(&c.DatacenterNames, "dc-name", datacenterNamesFlagHelp)
 		flag.Var(&c.IncludedAlarmEntityTypes, "include-type", includedAlarmEntityTypesFlagHelp)
 		flag.Var(&c.ExcludedAlarmEntityTypes, "exclude-type", excludedAlarmEntityTypesFlagHelp)
 		flag.BoolVar(&c.EvaluateAcknowledgedAlarms, "eval-acknowledged", defaultEvaluateAcknowledgedAlarms, evaluateAcknowledgedTriggeredAlarmFlagHelp)

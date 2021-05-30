@@ -162,8 +162,15 @@ type Config struct {
 	DatastoreName string
 
 	// DatacenterName is the name of a Datacenter in the associated vSphere
-	// inventory. Not applicable to standline ESXi hosts.
+	// inventory. This field is used by plugins which support monitoring only
+	// a single Datacenter. Not applicable to standalone ESXi hosts.
 	DatacenterName string
+
+	// DatacenterNames is the name of one or more Datacenters in the
+	// associated vSphere inventory. This field is used by plugins which
+	// support monitoring multiple Datacenters. Not applicable to standalone
+	// ESXi hosts.
+	DatacenterNames multiValueStringFlag
 
 	// HostSystemName is the name of an ESXi host/server in the associated
 	// vSphere inventory.
