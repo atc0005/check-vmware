@@ -88,41 +88,66 @@ type TriggeredAlarm struct {
 	// Acknowledged indicates whether the triggered alarm has been
 	// acknowledged by an admin user.
 	Acknowledged bool
+
+	// Exclude indicates whether the TriggeredAlarm has been excluded from
+	// final evaluation. During processing multiple filters are applied. We
+	// track exclusion state through the filtering pipeline so that any
+	// explicit inclusions chosen by the sysadmin will have the opportunity to
+	// reset this state and have the TriggeredAlarm considered for evaluation.
+	Exclude bool
+
+	// ExplicitlyIncluded indicates whether the TriggeredAlarm has been marked
+	// for explicit inclusion by a step in the filtering pipeline. A
+	// TriggeredAlarm marked in this way is not "dropped" by later explicit
+	// inclusion filtering steps in the pipeline.
+	ExplicitlyIncluded bool
+
+	// ExplicitlyExcluded indicates whether the TriggeredAlarm has been marked
+	// for explicit exclusion by a step in the filtering pipeline.
+	ExplicitlyExcluded bool
 }
 
 // TriggeredAlarms is a collection of alarms which have been triggered across
 // one or more Datacenters.
 type TriggeredAlarms []TriggeredAlarm
 
-// IgnoredAlarms receives a collection of TriggeredAlarms that remained from
-// earlier filtering and compares each entry against the current collection. A
-// new collection is returned containing only the TriggeredAlarms not present
-// in the current collection.
-func (tas TriggeredAlarms) IgnoredAlarms(filteredAlarms TriggeredAlarms) TriggeredAlarms {
+// TriggeredAlarmFilters is a collection of the options specified by the user
+// for filtering detected TriggeredAlarms. This is most often used for
+// providing summary information in logging or user-facing output.
+type TriggeredAlarmFilters struct {
+	IncludedAlarmEntityTypes   []string
+	ExcludedAlarmEntityTypes   []string
+	IncludedAlarmNames         []string
+	ExcludedAlarmNames         []string
+	IncludedAlarmDescriptions  []string
+	ExcludedAlarmDescriptions  []string
+	EvaluateAcknowledgedAlarms bool
+}
 
-	// If the collections are of the same length, return an empty collection
-	// to indicate that no TriggeredAlarms in the current collection were
-	// ignored.
-	if len(tas) == len(filteredAlarms) {
-		return TriggeredAlarms{}
-	}
-
-	ignoredAlarms := make(TriggeredAlarms, 0, len(tas))
-
-	filteredAlarmkeys := filteredAlarms.Keys()
-
+// NumExcluded returns the number of TriggeredAlarms that have been implicitly
+// or explicitly excluded.
+func (tas TriggeredAlarms) NumExcluded() int {
+	var num int
 	for i := range tas {
-		if !textutils.InList(tas[i].Key, filteredAlarmkeys, false) {
-			ignoredAlarms = append(ignoredAlarms, tas[i])
+		if tas[i].Excluded() {
+			num++
 		}
 	}
 
-	sort.Slice(ignoredAlarms, func(i, j int) bool {
-		return strings.ToLower(ignoredAlarms[i].Name) < strings.ToLower(ignoredAlarms[j].Name)
-	})
+	return num
+}
 
-	return ignoredAlarms
+// NumExcludedFinal returns the number of TriggeredAlarms that have been
+// explicitly excluded from further evaluation.
+func (tas TriggeredAlarms) NumExcludedFinal() int {
+	var num int
+	for i := range tas {
+		if tas[i].ExcludedFinal() {
+			num++
+		}
+	}
 
+	return num
 }
 
 // FilterByKey returns the matching TriggeredAlarm for the provided unique
@@ -187,18 +212,31 @@ func (tas TriggeredAlarms) Datacenters() []string {
 }
 
 // HasCriticalState indicates whether the collection of TriggeredAlarms
-// contains an alarm considered to be in a CRITICAL state. The caller is
-// responsible for filtering the collection; processing of inclusion or
-// exclusion lists should be performed prior to calling this method.
-func (tas TriggeredAlarms) HasCriticalState() bool {
+// contains an alarm considered to be in a CRITICAL state. A boolean value is
+// accepted which indicates whether TriggeredAlarm values marked for exclusion
+// (during filtering) should also be considered. The caller is responsible for
+// filtering the collection; processing of inclusion or exclusion lists should
+// be performed prior to calling this method.
+func (tas TriggeredAlarms) HasCriticalState(evalExcluded bool) bool {
+
+	if len(tas) == 0 {
+		return false
+	}
 
 	var hasCriticalState bool
 
 	for i := range tas {
-		_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
-		if exitCode == nagios.StateCRITICALExitCode {
-			hasCriticalState = true
+		if hasCriticalState {
 			break
+		}
+		switch {
+		case tas[i].Exclude && !evalExcluded:
+			continue
+		default:
+			_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
+			if exitCode == nagios.StateCRITICALExitCode {
+				hasCriticalState = true
+			}
 		}
 	}
 
@@ -207,17 +245,28 @@ func (tas TriggeredAlarms) HasCriticalState() bool {
 }
 
 // NumCriticalState indicates how many TriggeredAlarms in the collection are
-// considered to be in a CRITICAL state. The caller is responsible for
-// filtering the collection; processing of inclusion or exclusion lists should
-// be performed prior to calling this method.
-func (tas TriggeredAlarms) NumCriticalState() int {
+// considered to be in a CRITICAL state. A boolean value is accepted which
+// indicates whether all TriggeredAlarm values are evaluated or only those not
+// marked for exclusion. The caller is responsible for filtering the
+// collection; processing of inclusion or exclusion lists should be performed
+// prior to calling this method.
+func (tas TriggeredAlarms) NumCriticalState(evalExcluded bool) int {
+
+	if len(tas) == 0 {
+		return 0
+	}
 
 	var numCriticalState int
 
 	for i := range tas {
-		_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
-		if exitCode == nagios.StateCRITICALExitCode {
-			numCriticalState++
+		switch {
+		case tas[i].Exclude && !evalExcluded:
+			continue
+		default:
+			_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
+			if exitCode == nagios.StateCRITICALExitCode {
+				numCriticalState++
+			}
 		}
 	}
 
@@ -226,18 +275,31 @@ func (tas TriggeredAlarms) NumCriticalState() int {
 }
 
 // HasWarningState indicates whether the collection of TriggeredAlarms
-// contains an alarm considered to be in a WARNING state. The caller is
-// responsible for filtering the collection; processing of inclusion or
-// exclusion lists should be performed prior to calling this method.
-func (tas TriggeredAlarms) HasWarningState() bool {
+// contains an alarm considered to be in a WARNING state. A boolean value is
+// accepted which indicates whether TriggeredAlarm values marked for exclusion
+// (during filter) should also be considered. The caller is responsible for
+// filtering the collection; processing of inclusion or exclusion lists should
+// be performed prior to calling this method.
+func (tas TriggeredAlarms) HasWarningState(evalExcluded bool) bool {
+
+	if len(tas) == 0 {
+		return false
+	}
 
 	var hasWarningState bool
 
 	for i := range tas {
-		_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
-		if exitCode == nagios.StateWARNINGExitCode {
-			hasWarningState = true
+		if hasWarningState {
 			break
+		}
+		switch {
+		case tas[i].Exclude && !evalExcluded:
+			continue
+		default:
+			_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
+			if exitCode == nagios.StateWARNINGExitCode {
+				hasWarningState = true
+			}
 		}
 	}
 
@@ -246,18 +308,30 @@ func (tas TriggeredAlarms) HasWarningState() bool {
 }
 
 // NumWarningState indicates how many TriggeredAlarms in the collection are
-// considered to be in a WARNING state. The caller is responsible for
+// considered to be in a WARNING state. A boolean value is accepted which
+// indicates whether TriggeredAlarm values marked for exclusion (during
+// filtering) should also be considered. The caller is responsible for
 // filtering the collection; processing of inclusion or exclusion lists should
 // be performed prior to calling this method.
-func (tas TriggeredAlarms) NumWarningState() int {
+func (tas TriggeredAlarms) NumWarningState(evalExcluded bool) int {
+
+	if len(tas) == 0 {
+		return 0
+	}
 
 	var numWarningState int
 
 	for i := range tas {
-		_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
-		if exitCode == nagios.StateWARNINGExitCode {
-			numWarningState++
+		switch {
+		case tas[i].Exclude && !evalExcluded:
+			continue
+		default:
+			_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
+			if exitCode == nagios.StateWARNINGExitCode {
+				numWarningState++
+			}
 		}
+
 	}
 
 	return numWarningState
@@ -265,18 +339,31 @@ func (tas TriggeredAlarms) NumWarningState() int {
 }
 
 // HasUnknownState indicates whether the collection of TriggeredAlarms
-// contains an alarm considered to be in an UNKNOWN state. The caller is
-// responsible for filtering the collection; processing of inclusion or
-// exclusion lists should be performed prior to calling this method.
-func (tas TriggeredAlarms) HasUnknownState() bool {
+// contains an alarm considered to be in an UNKNOWN state. A boolean value is
+// accepted which indicates whether TriggeredAlarm values marked for exclusion
+// (during filtering) should also be considered. The caller is responsible for
+// filtering the collection; processing of inclusion or exclusion lists should
+// be performed prior to calling this method.
+func (tas TriggeredAlarms) HasUnknownState(evalExcluded bool) bool {
+
+	if len(tas) == 0 {
+		return false
+	}
 
 	var hasUnknownState bool
 
 	for i := range tas {
-		_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
-		if exitCode == nagios.StateUNKNOWNExitCode {
-			hasUnknownState = true
+		if hasUnknownState {
 			break
+		}
+		switch {
+		case tas[i].Exclude && !evalExcluded:
+			continue
+		default:
+			_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
+			if exitCode == nagios.StateUNKNOWNExitCode {
+				hasUnknownState = true
+			}
 		}
 	}
 
@@ -285,17 +372,28 @@ func (tas TriggeredAlarms) HasUnknownState() bool {
 }
 
 // NumUnknownState indicates how many TriggeredAlarms in the collection are
-// considered to be in an UNKNOWN state. The caller is responsible for
+// considered to be in an UNKNOWN state. A boolean value is accepted which
+// indicates whether TriggeredAlarm values marked for exclusion (during
+// filtering) should also be considered. The caller is responsible for
 // filtering the collection; processing of inclusion or exclusion lists should
 // be performed prior to calling this method.
-func (tas TriggeredAlarms) NumUnknownState() int {
+func (tas TriggeredAlarms) NumUnknownState(evalExcluded bool) int {
+
+	if len(tas) == 0 {
+		return 0
+	}
 
 	var numUnknownState int
 
 	for i := range tas {
-		_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
-		if exitCode == nagios.StateUNKNOWNExitCode {
-			numUnknownState++
+		switch {
+		case tas[i].Exclude && !evalExcluded:
+			continue
+		default:
+			_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
+			if exitCode == nagios.StateUNKNOWNExitCode {
+				numUnknownState++
+			}
 		}
 	}
 
@@ -304,17 +402,19 @@ func (tas TriggeredAlarms) NumUnknownState() int {
 }
 
 // IsOKState indicates whether all alarms in the collection of TriggeredAlarms
-// are considered to be in an OK state. The caller is responsible for
-// filtering the collection; processing of inclusion or exclusion lists should
-// be performed prior to calling this method.
-func (tas TriggeredAlarms) IsOKState() bool {
+// are considered to be in an OK state. A boolean value is accepted to control
+// whether all TriggeredAlarm values are evaluated or only those not marked
+// for exclusion. The caller is responsible for filtering the collection;
+// processing of inclusion or exclusion lists should be performed prior to
+// calling this method.
+func (tas TriggeredAlarms) IsOKState(evalExcluded bool) bool {
 
 	switch {
-	case tas.HasCriticalState():
+	case tas.HasCriticalState(evalExcluded):
 		return false
-	case tas.HasWarningState():
+	case tas.HasWarningState(evalExcluded):
 		return false
-	case tas.HasUnknownState():
+	case tas.HasUnknownState(evalExcluded):
 		return false
 	default:
 		return true
@@ -323,21 +423,94 @@ func (tas TriggeredAlarms) IsOKState() bool {
 }
 
 // NumOKState indicates how many TriggeredAlarms in the collection are
-// considered to be in an OK state. The caller is responsible for filtering
+// considered to be in an OK state. A boolean value is accepted which
+// indicates whether TriggeredAlarm values marked for exclusion (during
+// filtering) should also be considered. The caller is responsible for filtering
 // the collection; processing of inclusion or exclusion lists should be
 // performed prior to calling this method.
-func (tas TriggeredAlarms) NumOKState() int {
+func (tas TriggeredAlarms) NumOKState(evalExcluded bool) int {
 
 	var numOKState int
 
 	for i := range tas {
-		_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
-		if exitCode == nagios.StateOKExitCode {
-			numOKState++
+		switch {
+		case tas[i].Exclude && !evalExcluded:
+			continue
+		default:
+			_, exitCode := EntityStatusToNagiosState(tas[i].OverallStatus)
+			if exitCode == nagios.StateOKExitCode {
+				numOKState++
+			}
 		}
+
 	}
 
 	return numOKState
+
+}
+
+// Excluded indicates whether a TriggeredAlarm has been excluded implicitly
+// (for now) or explicitly (permanently) from further evaluation.
+func (ta TriggeredAlarm) Excluded() bool {
+
+	if ta.ExplicitlyExcluded || ta.Exclude {
+		return true
+	}
+
+	return false
+
+}
+
+// ExcludedFinal indicates whether a TriggeredAlarm has been permanently
+// excluded from further evaluation.
+func (ta TriggeredAlarm) ExcludedFinal() bool {
+
+	return ta.ExplicitlyExcluded
+
+}
+
+// logExcluded is a helper method for logging when a TriggeredAlarm has been
+// marked for exclusion, mostly for debugging purposes.
+func (ta TriggeredAlarm) logExcluded(explicit bool) {
+	logTriggeredAlarmMarked(ta, false, explicit)
+}
+
+// logIncluded is a helper method for logging when a TriggeredAlarm has been
+// marked for inclusion, mostly for debugging purposes.
+func (ta TriggeredAlarm) logIncluded(explicit bool) {
+	logTriggeredAlarmMarked(ta, true, explicit)
+}
+
+// logTriggeredAlarmMarked is a helper function for logging when a
+// TriggeredAlarm has been marked for inclusion or exclusion, mostly for
+// debugging purposes.
+func logTriggeredAlarmMarked(triggeredAlarm TriggeredAlarm, keep bool, explicit bool) {
+
+	markType := "implicitly"
+	if explicit {
+		markType = "explicitly"
+	}
+
+	switch {
+	case keep:
+		logger.Printf(
+			"Alarm for %q of type %q with name %q %s marked for inclusion",
+			triggeredAlarm.Entity.Name,
+			triggeredAlarm.Entity.MOID.Type,
+			triggeredAlarm.Name,
+			markType,
+		)
+
+	default:
+		logger.Printf(
+			"Alarm for %q of type %q with name %q %s marked for exclusion",
+			triggeredAlarm.Entity.Name,
+			triggeredAlarm.Entity.MOID.Type,
+			triggeredAlarm.Name,
+			markType,
+		)
+
+	}
 
 }
 
@@ -428,6 +601,9 @@ func GetTriggeredAlarms(ctx context.Context, c *govmomi.Client, datacenters []mo
 		}
 	}
 
+	// Sorting is only needed at initialization as we retain all
+	// TriggeredAlarm values during later filtering/processing pipeline
+	// phases.
 	sort.Slice(alarms, func(i, j int) bool {
 		return strings.ToLower(alarms[i].Entity.Name) < strings.ToLower(alarms[j].Entity.Name)
 	})
@@ -465,133 +641,421 @@ func EntityStatusToNagiosState(entityStatus types.ManagedEntityStatus) (string, 
 
 }
 
-// FilterTriggeredAlarmsByEntityType accepts a collection of TriggeredAlarms
-// and slices of entity type values to include and exclude. These slices are
-// used to determine what TriggeredAlarm values should be included in the
-// returned collection. If the collection of provided TriggeredAlarms is
-// empty, an empty collection is returned.
-func FilterTriggeredAlarmsByEntityType(triggeredAlarms TriggeredAlarms, includeTypes []string, excludeTypes []string) TriggeredAlarms {
+// Filter explicitly includes or excludes TriggeredAlarms based on specified
+// filter settings.
+func (tas *TriggeredAlarms) Filter(filters TriggeredAlarmFilters) {
 
-	// setup early so we can reference it from deferred stats output
-	filteredTriggeredAlarms := make(TriggeredAlarms, 0, len(triggeredAlarms))
+	logger.Println("Filtering triggered alarms by acknowledged state")
+	tas.FilterByAcknowledgedState(filters.EvaluateAcknowledgedAlarms)
 
-	funcTimeStart := time.Now()
+	logger.Println("Filtering triggered alarms by entity type")
+	tas.filterByEntityType(filters.IncludedAlarmEntityTypes, filters.ExcludedAlarmEntityTypes)
 
-	defer func(alarms TriggeredAlarms, filteredAlarms *TriggeredAlarms) {
-		logger.Printf(
-			"It took %v to execute FilterTriggeredAlarmsByEntityType func (for %d TriggeredAlarms, yielding %d TriggeredAlarms)\n",
-			time.Since(funcTimeStart),
-			len(alarms),
-			len(*filteredAlarms),
-		)
-	}(triggeredAlarms, &filteredTriggeredAlarms)
+	logger.Println("Filtering triggered alarms by name")
+	tas.filterBySubstring(false, filters.IncludedAlarmNames, filters.ExcludedAlarmNames)
 
-	switch {
-	// if the collection of TriggeredAlarm values is empty, return the empty
-	// collection as-is.
-	case len(triggeredAlarms) == 0:
-		return triggeredAlarms
-
-	// if we're not limiting the triggered alarm by entity type, return the
-	// entire collection.
-	case len(includeTypes) == 0 && len(excludeTypes) == 0:
-		filteredTriggeredAlarms = triggeredAlarms
-		return filteredTriggeredAlarms
-	}
-
-	switch {
-	case len(includeTypes) > 0:
-		logger.Println("Include list provided; keeping triggered alarms for any specified types, excluding others")
-
-	case len(excludeTypes) > 0:
-		logger.Println("Exclude list provided; ignoring triggered alarms for any specified types, keeping others")
-	}
-
-	for _, triggeredAlarm := range triggeredAlarms {
-		switch {
-
-		case len(includeTypes) > 0:
-			if textutils.InList(triggeredAlarm.Entity.MOID.Type, includeTypes, true) {
-				filteredTriggeredAlarms = append(filteredTriggeredAlarms, triggeredAlarm)
-				continue
-			}
-			logger.Printf(
-				"Alarm %s for %s of type %s filtered out",
-				triggeredAlarm.Name,
-				triggeredAlarm.Entity.Name,
-				triggeredAlarm.Entity.MOID.Type,
-			)
-
-		case len(excludeTypes) > 0:
-			if !textutils.InList(triggeredAlarm.Entity.MOID.Type, excludeTypes, true) {
-				filteredTriggeredAlarms = append(filteredTriggeredAlarms, triggeredAlarm)
-				continue
-			}
-			logger.Printf(
-				"Alarm %s for %s of type %s filtered out",
-				triggeredAlarm.Name,
-				triggeredAlarm.Entity.Name,
-				triggeredAlarm.Entity.MOID.Type,
-			)
-		}
-	}
-
-	sort.Slice(filteredTriggeredAlarms, func(i, j int) bool {
-		return strings.ToLower(filteredTriggeredAlarms[i].Entity.Name) < strings.ToLower(filteredTriggeredAlarms[j].Entity.Name)
-	})
-
-	return filteredTriggeredAlarms
+	logger.Println("Filtering triggered alarms by description")
+	tas.filterBySubstring(true, filters.IncludedAlarmDescriptions, filters.ExcludedAlarmDescriptions)
 
 }
 
-// FilterTriggeredAlarmsByAcknowledgedState accepts a collection of
-// TriggeredAlarms and a boolean value to indicate whether previously
-// acknowledged alarms should be included in the returned collection. If the
-// collection of provided TriggeredAlarms is empty, an empty collection is
-// returned.
-func FilterTriggeredAlarmsByAcknowledgedState(triggeredAlarms TriggeredAlarms, includeAcknowledged bool) TriggeredAlarms {
-
-	// setup early so we can reference it from deferred stats output
-	filteredTriggeredAlarms := make(TriggeredAlarms, 0, len(triggeredAlarms))
+// FilterByIncludedEntityType accepts a slice of entity type keywords to use
+// in comparison against the entity type associated with a TriggeredAlarm. For
+// any matches, the TriggeredAlarm is marked as explicitly included. This will
+// prevent later filtering from implicitly excluding the TriggeredAlarm, but
+// will not stop explicit exclusions from "dropping" the TriggeredAlarm from
+// further evaluation in the filtering pipeline.
+func (tas *TriggeredAlarms) FilterByIncludedEntityType(includeTypes []string) {
 
 	funcTimeStart := time.Now()
 
-	defer func(vms TriggeredAlarms, filteredTriggeredAlarms *TriggeredAlarms) {
+	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterTriggeredAlarmsByAcknowledgedState func (for %d TriggeredAlarms, yielding %d TriggeredAlarms)\n",
+			"It took %v to execute FilterByIncludedEntityType func\n",
 			time.Since(funcTimeStart),
-			len(vms),
-			len(*filteredTriggeredAlarms),
 		)
-	}(triggeredAlarms, &filteredTriggeredAlarms)
+	}()
 
-	if len(triggeredAlarms) == 0 {
-		return triggeredAlarms
+	tas.filterByEntityType(includeTypes, []string{})
+
+}
+
+// FilterByExcludedEntityType accepts a slice of entity type keywords to use
+// in comparison against the entity type associated with a TriggeredAlarm. For
+// any matches, the TriggeredAlarm is marked as explicitly excluded. This will
+// result in "dropping" the TriggeredAlarm from further evaluation in the
+// filtering pipeline.
+func (tas *TriggeredAlarms) FilterByExcludedEntityType(excludeTypes []string) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterByExcludedEntityType func\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	tas.filterByEntityType([]string{}, excludeTypes)
+
+}
+
+// filterByEntityType uses slices of entity type values to explicitly mark
+// TriggeredAlarm values for inclusion or exclusion in the final evaluation.
+// Flag evaluation logic prevents sysadmins from providing both an inclusion
+// and exclusion list.
+func (tas *TriggeredAlarms) filterByEntityType(include []string, exclude []string) {
+
+	funcTimeStart := time.Now()
+
+	// Collect number of non-excluded TriggeredAlarms at the start of this
+	// filtering process. We'll collect this number again after filtering has
+	// been applied in order to show the results of this filter.
+	nonExcludedStart := len(*tas) - tas.NumExcluded()
+
+	defer func(start *int) {
+		logger.Printf(
+			"It took %v to execute filterByEntityType func (for %d non-excluded TriggeredAlarms, yielding %d non-excluded TriggeredAlarms)\n",
+			time.Since(funcTimeStart),
+			*start,
+			len(*tas)-tas.NumExcluded(),
+		)
+	}(&nonExcludedStart)
+
+	switch {
+	// if the collection of TriggeredAlarms is empty, skip filtering attempts.
+	case len(*tas) == 0:
+		return
+
+	// if we're not limiting TriggeredAlarms by entity type, skip filtering
+	// attempts.
+	case len(include) == 0 && len(exclude) == 0:
+		return
 	}
 
-	for _, alarm := range triggeredAlarms {
-		switch {
-		case !alarm.Acknowledged:
-			filteredTriggeredAlarms = append(filteredTriggeredAlarms, alarm)
+	switch {
+	case len(include) > 0:
+		logger.Printf(
+			"Include list provided; explicitly marking TriggeredAlarms for inclusion for %d specified types",
+			len(include),
+		)
 
-		case alarm.Acknowledged && includeAcknowledged:
-			filteredTriggeredAlarms = append(filteredTriggeredAlarms, alarm)
+	case len(exclude) > 0:
+		logger.Printf(
+			"Exclude list provided; explicitly marking TriggeredAlarms for exclusion for %d specified types",
+			len(exclude),
+		)
+	}
+
+	for i := range *tas {
+
+		switch {
+
+		case len(include) > 0:
+
+			switch {
+
+			// If the Entity Type of the TriggeredAlarm matches one of the
+			// provided type keywords mark TriggeredAlarm as explicitly
+			// included.
+			case textutils.InList((*tas)[i].Entity.MOID.Type, include, true):
+
+				// Don't explicitly *include* the TriggeredAlarm if the
+				// TriggeredAlarm has already been explicitly *excluded*.
+				if !(*tas)[i].ExplicitlyExcluded {
+					(*tas)[i].Exclude = false
+					(*tas)[i].ExplicitlyIncluded = true
+					(*tas)[i].logIncluded(true)
+				}
+
+			// if not explicitly included by another filter in the pipeline,
+			// implicitly mark as excluded
+			default:
+				if !(*tas)[i].ExplicitlyIncluded {
+					(*tas)[i].Exclude = true
+					(*tas)[i].logExcluded(true)
+				}
+
+			}
+
+		case len(exclude) > 0:
+
+			// explicitly excluded
+			//
+			// no implicit inclusions are applied for non-matching alarm types
+			// as that could unintentionally flip the results from earlier
+			// filtering stages.
+			if textutils.InList((*tas)[i].Entity.MOID.Type, exclude, true) {
+				(*tas)[i].Exclude = true
+				(*tas)[i].ExplicitlyExcluded = true
+				(*tas)[i].logExcluded(true)
+			}
 
 		}
 	}
 
-	return filteredTriggeredAlarms
+}
 
+// FilterByAcknowledgedState accepts a boolean value to indicate whether
+// previously acknowledged alarms should be included in the final evaluation.
+//
+// If false, previously acknowledged TriggeredAlarms are marked as explicitly
+// excluded and will be "dropped" from further evaluation in the filtering
+// pipeline. If true and not previously explicitly excluded, each previously
+// acknowledged TriggeredAlarm is marked as not excluded. Further evaluation
+// in the filtering pipeline can still mark the TriggeredAlarm as excluded.
+func (tas *TriggeredAlarms) FilterByAcknowledgedState(includeAcknowledged bool) {
+
+	// Collect number of non-excluded TriggeredAlarms at the start of this
+	// filtering process. We'll collect this number again after filtering has
+	// been applied in order to show the results of this filter.
+	nonExcludedStart := len(*tas) - tas.NumExcluded()
+
+	funcTimeStart := time.Now()
+
+	defer func(start *int) {
+		logger.Printf(
+			"It took %v to execute FilterByAcknowledgedState func (for %d non-excluded TriggeredAlarms, yielding %d non-excluded TriggeredAlarms)\n",
+			time.Since(funcTimeStart),
+			*start,
+			len(*tas)-tas.NumExcluded(),
+		)
+	}(&nonExcludedStart)
+
+	// if the collection of TriggeredAlarms is empty, skip filtering attempts.
+	if len(*tas) == 0 {
+		return
+	}
+
+	for i := range *tas {
+		switch {
+
+		// Mark TriggeredAlarm as explicitly excluded if sysadmin did not opt
+		// to evaluate previously acknowledged alarms
+		case (*tas)[i].Acknowledged && !includeAcknowledged:
+			(*tas)[i].Exclude = true
+			(*tas)[i].ExplicitlyExcluded = true
+			(*tas)[i].logExcluded(true)
+
+		// implicitly included *if* not explicitly excluded by another filter
+		// in the pipeline
+		default:
+
+			if !(*tas)[i].ExplicitlyExcluded {
+				(*tas)[i].Exclude = false
+				(*tas)[i].logIncluded(false)
+			}
+
+		}
+
+	}
+
+}
+
+// FilterByIncludedNameSubstring accepts a slice of substrings to use in
+// comparisons against TriggeredAlarm names. For any matches, the
+// TriggeredAlarm is marked as explicitly included. This will prevent later
+// filtering from implicitly excluding the TriggeredAlarm, but will not stop
+// explicit exclusions from "dropping" the TriggeredAlarm from further
+// evaluation in the filtering pipeline.
+func (tas *TriggeredAlarms) FilterByIncludedNameSubstring(include []string) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterByIncludedNameSubstring func\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	tas.filterBySubstring(false, include, []string{})
+
+}
+
+// FilterByExcludedNameSubstring accepts a slice of substrings to use in
+// comparisons against TriggeredAlarm names in order to explicitly mark
+// TriggeredAlarms for exclusion in the final evaluation. Flag evaluation
+// logic prevents sysadmins from providing both an inclusion and exclusion
+// list.
+func (tas *TriggeredAlarms) FilterByExcludedNameSubstring(exclude []string) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterByExcludedNameSubstring func\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	tas.filterBySubstring(false, []string{}, exclude)
+
+}
+
+// FilterByIncludedDescriptionSubstring accepts a slice of substrings to use
+// in comparisons against TriggeredAlarm descriptions.
+//
+// For any matches, the TriggeredAlarm is marked as explicitly included. This
+// will prevent later filtering from implicitly excluding the TriggeredAlarm,
+// but will not stop explicit exclusions from "dropping" the TriggeredAlarm
+// from further evaluation in the filtering pipeline.
+func (tas *TriggeredAlarms) FilterByIncludedDescriptionSubstring(include []string) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterByIncludedDescriptionSubstring func\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	tas.filterBySubstring(true, include, []string{})
+
+}
+
+// FilterByExcludedDescriptionSubstring accepts a slice of substrings to use
+// in comparisons against TriggeredAlarm descriptions in order to explicitly
+// mark TriggeredAlarms for exclusion in the final evaluation. Flag evaluation
+// logic prevents sysadmins from providing both an inclusion and exclusion
+// list.
+func (tas *TriggeredAlarms) FilterByExcludedDescriptionSubstring(exclude []string) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterByExcludedDescriptionSubstring func\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	tas.filterBySubstring(true, []string{}, exclude)
+
+}
+
+// filterBySubstring accepts slices of substrings to use in comparisons
+// against TriggeredAlarm names or descriptions in order to explicitly mark
+// TriggeredAlarms for inclusion or exclusion in the final evaluation. A
+// boolean value indicates whether the comparison should be against the
+// defined Alarm's description or name field.
+//
+// Flag evaluation logic prevents sysadmins from providing both an inclusion
+// and exclusion list.
+func (tas *TriggeredAlarms) filterBySubstring(useDescription bool, include []string, exclude []string) {
+
+	funcTimeStart := time.Now()
+
+	// Collect number of non-excluded TriggeredAlarms at the start of this
+	// filtering process. We'll collect this number again after filtering has
+	// been applied in order to show the results of this filter.
+	nonExcludedStart := len(*tas) - tas.NumExcluded()
+
+	defer func(start *int) {
+		logger.Printf(
+			"It took %v to execute filterBySubstring func (for %d non-excluded TriggeredAlarms, yielding %d non-excluded TriggeredAlarms)\n",
+			time.Since(funcTimeStart),
+			*start,
+			len(*tas)-tas.NumExcluded(),
+		)
+	}(&nonExcludedStart)
+
+	switch {
+	// if the collection of TriggeredAlarms is empty, skip filtering attempts.
+	case len(*tas) == 0:
+		return
+
+	// if we're not limiting TriggeredAlarms by entity type, skip filtering
+	// attempts.
+	case len(include) == 0 && len(exclude) == 0:
+		return
+	}
+
+	switch {
+	case len(include) > 0:
+		logger.Printf(
+			"Include list provided; explicitly marking TriggeredAlarms for inclusion which match any of %d specified substrings",
+			len(include),
+		)
+
+	case len(exclude) > 0:
+		logger.Printf(
+			"Exclude list provided; explicitly marking TriggeredAlarms for exclusion which match any of %d specified substrings",
+			len(exclude),
+		)
+	}
+
+	for i := range *tas {
+
+		var substrField string
+		switch {
+		case useDescription:
+			substrField = (*tas)[i].Description
+		default:
+			substrField = (*tas)[i].Name
+		}
+
+		switch {
+
+		case len(include) > 0:
+
+			for _, substr := range include {
+
+				switch {
+
+				// Attempt literal, case-insensitive match first then attempt
+				// substring, case-insensitive match.
+				case strings.EqualFold(substrField, substr) ||
+					strings.Contains(substrField, substr):
+
+					// Don't explicitly *include* the TriggeredAlarm if the
+					// TriggeredAlarm has already been explicitly *excluded*.
+					if !(*tas)[i].ExplicitlyExcluded {
+						(*tas)[i].Exclude = false
+						(*tas)[i].ExplicitlyIncluded = true
+						(*tas)[i].logIncluded(true)
+					}
+
+				// If not explicitly included by another filter in the
+				// pipeline, implicitly mark as excluded.
+				default:
+					if !(*tas)[i].ExplicitlyIncluded {
+						(*tas)[i].Exclude = true
+						(*tas)[i].logExcluded(false)
+					}
+				}
+
+			}
+
+		case len(exclude) > 0:
+
+			for _, substr := range exclude {
+
+				// explicitly excluded
+				//
+				// no implicit inclusions are applied for non-matching alarm
+				// types as that could unintentionally flip the results from
+				// earlier filtering stages.
+				if strings.EqualFold(substrField, substr) ||
+					strings.Contains(substrField, substr) {
+					(*tas)[i].Exclude = true
+					(*tas)[i].ExplicitlyExcluded = true
+					(*tas)[i].logExcluded(true)
+				}
+
+			}
+
+		}
+	}
 }
 
 // AlarmsOneLineCheckSummary is used to generate a one-line Nagios service
 // check results summary. This is the line most prominent in notifications.
 func AlarmsOneLineCheckSummary(
 	stateLabel string,
-	allAlarms TriggeredAlarms,
-	filteredAlarms TriggeredAlarms,
-	includedAlarmEntityTypes []string,
-	excludedAlarmEntityTypes []string,
+	triggeredAlarms TriggeredAlarms,
+	datacentersEvaluated []string,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -603,24 +1067,22 @@ func AlarmsOneLineCheckSummary(
 		)
 	}()
 
-	datacentersEvaluated := len(filteredAlarms.Datacenters())
-
 	switch {
-	case !filteredAlarms.IsOKState():
+	case !triggeredAlarms.IsOKState(false):
 		return fmt.Sprintf(
 			"%s: %d non-excluded Triggered Alarms detected (evaluated %d Datacenters, %d Triggered Alarms)",
 			stateLabel,
-			len(filteredAlarms),
-			datacentersEvaluated,
-			len(allAlarms),
+			len(triggeredAlarms)-triggeredAlarms.NumExcluded(),
+			len(datacentersEvaluated),
+			len(triggeredAlarms),
 		)
 
 	default:
 		return fmt.Sprintf(
 			"%s: No non-excluded Triggered Alarms detected (evaluated %d Datacenters, %d Triggered Alarms)",
 			stateLabel,
-			datacentersEvaluated,
-			len(allAlarms),
+			len(datacentersEvaluated),
+			len(triggeredAlarms),
 		)
 	}
 }
@@ -632,11 +1094,8 @@ func AlarmsOneLineCheckSummary(
 // the web UI or in the body of many notifications.
 func AlarmsReport(
 	c *vim25.Client,
-	allAlarms TriggeredAlarms,
-	filteredAlarms TriggeredAlarms,
-	includedAlarmEntityTypes []string,
-	excludedAlarmEntityTypes []string,
-	evalAcknowledgedAlarms bool,
+	triggeredAlarms TriggeredAlarms,
+	triggeredAlarmFilters TriggeredAlarmFilters,
 	specifiedDatacenters []string,
 	datacentersEvaluated []string,
 ) string {
@@ -650,9 +1109,6 @@ func AlarmsReport(
 		)
 	}()
 
-	// Build list of triggered alarms that have been filtered out
-	ignoredAlarms := allAlarms.IgnoredAlarms(filteredAlarms)
-
 	var report strings.Builder
 
 	fmt.Fprintf(
@@ -662,22 +1118,32 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
+	numTriggeredAlarmsToReport := len(triggeredAlarms) - triggeredAlarms.NumExcluded()
+
 	switch {
-	case len(filteredAlarms) == 0:
-		fmt.Fprintf(&report, "* None%s", nagios.CheckOutputEOL)
+	case numTriggeredAlarmsToReport == 0:
+		fmt.Fprintf(
+			&report,
+			"* None%s%s",
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+		)
 	default:
 		var alarmCtr int
-		for i := range filteredAlarms {
-			alarmCtr++
-			fmt.Fprintf(
-				&report,
-				"* (%.2d) %s (type %s): %s%s",
-				alarmCtr,
-				filteredAlarms[i].Entity.Name,
-				filteredAlarms[i].Entity.MOID.Type,
-				filteredAlarms[i].Name,
-				nagios.CheckOutputEOL,
-			)
+		for i := range triggeredAlarms {
+			// only look at non-excluded alarms
+			if !triggeredAlarms[i].Exclude {
+				alarmCtr++
+				fmt.Fprintf(
+					&report,
+					"* (%.2d) %s (type %s): %s%s",
+					alarmCtr,
+					triggeredAlarms[i].Entity.Name,
+					triggeredAlarms[i].Entity.MOID.Type,
+					triggeredAlarms[i].Name,
+					nagios.CheckOutputEOL,
+				)
+			}
 		}
 
 		fmt.Fprintf(&report, "%s", nagios.CheckOutputEOL)
@@ -692,27 +1158,43 @@ func AlarmsReport(
 	)
 
 	switch {
-	case len(ignoredAlarms) == 0:
-		fmt.Fprintf(&report, "* None%s", nagios.CheckOutputEOL)
+	case triggeredAlarms.NumExcluded() == 0:
+		fmt.Fprintf(
+			&report,
+			"* None%s%s",
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+		)
 	default:
 		var alarmCtr int
-		for i := range ignoredAlarms {
-			alarmCtr++
-			fmt.Fprintf(
-				&report,
-				"* (%.2d) %s (type %s): %s%s",
-				alarmCtr,
-				ignoredAlarms[i].Entity.Name,
-				ignoredAlarms[i].Entity.MOID.Type,
-				ignoredAlarms[i].Name,
-				nagios.CheckOutputEOL,
-			)
+		for i := range triggeredAlarms {
+			// only look at excluded alarms
+			if triggeredAlarms[i].Exclude {
+				alarmCtr++
+				fmt.Fprintf(
+					&report,
+					"* (%.2d) %s (type %s): %s%s",
+					alarmCtr,
+					triggeredAlarms[i].Entity.Name,
+					triggeredAlarms[i].Entity.MOID.Type,
+					triggeredAlarms[i].Name,
+					nagios.CheckOutputEOL,
+				)
+			}
 		}
 	}
 
 	fmt.Fprintf(
 		&report,
 		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"%s**NOTE: Explicit exclusions have precedence over inclusions**%s%s",
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
@@ -728,32 +1210,64 @@ func AlarmsReport(
 	fmt.Fprintf(
 		&report,
 		"* Triggered Alarms (evaluated: %d, ignored: %d, total: %d)%s",
-		len(filteredAlarms),
-		len(ignoredAlarms),
-		len(allAlarms),
+		numTriggeredAlarmsToReport,
+		triggeredAlarms.NumExcluded(),
+		len(triggeredAlarms),
 		nagios.CheckOutputEOL,
 	)
 
 	fmt.Fprintf(
 		&report,
 		"* Acknowledged Alarms evaluated: %t%s",
-		evalAcknowledgedAlarms,
+		triggeredAlarmFilters.EvaluateAcknowledgedAlarms,
 		nagios.CheckOutputEOL,
 	)
 
 	fmt.Fprintf(
 		&report,
 		"* Specified Triggered Alarm entity types to explicitly include (%d): [%v]%s",
-		len(includedAlarmEntityTypes),
-		strings.Join(includedAlarmEntityTypes, ", "),
+		len(triggeredAlarmFilters.IncludedAlarmEntityTypes),
+		strings.Join(triggeredAlarmFilters.IncludedAlarmEntityTypes, ", "),
 		nagios.CheckOutputEOL,
 	)
 
 	fmt.Fprintf(
 		&report,
 		"* Specified Triggered Alarm entity types to explicitly exclude (%d): [%v]%s",
-		len(excludedAlarmEntityTypes),
-		strings.Join(excludedAlarmEntityTypes, ", "),
+		len(triggeredAlarmFilters.ExcludedAlarmEntityTypes),
+		strings.Join(triggeredAlarmFilters.ExcludedAlarmEntityTypes, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Triggered Alarm names to explicitly include (%d): [%v]%s",
+		len(triggeredAlarmFilters.IncludedAlarmNames),
+		strings.Join(triggeredAlarmFilters.IncludedAlarmNames, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Triggered Alarm names to explicitly exclude (%d): [%v]%s",
+		len(triggeredAlarmFilters.ExcludedAlarmNames),
+		strings.Join(triggeredAlarmFilters.ExcludedAlarmNames, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Triggered Alarm descriptions to explicitly include (%d): [%v]%s",
+		len(triggeredAlarmFilters.IncludedAlarmDescriptions),
+		strings.Join(triggeredAlarmFilters.IncludedAlarmDescriptions, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Triggered Alarm descriptions to explicitly exclude (%d): [%v]%s",
+		len(triggeredAlarmFilters.ExcludedAlarmDescriptions),
+		strings.Join(triggeredAlarmFilters.ExcludedAlarmDescriptions, ", "),
 		nagios.CheckOutputEOL,
 	)
 
@@ -776,8 +1290,8 @@ func AlarmsReport(
 	fmt.Fprintf(
 		&report,
 		"* Datacenters with Triggered Alarms (%d): [%v]%s",
-		len(allAlarms.Datacenters()),
-		strings.Join(allAlarms.Datacenters(), ", "),
+		len(triggeredAlarms.Datacenters()),
+		strings.Join(triggeredAlarms.Datacenters(), ", "),
 		nagios.CheckOutputEOL,
 	)
 
