@@ -1,6 +1,13 @@
 # github.com/atc0005/go-nagios v0.6.0
 ## explicit
 github.com/atc0005/go-nagios
+# github.com/google/go-cmp v0.5.6
+## explicit
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
 # github.com/rs/zerolog v1.22.0
 ## explicit
 github.com/rs/zerolog

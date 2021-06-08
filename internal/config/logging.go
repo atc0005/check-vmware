@@ -14,33 +14,6 @@ import (
 	"github.com/rs/zerolog"
 )
 
-const (
-
-	// LogLevelDisabled maps to zerolog.Disabled logging level
-	LogLevelDisabled string = "disabled"
-
-	// LogLevelPanic maps to zerolog.PanicLevel logging level
-	LogLevelPanic string = "panic"
-
-	// LogLevelFatal maps to zerolog.FatalLevel logging level
-	LogLevelFatal string = "fatal"
-
-	// LogLevelError maps to zerolog.ErrorLevel logging level
-	LogLevelError string = "error"
-
-	// LogLevelWarn maps to zerolog.WarnLevel logging level
-	LogLevelWarn string = "warn"
-
-	// LogLevelInfo maps to zerolog.InfoLevel logging level
-	LogLevelInfo string = "info"
-
-	// LogLevelDebug maps to zerolog.DebugLevel logging level
-	LogLevelDebug string = "debug"
-
-	// LogLevelTrace maps to zerolog.TraceLevel logging level
-	LogLevelTrace string = "trace"
-)
-
 // loggingLevels is a map of string to zerolog.Level created in an effort to
 // keep from repeating ourselves
 var loggingLevels = make(map[string]zerolog.Level)
@@ -59,6 +32,7 @@ func init() {
 	loggingLevels[LogLevelInfo] = zerolog.InfoLevel
 	loggingLevels[LogLevelDebug] = zerolog.DebugLevel
 	loggingLevels[LogLevelTrace] = zerolog.TraceLevel
+
 }
 
 // setLoggingLevel applies the requested logging level to filter out messages
