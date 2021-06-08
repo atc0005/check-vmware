@@ -5,9 +5,7 @@ Nagios plugin used to monitor for Triggered Alarms in one or more datacenters.
 PURPOSE
 
 This plugin monitors one or more datacenters for Triggered Alarms. These
-alarms can be explicitly *included* or *excluded* based on Acknowledged status
-or the Managed Entity type (e.g., `Datastore`, `VirtualMachine`). Future
-enhancements are planned to expand filtering capabilities.
+alarms can be explicitly *included* or *excluded* based on multiple criteria.
 
 The output for this plugin is designed to provide the one-line summary needed
 by Nagios for quick identification of a problem while providing longer, more

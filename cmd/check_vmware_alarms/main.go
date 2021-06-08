@@ -163,7 +163,7 @@ func main() {
 		Str("datacenters", strings.Join(dcsEvalNames, ", ")).
 		Msg("Datacenters found")
 
-	allAlarms, fetchAlarmsErr := vsphere.GetTriggeredAlarms(
+	triggeredAlarms, fetchAlarmsErr := vsphere.GetTriggeredAlarms(
 		ctx,
 		c,
 		dcs,
@@ -183,70 +183,81 @@ func main() {
 		return
 	}
 
-	log.Debug().Int("total_alarms", len(allAlarms)).Msg("alarms found")
+	log.Debug().Int("total_triggered_alarms", len(triggeredAlarms)).Msg("")
 
-	log.Debug().Msg("Filtering triggered alarms by entity type")
-	filteredAlarms := vsphere.FilterTriggeredAlarmsByEntityType(
-		allAlarms,
-		cfg.IncludedAlarmEntityTypes,
-		cfg.ExcludedAlarmEntityTypes,
-	)
-
-	log.Debug().Msg("Filtering triggered alarms by acknowledged state")
-	filteredAlarms = vsphere.FilterTriggeredAlarmsByAcknowledgedState(
-		filteredAlarms,
-		cfg.EvaluateAcknowledgedAlarms,
-	)
-
-	log.Debug().
-		Int("remaining_alarms", len(filteredAlarms)).
-		Msg("alarms remaining after filtering")
+	// Collect all filtering options together for easy reference.
+	triggeredAlarmFilters := vsphere.TriggeredAlarmFilters{
+		IncludedAlarmEntityTypes:   cfg.IncludedAlarmEntityTypes,
+		ExcludedAlarmEntityTypes:   cfg.ExcludedAlarmEntityTypes,
+		IncludedAlarmNames:         cfg.IncludedAlarmNames,
+		ExcludedAlarmNames:         cfg.ExcludedAlarmNames,
+		IncludedAlarmDescriptions:  cfg.IncludedAlarmDescriptions,
+		ExcludedAlarmDescriptions:  cfg.ExcludedAlarmDescriptions,
+		EvaluateAcknowledgedAlarms: cfg.EvaluateAcknowledgedAlarms,
+	}
 
 	switch {
 
-	case len(filteredAlarms) > 0:
+	case len(triggeredAlarms) > 0:
 
-		log.Error().
-			Int("total_alarms", len(allAlarms)).
-			Int("filtered_alarms", len(filteredAlarms)).
-			Int("excluded_alarms", len(allAlarms)-len(filteredAlarms)).
-			Msg("Non-excluded alarms detected")
+		// Filter Triggered Alarms using requested settings.
+		triggeredAlarms.Filter(triggeredAlarmFilters)
 
-		// Same error no matter whether CRITICAL, WARNING or UNKNOWN state.
-		nagiosExitState.LastError = vsphere.ErrAlarmNotExcludedFromEvaluation
+		numTriggeredAlarmsToReport := len(triggeredAlarms) - triggeredAlarms.NumExcluded()
+		log.Debug().
+			Int("remaining_triggered_alarms", numTriggeredAlarmsToReport).
+			Msg("triggered alarms remaining after filtering")
+
+		if !triggeredAlarms.IsOKState(false) {
+			log.Error().
+				Int("total_triggered_alarms", len(triggeredAlarms)).
+				Int("remaining_alarms", numTriggeredAlarmsToReport).
+				Int("excluded_triggered_alarms", triggeredAlarms.NumExcluded()).
+				Msg("Non-excluded alarms detected")
+		}
 
 		// Set state label and exit code based on most severe
-		// ManagedEntityStatus found in the TriggeredAlarms collection.
+		// ManagedEntityStatus found in the TriggeredAlarms collection. Record
+		// error if any TriggeredAlarms remain after filtering.
 		var stateLabel string
 		switch {
-		case filteredAlarms.HasCriticalState():
+		case triggeredAlarms.HasCriticalState(false):
 			stateLabel = nagios.StateCRITICALLabel
 			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+			nagiosExitState.LastError = vsphere.ErrAlarmNotExcludedFromEvaluation
 
-		case filteredAlarms.HasWarningState():
+		case triggeredAlarms.HasWarningState(false):
 			stateLabel = nagios.StateWARNINGLabel
 			nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
+			nagiosExitState.LastError = vsphere.ErrAlarmNotExcludedFromEvaluation
 
-		case filteredAlarms.HasUnknownState():
+		case triggeredAlarms.HasUnknownState(false):
 			stateLabel = nagios.StateUNKNOWNLabel
 			nagiosExitState.ExitStatusCode = nagios.StateUNKNOWNExitCode
+			nagiosExitState.LastError = vsphere.ErrAlarmNotExcludedFromEvaluation
+
+		// though we started off with triggered alarms, it's possible that we
+		// filtered all of them out by this point
+		default:
+
+			// success path
+
+			stateLabel = nagios.StateOKLabel
+			nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
+			nagiosExitState.LastError = nil
+
 		}
 
 		nagiosExitState.ServiceOutput = vsphere.AlarmsOneLineCheckSummary(
 			stateLabel,
-			allAlarms,
-			filteredAlarms,
-			cfg.IncludedAlarmEntityTypes,
-			cfg.ExcludedAlarmEntityTypes,
+			triggeredAlarms,
+			dcsEvalNames,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.AlarmsReport(
 			c.Client,
-			allAlarms,
-			filteredAlarms,
-			cfg.IncludedAlarmEntityTypes,
-			cfg.ExcludedAlarmEntityTypes,
-			cfg.EvaluateAcknowledgedAlarms,
+			triggeredAlarms,
+			triggeredAlarmFilters,
 			cfg.DatacenterNames,
 			dcsEvalNames,
 		)
@@ -257,30 +268,24 @@ func main() {
 
 		// success path
 
-		log.Info().Msg("No non-excluded alarms detected")
+		log.Debug().Msg("No non-excluded alarms detected")
 
 		nagiosExitState.LastError = nil
+		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
 		nagiosExitState.ServiceOutput = vsphere.AlarmsOneLineCheckSummary(
 			nagios.StateOKLabel,
-			allAlarms,
-			filteredAlarms,
-			cfg.IncludedAlarmEntityTypes,
-			cfg.ExcludedAlarmEntityTypes,
+			triggeredAlarms,
+			dcsEvalNames,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.AlarmsReport(
 			c.Client,
-			allAlarms,
-			filteredAlarms,
-			cfg.IncludedAlarmEntityTypes,
-			cfg.ExcludedAlarmEntityTypes,
-			cfg.EvaluateAcknowledgedAlarms,
+			triggeredAlarms,
+			triggeredAlarmFilters,
 			cfg.DatacenterNames,
 			dcsEvalNames,
 		)
-
-		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
 		return
 

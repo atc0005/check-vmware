@@ -129,6 +129,10 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.IncludedAlarmEntityTypes, "include-type", includedAlarmEntityTypesFlagHelp)
 		flag.Var(&c.ExcludedAlarmEntityTypes, "exclude-type", excludedAlarmEntityTypesFlagHelp)
 		flag.BoolVar(&c.EvaluateAcknowledgedAlarms, "eval-acknowledged", defaultEvaluateAcknowledgedAlarms, evaluateAcknowledgedTriggeredAlarmFlagHelp)
+		flag.Var(&c.IncludedAlarmNames, "include-name", includedAlarmNamesFlagHelp)
+		flag.Var(&c.ExcludedAlarmNames, "exclude-name", excludedAlarmNamesFlagHelp)
+		flag.Var(&c.IncludedAlarmDescriptions, "include-desc", includedAlarmDescriptionsFlagHelp)
+		flag.Var(&c.ExcludedAlarmDescriptions, "exclude-desc", excludedAlarmDescriptionsFlagHelp)
 
 	case pluginType.DatastoresSize:
 

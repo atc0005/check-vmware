@@ -195,12 +195,44 @@ type Config struct {
 	IgnoredDatastores multiValueStringFlag
 
 	// IncludedAlarmEntityTypes is a list of entity types for Alarms that will
-	// be evaluated.
+	// be explicitly included for evaluation. Unless included by later
+	// filtering logic, unmatched Triggered Alarms will be excluded from final
+	// evaluation. Explicitly included Triggered Alarms are still subject to
+	// permanent exclusion if a an explicit exclusion match is made.
 	IncludedAlarmEntityTypes multiValueStringFlag
 
 	// ExcludedAlarmEntityTypes is a list of entity types for Alarms that will
-	// be excluded from evaluation.
+	// be explicitly excluded from further evaluation by other stages in the
+	// filtering pipeline. Explicit exclusions have precedence over explicit
+	// inclusions.
 	ExcludedAlarmEntityTypes multiValueStringFlag
+
+	// IncludedAlarmNames is a list of names for defined Alarms that will be
+	// explicitly included for evaluation. Unless included by later filtering
+	// logic, unmatched Triggered Alarms will be excluded from final
+	// evaluation. Explicitly included Triggered Alarms are still subject to
+	// permanent exclusion if a an explicit exclusion match is made.
+	IncludedAlarmNames multiValueStringFlag
+
+	// ExcludedAlarmNames is a list of names for defined Alarms that will be
+	// explicitly excluded from further evaluation by other stages in the
+	// filtering pipeline. Explicit exclusions have precedence over explicit
+	// inclusions.
+	ExcludedAlarmNames multiValueStringFlag
+
+	// IncludedAlarmDescriptions is a list of descriptions for defined Alarms
+	// that will be explicitly included for evaluation. Unless included by
+	// later filtering logic, unmatched Triggered Alarms will be excluded from
+	// final evaluation. Explicitly included Triggered Alarms are still
+	// subject to permanent exclusion if a an explicit exclusion match is
+	// made.
+	IncludedAlarmDescriptions multiValueStringFlag
+
+	// ExcludedAlarmDescriptions is a list of descriptions for defined Alarms
+	// that will be explicitly excluded from further evaluation by other
+	// stages in the filtering pipeline. Explicit exclusions have precedence
+	// over explicit inclusions.
+	ExcludedAlarmDescriptions multiValueStringFlag
 
 	// Log is an embedded zerolog Logger initialized via config.New().
 	Log zerolog.Logger
