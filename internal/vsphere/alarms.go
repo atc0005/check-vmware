@@ -801,9 +801,8 @@ func (tas *TriggeredAlarms) filterByEntityType(include []string, exclude []strin
 //
 // If false, previously acknowledged TriggeredAlarms are marked as explicitly
 // excluded and will be "dropped" from further evaluation in the filtering
-// pipeline. If true and not previously explicitly excluded, each previously
-// acknowledged TriggeredAlarm is marked as not excluded. Further evaluation
-// in the filtering pipeline can still mark the TriggeredAlarm as excluded.
+// pipeline. If true, no changes are made. Further evaluation in the filtering
+// pipeline can still mark the TriggeredAlarm as excluded.
 func (tas *TriggeredAlarms) FilterByAcknowledgedState(includeAcknowledged bool) {
 
 	// Collect number of non-excluded TriggeredAlarms at the start of this
@@ -828,24 +827,14 @@ func (tas *TriggeredAlarms) FilterByAcknowledgedState(includeAcknowledged bool) 
 	}
 
 	for i := range *tas {
-		switch {
 
 		// Mark TriggeredAlarm as explicitly excluded if sysadmin did not opt
 		// to evaluate previously acknowledged alarms
-		case (*tas)[i].Acknowledged && !includeAcknowledged:
+		if (*tas)[i].Acknowledged && !includeAcknowledged {
 			(*tas)[i].Exclude = true
 			(*tas)[i].ExplicitlyExcluded = true
+			// (*tas)[i].ExplicitlyIncluded = false
 			(*tas)[i].logExcluded(true)
-
-		// implicitly included *if* not explicitly excluded by another filter
-		// in the pipeline
-		default:
-
-			if !(*tas)[i].ExplicitlyExcluded {
-				(*tas)[i].Exclude = false
-				(*tas)[i].logIncluded(false)
-			}
-
 		}
 
 	}
