@@ -121,6 +121,8 @@ type TriggeredAlarmFilters struct {
 	ExcludedAlarmNames         []string
 	IncludedAlarmDescriptions  []string
 	ExcludedAlarmDescriptions  []string
+	IncludedAlarmStatuses      []string
+	ExcludedAlarmStatuses      []string
 	EvaluateAcknowledgedAlarms bool
 }
 
@@ -180,15 +182,48 @@ func (tas TriggeredAlarms) CountPerDatacenter() map[string]int {
 }
 
 // Keys returns a list of TriggeredAlarm keys or unique identifiers associated
-// with each TriggeredAlarm in the collection.
-func (tas TriggeredAlarms) Keys() []string {
+// with each TriggeredAlarm in the collection. If specified, keys are also
+// returned for acknowledged triggered alarms. Keys are returned in ascending
+// order.
+func (tas TriggeredAlarms) Keys(evalAcknowledged bool, evalExcluded bool) []string {
 
 	keys := make([]string, 0, len(tas))
 	for i := range tas {
-		keys = append(keys, tas[i].Key)
+		switch {
+		case tas[i].Acknowledged && !evalAcknowledged:
+			continue
+		case tas[i].Exclude && !evalExcluded:
+			continue
+		default:
+			keys = append(keys, tas[i].Key)
+		}
 	}
 
+	sort.Slice(keys, func(i, j int) bool {
+		return strings.ToLower(keys[i]) < strings.ToLower(keys[j])
+	})
+
 	return keys
+
+}
+
+// KeysExcluded returns a list of TriggeredAlarm keys or unique identifiers
+// associated with each TriggeredAlarm in the collection that has been
+// excluded. Keys are returned in ascending order.
+func (tas TriggeredAlarms) KeysExcluded() []string {
+
+	keysExcl := make([]string, 0, len(tas))
+	for i := range tas {
+		if tas[i].Exclude {
+			keysExcl = append(keysExcl, tas[i].Key)
+		}
+	}
+
+	sort.Slice(keysExcl, func(i, j int) bool {
+		return strings.ToLower(keysExcl[i]) < strings.ToLower(keysExcl[j])
+	})
+
+	return keysExcl
 
 }
 
@@ -494,7 +529,8 @@ func logTriggeredAlarmMarked(triggeredAlarm TriggeredAlarm, keep bool, explicit 
 	switch {
 	case keep:
 		logger.Printf(
-			"Alarm for %q of type %q with name %q %s marked for inclusion",
+			"Alarm (%s) for %q of type %q with name %q %s marked for inclusion",
+			triggeredAlarm.OverallStatus,
 			triggeredAlarm.Entity.Name,
 			triggeredAlarm.Entity.MOID.Type,
 			triggeredAlarm.Name,
@@ -503,7 +539,8 @@ func logTriggeredAlarmMarked(triggeredAlarm TriggeredAlarm, keep bool, explicit 
 
 	default:
 		logger.Printf(
-			"Alarm for %q of type %q with name %q %s marked for exclusion",
+			"Alarm (%s) for %q of type %q with name %q %s marked for exclusion",
+			triggeredAlarm.OverallStatus,
 			triggeredAlarm.Entity.Name,
 			triggeredAlarm.Entity.MOID.Type,
 			triggeredAlarm.Name,
@@ -657,6 +694,9 @@ func (tas *TriggeredAlarms) Filter(filters TriggeredAlarmFilters) {
 	logger.Println("Filtering triggered alarms by description")
 	tas.filterBySubstring(true, filters.IncludedAlarmDescriptions, filters.ExcludedAlarmDescriptions)
 
+	logger.Println("Filtering triggered alarms by status")
+	tas.filterByStatus(filters.IncludedAlarmStatuses, filters.ExcludedAlarmStatuses)
+
 }
 
 // FilterByIncludedEntityType accepts a slice of entity type keywords to use
@@ -671,8 +711,9 @@ func (tas *TriggeredAlarms) FilterByIncludedEntityType(includeTypes []string) {
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterByIncludedEntityType func\n",
+			"It took %v to execute FilterByIncludedEntityType func for %d types\n",
 			time.Since(funcTimeStart),
+			len(includeTypes),
 		)
 	}()
 
@@ -691,8 +732,9 @@ func (tas *TriggeredAlarms) FilterByExcludedEntityType(excludeTypes []string) {
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterByExcludedEntityType func\n",
+			"It took %v to execute FilterByExcludedEntityType func for %d types\n",
 			time.Since(funcTimeStart),
+			len(excludeTypes),
 		)
 	}()
 
@@ -788,6 +830,7 @@ func (tas *TriggeredAlarms) filterByEntityType(include []string, exclude []strin
 			if textutils.InList((*tas)[i].Entity.MOID.Type, exclude, true) {
 				(*tas)[i].Exclude = true
 				(*tas)[i].ExplicitlyExcluded = true
+				// (*tas)[i].ExplicitlyIncluded = false
 				(*tas)[i].logExcluded(true)
 			}
 
@@ -853,8 +896,9 @@ func (tas *TriggeredAlarms) FilterByIncludedNameSubstring(include []string) {
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterByIncludedNameSubstring func\n",
+			"It took %v to execute FilterByIncludedNameSubstring func for %d substrings\n",
 			time.Since(funcTimeStart),
+			len(include),
 		)
 	}()
 
@@ -873,8 +917,9 @@ func (tas *TriggeredAlarms) FilterByExcludedNameSubstring(exclude []string) {
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterByExcludedNameSubstring func\n",
+			"It took %v to execute FilterByExcludedNameSubstring func for %d substrings\n",
 			time.Since(funcTimeStart),
+			len(exclude),
 		)
 	}()
 
@@ -895,8 +940,9 @@ func (tas *TriggeredAlarms) FilterByIncludedDescriptionSubstring(include []strin
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterByIncludedDescriptionSubstring func\n",
+			"It took %v to execute FilterByIncludedDescriptionSubstring func for %d substrings\n",
 			time.Since(funcTimeStart),
+			len(include),
 		)
 	}()
 
@@ -915,8 +961,9 @@ func (tas *TriggeredAlarms) FilterByExcludedDescriptionSubstring(exclude []strin
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterByExcludedDescriptionSubstring func\n",
+			"It took %v to execute FilterByExcludedDescriptionSubstring func for %d substrings\n",
 			time.Since(funcTimeStart),
+			len(exclude),
 		)
 	}()
 
@@ -1030,6 +1077,171 @@ func (tas *TriggeredAlarms) filterBySubstring(useDescription bool, include []str
 					strings.Contains(substrField, substr) {
 					(*tas)[i].Exclude = true
 					(*tas)[i].ExplicitlyExcluded = true
+					// (*tas)[i].ExplicitlyIncluded = false
+					(*tas)[i].logExcluded(true)
+				}
+
+			}
+
+		}
+	}
+}
+
+// FilterByIncludedStatus accepts a slice of ManagedEntityStatus keywords to
+// use in comparisons against TriggeredAlarm statuses. For any matches, the
+// TriggeredAlarm is marked as explicitly included. This will prevent later
+// filtering from implicitly excluding the TriggeredAlarm, but will not stop
+// explicit exclusions from "dropping" the TriggeredAlarm from further
+// evaluation in the filtering pipeline.
+func (tas *TriggeredAlarms) FilterByIncludedStatus(include []string) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterByIncludedStatus func for %d keywords\n",
+			time.Since(funcTimeStart),
+			len(include),
+		)
+	}()
+
+	tas.filterByStatus(include, []string{})
+
+}
+
+// FilterByExcludedStatus accepts a slice of ManagedEntityStatus keywords to
+// use in comparisons against TriggeredAlarm statuses in order to explicitly
+// mark TriggeredAlarms for exclusion in the final evaluation. Flag evaluation
+// logic prevents sysadmins from providing both an inclusion and exclusion
+// list.
+func (tas *TriggeredAlarms) FilterByExcludedStatus(exclude []string) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterByExcludedStatus func for %d keywords\n",
+			time.Since(funcTimeStart),
+			len(exclude),
+		)
+	}()
+
+	tas.filterByStatus([]string{}, exclude)
+
+}
+
+// filterByStatus accepts slices of ManagedEntityStatus keywords to use in
+// comparisons against TriggeredAlarm statuses n order to explicitly mark
+// TriggeredAlarms for inclusion or exclusion in the final evaluation.
+//
+// Flag evaluation logic prevents sysadmins from providing both an inclusion
+// and exclusion list.
+func (tas *TriggeredAlarms) filterByStatus(include []string, exclude []string) {
+
+	funcTimeStart := time.Now()
+
+	// Collect number of non-excluded TriggeredAlarms at the start of this
+	// filtering process. We'll collect this number again after filtering has
+	// been applied in order to show the results of this filter.
+	nonExcludedStart := len(*tas) - tas.NumExcluded()
+
+	defer func(start *int) {
+		logger.Printf(
+			"It took %v to execute filterByStatus func (for %d non-excluded TriggeredAlarms, yielding %d non-excluded TriggeredAlarms)\n",
+			time.Since(funcTimeStart),
+			*start,
+			len(*tas)-tas.NumExcluded(),
+		)
+	}(&nonExcludedStart)
+
+	switch {
+	// if the collection of TriggeredAlarms is empty, skip filtering attempts.
+	case len(*tas) == 0:
+		logger.Println("Triggered Alarms list is empty, aborting")
+		return
+
+	// if we're not limiting TriggeredAlarms by entity type, skip filtering
+	// attempts.
+	case len(include) == 0 && len(exclude) == 0:
+		logger.Println("Triggered Alarms status inclusion and exclusion lists are empty, aborting")
+		return
+	}
+
+	switch {
+	case len(include) > 0:
+		logger.Printf(
+			"Include list provided; explicitly marking TriggeredAlarms for inclusion which match any of %d specified status keywords",
+			len(include),
+		)
+
+	case len(exclude) > 0:
+		logger.Printf(
+			"Exclude list provided; explicitly marking TriggeredAlarms for exclusion which match any of %d specified status keywords",
+			len(exclude),
+		)
+	}
+
+	for i := range *tas {
+
+		switch {
+
+		case len(include) > 0:
+
+			for _, keyword := range include {
+
+				logger.Printf(
+					"(incl) OverallStatus: %q, Keyword: %q",
+					string((*tas)[i].OverallStatus),
+					keyword,
+				)
+
+				switch {
+
+				case strings.EqualFold(string((*tas)[i].OverallStatus), keyword):
+
+					logger.Printf("SUCCESSFUL MATCH on keyword: %s\n", keyword)
+
+					// Don't explicitly *include* the TriggeredAlarm if the
+					// TriggeredAlarm has already been explicitly *excluded*.
+					if !(*tas)[i].ExplicitlyExcluded {
+						(*tas)[i].Exclude = false
+						(*tas)[i].ExplicitlyIncluded = true
+						(*tas)[i].logIncluded(true)
+					}
+
+				// If not explicitly included by another filter in the
+				// pipeline, implicitly mark as excluded.
+				default:
+
+					logger.Printf("FAILED MATCH on keyword: %s", keyword)
+
+					if !(*tas)[i].ExplicitlyIncluded {
+						(*tas)[i].Exclude = true
+						(*tas)[i].logExcluded(false)
+					}
+				}
+
+			}
+
+		case len(exclude) > 0:
+
+			for _, keyword := range exclude {
+
+				logger.Printf(
+					"(excl) OverallStatus: %q, Keyword: %q",
+					string((*tas)[i].OverallStatus),
+					keyword,
+				)
+
+				// explicitly excluded
+				//
+				// no implicit inclusions are applied for non-matching alarm
+				// types as that could unintentionally flip the results from
+				// earlier filtering stages.
+				if strings.EqualFold(string((*tas)[i].OverallStatus), keyword) {
+					(*tas)[i].Exclude = true
+					(*tas)[i].ExplicitlyExcluded = true
+					// (*tas)[i].ExplicitlyIncluded = false
 					(*tas)[i].logExcluded(true)
 				}
 
@@ -1257,6 +1469,22 @@ func AlarmsReport(
 		"* Specified Triggered Alarm descriptions to explicitly exclude (%d): [%v]%s",
 		len(triggeredAlarmFilters.ExcludedAlarmDescriptions),
 		strings.Join(triggeredAlarmFilters.ExcludedAlarmDescriptions, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Triggered Alarm statuses to explicitly include (%d): [%v]%s",
+		len(triggeredAlarmFilters.IncludedAlarmStatuses),
+		strings.Join(triggeredAlarmFilters.IncludedAlarmStatuses, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Triggered Alarm statuses to explicitly exclude (%d): [%v]%s",
+		len(triggeredAlarmFilters.ExcludedAlarmStatuses),
+		strings.Join(triggeredAlarmFilters.ExcludedAlarmStatuses, ", "),
 		nagios.CheckOutputEOL,
 	)
 

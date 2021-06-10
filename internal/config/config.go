@@ -234,6 +234,31 @@ type Config struct {
 	// over explicit inclusions.
 	ExcludedAlarmDescriptions multiValueStringFlag
 
+	// includedAlarmStatuses is a list of user-specified status keywords for
+	// Triggered Alarms that should be explicitly included. This list will be
+	// validated and then converted (where needed) into ManagedEntityStatus
+	// keywords. See the exported field of the same name for more information.
+	includedAlarmStatuses multiValueStringFlag
+
+	// excludedAlarmStatuses is a list of user-specified status keywords for
+	// Triggered Alarms that should be explicitly excluded. This list will be
+	// validated and then converted (where needed) into ManagedEntityStatus
+	// keywords. See the exported field of the same name for more information.
+	excludedAlarmStatuses multiValueStringFlag
+
+	// IncludedAlarmNames is a list of statuses for Triggered Alarms that will
+	// be explicitly included for evaluation. Unless included by later
+	// filtering logic, unmatched Triggered Alarms will be excluded from final
+	// evaluation. Explicitly included Triggered Alarms are still subject to
+	// permanent exclusion if a an explicit exclusion match is made.
+	IncludedAlarmStatuses multiValueStringFlag
+
+	// ExcludedAlarmStatuses is a list of statuses for Triggered Alarms that
+	// will be explicitly excluded from further evaluation by other stages in
+	// the filtering pipeline. Explicit exclusions have precedence over
+	// explicit inclusions.
+	ExcludedAlarmStatuses multiValueStringFlag
+
 	// Log is an embedded zerolog Logger initialized via config.New().
 	Log zerolog.Logger
 
@@ -428,6 +453,15 @@ func New(pluginType PluginType) (*Config, error) {
 	if err := config.setupLogging(pluginType); err != nil {
 		return nil, fmt.Errorf(
 			"failed to set logging configuration: %w",
+			err,
+		)
+	}
+
+	// initialize exported TriggeredAlarm status inclusion and exclusion lists
+	// based on user-provided keywords after validation is complete
+	if err := config.setAlarmStatuses(); err != nil {
+		return nil, fmt.Errorf(
+			"failed to evaluate provided triggered alarm status keywords: %w",
 			err,
 		)
 	}

@@ -193,6 +193,8 @@ func main() {
 		ExcludedAlarmNames:         cfg.ExcludedAlarmNames,
 		IncludedAlarmDescriptions:  cfg.IncludedAlarmDescriptions,
 		ExcludedAlarmDescriptions:  cfg.ExcludedAlarmDescriptions,
+		IncludedAlarmStatuses:      cfg.IncludedAlarmStatuses,
+		ExcludedAlarmStatuses:      cfg.ExcludedAlarmStatuses,
 		EvaluateAcknowledgedAlarms: cfg.EvaluateAcknowledgedAlarms,
 	}
 

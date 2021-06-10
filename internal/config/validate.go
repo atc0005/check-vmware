@@ -450,6 +450,57 @@ func (c Config) validate(pluginType PluginType) error {
 				"exclude-desc",
 			)
 		}
+
+		if len(c.IncludedAlarmStatuses) > 0 || len(c.ExcludedAlarmStatuses) > 0 {
+
+			// only one of these options may be used
+			if len(c.IncludedAlarmStatuses) > 0 && len(c.ExcludedAlarmStatuses) > 0 {
+				return fmt.Errorf(
+					"only one of %q or %q flags may be specified",
+					"include-status",
+					"exclude-status",
+				)
+			}
+
+			alarmStatuses := getTriggeredAlarmStatuses()
+
+			// If there are explicit inclusions, validate keyword and then
+			// reject "green" or "ok" status for Triggered Alarms since alarms
+			// (afaik) don't trigger for that state.
+			if len(c.includedAlarmStatuses) > 0 {
+				for _, keyword := range c.includedAlarmStatuses {
+					requestedkeyword := strings.ToLower(keyword)
+					_, ok := alarmStatuses[requestedkeyword]
+
+					if !ok || requestedkeyword == AlarmStatusOk ||
+						requestedkeyword == AlarmStatusGreen {
+						return fmt.Errorf(
+							"invalid triggered alarm status for inclusion: %q",
+							keyword,
+						)
+					}
+				}
+			}
+
+			// If there are explicit exclusions, validate keyword and then
+			// reject "green" or "ok" status for Triggered Alarms since alarms
+			// (afaik) don't trigger for that state.
+			if len(c.excludedAlarmStatuses) > 0 {
+				for _, keyword := range c.excludedAlarmStatuses {
+					requestedkeyword := strings.ToLower(keyword)
+					_, ok := alarmStatuses[requestedkeyword]
+
+					if !ok || requestedkeyword == AlarmStatusOk ||
+						requestedkeyword == AlarmStatusGreen {
+						return fmt.Errorf(
+							"invalid triggered alarm status for exclusion: %q",
+							keyword,
+						)
+					}
+				}
+			}
+
+		}
 	}
 
 	// shared validation checks

@@ -69,6 +69,8 @@ const (
 	excludedAlarmNamesFlagHelp                      string = "If specified, triggered alarms will only be evaluated if the alarm name (e.g., \"Datastore usage on disk\") DOES NOT case-insensitively match one of the provided substring values (e.g., \"datastore\" or \"datastore usage\") and is not explicitly excluded by another filter in the pipeline; while multiple explicit inclusions are allowed, explicit exclusions have precedence over explicit inclusions and will exclude the triggered alarm from further evaluation."
 	includedAlarmDescriptionsFlagHelp               string = "If specified, triggered alarms will only be evaluated if the alarm description (e.g., \"Default alarm to monitor datastore disk usage\") case-insensitively matches one of the provided substring values (e.g., \"datastore disk\" or \"monitor datastore\") and is not explicitly excluded by another filter in the pipeline; while multiple explicit inclusions are allowed, explicit exclusions have precedence over explicit inclusions and will exclude the triggered alarm from further evaluation."
 	excludedAlarmDescriptionsFlagHelp               string = "If specified, triggered alarms will only be evaluated if the alarm description (e.g., \"Default alarm to monitor datastore disk usage\") DOES NOT case-insensitively match one of the provided substring values (e.g., \"datastore disk\" or \"monitor datastore\") and is not explicitly excluded by another filter in the pipeline; while multiple explicit inclusions are allowed, explicit exclusions have precedence over explicit inclusions and will exclude the triggered alarm from further evaluation."
+	includedAlarmStatusesFlagHelp                   string = "If specified, triggered alarms will only be evaluated if the alarm status (e.g., \"yellow\") case-insensitively matches one of the provided keywords (e.g., \"yellow\") and is not explicitly excluded by another filter in the pipeline; while multiple explicit inclusions are allowed, explicit exclusions have precedence over explicit inclusions and will exclude the triggered alarm from further evaluation."
+	excludedAlarmStatusesFlagHelp                   string = "If specified, triggered alarms will only be evaluated if the alarm status (e.g., \"yellow\") DOES NOT case-insensitively match one of the provided keywords (e.g., \"yellow\") and is not explicitly excluded by another filter in the pipeline; while multiple explicit inclusions are allowed, explicit exclusions have precedence over explicit inclusions and will exclude the triggered alarm from further evaluation."
 )
 
 // Default flag settings if not overridden by user input
@@ -178,3 +180,47 @@ const (
 // ThresholdNotUsed indicates that a plugin is not using a specific threshold.
 // This is visible in locations where Long Service Output text is displayed.
 const ThresholdNotUsed string = "Not used."
+
+const (
+
+	// LogLevelDisabled maps to zerolog.Disabled logging level
+	LogLevelDisabled string = "disabled"
+
+	// LogLevelPanic maps to zerolog.PanicLevel logging level
+	LogLevelPanic string = "panic"
+
+	// LogLevelFatal maps to zerolog.FatalLevel logging level
+	LogLevelFatal string = "fatal"
+
+	// LogLevelError maps to zerolog.ErrorLevel logging level
+	LogLevelError string = "error"
+
+	// LogLevelWarn maps to zerolog.WarnLevel logging level
+	LogLevelWarn string = "warn"
+
+	// LogLevelInfo maps to zerolog.InfoLevel logging level
+	LogLevelInfo string = "info"
+
+	// LogLevelDebug maps to zerolog.DebugLevel logging level
+	LogLevelDebug string = "debug"
+
+	// LogLevelTrace maps to zerolog.TraceLevel logging level
+	LogLevelTrace string = "trace"
+)
+
+// Valid Triggered Alarm status keywords. Provided by sysadmin, maps to
+// ManagedEntityStatus values.
+const (
+
+	// native vSphere keywords
+	AlarmStatusRed    string = "red"
+	AlarmStatusYellow string = "yellow"
+	AlarmStatusGreen  string = "green"
+	AlarmStatusGray   string = "gray"
+
+	// Nagios keywords, though these values are displayed within the web UI
+	AlarmStatusCritical string = "critical"
+	AlarmStatusWarning  string = "warning"
+	AlarmStatusOk       string = "ok"
+	AlarmStatusUnknown  string = "unknown"
+)

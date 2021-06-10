@@ -8,11 +8,14 @@
 package main
 
 import (
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/atc0005/check-vmware/internal/config"
 	"github.com/atc0005/check-vmware/internal/vsphere"
+	"github.com/google/go-cmp/cmp"
 	"github.com/vmware/govmomi/vim25/types"
 )
 
@@ -127,12 +130,34 @@ func TestFilters(t *testing.T) {
 
 	// setup table tests
 	tests := []struct {
-		testName                                  string
-		cfg                                       config.Config
-		pretendNoAlarms                           bool
-		wantedNumTotalTriggeredAlarms             int
-		wantedNumNonExcludedAlarmsBeforeFiltering int
-		wantedNumNonExcludedAlarmsAfterFiltering  int
+
+		// wantedNonExcludedAlarmKeysAfterFiltering is a collection of
+		// triggered alarm keys (unique to a triggered alarm) which were *not*
+		// filtered out.
+		wantedNonExcludedAlarmKeysAfterFiltering []string
+
+		// testName is the human readable name of the test case
+		testName string
+
+		// cfg is a copy of a configuration that models flag values provided
+		// by a sysadmin. Highly variable.
+		cfg config.Config
+
+		// wantedNumTotalTriggeredAlarms is the expected number of total
+		// triggered alarms. Usually the same number as the number returned by
+		// `getTestTriggeredAlarms()`, unless the test case opts to "pretend"
+		// that there are no triggered alarms available.
+		wantedNumTotalTriggeredAlarms int
+
+		// The desired number of excluded triggered alarms before filtering
+		// takes place. Having *any* results for this value would be highly
+		// unusual since triggered alarms are not filtered/excluded by
+		// default.
+		wantedNumExcludedAlarmsBeforeFiltering int
+
+		// pretendNoAlarms indicates that this test case should act like there
+		// are no triggered alarms within the monitored vSphere environment.
+		pretendNoAlarms bool
 	}{
 		{
 			testName: "Include VirtualMachine, Exclude VM CPU usage",
@@ -145,12 +170,22 @@ func TestFilters(t *testing.T) {
 				DatacenterNames:            []string{"Example"},
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{"Virtual machine CPU usage"},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
 				EvaluateAcknowledgedAlarms: false,
 			},
-			wantedNumTotalTriggeredAlarms:             5,
-			wantedNumNonExcludedAlarmsBeforeFiltering: 0,
-			wantedNumNonExcludedAlarmsAfterFiltering:  1, // VirtuaslMachine memory usage
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// explicitly included VirtualMachine triggered alarm matches
+				// limited to memory usage due to CPU usage exclusion
+				"alarm-7.vm-197",
+			},
 		},
 		{
 			testName: "Include VirtualMachine, Exclude VM CPU and memory usage",
@@ -163,12 +198,21 @@ func TestFilters(t *testing.T) {
 				DatacenterNames:            []string{"Example"},
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{"Virtual machine CPU usage", "memory usage"},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
 				EvaluateAcknowledgedAlarms: false,
 			},
-			wantedNumTotalTriggeredAlarms:             5,
-			wantedNumNonExcludedAlarmsBeforeFiltering: 0,
-			wantedNumNonExcludedAlarmsAfterFiltering:  0,
+			wantedNumTotalTriggeredAlarms:            5,
+			wantedNumExcludedAlarmsBeforeFiltering:   0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// all explicitly included VirtualMachine matches excluded by
+				// name
+			},
 		},
 		{
 			testName: "Pretend no alarms",
@@ -181,13 +225,19 @@ func TestFilters(t *testing.T) {
 				DatacenterNames:            []string{"Example"},
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{"Virtual machine CPU usage"},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
 				EvaluateAcknowledgedAlarms: false,
 			},
-			pretendNoAlarms:                           true,
-			wantedNumTotalTriggeredAlarms:             0,
-			wantedNumNonExcludedAlarmsBeforeFiltering: 0,
-			wantedNumNonExcludedAlarmsAfterFiltering:  0,
+			pretendNoAlarms:                          true,
+			wantedNumTotalTriggeredAlarms:            0,
+			wantedNumExcludedAlarmsBeforeFiltering:   0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{},
 		},
 		{
 			testName: "Exclude datastore usage, tacos on sale",
@@ -200,12 +250,81 @@ func TestFilters(t *testing.T) {
 				DatacenterNames:            []string{"Example"},
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{"datastore usage on disk", "tacos on sale"},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
 				EvaluateAcknowledgedAlarms: false,
 			},
-			wantedNumTotalTriggeredAlarms:             5,
-			wantedNumNonExcludedAlarmsBeforeFiltering: 0,
-			wantedNumNonExcludedAlarmsAfterFiltering:  2, // implicit VirtualMachine matches
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// implicit VirtualMachine matches
+				"alarm-6.vm-197",
+				"alarm-7.vm-197",
+			},
+		},
+		{
+			testName: "Evaluate all",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: true,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				"alarm-8.datastore-50120",
+				"alarm-8.datastore-50119",
+				"alarm-8.datastore-141490",
+				"alarm-6.vm-197",
+				"alarm-7.vm-197",
+			},
+		},
+		{
+			testName: "Evaluate all unacknowledged",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: false,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				"alarm-8.datastore-50119",
+				"alarm-8.datastore-141490",
+				"alarm-6.vm-197",
+				"alarm-7.vm-197",
+			},
 		},
 		{
 			testName: "Include Tacos on sale",
@@ -218,13 +337,20 @@ func TestFilters(t *testing.T) {
 				DatacenterNames:            []string{"Example"},
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
-				IncludedAlarmDescriptions:  []string{"tacos on sale"},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{"tacos on sale"},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
 				EvaluateAcknowledgedAlarms: false,
 			},
-			wantedNumTotalTriggeredAlarms:             5,
-			wantedNumNonExcludedAlarmsBeforeFiltering: 0,
-			wantedNumNonExcludedAlarmsAfterFiltering:  0,
+			wantedNumTotalTriggeredAlarms:            5,
+			wantedNumExcludedAlarmsBeforeFiltering:   0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// there are no tacos
+			},
 		},
 		{
 			testName: "Include Tacos on sale, evaluate acknowledged alarms",
@@ -237,13 +363,20 @@ func TestFilters(t *testing.T) {
 				DatacenterNames:            []string{"Example"},
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
-				IncludedAlarmDescriptions:  []string{"tacos on sale"},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{"tacos on sale"},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
 				EvaluateAcknowledgedAlarms: true,
 			},
-			wantedNumTotalTriggeredAlarms:             5,
-			wantedNumNonExcludedAlarmsBeforeFiltering: 0,
-			wantedNumNonExcludedAlarmsAfterFiltering:  0,
+			wantedNumTotalTriggeredAlarms:            5,
+			wantedNumExcludedAlarmsBeforeFiltering:   0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// still no tacos
+			},
 		},
 		{
 			testName: "Include datastore usage",
@@ -256,13 +389,23 @@ func TestFilters(t *testing.T) {
 				DatacenterNames:            []string{"Example"},
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
+				ExcludedAlarmEntityTypes:   []string{},
 				IncludedAlarmNames:         []string{"datastore usage on disk"},
 				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
 				EvaluateAcknowledgedAlarms: false,
 			},
-			wantedNumTotalTriggeredAlarms:             5,
-			wantedNumNonExcludedAlarmsBeforeFiltering: 0,
-			wantedNumNonExcludedAlarmsAfterFiltering:  2,
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// two of three datastore triggered alarms; already
+				// acknowledged alarm is ignored
+				"alarm-8.datastore-50119",
+				"alarm-8.datastore-141490",
+			},
 		},
 		{
 			testName: "Include datastore usage, eval previously acknowledged",
@@ -275,13 +418,92 @@ func TestFilters(t *testing.T) {
 				DatacenterNames:            []string{"Example"},
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
+				ExcludedAlarmEntityTypes:   []string{},
 				IncludedAlarmNames:         []string{"datastore usage on disk"},
 				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
 				EvaluateAcknowledgedAlarms: true,
 			},
-			wantedNumTotalTriggeredAlarms:             5,
-			wantedNumNonExcludedAlarmsBeforeFiltering: 0,
-			wantedNumNonExcludedAlarmsAfterFiltering:  3,
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// all three datastore triggered alarms, including previously
+				// acknowledged triggered alarm
+				"alarm-8.datastore-50120",
+				"alarm-8.datastore-50119",
+				"alarm-8.datastore-141490",
+			},
+		},
+		{
+			testName: "Include VirtualMachine type, eval previously acknowledged, exclude VM CPU usage, include red status",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{"Virtual machine CPU usage"},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{"red"},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: true,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// explicitly included "VirtualMachine" entity type
+				// explicitly excluded triggered alarm substring of "CPU usage"
+				// explicitly included status of "red"
+				//
+				// pulls in all VirtualMachine triggered alarms
+				// pulls in all triggered alarms with "red" status
+				// excludes all triggered alarms with name substring of "Virtual machine CPU usage"
+				"alarm-7.vm-197",
+				"alarm-8.datastore-141490",
+			},
+		},
+		{
+			testName: "Include VirtualMachine type, exclude VM CPU usage, include yellow status",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{"Virtual machine CPU usage"},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{"yellow"},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: false,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// explicitly included "VirtualMachine" entity type
+				// explicitly excluded triggered alarm substring of "CPU usage"
+				// explicitly included status of "yellow"
+				//
+				// pulls in all VirtualMachine triggered alarms
+				// pulls in all triggered alarms with "yellow" status
+				// excludes all triggered alarms with name substring of "Virtual machine CPU usage"
+				"alarm-7.vm-197",
+				"alarm-8.datastore-50119",
+			},
 		},
 	}
 
@@ -312,16 +534,16 @@ func TestFilters(t *testing.T) {
 
 			numNonExcludedAlarmsBeforeFiltering := triggeredAlarms.NumExcluded()
 			switch {
-			case numNonExcludedAlarmsBeforeFiltering != tt.wantedNumNonExcludedAlarmsBeforeFiltering:
+			case numNonExcludedAlarmsBeforeFiltering != tt.wantedNumExcludedAlarmsBeforeFiltering:
 				t.Errorf(
 					"want %d triggered alarms before filtering; got %d",
-					tt.wantedNumNonExcludedAlarmsBeforeFiltering,
+					tt.wantedNumExcludedAlarmsBeforeFiltering,
 					numNonExcludedAlarmsBeforeFiltering,
 				)
 			default:
 				t.Logf(
 					"Got expected number (%d) of non-excluded alarms before filtering",
-					tt.wantedNumNonExcludedAlarmsBeforeFiltering,
+					tt.wantedNumExcludedAlarmsBeforeFiltering,
 				)
 			}
 
@@ -336,31 +558,96 @@ func TestFilters(t *testing.T) {
 					ExcludedAlarmNames:         tt.cfg.ExcludedAlarmNames,
 					IncludedAlarmDescriptions:  tt.cfg.IncludedAlarmDescriptions,
 					ExcludedAlarmDescriptions:  tt.cfg.ExcludedAlarmDescriptions,
+					IncludedAlarmStatuses:      tt.cfg.IncludedAlarmStatuses,
+					ExcludedAlarmStatuses:      tt.cfg.ExcludedAlarmStatuses,
 					EvaluateAcknowledgedAlarms: tt.cfg.EvaluateAcknowledgedAlarms,
 				}
 
 				triggeredAlarms.Filter(triggeredAlarmFilters)
 
+				//
+				// Post-filtering
+				//
+
+				// Sort list of wanted/expected triggered alarm keys in the
+				// same manner as TriggeredAlarms.Keys() method to aid in
+				// comparing this collection against the collection that we
+				// were left with after filtering.
+				sort.Slice(tt.wantedNonExcludedAlarmKeysAfterFiltering, func(i, j int) bool {
+					return strings.ToLower(tt.wantedNonExcludedAlarmKeysAfterFiltering[i]) <
+						strings.ToLower(tt.wantedNonExcludedAlarmKeysAfterFiltering[j])
+				})
+
 				numTriggeredAlarmsToIgnore := triggeredAlarms.NumExcluded()
 				numTriggeredAlarmsToReport := len(triggeredAlarms) - numTriggeredAlarmsToIgnore
 
-				t.Logf("%d Triggered Alarms to ignore", numTriggeredAlarmsToIgnore)
-				t.Logf("%d Triggered Alarms to report", numTriggeredAlarmsToReport)
+				// gather all original triggered alarm keys
+				// allTriggeredAlarmKeys := triggeredAlarms.Keys(true)
 
-				// Post-filtering checks
-				numNonExcludedAlarmsAfterFiltering := len(triggeredAlarms) - triggeredAlarms.NumExcluded()
+				// gather all non-filtered triggered alarm keys honoring the
+				// test-specific choice of whether previously acknowledged
+				// alarms should be evaluated.
+				remainingTriggeredAlarmKeys := triggeredAlarms.Keys(tt.cfg.EvaluateAcknowledgedAlarms, false)
+
+				t.Logf(
+					"%d Triggered Alarms ignored: %v",
+					numTriggeredAlarmsToIgnore,
+					triggeredAlarms.KeysExcluded(),
+				)
+				t.Logf(
+					"%d Triggered Alarms to report: %v",
+					numTriggeredAlarmsToReport,
+					remainingTriggeredAlarmKeys,
+				)
+
 				switch {
-				case numNonExcludedAlarmsAfterFiltering != tt.wantedNumNonExcludedAlarmsAfterFiltering:
+				case !cmp.Equal(tt.wantedNonExcludedAlarmKeysAfterFiltering, remainingTriggeredAlarmKeys):
 					t.Errorf(
 						"want %d triggered alarms after filtering; got %d",
-						tt.wantedNumNonExcludedAlarmsAfterFiltering,
-						numNonExcludedAlarmsAfterFiltering,
+						len(tt.wantedNonExcludedAlarmKeysAfterFiltering),
+						len(remainingTriggeredAlarmKeys),
 					)
+
+					if d := cmp.Diff(tt.wantedNonExcludedAlarmKeysAfterFiltering, remainingTriggeredAlarmKeys); d != "" {
+						t.Logf("(-got, +want)\n:%s", d)
+					}
+
+					var ctr int
+					for _, ta := range triggeredAlarms {
+						if !ta.Excluded() {
+							ctr++
+							// t.Logf("(%.2d) %+v\n", ctr, ta)
+							t.Logf(
+								"Alarm (%s) for %q of type %q with name %q not excluded",
+								ta.OverallStatus,
+								ta.Entity.Name,
+								ta.Entity.MOID.Type,
+								ta.Name,
+							)
+						}
+					}
 				default:
 					t.Logf(
-						"Got expected number (%d) of non-excluded alarms after filtering",
-						tt.wantedNumNonExcludedAlarmsAfterFiltering,
+						"Got expected (%d) non-excluded alarms after filtering: %v",
+						len(tt.wantedNonExcludedAlarmKeysAfterFiltering),
+						tt.wantedNonExcludedAlarmKeysAfterFiltering,
 					)
+
+					var ctr int
+					for _, ta := range triggeredAlarms {
+						if !ta.Excluded() {
+							ctr++
+							// t.Logf("(%.2d) %+v\n", ctr, ta)
+							t.Logf(
+								"Alarm (%s) for %q of type %q with name %q not excluded",
+								ta.OverallStatus,
+								ta.Entity.Name,
+								ta.Entity.MOID.Type,
+								ta.Name,
+							)
+						}
+					}
+
 				}
 
 				switch {
