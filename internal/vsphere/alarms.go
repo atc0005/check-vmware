@@ -815,7 +815,7 @@ func (tas *TriggeredAlarms) filterByEntityType(include []string, exclude []strin
 			default:
 				if !(*tas)[i].ExplicitlyIncluded {
 					(*tas)[i].Exclude = true
-					(*tas)[i].logExcluded(true)
+					(*tas)[i].logExcluded(false)
 				}
 
 			}
