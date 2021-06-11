@@ -171,6 +171,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{"Virtual machine CPU usage"},
 				IncludedAlarmDescriptions:  []string{},
@@ -199,6 +201,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{"Virtual machine CPU usage", "memory usage"},
 				IncludedAlarmDescriptions:  []string{},
@@ -226,6 +230,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{"Virtual machine CPU usage"},
 				IncludedAlarmDescriptions:  []string{},
@@ -251,6 +257,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{"datastore usage on disk", "tacos on sale"},
 				IncludedAlarmDescriptions:  []string{},
@@ -279,6 +287,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{},
 				IncludedAlarmDescriptions:  []string{},
@@ -309,6 +319,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{},
 				IncludedAlarmDescriptions:  []string{},
@@ -338,6 +350,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{},
 				IncludedAlarmDescriptions:  []string{"tacos on sale"},
@@ -364,6 +378,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{},
 				IncludedAlarmDescriptions:  []string{"tacos on sale"},
@@ -390,6 +406,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{"datastore usage on disk"},
 				ExcludedAlarmNames:         []string{},
 				IncludedAlarmDescriptions:  []string{},
@@ -419,6 +437,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{"datastore usage on disk"},
 				ExcludedAlarmNames:         []string{},
 				IncludedAlarmDescriptions:  []string{},
@@ -449,6 +469,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{"Virtual machine CPU usage"},
 				IncludedAlarmDescriptions:  []string{},
@@ -483,6 +505,8 @@ func TestFilters(t *testing.T) {
 				TrustCert:                  true,
 				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
 				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{},
 				IncludedAlarmNames:         []string{},
 				ExcludedAlarmNames:         []string{"Virtual machine CPU usage"},
 				IncludedAlarmDescriptions:  []string{},
@@ -502,6 +526,237 @@ func TestFilters(t *testing.T) {
 				// pulls in all triggered alarms with "yellow" status
 				// excludes all triggered alarms with name substring of "Virtual machine CPU usage"
 				"alarm-7.vm-197",
+				"alarm-8.datastore-50119",
+			},
+		},
+		{
+			testName: "Include VirtualMachine type, include VM name",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{"node1.example.com"},
+				ExcludedAlarmEntityNames:   []string{},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: false,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// explicitly included "VirtualMachine" entity type
+				// explicitly included entity name of "node1.example.com"
+				//
+				// pulls in all VirtualMachine triggered alarms
+				// pulls in all triggered alarms with entity name of "node1.example.com"
+				"alarm-6.vm-197",
+				"alarm-7.vm-197",
+			},
+		},
+		{
+			testName: "Include VM name substring",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{"node1"},
+				ExcludedAlarmEntityNames:   []string{},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: false,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// explicitly included entity name of "node1.example.com"
+				//
+				// pulls in all triggered alarms with entity name of "node1.example.com"
+				"alarm-6.vm-197",
+				"alarm-7.vm-197",
+			},
+		},
+		{
+			testName: "Include datastore name",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{"HUSVM-DC1-DigColl-vol8"},
+				ExcludedAlarmEntityNames:   []string{},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: false,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// explicitly included entity name of "HUSVM-DC1-DigColl-vol8"
+				//
+				// pulls in all triggered alarms with entity name of "HUSVM-DC1-DigColl-vol8"
+				"alarm-8.datastore-141490",
+			},
+		},
+		{
+			testName: "Include datastore name HUSVM substring",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{"HUSVM"},
+				ExcludedAlarmEntityNames:   []string{},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: false,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// explicitly included entity name containing substring "HUSVM"
+				//
+				// pulls in all triggered alarms with entity name substring of
+				// "HUSVM"
+				"alarm-8.datastore-141490",
+			},
+		},
+		{
+			testName: "Include datastore name RES substring",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{"RES"},
+				ExcludedAlarmEntityNames:   []string{},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: false,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// explicitly included entity name containing substring "RES"
+				// implicitly excluded acknowledged alarms (because we didn't
+				// specify differently)
+				//
+				// pulls in all triggered alarms with entity name substring of
+				// "RES" which were not previously acknowledged
+				"alarm-8.datastore-50119",
+			},
+		},
+		{
+			testName: "Include datastore name RES substring, eval acknowledged",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{"RES"},
+				ExcludedAlarmEntityNames:   []string{},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: true,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// explicitly included entity name containing substring "RES"
+				//
+				// pulls in all triggered alarms with entity name substring of
+				// "RES"
+				"alarm-8.datastore-50120",
+				"alarm-8.datastore-50119",
+			},
+		},
+		{
+			testName: "Include VirtualMachine type, exclude VM CPU usage, include yellow status, exclude node1 substring",
+			cfg: config.Config{
+				Server:                     "vc1.example.com",
+				Username:                   "vc1-read-only-service-account",
+				Password:                   "placeholder",
+				Domain:                     "example",
+				LoggingLevel:               "info",
+				DatacenterNames:            []string{"Example"},
+				TrustCert:                  true,
+				IncludedAlarmEntityTypes:   []string{"VirtualMachine"},
+				ExcludedAlarmEntityTypes:   []string{},
+				IncludedAlarmEntityNames:   []string{},
+				ExcludedAlarmEntityNames:   []string{"node1"},
+				IncludedAlarmNames:         []string{},
+				ExcludedAlarmNames:         []string{"Virtual machine CPU usage"},
+				IncludedAlarmDescriptions:  []string{},
+				ExcludedAlarmDescriptions:  []string{},
+				IncludedAlarmStatuses:      []string{"yellow"},
+				ExcludedAlarmStatuses:      []string{},
+				EvaluateAcknowledgedAlarms: false,
+			},
+			wantedNumTotalTriggeredAlarms:          5,
+			wantedNumExcludedAlarmsBeforeFiltering: 0,
+			wantedNonExcludedAlarmKeysAfterFiltering: []string{
+				// explicitly included "VirtualMachine" entity type
+				// explicitly excluded triggered alarm substring of "CPU usage"
+				// explicitly included status of "yellow"
+				// explicitly excluded entity name substring of "node1"
+				//
+				// pulls in all triggered alarms with "yellow" status
+				// excludes all triggered alarm entity name of "node1"
 				"alarm-8.datastore-50119",
 			},
 		},
@@ -554,6 +809,8 @@ func TestFilters(t *testing.T) {
 				triggeredAlarmFilters := vsphere.TriggeredAlarmFilters{
 					IncludedAlarmEntityTypes:   tt.cfg.IncludedAlarmEntityTypes,
 					ExcludedAlarmEntityTypes:   tt.cfg.ExcludedAlarmEntityTypes,
+					IncludedAlarmEntityNames:   tt.cfg.IncludedAlarmEntityNames,
+					ExcludedAlarmEntityNames:   tt.cfg.ExcludedAlarmEntityNames,
 					IncludedAlarmNames:         tt.cfg.IncludedAlarmNames,
 					ExcludedAlarmNames:         tt.cfg.ExcludedAlarmNames,
 					IncludedAlarmDescriptions:  tt.cfg.IncludedAlarmDescriptions,
@@ -618,7 +875,7 @@ func TestFilters(t *testing.T) {
 							ctr++
 							// t.Logf("(%.2d) %+v\n", ctr, ta)
 							t.Logf(
-								"Alarm (%s) for %q of type %q with name %q not excluded",
+								"Alarm (%s) for entity name %q of type %q with alarm name %q not excluded",
 								ta.OverallStatus,
 								ta.Entity.Name,
 								ta.Entity.MOID.Type,
@@ -639,7 +896,7 @@ func TestFilters(t *testing.T) {
 							ctr++
 							// t.Logf("(%.2d) %+v\n", ctr, ta)
 							t.Logf(
-								"Alarm (%s) for %q of type %q with name %q not excluded",
+								"Alarm (%s) for entity name %q of type %q with alarm name %q not excluded",
 								ta.OverallStatus,
 								ta.Entity.Name,
 								ta.Entity.MOID.Type,

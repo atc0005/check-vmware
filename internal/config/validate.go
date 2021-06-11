@@ -428,8 +428,17 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.IncludedAlarmEntityTypes) > 0 && len(c.ExcludedAlarmEntityTypes) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-type",
-				"exclude-type",
+				"include-entity-type",
+				"exclude-entity-type",
+			)
+		}
+
+		// only one of these options may be used
+		if len(c.IncludedAlarmEntityNames) > 0 && len(c.ExcludedAlarmEntityNames) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-entity-name",
+				"exclude-entity-name",
 			)
 		}
 

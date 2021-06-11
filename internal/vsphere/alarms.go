@@ -117,6 +117,8 @@ type TriggeredAlarms []TriggeredAlarm
 type TriggeredAlarmFilters struct {
 	IncludedAlarmEntityTypes   []string
 	ExcludedAlarmEntityTypes   []string
+	IncludedAlarmEntityNames   []string
+	ExcludedAlarmEntityNames   []string
 	IncludedAlarmNames         []string
 	ExcludedAlarmNames         []string
 	IncludedAlarmDescriptions  []string
@@ -529,7 +531,7 @@ func logTriggeredAlarmMarked(triggeredAlarm TriggeredAlarm, keep bool, explicit 
 	switch {
 	case keep:
 		logger.Printf(
-			"Alarm (%s) for %q of type %q with name %q %s marked for inclusion",
+			"Alarm (%s) for entity name %q of type %q with alarm name %q %s marked for inclusion",
 			triggeredAlarm.OverallStatus,
 			triggeredAlarm.Entity.Name,
 			triggeredAlarm.Entity.MOID.Type,
@@ -539,7 +541,7 @@ func logTriggeredAlarmMarked(triggeredAlarm TriggeredAlarm, keep bool, explicit 
 
 	default:
 		logger.Printf(
-			"Alarm (%s) for %q of type %q with name %q %s marked for exclusion",
+			"Alarm (%s) for entity name %q of type %q with alarm name %q %s marked for exclusion",
 			triggeredAlarm.OverallStatus,
 			triggeredAlarm.Entity.Name,
 			triggeredAlarm.Entity.MOID.Type,
@@ -678,6 +680,16 @@ func EntityStatusToNagiosState(entityStatus types.ManagedEntityStatus) (string, 
 
 }
 
+// getSubstringFilterKeywords is a helper function that returns a map of all
+// valid keywords used by the TriggeredAlarms.filterByString method.
+// func getSubstringFilterKeywords() map[string]struct{} {
+// 	return map[string]struct{}{
+// 		AlarmDescription: struct{}{},
+// 		AlarmName:        struct{}{},
+// 		EntityName:       struct{}{},
+// 	}
+// }
+
 // Filter explicitly includes or excludes TriggeredAlarms based on specified
 // filter settings.
 func (tas *TriggeredAlarms) Filter(filters TriggeredAlarmFilters) {
@@ -689,13 +701,16 @@ func (tas *TriggeredAlarms) Filter(filters TriggeredAlarmFilters) {
 	tas.filterByEntityType(filters.IncludedAlarmEntityTypes, filters.ExcludedAlarmEntityTypes)
 
 	logger.Println("Filtering triggered alarms by name")
-	tas.filterBySubstring(false, filters.IncludedAlarmNames, filters.ExcludedAlarmNames)
+	tas.filterBySubstring(alarmName, filters.IncludedAlarmNames, filters.ExcludedAlarmNames)
 
 	logger.Println("Filtering triggered alarms by description")
-	tas.filterBySubstring(true, filters.IncludedAlarmDescriptions, filters.ExcludedAlarmDescriptions)
+	tas.filterBySubstring(alarmDescription, filters.IncludedAlarmDescriptions, filters.ExcludedAlarmDescriptions)
 
 	logger.Println("Filtering triggered alarms by status")
 	tas.filterByStatus(filters.IncludedAlarmStatuses, filters.ExcludedAlarmStatuses)
+
+	logger.Println("Filtering triggered alarms by entity name")
+	tas.filterBySubstring(entityName, filters.IncludedAlarmEntityNames, filters.ExcludedAlarmEntityNames)
 
 }
 
@@ -767,11 +782,13 @@ func (tas *TriggeredAlarms) filterByEntityType(include []string, exclude []strin
 	switch {
 	// if the collection of TriggeredAlarms is empty, skip filtering attempts.
 	case len(*tas) == 0:
+		logger.Println("Triggered Alarms list is empty, aborting")
 		return
 
 	// if we're not limiting TriggeredAlarms by entity type, skip filtering
 	// attempts.
 	case len(include) == 0 && len(exclude) == 0:
+		logger.Println("Triggered Alarms status inclusion and exclusion lists are empty, aborting")
 		return
 	}
 
@@ -902,7 +919,7 @@ func (tas *TriggeredAlarms) FilterByIncludedNameSubstring(include []string) {
 		)
 	}()
 
-	tas.filterBySubstring(false, include, []string{})
+	tas.filterBySubstring(alarmName, include, []string{})
 
 }
 
@@ -923,7 +940,7 @@ func (tas *TriggeredAlarms) FilterByExcludedNameSubstring(exclude []string) {
 		)
 	}()
 
-	tas.filterBySubstring(false, []string{}, exclude)
+	tas.filterBySubstring(alarmName, []string{}, exclude)
 
 }
 
@@ -946,7 +963,7 @@ func (tas *TriggeredAlarms) FilterByIncludedDescriptionSubstring(include []strin
 		)
 	}()
 
-	tas.filterBySubstring(true, include, []string{})
+	tas.filterBySubstring(alarmDescription, include, []string{})
 
 }
 
@@ -967,19 +984,20 @@ func (tas *TriggeredAlarms) FilterByExcludedDescriptionSubstring(exclude []strin
 		)
 	}()
 
-	tas.filterBySubstring(true, []string{}, exclude)
+	tas.filterBySubstring(alarmDescription, []string{}, exclude)
 
 }
 
-// filterBySubstring accepts slices of substrings to use in comparisons
-// against TriggeredAlarm names or descriptions in order to explicitly mark
-// TriggeredAlarms for inclusion or exclusion in the final evaluation. A
-// boolean value indicates whether the comparison should be against the
-// defined Alarm's description or name field.
+// filterBySubstring accepts a field keyword and slices of substrings to use
+// in comparisons against TriggeredAlarm fields in order to explicitly mark
+// TriggeredAlarms for inclusion or exclusion in the final evaluation. The
+// provided field keyword indicates which field the comparison should be
+// against. If an invlaid field keyword is supplied the field comparison will
+// default to using the alarm name.
 //
 // Flag evaluation logic prevents sysadmins from providing both an inclusion
 // and exclusion list.
-func (tas *TriggeredAlarms) filterBySubstring(useDescription bool, include []string, exclude []string) {
+func (tas *TriggeredAlarms) filterBySubstring(fieldKeyword string, include []string, exclude []string) {
 
 	funcTimeStart := time.Now()
 
@@ -988,23 +1006,26 @@ func (tas *TriggeredAlarms) filterBySubstring(useDescription bool, include []str
 	// been applied in order to show the results of this filter.
 	nonExcludedStart := len(*tas) - tas.NumExcluded()
 
-	defer func(start *int) {
+	defer func(start *int, keyword string) {
 		logger.Printf(
-			"It took %v to execute filterBySubstring func (for %d non-excluded TriggeredAlarms, yielding %d non-excluded TriggeredAlarms)\n",
+			"It took %v to execute filterBySubstring func (for %d non-excluded TriggeredAlarms, using keyword %s, yielding %d non-excluded TriggeredAlarms)\n",
 			time.Since(funcTimeStart),
 			*start,
+			keyword,
 			len(*tas)-tas.NumExcluded(),
 		)
-	}(&nonExcludedStart)
+	}(&nonExcludedStart, fieldKeyword)
 
 	switch {
 	// if the collection of TriggeredAlarms is empty, skip filtering attempts.
 	case len(*tas) == 0:
+		logger.Println("Triggered Alarms list is empty, aborting")
 		return
 
 	// if we're not limiting TriggeredAlarms by entity type, skip filtering
 	// attempts.
 	case len(include) == 0 && len(exclude) == 0:
+		logger.Println("Triggered Alarms status inclusion and exclusion lists are empty, aborting")
 		return
 	}
 
@@ -1022,13 +1043,27 @@ func (tas *TriggeredAlarms) filterBySubstring(useDescription bool, include []str
 		)
 	}
 
+	// validKeywords := getSubstringFilterKeywords()
+	// if _, ok := validKeywords[fieldKeyword]; !ok {
+	// 	logger.Printf("")
+	// }
+
+	logger.Printf("substring field keyword %q specified", fieldKeyword)
 	for i := range *tas {
 
 		var substrField string
-		switch {
-		case useDescription:
+		switch fieldKeyword {
+		case alarmDescription:
 			substrField = (*tas)[i].Description
+		case alarmName:
+			substrField = (*tas)[i].Name
+		case entityName:
+			substrField = (*tas)[i].Entity.Name
 		default:
+			logger.Printf(
+				"substring field %q not recognized, defaulting to alarm name",
+				fieldKeyword,
+			)
 			substrField = (*tas)[i].Name
 		}
 
@@ -1437,6 +1472,22 @@ func AlarmsReport(
 		"* Specified Triggered Alarm entity types to explicitly exclude (%d): [%v]%s",
 		len(triggeredAlarmFilters.ExcludedAlarmEntityTypes),
 		strings.Join(triggeredAlarmFilters.ExcludedAlarmEntityTypes, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Triggered Alarm entity names to explicitly include (%d): [%v]%s",
+		len(triggeredAlarmFilters.IncludedAlarmEntityNames),
+		strings.Join(triggeredAlarmFilters.IncludedAlarmEntityNames, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Triggered Alarm entity names to explicitly exclude (%d): [%v]%s",
+		len(triggeredAlarmFilters.ExcludedAlarmEntityNames),
+		strings.Join(triggeredAlarmFilters.ExcludedAlarmEntityNames, ", "),
 		nagios.CheckOutputEOL,
 	)
 

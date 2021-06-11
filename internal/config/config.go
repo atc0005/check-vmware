@@ -207,6 +207,19 @@ type Config struct {
 	// inclusions.
 	ExcludedAlarmEntityTypes multiValueStringFlag
 
+	// IncludedAlarmEntityNames is a list of entity names for Alarms that will
+	// be explicitly included for evaluation. Unless included by later
+	// filtering logic, unmatched Triggered Alarms will be excluded from final
+	// evaluation. Explicitly included Triggered Alarms are still subject to
+	// permanent exclusion if a an explicit exclusion match is made.
+	IncludedAlarmEntityNames multiValueStringFlag
+
+	// ExcludedAlarmEntityTypes is a list of entity names for Alarms that will
+	// be explicitly excluded from further evaluation by other stages in the
+	// filtering pipeline. Explicit exclusions have precedence over explicit
+	// inclusions.
+	ExcludedAlarmEntityNames multiValueStringFlag
+
 	// IncludedAlarmNames is a list of names for defined Alarms that will be
 	// explicitly included for evaluation. Unless included by later filtering
 	// logic, unmatched Triggered Alarms will be excluded from final

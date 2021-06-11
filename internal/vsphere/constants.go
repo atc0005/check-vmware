@@ -52,3 +52,11 @@ const (
 	snapshotThresholdTypeCountSuffix string = "snapshots"
 	snapshotThresholdTypeSizeSuffix  string = "GB"
 )
+
+// Substring filtering keywords supported by
+// TriggeredAlarms.filterBySubstring() method
+const (
+	alarmDescription string = "AlarmDescription"
+	alarmName        string = "AlarmName"
+	entityName       string = "EntityName"
+)
