@@ -608,7 +608,7 @@ func TestFilters(t *testing.T) {
 						len(remainingTriggeredAlarmKeys),
 					)
 
-					if d := cmp.Diff(tt.wantedNonExcludedAlarmKeysAfterFiltering, remainingTriggeredAlarmKeys); d != "" {
+					if d := cmp.Diff(remainingTriggeredAlarmKeys, tt.wantedNonExcludedAlarmKeysAfterFiltering); d != "" {
 						t.Logf("(-got, +want)\n:%s", d)
 					}
 
