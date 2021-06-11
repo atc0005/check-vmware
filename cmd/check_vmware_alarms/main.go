@@ -189,6 +189,8 @@ func main() {
 	triggeredAlarmFilters := vsphere.TriggeredAlarmFilters{
 		IncludedAlarmEntityTypes:   cfg.IncludedAlarmEntityTypes,
 		ExcludedAlarmEntityTypes:   cfg.ExcludedAlarmEntityTypes,
+		IncludedAlarmEntityNames:   cfg.IncludedAlarmEntityNames,
+		ExcludedAlarmEntityNames:   cfg.ExcludedAlarmEntityNames,
 		IncludedAlarmNames:         cfg.IncludedAlarmNames,
 		ExcludedAlarmNames:         cfg.ExcludedAlarmNames,
 		IncludedAlarmDescriptions:  cfg.IncludedAlarmDescriptions,
