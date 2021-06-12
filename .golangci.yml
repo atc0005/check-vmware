@@ -25,16 +25,30 @@ linters:
     - goimports
     - golint
     - gosec
+    - govet
+
+    # Deprecated linter, but still functional as of golangci-lint v1.39.0.
+    # See https://github.com/atc0005/go-ci/issues/302 for more information.
+    - maligned
+
     - misspell
     - prealloc
     - exportloopref
     - stylecheck
     - unconvert
 
-  disable:
-    - maligned
+#
+# Disable fieldalignment settings until the Go team offers more control over
+# the types of checks provided by the fieldalignment linter or golangci-lint
+# does so.
+#
+# See https://github.com/atc0005/go-ci/issues/302 for more information.
+#
 
-linters-settings:
-  govet:
-    enable:
-      - fieldalignment
+# disable:
+# - maligned
+
+# linters-settings:
+# govet:
+#   enable:
+#     - fieldalignment
