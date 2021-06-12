@@ -20,15 +20,15 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 	switch {
 	case pluginType.Tools:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
 	case pluginType.SnapshotsAge:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 
 		// NOTE: This plugin is hard-coded to evaluate powered off and powered
@@ -48,8 +48,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.SnapshotsCount:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 
 		// NOTE: This plugin is hard-coded to evaluate powered off and powered
@@ -69,8 +69,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.SnapshotsSize:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 
 		// NOTE: This plugin is hard-coded to evaluate powered off and powered
@@ -90,8 +90,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.VirtualMachinePowerCycleUptime:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 
 		flag.IntVar(&c.VMPowerCycleUptimeWarning, "uptime-warning", defaultVMPowerCycleUptimeWarning, vmPowerCycleUptimeWarningFlagHelp)
@@ -102,8 +102,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.DiskConsolidation:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 
 		// NOTE: This plugin is hard-coded to evaluate powered off and powered
@@ -119,8 +119,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.InteractiveQuestion:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 
 	case pluginType.Alarms:
@@ -142,6 +142,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 		flag.Var(&c.IncludedAlarmEntityNames, "include-entity-name", includedAlarmEntityNamesFlagHelp)
 		flag.Var(&c.ExcludedAlarmEntityNames, "exclude-entity-name", excludedAlarmEntityNamesFlagHelp)
+
+		flag.Var(&c.IncludedAlarmEntityResourcePools, "include-entity-rp", includedAlarmEntityResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedAlarmEntityResourcePools, "exclude-entity-rp", excludedAlarmEntityResourcePoolsFlagHelp)
 
 	case pluginType.DatastoresSize:
 
@@ -181,8 +184,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.ResourcePoolsMemory:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 
 		flag.IntVar(&c.ResourcePoolsMemoryUseWarning, "memory-use-warning", defaultMemoryUseWarning, resourcePoolsMemoryUseWarningFlagHelp)
 		flag.IntVar(&c.ResourcePoolsMemoryUseWarning, "mw", defaultMemoryUseWarning, resourcePoolsMemoryUseWarningFlagHelp+" (shorthand)")
@@ -195,8 +198,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.VirtualCPUsAllocation:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
@@ -211,8 +214,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.VirtualHardwareVersion:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
@@ -234,8 +237,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.Host2Datastores2VMs:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", includedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", excludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
