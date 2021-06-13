@@ -1224,17 +1224,17 @@ func (tas *TriggeredAlarms) filterByStatus(include []string, exclude []string) {
 
 			for _, keyword := range include {
 
-				logger.Printf(
-					"(incl) OverallStatus: %q, Keyword: %q",
-					string((*tas)[i].OverallStatus),
-					keyword,
-				)
+				// logger.Printf(
+				// 	"(incl) OverallStatus: %q, Keyword: %q",
+				// 	string((*tas)[i].OverallStatus),
+				// 	keyword,
+				// )
 
 				switch {
 
 				case strings.EqualFold(string((*tas)[i].OverallStatus), keyword):
 
-					logger.Printf("SUCCESSFUL MATCH on keyword: %s\n", keyword)
+					// logger.Printf("SUCCESSFUL MATCH on keyword: %s\n", keyword)
 
 					// Don't explicitly *include* the TriggeredAlarm if the
 					// TriggeredAlarm has already been explicitly *excluded*.
@@ -1248,7 +1248,7 @@ func (tas *TriggeredAlarms) filterByStatus(include []string, exclude []string) {
 				// pipeline, implicitly mark as excluded.
 				default:
 
-					logger.Printf("FAILED MATCH on keyword: %s", keyword)
+					// logger.Printf("FAILED MATCH on keyword: %s", keyword)
 
 					if !(*tas)[i].ExplicitlyIncluded {
 						(*tas)[i].Exclude = true
@@ -1262,11 +1262,11 @@ func (tas *TriggeredAlarms) filterByStatus(include []string, exclude []string) {
 
 			for _, keyword := range exclude {
 
-				logger.Printf(
-					"(excl) OverallStatus: %q, Keyword: %q",
-					string((*tas)[i].OverallStatus),
-					keyword,
-				)
+				// logger.Printf(
+				// 	"(excl) OverallStatus: %q, Keyword: %q",
+				// 	string((*tas)[i].OverallStatus),
+				// 	keyword,
+				// )
 
 				// explicitly excluded
 				//
