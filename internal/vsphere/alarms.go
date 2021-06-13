@@ -234,7 +234,7 @@ func (tas TriggeredAlarms) KeysExcluded() []string {
 func (tas TriggeredAlarms) Datacenters() []string {
 
 	dcsIdx := make(map[string]struct{})
-	dcs := make([]string, 0, len(dcsIdx))
+	dcs := make([]string, 0, len(tas))
 
 	for i := range tas {
 		dcsIdx[tas[i].Datacenter] = struct{}{}
@@ -243,6 +243,10 @@ func (tas TriggeredAlarms) Datacenters() []string {
 	for k := range dcsIdx {
 		dcs = append(dcs, k)
 	}
+
+	sort.Slice(dcs, func(i, j int) bool {
+		return strings.ToLower(dcs[i]) < strings.ToLower(dcs[j])
+	})
 
 	return dcs
 
