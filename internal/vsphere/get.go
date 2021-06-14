@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/view"
@@ -413,5 +414,97 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 	}
 
 	return nil
+
+}
+
+// getResourcePools retrieves Resource Pools for VirtualMachine or
+// ResourcePool types via the provided ManagedObjectReference (moRef) and
+// Datacenter name. If the moRef is for a VirtualMachine, one ResourcePool is
+// returned. If the moRef is for a ResourcePool then two are returned: the
+// matching ResourcePool and the parent ResourcePool. If the moRef is for
+// another ManagedEntity type an empty collection is returned. If specified, a
+// subset of all properties are returned for discovered ResourcePools.
+func getResourcePools(ctx context.Context, c *govmomi.Client, moRef types.ManagedObjectReference, propsSubset bool) ([]mo.ResourcePool, error) {
+
+	// Up to 2 can be returned, so set the initial size to match
+	resourcePools := make([]mo.ResourcePool, 0, 2)
+
+	switch {
+	case moRef.Type == MgObjRefTypeResourcePool:
+
+		// if the associated entity is a Resource Pool, then its name
+		// and the name of its parent (another Resource Pool) should
+		// be considered.
+
+		var rp mo.ResourcePool
+		var rpParent mo.ResourcePool
+		var rpProps []string
+
+		if propsSubset {
+			rpProps = getResourcePoolPropsSubset()
+		}
+
+		// Fetch Resource Pool directly associated with the Triggered
+		// Alarm entity
+		err := c.RetrieveOne(ctx, moRef, rpProps, &rp)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add *this* Resource Pool
+		resourcePools = append(resourcePools, rp)
+
+		// Fetch the parent Resource Pool for the Resource Pool
+		// associated with the Triggered Alarm.
+		err = c.RetrieveOne(ctx, rp.Self, rpProps, &rpParent)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add the parent Resource Pool
+		resourcePools = append(resourcePools, rpParent)
+
+		return resourcePools, nil
+
+	case moRef.Type == MgObjRefTypeVirtualMachine:
+		var vm mo.VirtualMachine
+		var rp mo.ResourcePool
+		var vmProps []string
+		var rpProps []string
+
+		if propsSubset {
+			vmProps = getVirtualMachinePropsSubset()
+			rpProps = getResourcePoolPropsSubset()
+		}
+
+		// Fetch VirtualMachine associated with Triggered Alarm
+		// entity.
+		err := c.RetrieveOne(ctx, moRef, vmProps, &vm)
+		if err != nil {
+			return nil, err
+		}
+
+		// guard against nil pointer dereferencing
+		if vm.ResourcePool == nil {
+			return nil, fmt.Errorf("resource pool MOID not set for %s", vm.Self)
+		}
+
+		// Fetch Resource Pool for VirtualMachine associated with
+		// Triggered Alarm entity.
+		err = c.RetrieveOne(ctx, *vm.ResourcePool, rpProps, &rp)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add the VirtualMachine's ResourcePool.
+		resourcePools = append(resourcePools, rp)
+
+		return resourcePools, nil
+
+	default:
+		// As far as I know, no other types can be "part" of a
+		// Resource Pool. Return an empty collection.
+		return []mo.ResourcePool{}, nil
+	}
 
 }

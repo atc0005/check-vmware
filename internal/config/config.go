@@ -198,7 +198,7 @@ type Config struct {
 	// be explicitly included for evaluation. Unless included by later
 	// filtering logic, unmatched Triggered Alarms will be excluded from final
 	// evaluation. Explicitly included Triggered Alarms are still subject to
-	// permanent exclusion if a an explicit exclusion match is made.
+	// permanent exclusion if an explicit exclusion match is made.
 	IncludedAlarmEntityTypes multiValueStringFlag
 
 	// ExcludedAlarmEntityTypes is a list of entity types for Alarms that will
@@ -211,7 +211,7 @@ type Config struct {
 	// be explicitly included for evaluation. Unless included by later
 	// filtering logic, unmatched Triggered Alarms will be excluded from final
 	// evaluation. Explicitly included Triggered Alarms are still subject to
-	// permanent exclusion if a an explicit exclusion match is made.
+	// permanent exclusion if an explicit exclusion match is made.
 	IncludedAlarmEntityNames multiValueStringFlag
 
 	// ExcludedAlarmEntityTypes is a list of entity names for Alarms that will
@@ -220,11 +220,31 @@ type Config struct {
 	// inclusions.
 	ExcludedAlarmEntityNames multiValueStringFlag
 
+	// IncludedAlarmEntityResourcePools is a list of resource pools that are
+	// compared against the name of a resource pool for an entity associated
+	// with one or more Triggered Alarms. Any Triggered Alarm with an
+	// associated entity that is part of one of these resource pools is
+	// explicitly included for evaluation.
+	//
+	// Unless included by later filtering logic, unmatched Triggered Alarms
+	// will be excluded from final evaluation. Explicitly included Triggered
+	// Alarms are still subject to permanent exclusion if an explicit
+	// exclusion match is made.
+	IncludedAlarmEntityResourcePools multiValueStringFlag
+
+	// ExcludedAlarmEntityTypes is a list of resource pools that are compared
+	// against the name of a resource pool for an entity associated with one
+	// or more Triggered Alarms. Any Triggered Alarm with an associated that
+	// is NOT part of one of these resource pools will be explicitly excluded
+	// from further evaluation by other stages in the filtering pipeline.
+	// Explicit exclusions have precedence over explicit inclusions.
+	ExcludedAlarmEntityResourcePools multiValueStringFlag
+
 	// IncludedAlarmNames is a list of names for defined Alarms that will be
 	// explicitly included for evaluation. Unless included by later filtering
 	// logic, unmatched Triggered Alarms will be excluded from final
 	// evaluation. Explicitly included Triggered Alarms are still subject to
-	// permanent exclusion if a an explicit exclusion match is made.
+	// permanent exclusion if an explicit exclusion match is made.
 	IncludedAlarmNames multiValueStringFlag
 
 	// ExcludedAlarmNames is a list of names for defined Alarms that will be
@@ -237,8 +257,7 @@ type Config struct {
 	// that will be explicitly included for evaluation. Unless included by
 	// later filtering logic, unmatched Triggered Alarms will be excluded from
 	// final evaluation. Explicitly included Triggered Alarms are still
-	// subject to permanent exclusion if a an explicit exclusion match is
-	// made.
+	// subject to permanent exclusion if an explicit exclusion match is made.
 	IncludedAlarmDescriptions multiValueStringFlag
 
 	// ExcludedAlarmDescriptions is a list of descriptions for defined Alarms
@@ -263,7 +282,7 @@ type Config struct {
 	// be explicitly included for evaluation. Unless included by later
 	// filtering logic, unmatched Triggered Alarms will be excluded from final
 	// evaluation. Explicitly included Triggered Alarms are still subject to
-	// permanent exclusion if a an explicit exclusion match is made.
+	// permanent exclusion if an explicit exclusion match is made.
 	IncludedAlarmStatuses multiValueStringFlag
 
 	// ExcludedAlarmStatuses is a list of statuses for Triggered Alarms that

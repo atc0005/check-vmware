@@ -121,11 +121,11 @@ func main() {
 	log.Debug().
 		Int("datacenters_specified", len(cfg.DatacenterNames)).
 		Msg("Validating datacenter names")
-	validateErr := vsphere.ValidateDCs(ctx, c.Client, cfg.DatacenterNames)
-	if validateErr != nil {
-		log.Error().Err(validateErr).Msg("error validating datacenter names")
+	validateDCsErr := vsphere.ValidateDCs(ctx, c.Client, cfg.DatacenterNames)
+	if validateDCsErr != nil {
+		log.Error().Err(validateDCsErr).Msg("error validating datacenter names")
 
-		nagiosExitState.LastError = validateErr
+		nagiosExitState.LastError = validateDCsErr
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error validating requested datacenter names",
 			nagios.StateCRITICALLabel,
@@ -138,9 +138,9 @@ func main() {
 	log.Debug().Msg("Retrieving Datacenters")
 	dcs, dcsFetchErr := vsphere.GetDatacenters(ctx, c.Client, cfg.DatacenterNames, true)
 	if dcsFetchErr != nil {
-		log.Error().Err(validateErr).Msg("error retrieving datacenters")
+		log.Error().Err(dcsFetchErr).Msg("error retrieving datacenters")
 
-		nagiosExitState.LastError = validateErr
+		nagiosExitState.LastError = dcsFetchErr
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving datacenters",
 			nagios.StateCRITICALLabel,
@@ -162,6 +162,30 @@ func main() {
 		Int("datacenters_found", len(dcs)).
 		Str("datacenters", strings.Join(dcsEvalNames, ", ")).
 		Msg("Datacenters found")
+
+	if len(cfg.ExcludedAlarmEntityResourcePools) > 0 || len(cfg.IncludedAlarmEntityResourcePools) > 0 {
+		// If include/exclude lists for Resource Pools (associated with Triggered
+		// Alarm entities) were provided, validate those.
+		log.Debug().Msg("Validating provided resource pool names")
+		validateRPsErr := vsphere.ValidateRPs(
+			ctx,
+			c.Client,
+			cfg.IncludedAlarmEntityResourcePools,
+			cfg.ExcludedAlarmEntityResourcePools,
+		)
+		if validateRPsErr != nil {
+			log.Error().Err(validateRPsErr).Msg("error validating include/exclude lists")
+
+			nagiosExitState.LastError = validateRPsErr
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"%s: Error validating include/exclude lists",
+				nagios.StateCRITICALLabel,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+			return
+		}
+	}
 
 	triggeredAlarms, fetchAlarmsErr := vsphere.GetTriggeredAlarms(
 		ctx,
@@ -187,17 +211,19 @@ func main() {
 
 	// Collect all filtering options together for easy reference.
 	triggeredAlarmFilters := vsphere.TriggeredAlarmFilters{
-		IncludedAlarmEntityTypes:   cfg.IncludedAlarmEntityTypes,
-		ExcludedAlarmEntityTypes:   cfg.ExcludedAlarmEntityTypes,
-		IncludedAlarmEntityNames:   cfg.IncludedAlarmEntityNames,
-		ExcludedAlarmEntityNames:   cfg.ExcludedAlarmEntityNames,
-		IncludedAlarmNames:         cfg.IncludedAlarmNames,
-		ExcludedAlarmNames:         cfg.ExcludedAlarmNames,
-		IncludedAlarmDescriptions:  cfg.IncludedAlarmDescriptions,
-		ExcludedAlarmDescriptions:  cfg.ExcludedAlarmDescriptions,
-		IncludedAlarmStatuses:      cfg.IncludedAlarmStatuses,
-		ExcludedAlarmStatuses:      cfg.ExcludedAlarmStatuses,
-		EvaluateAcknowledgedAlarms: cfg.EvaluateAcknowledgedAlarms,
+		IncludedAlarmEntityTypes:         cfg.IncludedAlarmEntityTypes,
+		ExcludedAlarmEntityTypes:         cfg.ExcludedAlarmEntityTypes,
+		IncludedAlarmEntityNames:         cfg.IncludedAlarmEntityNames,
+		ExcludedAlarmEntityNames:         cfg.ExcludedAlarmEntityNames,
+		IncludedAlarmEntityResourcePools: cfg.IncludedAlarmEntityResourcePools,
+		ExcludedAlarmEntityResourcePools: cfg.ExcludedAlarmEntityResourcePools,
+		IncludedAlarmNames:               cfg.IncludedAlarmNames,
+		ExcludedAlarmNames:               cfg.ExcludedAlarmNames,
+		IncludedAlarmDescriptions:        cfg.IncludedAlarmDescriptions,
+		ExcludedAlarmDescriptions:        cfg.ExcludedAlarmDescriptions,
+		IncludedAlarmStatuses:            cfg.IncludedAlarmStatuses,
+		ExcludedAlarmStatuses:            cfg.ExcludedAlarmStatuses,
+		EvaluateAcknowledgedAlarms:       cfg.EvaluateAcknowledgedAlarms,
 	}
 
 	switch {

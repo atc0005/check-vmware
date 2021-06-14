@@ -36,13 +36,19 @@ type AlarmEntity struct {
 	// triggered alarm.
 	Name string
 
-	// MOID is the Managed Object Reference of the entity.
-	MOID types.ManagedObjectReference
-
 	// OverallStatus is the entity's top-level or overall status. vSphere
 	// represents this status (aka, ManagedEntityStatus) as a color (gray,
 	// green, red or yellow) with green indicating "OK" and red "CRITICAL".
 	OverallStatus types.ManagedEntityStatus
+
+	// MOID is the Managed Object Reference of the entity.
+	MOID types.ManagedObjectReference
+
+	// ResourcePools are the names of the Resource Pool that the
+	// TriggeredAlarm entity is part of. This applies to VirtualMachine and
+	// ResourcePool types. VirtualMachine types have one entry and
+	// ResourcePool types have two (self & parent).
+	ResourcePools []string
 }
 
 // TriggeredAlarm represents the state of an alarm along with the affected
@@ -115,17 +121,19 @@ type TriggeredAlarms []TriggeredAlarm
 // for filtering detected TriggeredAlarms. This is most often used for
 // providing summary information in logging or user-facing output.
 type TriggeredAlarmFilters struct {
-	IncludedAlarmEntityTypes   []string
-	ExcludedAlarmEntityTypes   []string
-	IncludedAlarmEntityNames   []string
-	ExcludedAlarmEntityNames   []string
-	IncludedAlarmNames         []string
-	ExcludedAlarmNames         []string
-	IncludedAlarmDescriptions  []string
-	ExcludedAlarmDescriptions  []string
-	IncludedAlarmStatuses      []string
-	ExcludedAlarmStatuses      []string
-	EvaluateAcknowledgedAlarms bool
+	IncludedAlarmEntityTypes         []string
+	ExcludedAlarmEntityTypes         []string
+	IncludedAlarmEntityNames         []string
+	ExcludedAlarmEntityNames         []string
+	IncludedAlarmEntityResourcePools []string
+	ExcludedAlarmEntityResourcePools []string
+	IncludedAlarmNames               []string
+	ExcludedAlarmNames               []string
+	IncludedAlarmDescriptions        []string
+	ExcludedAlarmDescriptions        []string
+	IncludedAlarmStatuses            []string
+	ExcludedAlarmStatuses            []string
+	EvaluateAcknowledgedAlarms       bool
 }
 
 // NumExcluded returns the number of TriggeredAlarms that have been implicitly
@@ -249,6 +257,32 @@ func (tas TriggeredAlarms) Datacenters() []string {
 	})
 
 	return dcs
+
+}
+
+// ResourcePools returns a list of ResourcePool names associated with the
+// collection of TriggeredAlarms.
+func (tas TriggeredAlarms) ResourcePools() []string {
+
+	rpsIdx := make(map[string]struct{})
+	rps := make([]string, 0, len(tas))
+
+	for i := range tas {
+		for j := range tas[i].Entity.ResourcePools {
+			rpsIdx[tas[i].Entity.ResourcePools[j]] = struct{}{}
+		}
+
+	}
+
+	for k := range rpsIdx {
+		rps = append(rps, k)
+	}
+
+	sort.Slice(rps, func(i, j int) bool {
+		return strings.ToLower(rps[i]) < strings.ToLower(rps[j])
+	})
+
+	return rps
 
 }
 
@@ -532,23 +566,35 @@ func logTriggeredAlarmMarked(triggeredAlarm TriggeredAlarm, keep bool, explicit 
 		markType = "explicitly"
 	}
 
+	// create comma-separated list of resource pools for entity if provided,
+	// otherwise produce a NOOP
+	var rpsList string
+	if len(triggeredAlarm.Entity.ResourcePools) > 0 {
+		rpsList = fmt.Sprintf(
+			" from pools [%q]",
+			strings.Join(triggeredAlarm.Entity.ResourcePools, ", "),
+		)
+	}
+
 	switch {
 	case keep:
 		logger.Printf(
-			"Alarm (%s) for entity name %q of type %q with alarm name %q %s marked for inclusion",
+			"Alarm (%s) for entity name %q of type %q%s with alarm name %q %s marked for inclusion",
 			triggeredAlarm.OverallStatus,
 			triggeredAlarm.Entity.Name,
 			triggeredAlarm.Entity.MOID.Type,
+			rpsList,
 			triggeredAlarm.Name,
 			markType,
 		)
 
 	default:
 		logger.Printf(
-			"Alarm (%s) for entity name %q of type %q with alarm name %q %s marked for exclusion",
+			"Alarm (%s) for entity name %q of type %q%s with alarm name %q %s marked for exclusion",
 			triggeredAlarm.OverallStatus,
 			triggeredAlarm.Entity.Name,
 			triggeredAlarm.Entity.MOID.Type,
+			rpsList,
 			triggeredAlarm.Name,
 			markType,
 		)
@@ -622,10 +668,33 @@ func GetTriggeredAlarms(ctx context.Context, c *govmomi.Client, datacenters []mo
 				acknowledged = *alarmState.Acknowledged
 			}
 
+			resourcePoolNames := make([]string, 0, 2)
+			switch {
+			case entity.Self.Type == MgObjRefTypeResourcePool ||
+				entity.Self.Type == MgObjRefTypeVirtualMachine:
+
+				rps, err := getResourcePools(ctx, c, entity.Self, propsSubset)
+				if err != nil {
+					return nil, err
+				}
+				for _, rp := range rps {
+					resourcePoolNames = append(resourcePoolNames, rp.Name)
+				}
+
+			default:
+				// As far as I know, no other types can be "part" of a
+				// Resource Pool. Set to empty slice to help prevent nil
+				// pointer dereferencing attempts later. This matches the
+				// pattern used for other fields in our custom TriggeredAlarm
+				// type.
+				resourcePoolNames = []string{}
+			}
+
 			triggeredAlarm := TriggeredAlarm{
 				Entity: AlarmEntity{
 					Name:          entity.Name,
 					MOID:          entity.Self,
+					ResourcePools: resourcePoolNames,
 					OverallStatus: entity.OverallStatus,
 				},
 				AcknowledgedTime:   acknowledgedTime,
@@ -716,6 +785,9 @@ func (tas *TriggeredAlarms) Filter(filters TriggeredAlarmFilters) {
 	logger.Println("Filtering triggered alarms by entity name")
 	tas.filterBySubstring(entityName, filters.IncludedAlarmEntityNames, filters.ExcludedAlarmEntityNames)
 
+	logger.Println("Filtering triggered alarms by entity resource pool")
+	tas.filterByEntityResourcePool(filters.IncludedAlarmEntityResourcePools, filters.ExcludedAlarmEntityResourcePools)
+
 }
 
 // FilterByIncludedEntityType accepts a slice of entity type keywords to use
@@ -792,7 +864,7 @@ func (tas *TriggeredAlarms) filterByEntityType(include []string, exclude []strin
 	// if we're not limiting TriggeredAlarms by entity type, skip filtering
 	// attempts.
 	case len(include) == 0 && len(exclude) == 0:
-		logger.Println("Triggered Alarms status inclusion and exclusion lists are empty, aborting")
+		logger.Println("Triggered Alarms entity type inclusion and exclusion lists are empty, aborting")
 		return
 	}
 
@@ -853,6 +925,183 @@ func (tas *TriggeredAlarms) filterByEntityType(include []string, exclude []strin
 				(*tas)[i].ExplicitlyExcluded = true
 				// (*tas)[i].ExplicitlyIncluded = false
 				(*tas)[i].logExcluded(true)
+			}
+
+		}
+	}
+
+}
+
+// FilterByIncludedEntityResourcePool accepts a slice of Resource Pool names
+// to use in comparison against the Resource Pool for an entity associated
+// with a TriggeredAlarm. For any matches, the TriggeredAlarm is marked as
+// explicitly included. This will prevent later filtering from implicitly
+// excluding the TriggeredAlarm, but will not stop explicit exclusions from
+// "dropping" the TriggeredAlarm from further evaluation in the filtering
+// pipeline.
+func (tas *TriggeredAlarms) FilterByIncludedEntityResourcePool(include []string) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterByIncludedEntityResourcePool func for %d Resource Pools\n",
+			time.Since(funcTimeStart),
+			len(include),
+		)
+	}()
+
+	tas.filterByEntityResourcePool(include, []string{})
+
+}
+
+// FilterByExcludedEntityResourcePool accepts a slice of Resource Pool names
+// to use in comparison against the Resource Pool for an entity associated
+// with a TriggeredAlarm. For any matches, the TriggeredAlarm is marked as
+// explicitly excluded. This will result in "dropping" the TriggeredAlarm from
+// further evaluation in the filtering pipeline.
+func (tas *TriggeredAlarms) FilterByExcludedEntityResourcePool(exclude []string) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterByExcludedEntityResourcePool func for %d Resource Pools\n",
+			time.Since(funcTimeStart),
+			len(exclude),
+		)
+	}()
+
+	tas.filterByEntityResourcePool([]string{}, exclude)
+
+}
+
+// filterByEntityResourcePool accepts slices of Resource Pool names to use in
+// comparison against the Resource Pool for an entity associated with a
+// TriggeredAlarm. This is done to explicitly mark TriggeredAlarm values for
+// inclusion or exclusion in the final evaluation. Flag evaluation logic
+// prevents sysadmins from providing both an inclusion and exclusion list.
+func (tas *TriggeredAlarms) filterByEntityResourcePool(include []string, exclude []string) {
+
+	funcTimeStart := time.Now()
+
+	// Collect number of non-excluded TriggeredAlarms at the start of this
+	// filtering process. We'll collect this number again after filtering has
+	// been applied in order to show the results of this filter.
+	nonExcludedStart := len(*tas) - tas.NumExcluded()
+
+	defer func(start *int) {
+		logger.Printf(
+			"It took %v to execute filterByEntityResourcePool func (for %d non-excluded TriggeredAlarms, yielding %d non-excluded TriggeredAlarms)\n",
+			time.Since(funcTimeStart),
+			*start,
+			len(*tas)-tas.NumExcluded(),
+		)
+	}(&nonExcludedStart)
+
+	switch {
+	// if the collection of TriggeredAlarms is empty, skip filtering attempts.
+	case len(*tas) == 0:
+		logger.Println("Triggered Alarms list is empty, aborting")
+		return
+
+	// if we're not limiting TriggeredAlarms by entity type, skip filtering
+	// attempts.
+	case len(include) == 0 && len(exclude) == 0:
+		logger.Println("Triggered Alarms entity Resource Pool inclusion and exclusion lists are empty, aborting")
+		return
+	}
+
+	switch {
+	case len(include) > 0:
+		logger.Printf(
+			"Include list provided; explicitly marking TriggeredAlarms for inclusion for %d specified Resource Pools",
+			len(include),
+		)
+
+	case len(exclude) > 0:
+		logger.Printf(
+			"Exclude list provided; explicitly marking TriggeredAlarms for exclusion for %d specified Resource Pools",
+			len(exclude),
+		)
+	}
+
+	for i := range *tas {
+
+		switch {
+
+		case len(include) > 0:
+
+			// at this point we have a list of Resource Pool names (via
+			// include list) to compare against a list of actual Resource Pool
+			// names associated with the Triggered Alarms.
+
+			switch {
+
+			// if we have resource pools for the entity, examine to see if any
+			// are in our explicit inclusion list.
+			case len((*tas)[i].Entity.ResourcePools) > 0:
+				for j := range (*tas)[i].Entity.ResourcePools {
+
+					switch {
+
+					// If the Resource Pool names associated with the
+					// TriggeredAlarm matches one of the provided Resource
+					// Pool names to compare against mark the TriggeredAlarm
+					// as explicitly included.
+					case textutils.InList((*tas)[i].Entity.ResourcePools[j], include, true):
+
+						// Don't explicitly *include* the TriggeredAlarm if
+						// the TriggeredAlarm has already been explicitly
+						// *excluded*.
+						if !(*tas)[i].ExplicitlyExcluded {
+							(*tas)[i].Exclude = false
+							(*tas)[i].ExplicitlyIncluded = true
+							(*tas)[i].logIncluded(true)
+						}
+
+					// if not explicitly included by another filter in the
+					// pipeline, implicitly mark as excluded
+					default:
+						if !(*tas)[i].ExplicitlyIncluded {
+							(*tas)[i].Exclude = true
+							(*tas)[i].logExcluded(false)
+						}
+
+					}
+				}
+
+			// there are no resource pools for the entity, so therefore no
+			// match is possible
+			default:
+				// if not explicitly included by another filter in the
+				// pipeline, implicitly mark as excluded
+				if !(*tas)[i].ExplicitlyIncluded {
+					(*tas)[i].Exclude = true
+					(*tas)[i].logExcluded(false)
+				}
+			}
+
+		case len(exclude) > 0:
+
+			// If we have resource pools for the entity, examine to see if any
+			// are in our explicit exclusion list. If there are no resource
+			// pools for the entity, then we won't exclude anything based on a
+			// resource pool match (none to match against).
+			for j := range (*tas)[i].Entity.ResourcePools {
+
+				// explicitly excluded
+				//
+				// no implicit inclusions are applied for non-matching alarm
+				// types as that could unintentionally flip the results from
+				// earlier filtering stages.
+				if textutils.InList((*tas)[i].Entity.ResourcePools[j], exclude, true) {
+					(*tas)[i].Exclude = true
+					(*tas)[i].ExplicitlyExcluded = true
+					// (*tas)[i].ExplicitlyIncluded = false
+					(*tas)[i].logExcluded(true)
+				}
+
 			}
 
 		}
@@ -1029,7 +1278,10 @@ func (tas *TriggeredAlarms) filterBySubstring(fieldKeyword string, include []str
 	// if we're not limiting TriggeredAlarms by entity type, skip filtering
 	// attempts.
 	case len(include) == 0 && len(exclude) == 0:
-		logger.Println("Triggered Alarms status inclusion and exclusion lists are empty, aborting")
+		logger.Printf(
+			"Triggered Alarms substring (%s) inclusion and exclusion lists are empty, aborting",
+			fieldKeyword,
+		)
 		return
 	}
 
@@ -1458,14 +1710,20 @@ func AlarmsReport(
 
 	fmt.Fprintf(
 		&report,
-		"* Acknowledged Alarms evaluated: %t%s",
+		"* Acknowledged Triggered Alarms evaluated: %t%s",
 		triggeredAlarmFilters.EvaluateAcknowledgedAlarms,
 		nagios.CheckOutputEOL,
 	)
 
 	fmt.Fprintf(
 		&report,
-		"* Specified Triggered Alarm entity types to explicitly include (%d): [%v]%s",
+		"* Triggered Alarms to explicitly include%s",
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"** entity types (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmEntityTypes),
 		strings.Join(triggeredAlarmFilters.IncludedAlarmEntityTypes, ", "),
 		nagios.CheckOutputEOL,
@@ -1473,15 +1731,7 @@ func AlarmsReport(
 
 	fmt.Fprintf(
 		&report,
-		"* Specified Triggered Alarm entity types to explicitly exclude (%d): [%v]%s",
-		len(triggeredAlarmFilters.ExcludedAlarmEntityTypes),
-		strings.Join(triggeredAlarmFilters.ExcludedAlarmEntityTypes, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Triggered Alarm entity names to explicitly include (%d): [%v]%s",
+		"** entity names (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmEntityNames),
 		strings.Join(triggeredAlarmFilters.IncludedAlarmEntityNames, ", "),
 		nagios.CheckOutputEOL,
@@ -1489,15 +1739,15 @@ func AlarmsReport(
 
 	fmt.Fprintf(
 		&report,
-		"* Specified Triggered Alarm entity names to explicitly exclude (%d): [%v]%s",
-		len(triggeredAlarmFilters.ExcludedAlarmEntityNames),
-		strings.Join(triggeredAlarmFilters.ExcludedAlarmEntityNames, ", "),
+		"** entity resource pools (%d): [%v]%s",
+		len(triggeredAlarmFilters.IncludedAlarmEntityResourcePools),
+		strings.Join(triggeredAlarmFilters.IncludedAlarmEntityResourcePools, ", "),
 		nagios.CheckOutputEOL,
 	)
 
 	fmt.Fprintf(
 		&report,
-		"* Specified Triggered Alarm names to explicitly include (%d): [%v]%s",
+		"** names (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmNames),
 		strings.Join(triggeredAlarmFilters.IncludedAlarmNames, ", "),
 		nagios.CheckOutputEOL,
@@ -1505,15 +1755,7 @@ func AlarmsReport(
 
 	fmt.Fprintf(
 		&report,
-		"* Specified Triggered Alarm names to explicitly exclude (%d): [%v]%s",
-		len(triggeredAlarmFilters.ExcludedAlarmNames),
-		strings.Join(triggeredAlarmFilters.ExcludedAlarmNames, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Triggered Alarm descriptions to explicitly include (%d): [%v]%s",
+		"** descriptions (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmDescriptions),
 		strings.Join(triggeredAlarmFilters.IncludedAlarmDescriptions, ", "),
 		nagios.CheckOutputEOL,
@@ -1521,15 +1763,7 @@ func AlarmsReport(
 
 	fmt.Fprintf(
 		&report,
-		"* Specified Triggered Alarm descriptions to explicitly exclude (%d): [%v]%s",
-		len(triggeredAlarmFilters.ExcludedAlarmDescriptions),
-		strings.Join(triggeredAlarmFilters.ExcludedAlarmDescriptions, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Triggered Alarm statuses to explicitly include (%d): [%v]%s",
+		"** statuses (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmStatuses),
 		strings.Join(triggeredAlarmFilters.IncludedAlarmStatuses, ", "),
 		nagios.CheckOutputEOL,
@@ -1537,7 +1771,53 @@ func AlarmsReport(
 
 	fmt.Fprintf(
 		&report,
-		"* Specified Triggered Alarm statuses to explicitly exclude (%d): [%v]%s",
+		"* Triggered Alarms to explicitly exclude%s",
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"** entity types (%d): [%v]%s",
+		len(triggeredAlarmFilters.ExcludedAlarmEntityTypes),
+		strings.Join(triggeredAlarmFilters.ExcludedAlarmEntityTypes, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"** entity names (%d): [%v]%s",
+		len(triggeredAlarmFilters.ExcludedAlarmEntityNames),
+		strings.Join(triggeredAlarmFilters.ExcludedAlarmEntityNames, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"** entity resource pools (%d): [%v]%s",
+		len(triggeredAlarmFilters.ExcludedAlarmEntityResourcePools),
+		strings.Join(triggeredAlarmFilters.ExcludedAlarmEntityResourcePools, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"** names (%d): [%v]%s",
+		len(triggeredAlarmFilters.ExcludedAlarmNames),
+		strings.Join(triggeredAlarmFilters.ExcludedAlarmNames, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"** descriptions (%d): [%v]%s",
+		len(triggeredAlarmFilters.ExcludedAlarmDescriptions),
+		strings.Join(triggeredAlarmFilters.ExcludedAlarmDescriptions, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"** statuses (%d): [%v]%s",
 		len(triggeredAlarmFilters.ExcludedAlarmStatuses),
 		strings.Join(triggeredAlarmFilters.ExcludedAlarmStatuses, ", "),
 		nagios.CheckOutputEOL,
@@ -1564,6 +1844,14 @@ func AlarmsReport(
 		"* Datacenters with Triggered Alarms (%d): [%v]%s",
 		len(triggeredAlarms.Datacenters()),
 		strings.Join(triggeredAlarms.Datacenters(), ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Resource Pools with Triggered Alarms (%d): [%v]%s",
+		len(triggeredAlarms.ResourcePools()),
+		strings.Join(triggeredAlarms.ResourcePools(), ", "),
 		nagios.CheckOutputEOL,
 	)
 
