@@ -20,7 +20,25 @@ func (c Config) validate(pluginType PluginType) error {
 	switch {
 	case pluginType.Tools:
 
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
+
 	case pluginType.SnapshotsAge:
+
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
 
 		if c.SnapshotsAgeWarning < 0 {
 			return fmt.Errorf(
@@ -44,6 +62,15 @@ func (c Config) validate(pluginType PluginType) error {
 
 	case pluginType.SnapshotsCount:
 
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
+
 		if c.SnapshotsCountWarning < 0 {
 			return fmt.Errorf(
 				"invalid snapshot count WARNING threshold number: %d",
@@ -66,6 +93,15 @@ func (c Config) validate(pluginType PluginType) error {
 
 	case pluginType.SnapshotsSize:
 
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
+
 		if c.SnapshotsSizeWarning < 0 {
 			return fmt.Errorf(
 				"invalid snapshot size WARNING threshold number: %d",
@@ -87,6 +123,15 @@ func (c Config) validate(pluginType PluginType) error {
 		}
 
 	case pluginType.VirtualMachinePowerCycleUptime:
+
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
 
 		if c.VMPowerCycleUptimeWarning < 0 {
 			return fmt.Errorf(
@@ -188,6 +233,15 @@ func (c Config) validate(pluginType PluginType) error {
 
 	case pluginType.ResourcePoolsMemory:
 
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
+
 		if c.ResourcePoolsMemoryMaxAllowed < 1 {
 			return fmt.Errorf(
 				"invalid value specified for maximum memory usage allowed: %d",
@@ -217,6 +271,15 @@ func (c Config) validate(pluginType PluginType) error {
 
 	case pluginType.VirtualCPUsAllocation:
 
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
+
 		if c.VCPUsMaxAllowed < 1 {
 			return fmt.Errorf(
 				"invalid value specified for maximum number of vCPUs allowed: %d",
@@ -245,6 +308,15 @@ func (c Config) validate(pluginType PluginType) error {
 		}
 
 	case pluginType.Host2Datastores2VMs:
+
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
 
 		// Validate that *only one* of shared Custom Attribute name is
 		// provided or both datastore and host Custom Attribute names are
@@ -324,6 +396,15 @@ func (c Config) validate(pluginType PluginType) error {
 		}
 
 	case pluginType.VirtualHardwareVersion:
+
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
 
 		// optional flag; if not default value, assert known requirements
 		if c.ClusterName != defaultClusterName {
@@ -524,15 +605,6 @@ func (c Config) validate(pluginType PluginType) error {
 
 	if c.Password == "" {
 		return fmt.Errorf("password not provided")
-	}
-
-	// only one of these options may be used
-	if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
-		return fmt.Errorf(
-			"only one of %q or %q flags may be specified",
-			"include-rp",
-			"exclude-rp",
-		)
 	}
 
 	if c.Port < 0 {
