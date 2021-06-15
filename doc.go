@@ -16,7 +16,7 @@ Monitor VMware environments
 FEATURES
 
 Nagios plugins for monitoring VMware vSphere environments (standalone ESXi
-hosts or vCenter instances) for select (or all) Resource Pools.
+hosts or vCenter instances).
 
 • VMware Tools
 
