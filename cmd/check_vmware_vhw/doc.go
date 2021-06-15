@@ -4,11 +4,12 @@ Nagios plugin used to monitor virtual hardware versions.
 
 PURPOSE
 
-This plugin supports three monitoring modes:
+This plugin supports four monitoring modes:
 
 1) Homogeneous version check
 2) Minimum required version check
 3) Outdated-by or threshold range check
+4) Default is minimum required version check
 
 The output for this plugin is designed to provide the one-line summary needed
 by Nagios for quick identification of a problem while providing longer, more

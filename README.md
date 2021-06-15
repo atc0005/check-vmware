@@ -214,27 +214,19 @@ This plugin supports four monitoring modes:
 
 #### Homogeneous version check
 
-As of this writing, I have yet to figure out how to implement support for
-querying the current vSphere environment for the latest available hardware
-version. [GH-130](https://github.com/atc0005/check-vmware/issues/130) is
-intended to add that support.
-
-As a workaround for that lack of support, this monitoring mode applies an
-automatic baseline of "highest version discovered" across evaluated VMs. Any
-VMs with a hardware version not at that highest version are flagged as
-problematic.
+This monitoring mode applies an automatic baseline of "highest version
+discovered" across evaluated VMs. Any VMs with a hardware version not at that
+highest version are flagged as problematic.
 
 Instead of trying to determine how far behind each VM is from the newest
 version, this monitoring mode assumes that any deviation is a `WARNING` state.
 
 #### Outdated-by or threshold range check
 
-This mode was implemented as part of
-[GH-33](https://github.com/atc0005/check-vmware/issues/33) and applies the
-standard WARNING and CRITICAL level threshold checks to determine the current
-plugin state. Any VM with virtual hardware older than the specified thresholds
-triggers the associated state. This mode is useful for catching VMs with
-outdated hardware outside of an acceptable range.
+This mode applies the standard WARNING and CRITICAL level threshold checks to
+determine the current plugin state. Any VM with virtual hardware older than
+the specified thresholds triggers the associated state. This mode is useful
+for catching VMs with outdated hardware outside of an acceptable range.
 
 The highest version used as a baseline for comparison is provided using the
 same logic as provided by the "homogeneous" version check: latest visible
@@ -242,19 +234,15 @@ hardware version.
 
 #### Minimum required version check
 
-This mode was implemented as part of
-[GH-33](https://github.com/atc0005/check-vmware/issues/33) and requires that
-all hardware versions match or exceed the specified minimum hardware version.
-This monitoring mode assumes that any deviation is considered a `CRITICAL`
-state.
+This mode requires that all hardware versions match or exceed the specified
+minimum hardware version. This monitoring mode assumes that any deviation is
+considered a `CRITICAL` state.
 
 #### Default is minimum required version check
 
-This mode was implemented as part of
-[GH-130](https://github.com/atc0005/check-vmware/issues/130) and requires that
-all hardware versions match or exceed the host or cluster default hardware
-version. This monitoring mode assumes that any deviation is considered a
-`WARNING` state.
+This mode requires that all hardware versions match or exceed the host or
+cluster default hardware version. This monitoring mode assumes that any
+deviation is considered a `WARNING` state.
 
 ### `check_vmware_hs2ds2vms`
 
