@@ -111,6 +111,9 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 	case pluginType.InteractiveQuestion:
 		appDescription = PluginTypeInteractiveQuestion
 
+	case pluginType.Alarms:
+		appDescription = PluginTypeAlarms
+
 	case pluginType.Tools:
 		appDescription = PluginTypeTools
 
