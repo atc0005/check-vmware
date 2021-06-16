@@ -26,7 +26,22 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
-## [v0.17.0]
+## [v0.17.1] - 2021-06-16
+
+### Overview
+
+- Bug fixes
+- built using Go 1.16.5
+  - Statically linked
+  - Linux (x86, x64)
+
+### Fixed
+
+- Missing date for prior version header
+- logger includes fields not used by this plugin
+- plugin_type structured logger field empty
+
+## [v0.17.0] - 2021-06-16
 
 ### Overview
 
@@ -738,7 +753,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.17.1...HEAD
+[v0.17.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.1
 [v0.17.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.0
 [v0.16.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.16.0
 [v0.15.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.3
