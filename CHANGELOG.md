@@ -26,6 +26,61 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.0]
+
+### Overview
+
+- Improved `check_vmware_alarms` plugin
+- Bug fixes
+- Dependency updates
+- built using Go 1.16.5
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- Add contrib files coverage for alarms plugin
+  - initial coverage of v0.16.0 `check_vmware_alarms` plugin functionality
+  - expanded coverage of new filtering modes
+- Add support for specifying multiple datacenters
+- Add support for ignoring (or explicitly including) triggered alarms by alarm
+  description or name substrings
+- Add support for filtering triggered alarms by alarm description substrings
+- Add support for filtering triggered alarms by alarm name substrings
+- Add support for filtering triggered alarms by specific status keywords
+- Add support for filtering triggered alarms by associated entity name
+- Add support for filtering triggered alarms by associated entity resource
+  pool
+- Add test coverage for filtering behavior
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.4` to `1.16.5`
+  - `rs/zerolog`
+    - `v1.22.0` to `v1.23.0`
+  - `vmware/govmomi`
+    - `v0.25.0` to `v0.26.0`
+
+- Linting
+  - Re-enable (deprecated) `maligned` linter
+  - Disable `fieldalignment` settings
+    - until the Go team offers more control over the types of checks provided
+      by the `fieldalignment` linter or `golangci-lint` does so.
+
+- Datacenters handling
+  - reverse the decision to fallback to the default datacenter if the
+    specified list is not found and instead consider any missing requested
+    datacenter names as a `CRITICAL` error
+
+### Fixed
+
+- Invalid logic when filtering by acknowledged state
+- README and command definition incorrectly uses a flag in the "show
+  everything" example
+- Virtual Hardware check documentation outdated
+
 ## [v0.16.0] - 2021-05-27
 
 ### Overview
@@ -683,7 +738,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.17.0...HEAD
+[v0.17.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.0
 [v0.16.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.16.0
 [v0.15.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.3
 [v0.15.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.15.2
