@@ -85,6 +85,10 @@ type TriggeredAlarm struct {
 	// AcknowledgedByUser is the user which acknowledged the alarm.
 	AcknowledgedByUser string
 
+	// ExcludeReason gives a brief explanation of why a TriggeredAlarm is
+	// excluded.
+	ExcludeReason string
+
 	// OverallStatus is the alarm's top-level or overall status of the alarm.
 	// vSphere represents this status (aka, ManagedEntityStatus) as a color
 	// (gray, green, red or yellow) with green indicating "OK" and red
@@ -908,6 +912,7 @@ func (tas *TriggeredAlarms) filterByEntityType(include []string, exclude []strin
 			default:
 				if !(*tas)[i].ExplicitlyIncluded {
 					(*tas)[i].Exclude = true
+					(*tas)[i].ExcludeReason = alarmExcludeReasonEntityType
 					(*tas)[i].logExcluded(false)
 				}
 
@@ -922,6 +927,7 @@ func (tas *TriggeredAlarms) filterByEntityType(include []string, exclude []strin
 			// filtering stages.
 			if textutils.InList((*tas)[i].Entity.MOID.Type, exclude, true) {
 				(*tas)[i].Exclude = true
+				(*tas)[i].ExcludeReason = alarmExcludeReasonEntityType
 				(*tas)[i].ExplicitlyExcluded = true
 				// (*tas)[i].ExplicitlyIncluded = false
 				(*tas)[i].logExcluded(true)
@@ -1065,6 +1071,7 @@ func (tas *TriggeredAlarms) filterByEntityResourcePool(include []string, exclude
 					default:
 						if !(*tas)[i].ExplicitlyIncluded {
 							(*tas)[i].Exclude = true
+							(*tas)[i].ExcludeReason = alarmExcludeReasonEntityResourcePool
 							(*tas)[i].logExcluded(false)
 						}
 
@@ -1078,6 +1085,7 @@ func (tas *TriggeredAlarms) filterByEntityResourcePool(include []string, exclude
 				// pipeline, implicitly mark as excluded
 				if !(*tas)[i].ExplicitlyIncluded {
 					(*tas)[i].Exclude = true
+					(*tas)[i].ExcludeReason = alarmExcludeReasonEntityResourcePool
 					(*tas)[i].logExcluded(false)
 				}
 			}
@@ -1097,6 +1105,7 @@ func (tas *TriggeredAlarms) filterByEntityResourcePool(include []string, exclude
 				// earlier filtering stages.
 				if textutils.InList((*tas)[i].Entity.ResourcePools[j], exclude, true) {
 					(*tas)[i].Exclude = true
+					(*tas)[i].ExcludeReason = alarmExcludeReasonEntityResourcePool
 					(*tas)[i].ExplicitlyExcluded = true
 					// (*tas)[i].ExplicitlyIncluded = false
 					(*tas)[i].logExcluded(true)
@@ -1145,6 +1154,7 @@ func (tas *TriggeredAlarms) FilterByAcknowledgedState(includeAcknowledged bool) 
 		// to evaluate previously acknowledged alarms
 		if (*tas)[i].Acknowledged && !includeAcknowledged {
 			(*tas)[i].Exclude = true
+			(*tas)[i].ExcludeReason = alarmExcludeReasonAlarmAcknowledged
 			(*tas)[i].ExplicitlyExcluded = true
 			// (*tas)[i].ExplicitlyIncluded = false
 			(*tas)[i].logExcluded(true)
@@ -1308,19 +1318,24 @@ func (tas *TriggeredAlarms) filterBySubstring(fieldKeyword string, include []str
 	for i := range *tas {
 
 		var substrField string
+		var excludeReason string
 		switch fieldKeyword {
 		case alarmDescription:
 			substrField = (*tas)[i].Description
+			excludeReason = alarmExcludeReasonAlarmDescription
 		case alarmName:
 			substrField = (*tas)[i].Name
+			excludeReason = alarmExcludeReasonAlarmName
 		case entityName:
 			substrField = (*tas)[i].Entity.Name
+			excludeReason = alarmExcludeReasonEntityName
 		default:
 			logger.Printf(
 				"substring field %q not recognized, defaulting to alarm name",
 				fieldKeyword,
 			)
 			substrField = (*tas)[i].Name
+			excludeReason = alarmExcludeReasonAlarmName
 		}
 
 		switch {
@@ -1349,6 +1364,7 @@ func (tas *TriggeredAlarms) filterBySubstring(fieldKeyword string, include []str
 				default:
 					if !(*tas)[i].ExplicitlyIncluded {
 						(*tas)[i].Exclude = true
+						(*tas)[i].ExcludeReason = excludeReason
 						(*tas)[i].logExcluded(false)
 					}
 				}
@@ -1367,6 +1383,7 @@ func (tas *TriggeredAlarms) filterBySubstring(fieldKeyword string, include []str
 				if strings.EqualFold(substrField, substr) ||
 					strings.Contains(substrField, substr) {
 					(*tas)[i].Exclude = true
+					(*tas)[i].ExcludeReason = excludeReason
 					(*tas)[i].ExplicitlyExcluded = true
 					// (*tas)[i].ExplicitlyIncluded = false
 					(*tas)[i].logExcluded(true)
@@ -1508,6 +1525,7 @@ func (tas *TriggeredAlarms) filterByStatus(include []string, exclude []string) {
 
 					if !(*tas)[i].ExplicitlyIncluded {
 						(*tas)[i].Exclude = true
+						(*tas)[i].ExcludeReason = alarmExcludeReasonAlarmStatus
 						(*tas)[i].logExcluded(false)
 					}
 				}
@@ -1531,6 +1549,7 @@ func (tas *TriggeredAlarms) filterByStatus(include []string, exclude []string) {
 				// earlier filtering stages.
 				if strings.EqualFold(string((*tas)[i].OverallStatus), keyword) {
 					(*tas)[i].Exclude = true
+					(*tas)[i].ExcludeReason = alarmExcludeReasonAlarmStatus
 					(*tas)[i].ExplicitlyExcluded = true
 					// (*tas)[i].ExplicitlyIncluded = false
 					(*tas)[i].logExcluded(true)
@@ -1665,11 +1684,12 @@ func AlarmsReport(
 				alarmCtr++
 				fmt.Fprintf(
 					&report,
-					"* (%.2d) %s (type %s): %s%s",
+					"* (%.2d) %s (type: %q, alarm name: %q, exclude reason: %q)%s",
 					alarmCtr,
 					triggeredAlarms[i].Entity.Name,
 					triggeredAlarms[i].Entity.MOID.Type,
 					triggeredAlarms[i].Name,
+					triggeredAlarms[i].ExcludeReason,
 					nagios.CheckOutputEOL,
 				)
 			}
