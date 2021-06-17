@@ -61,3 +61,15 @@ const (
 	alarmName        string = "AlarmName"
 	entityName       string = "EntityName"
 )
+
+// used to track why a TriggeredAlarm was excluded, displayed in
+// LongServiceOutput/report.
+const (
+	alarmExcludeReasonAlarmAcknowledged  = "alarm is acknowledged"
+	alarmExcludeReasonAlarmName          = "alarm name"
+	alarmExcludeReasonAlarmDescription   = "alarm desc"
+	alarmExcludeReasonAlarmStatus        = "alarm status"
+	alarmExcludeReasonEntityType         = "object type"
+	alarmExcludeReasonEntityName         = "object name"
+	alarmExcludeReasonEntityResourcePool = "resource pool"
+)
