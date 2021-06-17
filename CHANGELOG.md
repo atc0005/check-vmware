@@ -26,6 +26,20 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.2] - 2021-06-17
+
+### Overview
+
+- Plugin output tweak
+- built using Go 1.16.5
+  - Statically linked
+  - Linux (x86, x64)
+
+### Changed
+
+- Expand triggered alarms listing in report to help indicate *why* an alarm
+  was excluded
+
 ## [v0.17.1] - 2021-06-16
 
 ### Overview
@@ -753,7 +767,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.17.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.17.2...HEAD
+[v0.17.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.2
 [v0.17.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.1
 [v0.17.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.0
 [v0.16.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.16.0
