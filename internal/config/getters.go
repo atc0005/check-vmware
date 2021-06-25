@@ -7,7 +7,10 @@
 
 package config
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // Timeout converts the user-specified connection timeout value in
 // seconds to an appropriate time duration value for use with setting
@@ -132,5 +135,19 @@ func (c Config) VirtualHardwareApplyHomogeneousVersionCheck() bool {
 		c.VirtualHardwareOutdatedByCritical == defaultVirtualHardwareOutdatedByCritical &&
 		c.VirtualHardwareOutdatedByWarning == defaultVirtualHardwareOutdatedByWarning &&
 		!c.VirtualHardwareDefaultVersionIsMinimum
+
+}
+
+// UserAgent returns a string usable as-is as a custom user agent for plugins
+// provided by this project.
+func (c Config) UserAgent() string {
+
+	// Default User Agent: (Go-http-client/1.1)
+	// https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-p2-semantics-22#section-5.5.3
+	return fmt.Sprintf(
+		"%s/%s",
+		c.App.Name,
+		c.App.Version,
+	)
 
 }

@@ -752,6 +752,13 @@ func VMPowerCycleUptimeReport(
 
 	fmt.Fprintf(
 		&report,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
 		"* VMs (evaluated: %d, total: %d)%s",
 		len(evaluatedVMs),
 		len(allVMs),
@@ -910,6 +917,13 @@ func VMDiskConsolidationReport(
 		&report,
 		"* vSphere environment: %s%s",
 		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 
@@ -1096,6 +1110,13 @@ func VMInteractiveQuestionReport(
 		&report,
 		"* vSphere environment: %s%s",
 		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 

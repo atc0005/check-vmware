@@ -103,6 +103,7 @@ func main() {
 	c, loginErr := vsphere.Login(
 		ctx, cfg.Server, cfg.Port, cfg.TrustCert,
 		cfg.Username, cfg.Domain, cfg.Password,
+		cfg.UserAgent(),
 	)
 	if loginErr != nil {
 		log.Error().Err(loginErr).Msgf("error logging into %s", cfg.Server)

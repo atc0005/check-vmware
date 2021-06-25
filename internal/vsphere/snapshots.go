@@ -1349,6 +1349,13 @@ func writeSnapshotsReportFooter(
 
 	fmt.Fprintf(
 		w,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
 		"* VMs (evaluated: %d, total: %d)%s",
 		len(evaluatedVMs),
 		len(allVMs),

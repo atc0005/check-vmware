@@ -341,5 +341,12 @@ func DatastoreUsageReport(
 		nagios.CheckOutputEOL,
 	)
 
+	fmt.Fprintf(
+		&report,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
+		nagios.CheckOutputEOL,
+	)
+
 	return report.String()
 }

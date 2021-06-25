@@ -27,6 +27,7 @@ func Login(
 	username string,
 	domain string,
 	password string,
+	userAgent string,
 ) (*govmomi.Client, error) {
 
 	// TODO: Do we really need to support user domains?
@@ -43,9 +44,21 @@ func Login(
 	if domain != "" {
 		username = strings.Join([]string{username, domain}, "@")
 	}
+
+	c, err := govmomi.NewClient(ctx, u, trustCert)
+	if err != nil {
+		return nil, err
+	}
+
+	// Override default user agent
+	c.Client.UserAgent = userAgent
+
+	// provide credentials *after* we create the client so that the desired
+	// User Agent value can be set before logging in.
 	u.User = url.UserPassword(username, password)
 
-	c, authErr := govmomi.NewClient(ctx, u, trustCert)
+	// Login, supplying our custom user agent in place of the default
+	authErr := c.Login(ctx, u.User)
 	if authErr != nil {
 		return nil, authErr
 	}

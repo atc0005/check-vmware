@@ -156,7 +156,9 @@ const (
 	defaultCustomAttributePrefixSeparator string = ""
 )
 
-// Plugin types provided by this project.
+// Plugin types provided by this project. These values are used as labels in
+// logging and report output. See also the PluginType struct type used to
+// indicate what plugin is executing.
 const (
 	PluginTypeTools                          string = "vmware-tools"
 	PluginTypeSnapshotsAge                   string = "snapshots-age"
