@@ -484,9 +484,14 @@ func getResourcePools(ctx context.Context, c *govmomi.Client, moRef types.Manage
 			return nil, err
 		}
 
-		// guard against nil pointer dereferencing
+		// guard against missing resource pool (nil pointer dereferencing)
 		if vm.ResourcePool == nil {
-			return nil, fmt.Errorf("resource pool MOID not set for %s", vm.Self)
+			return nil, fmt.Errorf(
+				"resource pool MOID not set for %q (%q); "+
+					"permissions to view associated resource pool may not be available",
+				vm.Name,
+				vm.Self,
+			)
 		}
 
 		// Fetch Resource Pool for VirtualMachine associated with
