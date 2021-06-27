@@ -26,6 +26,37 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.3] - 2021-06-27
+
+### Overview
+
+- Output tweaks
+- Minor cleanup & bug fixes
+- built using Go 1.16.5
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- contrib files
+  - Update send2teams command definition to use new `target-url` flag from
+    [send2teams v0.6.0
+    release](https://github.com/atc0005/send2teams/releases/tag/v0.6.0)
+- plugin output
+  - Set & report custom User Agent as shared value for all plugins
+
+### Changed
+
+- Triggered Alarms | Extend missing resource pool error message
+
+### Fixed
+
+- contrib files
+  - check_vmware_alarms | vc1 host service checks contrib file has several
+    misconfigured checks
+  - check_vmware_alarms | command definitions contrib file has several
+    duplicated doc comments
+
 ## [v0.17.2] - 2021-06-17
 
 ### Overview
@@ -767,7 +798,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.17.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.17.3...HEAD
+[v0.17.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.3
 [v0.17.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.2
 [v0.17.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.1
 [v0.17.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.0
