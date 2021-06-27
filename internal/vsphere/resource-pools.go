@@ -503,6 +503,13 @@ func ResourcePoolsMemoryReport(
 
 	fmt.Fprintf(
 		&report,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
 		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
 		len(includeRPs),
 		strings.Join(includeRPs, ", "),

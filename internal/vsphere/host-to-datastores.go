@@ -623,6 +623,13 @@ func H2D2VMsReport(
 
 	fmt.Fprintf(
 		&report,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
 		"* VMs (evaluated: %d, total: %d)%s",
 		len(evaluatedVMs),
 		len(allVMs),

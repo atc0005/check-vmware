@@ -593,6 +593,13 @@ func VirtualHardwareReport(
 
 	fmt.Fprintf(
 		&report,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
 		"* Default Virtual Hardware Version: %d (%s) %s",
 		defaultHardwareVersion.VersionNumber(),
 		defaultHardwareVersion.String(),

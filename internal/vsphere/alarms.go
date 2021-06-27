@@ -1721,6 +1721,13 @@ func AlarmsReport(
 
 	fmt.Fprintf(
 		&report,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
 		"* Triggered Alarms (evaluated: %d, ignored: %d, total: %d)%s",
 		numTriggeredAlarmsToReport,
 		triggeredAlarms.NumExcluded(),

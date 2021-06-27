@@ -30,7 +30,7 @@ var ErrVersionRequested = errors.New("version information requested")
 // configured/initialized. Not all plugin types will use the same features and
 // as a result will not accept the same flags. Unless noted otherwise, each of
 // the plugin types are incompatible with each other, though some flags are
-// common to all types.
+// common to all types. See also the PluginType* constants.
 type PluginType struct {
 	Tools                          bool
 	SnapshotsAge                   bool
@@ -51,6 +51,26 @@ type PluginType struct {
 	// TODO:
 	// - vCenter/server time (NTP)
 
+}
+
+// AppInfo identifies common details about the plugins provided by this
+// project.
+type AppInfo struct {
+
+	// Name specifies the public name shared by all plugins in this project.
+	Name string
+
+	// Version specifies the public version shared by all plugins in this
+	// project.
+	Version string
+
+	// URL specifies the public repo URL shared by all plugins in this
+	// project.
+	URL string
+
+	// Plugin indicates which plugin provided by this project is currently
+	// executing.
+	Plugin string
 }
 
 // multiValueStringFlag is a custom type that satisfies the flag.Value
@@ -291,6 +311,10 @@ type Config struct {
 	// explicit inclusions.
 	ExcludedAlarmStatuses multiValueStringFlag
 
+	// App represents common details about the plugins provided by this
+	// project.
+	App AppInfo
+
 	// Log is an embedded zerolog Logger initialized via config.New().
 	Log zerolog.Logger
 
@@ -464,6 +488,67 @@ func Branding(msg string) func() string {
 	}
 }
 
+// pluginTypeLabel is used as a lookup to return the plugin type label
+// associated with the active/specified PluginType.
+func pluginTypeLabel(pluginType PluginType) string {
+
+	var label string
+
+	switch {
+	case pluginType.SnapshotsAge:
+		label = PluginTypeSnapshotsAge
+
+	case pluginType.SnapshotsCount:
+		label = PluginTypeSnapshotsCount
+
+	case pluginType.SnapshotsSize:
+		label = PluginTypeSnapshotsSize
+
+	case pluginType.DatastoresSize:
+		label = PluginTypeDatastoresSize
+
+	case pluginType.ResourcePoolsMemory:
+		label = PluginTypeResourcePoolsMemory
+
+	case pluginType.VirtualCPUsAllocation:
+		label = PluginTypeVirtualCPUsAllocation
+
+	case pluginType.VirtualHardwareVersion:
+		label = PluginTypeVirtualHardwareVersion
+
+	case pluginType.Host2Datastores2VMs:
+		label = PluginTypeHostDatastoreVMsPairings
+
+	case pluginType.HostSystemMemory:
+		label = PluginTypeHostSystemMemory
+
+	case pluginType.HostSystemCPU:
+		label = PluginTypeHostSystemCPU
+
+	case pluginType.VirtualMachinePowerCycleUptime:
+		label = PluginTypeVirtualMachinePowerCycleUptime
+
+	case pluginType.DiskConsolidation:
+		label = PluginTypeDiskConsolidation
+
+	case pluginType.InteractiveQuestion:
+		label = PluginTypeInteractiveQuestion
+
+	case pluginType.Alarms:
+		label = PluginTypeAlarms
+
+	case pluginType.Tools:
+		label = PluginTypeTools
+
+	default:
+		label = "ERROR: Please report this; I evidently forgot to expand the PluginType collection"
+
+	}
+
+	return label
+
+}
+
 // New is a factory function that produces a new Config object based on user
 // provided flag and config file values. It is responsible for validating
 // user-provided values and initializing the logging settings used by this
@@ -472,6 +557,13 @@ func New(pluginType PluginType) (*Config, error) {
 	var config Config
 
 	config.handleFlagsConfig(pluginType)
+
+	config.App = AppInfo{
+		Name:    myAppName,
+		Version: version,
+		URL:     myAppURL,
+		Plugin:  pluginTypeLabel(pluginType),
+	}
 
 	if config.ShowVersion {
 		return nil, ErrVersionRequested

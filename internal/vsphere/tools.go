@@ -221,6 +221,13 @@ func VMToolsReport(
 
 	fmt.Fprintf(
 		&vmsReport,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&vmsReport,
 		"* VMs (evaluated: %d, total: %d)%s",
 		len(evaluatedVMs),
 		len(allVMs),

@@ -69,56 +69,6 @@ func setLoggingLevel(logLevel string) error {
 // application
 func (c *Config) setupLogging(pluginType PluginType) error {
 
-	var appDescription string
-
-	switch {
-	case pluginType.SnapshotsAge:
-		appDescription = PluginTypeSnapshotsAge
-
-	case pluginType.SnapshotsCount:
-		appDescription = PluginTypeSnapshotsCount
-
-	case pluginType.SnapshotsSize:
-		appDescription = PluginTypeSnapshotsSize
-
-	case pluginType.DatastoresSize:
-		appDescription = PluginTypeDatastoresSize
-
-	case pluginType.ResourcePoolsMemory:
-		appDescription = PluginTypeResourcePoolsMemory
-
-	case pluginType.VirtualCPUsAllocation:
-		appDescription = PluginTypeVirtualCPUsAllocation
-
-	case pluginType.VirtualHardwareVersion:
-		appDescription = PluginTypeVirtualHardwareVersion
-
-	case pluginType.Host2Datastores2VMs:
-		appDescription = PluginTypeHostDatastoreVMsPairings
-
-	case pluginType.HostSystemMemory:
-		appDescription = PluginTypeHostSystemMemory
-
-	case pluginType.HostSystemCPU:
-		appDescription = PluginTypeHostSystemCPU
-
-	case pluginType.VirtualMachinePowerCycleUptime:
-		appDescription = PluginTypeVirtualMachinePowerCycleUptime
-
-	case pluginType.DiskConsolidation:
-		appDescription = PluginTypeDiskConsolidation
-
-	case pluginType.InteractiveQuestion:
-		appDescription = PluginTypeInteractiveQuestion
-
-	case pluginType.Alarms:
-		appDescription = PluginTypeAlarms
-
-	case pluginType.Tools:
-		appDescription = PluginTypeTools
-
-	}
-
 	// We set some common fields here so that we don't have to repeat them
 	// explicitly later and then set additional fields while processing each
 	// email account. This approach is intended to help standardize the log
@@ -128,7 +78,7 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 	c.Log = zerolog.New(os.Stderr).With().Timestamp().Caller().
 		Str("version", Version()).
 		Str("logging_level", c.LoggingLevel).
-		Str("plugin_type", appDescription).
+		Str("plugin_type", pluginTypeLabel(pluginType)).
 		Str("connection_timeout", c.Timeout().String()).
 		Str("username", c.Username).
 		Str("user_domain", c.Domain).
