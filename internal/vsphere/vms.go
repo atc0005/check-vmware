@@ -896,7 +896,13 @@ func VMDiskConsolidationReport(
 		})
 
 		for _, vm := range vmsNeedingConsolidation {
-			fmt.Fprintf(&report, "* %s%s", vm.Name, nagios.CheckOutputEOL)
+			fmt.Fprintf(
+				&report,
+				"* %s (%s)%s",
+				vm.Name,
+				vm.Runtime.PowerState,
+				nagios.CheckOutputEOL,
+			)
 		}
 
 	default:
