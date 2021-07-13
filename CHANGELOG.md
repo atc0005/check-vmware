@@ -47,6 +47,8 @@ The following types of changes will be recorded in this file:
   - list the power state for VMs in need of disk consolidation
 
 - Dependencies
+  - `Go`
+    - `1.16.5` to `1.16.6`
   - `actions/setup-node`
     - updated from `v2.1.5` to `v2.2.0`
     - update `node-version` value to always use latest LTS version instead of
