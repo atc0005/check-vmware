@@ -26,6 +26,32 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.4] - 2021-07-13
+
+### Overview
+
+- Output tweak
+- Dependency updates
+- built using Go 1.16.6
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- Add "canary" Dockerfile to track stable Go releases, serve as a reminder to
+  generate fresh binaries
+
+### Changed
+
+- `check_vmware_disk_consolidation` plugin
+  - list the power state for VMs in need of disk consolidation
+
+- Dependencies
+  - `actions/setup-node`
+    - updated from `v2.1.5` to `v2.2.0`
+    - update `node-version` value to always use latest LTS version instead of
+      hard-coded version
+
 ## [v0.17.3] - 2021-06-27
 
 ### Overview
@@ -798,7 +824,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.17.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.17.4...HEAD
+[v0.17.4]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.4
 [v0.17.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.3
 [v0.17.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.2
 [v0.17.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.17.1
