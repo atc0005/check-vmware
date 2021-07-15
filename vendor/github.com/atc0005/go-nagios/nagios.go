@@ -12,7 +12,7 @@ package nagios
 import (
 	"fmt"
 	"os"
-	"runtime"
+	"runtime/debug"
 )
 
 // Nagios plugin/service check states. These constants replicate the values
@@ -141,22 +141,21 @@ func (es *ExitState) ReturnCheckResults() {
 			StateCRITICALLabel,
 		)
 
-		// Gather stack trace associated with panic for display.
-		// NOTE: runtime.Stack *requires* that we preallocate the slice and
-		// with zero values.
-		stackTrace := make([]byte, 512)
-		stackTraceSize := runtime.Stack(stackTrace, false)
+		// Gather stack trace associated with panic.
+		stackTrace := debug.Stack()
 
-		// Using literal `<pre>` tags in an effort to wrap the stack trace
-		// details so that they are not interpreted as formatting characters
-		// when passed through web UI, text, email, Teams, etc.
+		// Wrap stack trace details in an attempt to prevent these details
+		// from being interpreted as formatting characters when passed through
+		// web UI, text, email, Teams, etc. We use Markdown fenced code blocks
+		// instead of `<pre>` start/end tags because Nagios strips out angle
+		// brackets (due to default `illegal_macro_output_chars` settings).
 		es.LongServiceOutput = fmt.Sprintf(
-			"<pre>%s%s%s%s%s%s</pre>",
+			"```%s%s%s%s%s%s```",
 			CheckOutputEOL,
 			err,
 			CheckOutputEOL,
 			CheckOutputEOL,
-			stackTrace[0:stackTraceSize],
+			stackTrace,
 			CheckOutputEOL,
 		)
 
