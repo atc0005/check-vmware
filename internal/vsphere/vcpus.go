@@ -10,6 +10,7 @@ package vsphere
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -111,6 +112,8 @@ func VirtualCPUsReport(
 
 	var vmsReport strings.Builder
 
+	// This is shown regardless of whether the plugin is considered to be in a
+	// non-OK state.
 	fmt.Fprintf(
 		&vmsReport,
 		"* vCPUs%s** Allocated: %d (%.1f%%)%s** Max Allowed: %d%s",
@@ -121,6 +124,86 @@ func VirtualCPUsReport(
 		vCPUsMax,
 		nagios.CheckOutputEOL,
 	)
+
+	fmt.Fprintf(
+		&vmsReport,
+		"%sTop 10 vCPU consumers:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	sort.Slice(evaluatedVMs, func(i, j int) bool {
+		return evaluatedVMs[i].Summary.Config.NumCpu > evaluatedVMs[j].Summary.Config.NumCpu
+	})
+
+	// grab up to the first 10 VMs, presorted by large vCPU consumption
+	sampleSize := len(evaluatedVMs)
+	if sampleSize > 10 {
+		sampleSize = 10
+	}
+	topTen := evaluatedVMs[:sampleSize]
+
+	switch {
+	case len(topTen) == 0:
+		fmt.Fprintf(&vmsReport, "* None %s", nagios.CheckOutputEOL)
+	default:
+		for _, vm := range topTen {
+			fmt.Fprintf(
+				&vmsReport,
+				"* %s (%d vCPUs)%s",
+				vm.Name,
+				vm.Summary.Config.NumCpu,
+				nagios.CheckOutputEOL,
+			)
+		}
+	}
+
+	fmt.Fprintf(
+		&vmsReport,
+		"%sTen most recently started VMs:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	// Regardless of earlier decision whether to exclude powered off VMs from
+	// vCPU consumption calculations, we explicitly exclude here in order to
+	// limit evaluation of "most recently booted" to powered on VMs only.
+	poweredOnVMs := FilterVMsByPowerState(evaluatedVMs, false)
+
+	// sort before we sample the VMs so that we only get the ones with lowest
+	// power cycle uptime; require that the VM be powered on in order to sort
+	// in the intended order.
+	sort.Slice(poweredOnVMs, func(i, j int) bool {
+		return poweredOnVMs[i].Summary.QuickStats.UptimeSeconds < poweredOnVMs[j].Summary.QuickStats.UptimeSeconds
+
+	})
+
+	// Grab a sampling of the powered on VMs which were most recently booted.
+	sampleSize = len(poweredOnVMs)
+	if sampleSize > 10 {
+		sampleSize = 10
+	}
+	bottomTen := poweredOnVMs[:sampleSize]
+
+	switch {
+	case len(bottomTen) == 0:
+		fmt.Fprintf(&vmsReport, "* None %s", nagios.CheckOutputEOL)
+	default:
+		for _, vm := range bottomTen {
+			uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
+			uptimeDays := uptime.Hours() / 24
+
+			fmt.Fprintf(
+				&vmsReport,
+				"* %s: (%.2f days)%s",
+				vm.Name,
+				uptimeDays,
+				nagios.CheckOutputEOL,
+			)
+		}
+	}
 
 	fmt.Fprintf(
 		&vmsReport,
