@@ -780,8 +780,8 @@ logic for determining plugin state.
 | Nagios State | Description                                             |
 | ------------ | ------------------------------------------------------- |
 | `OK`         | Ideal state, no non-excluded Triggered Alarms detected. |
-| `WARNING`    | One or more non-excluded alarms with a red status.      |
-| `CRITICAL`   | One or more non-excluded alarms with a yellow status.   |
+| `WARNING`    | One or more non-excluded alarms with a yellow status.   |
+| `CRITICAL`   | One or more non-excluded alarms with a red status.      |
 
 ### Command-line arguments
 
