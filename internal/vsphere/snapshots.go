@@ -687,13 +687,6 @@ func NewSnapshotSummarySet(
 	snapshotThresholds SnapshotThresholds,
 ) SnapshotSummarySet {
 
-	// TODO: Return error if no snapshots are present?
-
-	logger.Println("Number of snapshot trees:", len(vm.Snapshot.RootSnapshotList))
-	if vm.Snapshot.CurrentSnapshot != nil {
-		logger.Println("Active snapshot MOID:", vm.Snapshot.CurrentSnapshot)
-	}
-
 	funcTimeStart := time.Now()
 
 	var snapshots []SnapshotSummary
@@ -706,6 +699,24 @@ func NewSnapshotSummarySet(
 			len(*ss),
 		)
 	}(&snapshots)
+
+	// Return a barebones response if no snapshots are present for this VM.
+	if vm.Snapshot == nil {
+		return SnapshotSummarySet{
+			VM:                    vm.Self,
+			VMName:                vm.Name,
+			Snapshots:             snapshots,
+			setSizeWarningState:   false,
+			setSizeCriticalState:  false,
+			setCountWarningState:  false,
+			setCountCriticalState: false,
+		}
+	}
+
+	logger.Println("Number of snapshot trees:", len(vm.Snapshot.RootSnapshotList))
+	if vm.Snapshot.CurrentSnapshot != nil {
+		logger.Println("Active snapshot MOID:", vm.Snapshot.CurrentSnapshot)
+	}
 
 	// all disk files attached to the virtual machine at the current point of
 	// running
