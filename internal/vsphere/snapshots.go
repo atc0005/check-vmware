@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/atc0005/go-nagios"
+	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/units"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -118,7 +119,11 @@ type SnapshotSummary struct {
 	// Description of the snapshot in human readable format.
 	Description string
 
+	// VMName is the name of the VirtualMachine associated with the snapshot.
 	VMName string
+
+	// DatastoreName is the name of the associated datastore for the snapshot.
+	DatastoreName string
 
 	// Size is the size of the snapshot.
 	Size int64
@@ -700,8 +705,10 @@ func NewSnapshotSummarySet(
 		)
 	}(&snapshots)
 
-	// Return a barebones response if no snapshots are present for this VM.
-	if vm.Snapshot == nil {
+	// Return a barebones response if no snapshots are present for this VM or
+	// the configuration info is not available (e.g., problems accessing the
+	// VM files on disk or during the initial phases of VM creation).
+	if vm.Snapshot == nil || vm.Config == nil {
 		return SnapshotSummarySet{
 			VM:                    vm.Self,
 			VMName:                vm.Name,
@@ -901,9 +908,21 @@ func NewSnapshotSummarySet(
 				snapTree.Name,
 			)
 
+			// Process vm.FileInfo.snapshotDirectory property to obtain
+			// associated datastore for snapshot. If we fail to parse the path
+			// to the snapshot directory fallback to placeholder string for
+			// the associated datastore name.
+			snapDatastoreName := "UNKNOWN"
+			snapDirectory := vm.Config.Files.SnapshotDirectory
+			var dsPath object.DatastorePath
+			if dsPath.FromString(snapDirectory) {
+				snapDatastoreName = dsPath.Datastore
+			}
+
 			snapshots = append(snapshots, SnapshotSummary{
 				Name:              snapTree.Name,
 				VMName:            vm.Name,
+				DatastoreName:     snapDatastoreName,
 				ID:                snapTree.Id,
 				MOID:              snapTree.Snapshot.Value,
 				Description:       snapTree.Description,
@@ -1158,7 +1177,7 @@ func writeSnapshotsListEntries(
 	snapshotSummarySets SnapshotSummarySets,
 ) {
 
-	listEntryTemplate := "* %q [Age: %v, Size (item: %v, sum: %v), Name: %q, ID: %v]\n"
+	listEntryTemplate := "* %q [Age: %v, Size (item: %v, sum: %v), Name: %q, Datastore: %q]\n"
 
 	fmt.Fprintf(
 		w,
@@ -1188,7 +1207,7 @@ func writeSnapshotsListEntries(
 						snap.SizeHR(),
 						snapSet.SizeHR(),
 						snap.Name,
-						snap.MOID,
+						snap.DatastoreName,
 					)
 				}
 			}
@@ -1214,7 +1233,7 @@ func writeSnapshotsListEntries(
 					snap.SizeHR(),
 					snapSet.SizeHR(),
 					snap.Name,
-					snap.MOID,
+					snap.DatastoreName,
 				)
 
 			}
@@ -1234,7 +1253,7 @@ func writeSnapshotsListEntries(
 						snap.SizeHR(),
 						snapSet.SizeHR(),
 						snap.Name,
-						snap.MOID,
+						snap.DatastoreName,
 					)
 				}
 			}
@@ -1269,7 +1288,7 @@ func writeSnapshotsListEntries(
 						snap.SizeHR(),
 						snapSet.SizeHR(),
 						snap.Name,
-						snap.MOID,
+						snap.DatastoreName,
 					)
 				}
 			}
@@ -1289,7 +1308,7 @@ func writeSnapshotsListEntries(
 						snap.SizeHR(),
 						snapSet.SizeHR(),
 						snap.Name,
-						snap.MOID,
+						snap.DatastoreName,
 					)
 				}
 			}
@@ -1309,7 +1328,7 @@ func writeSnapshotsListEntries(
 						snap.SizeHR(),
 						snapSet.SizeHR(),
 						snap.Name,
-						snap.MOID,
+						snap.DatastoreName,
 					)
 				}
 			}
