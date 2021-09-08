@@ -38,7 +38,7 @@ const (
 	StateOKLabel        string = "OK"
 	StateWARNINGLabel   string = "WARNING"
 	StateCRITICALLabel  string = "CRITICAL"
-	StateUNKNOWNLabel   string = "UKNOWN"
+	StateUNKNOWNLabel   string = "UNKNOWN"
 	StateDEPENDENTLabel string = "DEPENDENT"
 )
 
@@ -49,6 +49,17 @@ const (
 // results that we're looking for with that output and (presumably) host check
 // output as well.
 const CheckOutputEOL string = "\r\n"
+
+// ServiceState represents the status label and exit code for a service check.
+type ServiceState struct {
+
+	// Label maps directly to one of the supported Nagios state labels.
+	Label string
+
+	// ExitCode is the exit or exit status code associated with a Nagios
+	// service check.
+	ExitCode int
+}
 
 // ExitCallBackFunc represents a function that is called as a final step
 // before application termination so that branding information can be emitted
@@ -66,7 +77,7 @@ type ExitState struct {
 	// check contents of Inbox").
 	LastError error
 
-	// LastError is the exit or exit status code provided to the Nagios
+	// ExitStatusCode is the exit or exit status code provided to the Nagios
 	// instance that calls this service check. These status codes indicate to
 	// Nagios "state" the service is considered to be in. The most common
 	// states are OK (0), WARNING (1) and CRITICAL (2).
