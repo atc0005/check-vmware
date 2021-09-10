@@ -26,6 +26,23 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.7.0] - 2021-09-07
+
+### Added
+
+- (GH-80) Add `ServiceState` type
+
+### Changed
+
+- Dependencies
+  - `actions/setup-node`
+    - (`v2.2.0` to `v2.4.0`
+
+### Fixed
+
+- (GH-76) Fix typo in doc comment for `ExitStatusCode` field
+- (GH-82) Typo in `UNKNOWN` state label text
+
 ## [v0.6.1] - 2021-07-15
 
 ### Changed
@@ -253,7 +270,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.7.0...HEAD
+[v0.6.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.7.0
 [v0.6.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.6.1
 [v0.6.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.6.0
 [v0.5.3]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.3
