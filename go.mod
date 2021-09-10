@@ -12,6 +12,6 @@ go 1.15
 require (
 	github.com/atc0005/go-nagios v0.7.0
 	github.com/google/go-cmp v0.5.6
-	github.com/rs/zerolog v1.24.0
+	github.com/rs/zerolog v1.25.0
 	github.com/vmware/govmomi v0.26.1
 )
