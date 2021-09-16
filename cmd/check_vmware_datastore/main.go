@@ -196,14 +196,14 @@ func main() {
 
 	pd := []nagios.PerformanceData{
 		{
-			Label:             "datastore-usage",
+			Label:             "datastore_usage",
 			Value:             fmt.Sprintf("%.2f", dsUsage.StorageUsedPercent),
 			UnitOfMeasurement: "%",
 			Warn:              fmt.Sprintf("%d", dsUsage.WarningThreshold),
 			Crit:              fmt.Sprintf("%d", dsUsage.CriticalThreshold),
 		},
 		{
-			Label:             "datastore-space-remaining",
+			Label:             "datastore_storage_remaining",
 			Value:             fmt.Sprintf("%d", dsUsage.StorageRemaining),
 			UnitOfMeasurement: "B",
 			Max:               fmt.Sprintf("%d", dsUsage.StorageTotal),
