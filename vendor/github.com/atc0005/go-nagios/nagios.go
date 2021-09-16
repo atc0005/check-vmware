@@ -79,6 +79,11 @@ type PerformanceData struct {
 	// performance data point. The label length is arbitrary, but ideally the
 	// first 19 characters are unique due to a limitation in RRD. There is
 	// also a limitation in the amount of data that NRPE returns to Nagios.
+	//
+	// The popular convention used by plugin authors (and official
+	// documentation) is to use underscores for separating multiple words. For
+	// example, 'percent_packet_loss' instead of 'percent packet loss' or
+	// 'percentPacketLoss'.
 	Label string
 
 	// Value is the data point associated with the performance data label.
