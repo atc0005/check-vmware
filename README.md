@@ -16,6 +16,8 @@ or endorsed by VMware, Inc.
 
 - [Project home](#project-home)
 - [Overview](#overview)
+  - [Output](#output)
+  - [Optional evaluation](#optional-evaluation)
   - [`check_vmware_tools`](#check_vmware_tools)
   - [`check_vmware_vcpus`](#check_vmware_vcpus)
   - [`check_vmware_vhw`](#check_vmware_vhw)
@@ -175,10 +177,30 @@ This repo contains various tools used to monitor/validate VMware environments.
 | `check_vmware_question`           | Nagios plugin used to monitor VM interactive question status.                       |
 | `check_vmware_alarms`             | Nagios plugin used to monitor for Triggered Alarms in one or more datacenters.      |
 
+### Output
+
 The output for these plugins is designed to provide the one-line summary
 needed by Nagios for quick identification of a problem while providing longer,
-more detailed information for use in email and Teams notifications
+more detailed information for display within the web UI, use in email and
+Teams notifications
 ([atc0005/send2teams](https://github.com/atc0005/send2teams)).
+
+By default, output intended for processing by Nagios is sent to `stdout` and
+output intended for troubleshooting by the sysadmin is sent to `stderr`.
+
+For some monitoring systems or addons (e.g., Icinga Web 2), the `stderr`
+output is mixed in with the `stdout` output (GH-314) in the web UI for the
+service check. This may add visual noise when viewing the service check
+output. For those cases, you may wish to explicitly disable the output to
+`stderr` via the `--log-level "disabled"` CLI flag.
+
+If this impacts you, please [provide feedback
+here](https://github.com/atc0005/check-vmware/discussions/323). Future
+releases of this project may modify plugins to not emit to `stderr` by default
+or the example command definitions may be updated to specify the `--log-level
+"disabled"` CLI flag.
+
+### Optional evaluation
 
 Some plugins provide optional support to limit evaluation of VMs to specific
 Resource Pools (explicitly including or excluding) and power states (on or
@@ -797,7 +819,7 @@ logic for determining plugin state.
 | `branding`        | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
 | `h`, `help`       | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
 | `v`, `version`    | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level` | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `ll`, `log-level` | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                        |
 | `p`, `port`       | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
 | `t`, `timeout`    | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
 | `s`, `server`     | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
@@ -817,7 +839,7 @@ logic for determining plugin state.
 | `branding`                  | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
 | `h`, `help`                 | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
 | `v`, `version`              | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level`           | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `ll`, `log-level`           | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                        |
 | `p`, `port`                 | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
 | `t`, `timeout`              | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
 | `s`, `server`               | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
@@ -845,7 +867,7 @@ based on feedback.
 | `branding`                       | No        | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                                                                                          |
 | `h`, `help`                      | No        | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                                        |
 | `v`, `version`                   | No        | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                                                 |
-| `ll`, `log-level`                | No        | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                                                     |
+| `ll`, `log-level`                | No        | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                                                                                           |
 | `p`, `port`                      | No        | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                                                                                            |
 | `t`, `timeout`                   | No        | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                                                                                        |
 | `s`, `server`                    | **Yes**   |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                                                                                    |
@@ -872,7 +894,7 @@ based on feedback.
 | `branding`           | No        | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
 | `h`, `help`          | No        | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
 | `v`, `version`       | No        | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level`    | No        | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `ll`, `log-level`    | No        | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                        |
 | `p`, `port`          | No        | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
 | `t`, `timeout`       | No        | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
 | `s`, `server`        | **Yes**   |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
@@ -900,7 +922,7 @@ based on feedback.
 | `branding`                  | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                   |
 | `h`, `help`                 | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                 |
 | `v`, `version`              | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                          |
-| `ll`, `log-level`           | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                              |
+| `ll`, `log-level`           | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                    |
 | `p`, `port`                 | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                     |
 | `t`, `timeout`              | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                 |
 | `s`, `server`               | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                             |
@@ -920,7 +942,7 @@ based on feedback.
 | `branding`           | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
 | `h`, `help`          | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
 | `v`, `version`       | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level`    | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `ll`, `log-level`    | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                        |
 | `p`, `port`          | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
 | `t`, `timeout`       | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
 | `s`, `server`        | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
@@ -941,7 +963,7 @@ based on feedback.
 | `branding`             | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
 | `h`, `help`            | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
 | `v`, `version`         | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level`      | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `ll`, `log-level`      | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                        |
 | `p`, `port`            | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
 | `t`, `timeout`         | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
 | `s`, `server`          | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
@@ -962,7 +984,7 @@ based on feedback.
 | `branding`            | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
 | `h`, `help`           | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
 | `v`, `version`        | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level`     | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `ll`, `log-level`     | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                        |
 | `p`, `port`           | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
 | `t`, `timeout`        | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
 | `s`, `server`         | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
@@ -983,7 +1005,7 @@ based on feedback.
 | `branding`                  | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
 | `h`, `help`                 | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
 | `v`, `version`              | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level`           | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `ll`, `log-level`           | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                        |
 | `p`, `port`                 | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
 | `t`, `timeout`              | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
 | `s`, `server`               | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
@@ -1004,7 +1026,7 @@ based on feedback.
 | `branding`                    | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                   |
 | `h`, `help`                   | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                 |
 | `v`, `version`                | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                          |
-| `ll`, `log-level`             | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                              |
+| `ll`, `log-level`             | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                    |
 | `p`, `port`                   | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                     |
 | `t`, `timeout`                | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                 |
 | `s`, `server`                 | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                             |
@@ -1024,7 +1046,7 @@ based on feedback.
 | `branding`                 | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                   |
 | `h`, `help`                | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                 |
 | `v`, `version`             | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                          |
-| `ll`, `log-level`          | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                              |
+| `ll`, `log-level`          | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                    |
 | `p`, `port`                | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                     |
 | `t`, `timeout`             | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                 |
 | `s`, `server`              | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                             |
@@ -1044,7 +1066,7 @@ based on feedback.
 | `branding`              | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
 | `h`, `help`             | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
 | `v`, `version`          | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level`       | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `ll`, `log-level`       | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                        |
 | `p`, `port`             | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
 | `t`, `timeout`          | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
 | `s`, `server`           | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
@@ -1065,7 +1087,7 @@ based on feedback.
 | `branding`        | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
 | `h`, `help`       | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
 | `v`, `version`    | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level` | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `ll`, `log-level` | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                        |
 | `p`, `port`       | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
 | `t`, `timeout`    | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
 | `s`, `server`     | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
@@ -1084,7 +1106,7 @@ based on feedback.
 | `branding`        | No       | `false` | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                       |
 | `h`, `help`       | No       | `false` | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                     |
 | `v`, `version`    | No       | `false` | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                              |
-| `ll`, `log-level` | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                  |
+| `ll`, `log-level` | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                        |
 | `p`, `port`       | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                         |
 | `t`, `timeout`    | No       | `10`    | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                     |
 | `s`, `server`     | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                 |
@@ -1103,7 +1125,7 @@ based on feedback.
 | `branding`            | No       | `false` | No     | `branding`                                                                                                                                                                     | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `h`, `help`           | No       | `false` | No     | `h`, `help`                                                                                                                                                                    | Show Help text along with the list of supported flags.                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `v`, `version`        | No       | `false` | No     | `v`, `version`                                                                                                                                                                 | Whether to display application version and then immediately exit application.                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `ll`, `log-level`     | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace`                                                                                                        | Log message priority filter. Log messages with a lower level are ignored.                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ll`, `log-level`     | No       | `info`  | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace`                                                                                                        | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                                                                                                                                                                                                                                                                                                                         |
 | `p`, `port`           | No       | `443`   | No     | *positive whole number between 1-65535, inclusive*                                                                                                                             | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `t`, `timeout`        | No       | `10`    | No     | *positive whole number of seconds*                                                                                                                                             | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `s`, `server`         | **Yes**  |         | No     | *fully-qualified domain name or IP Address*                                                                                                                                    | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -1177,10 +1199,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1230,10 +1255,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1290,10 +1318,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 ##### Command definition
 
@@ -1346,10 +1377,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 ##### Command definition
 
@@ -1402,10 +1436,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 ##### Command definition
 
@@ -1462,10 +1499,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 ##### Command definition
 
@@ -1527,10 +1567,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1572,10 +1615,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1618,10 +1664,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1660,10 +1709,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1702,10 +1754,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1749,10 +1804,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1794,10 +1852,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1832,10 +1893,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1868,10 +1932,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1905,10 +1972,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1941,10 +2011,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -1996,10 +2069,13 @@ Of note:
 - Certificate warnings are ignored.
   - not best practice, but many vCenter instances use self-signed certs per
     various freely available guides
-- Logging is enabled at the `info` level.
-  - this output is sent to `stderr` by default, which Nagios ignores
-  - this output is only seen (at least as of Nagios v3.x) when invoking the
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
     plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
 
 #### Command definition
 
@@ -2069,6 +2145,8 @@ SOFTWARE.
 - Nagios
   - <https://github.com/atc0005/go-nagios>
   - <https://nagios-plugins.org/doc/guidelines.html>
+  - <https://www.monitoring-plugins.org/doc/guidelines.html>
+  - <https://icinga.com/docs/icinga-2/latest/doc/05-service-monitoring/>
 
 <!-- Footnotes here  -->
 
