@@ -370,7 +370,8 @@ func (es *ExitState) ReturnCheckResults() {
 }
 
 // AddPerfData appends provided performance data. Validation is skipped if
-// requested, otherwise an error is returned if validation fails.
+// requested, otherwise an error is returned if validation fails. Validation
+// failure results in no performance data being appended.
 //
 // Client code may wish to disable validation if performing this step
 // directly.
@@ -380,15 +381,15 @@ func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error
 		return fmt.Errorf("no performance data provided")
 	}
 
-	for i := range pd {
-		if skipValidate {
+	if !skipValidate {
+		for i := range pd {
 			if err := pd[i].Validate(); err != nil {
 				return err
 			}
 		}
-
-		es.perfData = append(es.perfData, pd[i])
 	}
+
+	es.perfData = append(es.perfData, pd...)
 
 	return nil
 
