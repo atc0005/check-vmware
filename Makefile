@@ -47,8 +47,12 @@ VERSION_VAR_PKG			= $(shell go list .)/internal/config
 
 OUTPUTDIR 				= release_assets
 
+ROOT_PATH				:= $(CURDIR)/$(OUTPUTDIR)
+
 # https://gist.github.com/TheHippo/7e4d9ec4b7ed4c0d7a39839e6800cc16
 VERSION 				= $(shell git describe --always --long --dirty)
+
+BASE_URL				= https://github.com/atc0005/check-vmware/releases/download
 
 # The default `go build` process embeds debugging information. Building
 # without that debugging information reduces the binary size by around 28%.
@@ -154,6 +158,7 @@ goclean:
 	@mkdir -p "$(OUTPUTDIR)"
 	@rm -vf $(wildcard ${OUTPUTDIR}/*/*-linux-*)
 	@rm -vf $(wildcard ${OUTPUTDIR}/*/*-windows-*)
+	@rm -vf $(wildcard ${OUTPUTDIR}/*-links.txt)
 
 .PHONY: clean
 ## clean: alias for goclean
@@ -181,15 +186,19 @@ windows: clean
 	@echo "Building release assets for windows ..."
 
 	@for target in $(WHAT); do \
-		mkdir -p $(OUTPUTDIR)/$$target && \
+		mkdir -p $(ROOT_PATH)/$$target && \
 		echo "  Building $$target 386 binaries" && \
-		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-$(VERSION)-windows-386.exe ${PWD}/cmd/$$target && \
+		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-windows-386.exe ${PWD}/cmd/$$target && \
+		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-windows-386.exe" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
 		echo "  Building $$target amd64 binaries" && \
-		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-$(VERSION)-windows-amd64.exe ${PWD}/cmd/$$target && \
+		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-windows-amd64.exe ${PWD}/cmd/$$target && \
+		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-windows-amd64.exe" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
 		echo "  Generating $$target checksum files" && \
-		cd $(OUTPUTDIR)/$$target && \
+		cd $(ROOT_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-$(VERSION)-windows-386.exe > $$target-$(VERSION)-windows-386.exe.sha256 && \
+		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-windows-386.exe.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
 		$(CHECKSUMCMD) $$target-$(VERSION)-windows-amd64.exe > $$target-$(VERSION)-windows-amd64.exe.sha256 && \
+		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-windows-amd64.exe.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
 		cd $$OLDPWD; \
 	done
 
@@ -201,15 +210,19 @@ linux: clean
 	@echo "Building release assets for linux ..."
 
 	@for target in $(WHAT); do \
-		mkdir -p $(OUTPUTDIR)/$$target && \
+		mkdir -p $(ROOT_PATH)/$$target && \
 		echo "  Building $$target 386 binaries" && \
-		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-$(VERSION)-linux-386 ${PWD}/cmd/$$target && \
+		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-linux-386 ${PWD}/cmd/$$target && \
+		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-linux-386" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
 		echo "  Building $$target amd64 binaries" && \
-		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(OUTPUTDIR)/$$target/$$target-$(VERSION)-linux-amd64 ${PWD}/cmd/$$target && \
+		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-linux-amd64 ${PWD}/cmd/$$target && \
+		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-linux-amd64" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
 		echo "  Generating $$target checksum files" && \
-		cd $(OUTPUTDIR)/$$target && \
+		cd $(ROOT_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-$(VERSION)-linux-386 > $$target-$(VERSION)-linux-386.sha256 && \
+		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-linux-386.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
 		$(CHECKSUMCMD) $$target-$(VERSION)-linux-amd64 > $$target-$(VERSION)-linux-amd64.sha256 && \
+		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-linux-amd64.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
 		cd $$OLDPWD; \
 	done
 
