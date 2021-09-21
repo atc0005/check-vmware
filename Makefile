@@ -159,6 +159,7 @@ goclean:
 	@rm -vf $(wildcard ${OUTPUTDIR}/*/*-linux-*)
 	@rm -vf $(wildcard ${OUTPUTDIR}/*/*-windows-*)
 	@rm -vf $(wildcard ${OUTPUTDIR}/*-links.txt)
+	@find ${OUTPUTDIR} -mindepth 1 -type d -empty -delete
 
 .PHONY: clean
 ## clean: alias for goclean
