@@ -364,6 +364,9 @@ func (es *ExitState) ReturnCheckResults() {
 				CheckOutputEOL,
 			)
 		}
+
+		// Add final trailing newline to satisfy Nagios plugin output format.
+		fmt.Print(CheckOutputEOL)
 	}
 
 	os.Exit(es.ExitStatusCode)
