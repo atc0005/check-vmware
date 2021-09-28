@@ -344,16 +344,19 @@ func (es *ExitState) ReturnCheckResults() {
 	// Generate formatted performance data if provided.
 	if es.perfData != nil {
 
-		// Performance data must be separated from the text output
-		// (LongServiceOutput) via a pipe character.
-		fmt.Print("|")
+		// Performance data metrics are appended to plugin output with a
+		// leading pipe character and a space with each metric separated from
+		// another by a single space.
+		fmt.Print(" |")
 
 		for _, pd := range es.perfData {
 			fmt.Printf(
 				// expected format:
 				// 'label'=value[UOM];[warn];[crit];[min];[max]
+				//
 				// https://nagios-plugins.org/doc/guidelines.html
-				"'%s'=%s%s;%s;%s;%s;%s%s",
+				// https://icinga.com/docs/icinga-2/latest/doc/05-service-monitoring/#performance-data-metrics
+				" '%s'=%s%s;%s;%s;%s;%s",
 				pd.Label,
 				pd.Value,
 				pd.UnitOfMeasurement,
@@ -361,7 +364,6 @@ func (es *ExitState) ReturnCheckResults() {
 				pd.Crit,
 				pd.Min,
 				pd.Max,
-				CheckOutputEOL,
 			)
 		}
 
