@@ -1,6 +1,6 @@
 github.com/a8m/tree v0.0.0-20210115125333-10a5fd5b637d/go.mod h1:FSdwKX97koS5efgm8WevNf7XS3PqtyFkKDDXrz778cg=
-github.com/atc0005/go-nagios v0.7.0 h1:8tDN5ftrMKagAsFDz6M1TWDC7HD5Z1MFWgtkZGlp6r4=
-github.com/atc0005/go-nagios v0.7.0/go.mod h1:VhzDr2I9+vn/6aDrZ5f7OyfNOFU8MdT7gLzmSSy8be0=
+github.com/atc0005/go-nagios v0.8.0 h1:ryFjblJcd7fENDaCnL0fy4bYpwRnR0WQyTZy06XjtpI=
+github.com/atc0005/go-nagios v0.8.0/go.mod h1:VhzDr2I9+vn/6aDrZ5f7OyfNOFU8MdT7gLzmSSy8be0=
 github.com/coreos/go-systemd/v22 v22.3.2/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/davecgh/go-xdr v0.0.0-20161123171359-e6a2ba005892/go.mod h1:CTDl0pzVzE5DEzZhPfvhY/9sPFMQIxaJ9VAMs9AagrE=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=

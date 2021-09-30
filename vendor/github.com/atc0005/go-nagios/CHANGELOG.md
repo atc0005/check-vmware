@@ -26,6 +26,23 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.8.0] - 2021-09-30
+
+### Added
+
+- Add initial support for collecting and formatting performance data
+
+### Changed
+
+- Dependencies
+  - `actions/setup-node`
+    - (`v2.4.0` to `v2.4.1`
+
+### Fixed
+
+- Fix typo in CHANGELOG release tags list
+- Remove duplicate package doc comments
+
 ## [v0.7.0] - 2021-09-07
 
 ### Added
@@ -270,8 +287,9 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.7.0...HEAD
-[v0.6.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.7.0
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.8.0...HEAD
+[v0.8.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.0
+[v0.7.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.7.0
 [v0.6.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.6.1
 [v0.6.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.6.0
 [v0.5.3]: https://github.com/atc0005/go-nagios/releases/tag/v0.5.3
