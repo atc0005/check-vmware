@@ -1,4 +1,4 @@
-# github.com/atc0005/go-nagios v0.7.1-0.20210930103224-8943e719e68b
+# github.com/atc0005/go-nagios v0.8.0
 ## explicit
 github.com/atc0005/go-nagios
 # github.com/google/go-cmp v0.5.6
