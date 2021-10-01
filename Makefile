@@ -52,6 +52,9 @@ ROOT_PATH				:= $(CURDIR)/$(OUTPUTDIR)
 # https://gist.github.com/TheHippo/7e4d9ec4b7ed4c0d7a39839e6800cc16
 VERSION 				= $(shell git describe --always --long --dirty)
 
+# Used when generating download URLs when building assets for public release
+RELEASE_TAG 			= $(shell git describe --exact-match --tags)
+
 BASE_URL				= https://github.com/atc0005/check-vmware/releases/download
 
 # The default `go build` process embeds debugging information. Building
@@ -188,17 +191,28 @@ windows-x86:
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$$target && \
-		echo "  Building $$target 386 binaries" && \
+		echo "  Building $$target 386 binary" && \
 		env GOOS=windows GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-windows-386.exe ${PWD}/cmd/$$target && \
-		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-windows-386.exe" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
-		echo "  Generating $$target checksum files" && \
+		echo "  Generating $$target checksum file" && \
 		cd $(ROOT_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-$(VERSION)-windows-386.exe > $$target-$(VERSION)-windows-386.exe.sha256 && \
-		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-windows-386.exe.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
 		cd $$OLDPWD; \
 	done
 
 	@echo "Completed build tasks for windows x86"
+
+.PHONY: windows-x86-links
+## windows-x86-links: generates download URLs for Windows x86 assets
+windows-x86-links:
+	@echo "Generating download links for windows x86 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  Generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-386.exe" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-386.exe.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt; \
+	done
+
+	@echo "Completed generating download links for windows x86 assets"
 
 .PHONY: windows-x64
 ## windows-x64: generates assets for Windows x64 systems
@@ -207,22 +221,38 @@ windows-x64:
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$$target && \
-		echo "  Building $$target amd64 binaries" && \
+		echo "  Building $$target amd64 binary" && \
 		env GOOS=windows GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-windows-amd64.exe ${PWD}/cmd/$$target && \
-		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-windows-amd64.exe" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
-		echo "  Generating $$target checksum files" && \
+		echo "  Generating $$target checksum file" && \
 		cd $(ROOT_PATH)/$$target && \
 		$(CHECKSUMCMD) $$target-$(VERSION)-windows-amd64.exe > $$target-$(VERSION)-windows-amd64.exe.sha256 && \
-		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-windows-amd64.exe.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
 		cd $$OLDPWD; \
 	done
 
 	@echo "Completed build tasks for windows x64"
 
+.PHONY: windows-x64-links
+## windows-x64-links: generates download URLs for Windows x64 assets
+windows-x64-links:
+	@echo "Generating download links for windows x64 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  Generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-amd64.exe" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-windows-amd64.exe.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt; \
+	done
+
+	@echo "Completed generating download links for windows x64 assets"
+
 .PHONY: windows
 ## windows: generates assets for Windows x86 and x64 systems
 windows: windows-x86 windows-x64
 	@echo "Completed all build tasks for windows"
+
+.PHONY: windows-links
+## windows-links: generates download URLs for Windows x86 and x64 assets
+windows-links: windows-x86-links windows-x64-links
+	@echo "Completed generating download links for windows x86 and x64 assets"
 
 .PHONY: linux-x86
 ## linux-x86: generates assets for Linux x86 distros
@@ -231,17 +261,27 @@ linux-x86:
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$$target && \
-		echo "  Building $$target 386 binaries" && \
+		echo "  Building $$target 386 binary" && \
 		env GOOS=linux GOARCH=386 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-linux-386 ${PWD}/cmd/$$target && \
-		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-linux-386" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
-		echo "  Generating $$target checksum files" && \
+		echo "  Generating $$target checksum file" && \
 		cd $(ROOT_PATH)/$$target && \
-		$(CHECKSUMCMD) $$target-$(VERSION)-linux-386 > $$target-$(VERSION)-linux-386.sha256 && \
-		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-linux-386.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
-		cd $$OLDPWD; \
+		$(CHECKSUMCMD) $$target-$(VERSION)-linux-386 > $$target-$(VERSION)-linux-386.sha256; \
 	done
 
 	@echo "Completed build tasks for linux x86"
+
+.PHONY: linux-x86-links
+## linux-x86-links: generates download URLs for Linux x86 assets
+linux-x86-links:
+	@echo "Generating download links for linux x86 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  Generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-386" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-386.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt; \
+	done
+
+	@echo "Completed generating download links for linux x86 assets"
 
 .PHONY: linux-x64
 ## linux-x64: generates assets for Linux x64 distros
@@ -250,24 +290,45 @@ linux-x64:
 
 	@for target in $(WHAT); do \
 		mkdir -p $(ROOT_PATH)/$$target && \
-		echo "  Building $$target amd64 binaries" && \
+		echo "  Building $$target amd64 binary" && \
 		env GOOS=linux GOARCH=amd64 $(BUILDCMD) -o $(ROOT_PATH)/$$target/$$target-$(VERSION)-linux-amd64 ${PWD}/cmd/$$target && \
-		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-linux-amd64" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
-		echo "  Generating $$target checksum files" && \
+		echo "  Generating $$target checksum file" && \
 		cd $(ROOT_PATH)/$$target && \
-		$(CHECKSUMCMD) $$target-$(VERSION)-linux-amd64 > $$target-$(VERSION)-linux-amd64.sha256 && \
-		echo "$(BASE_URL)/$(VERSION)/$$target-$(VERSION)-linux-amd64.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
-		cd $$OLDPWD; \
+		$(CHECKSUMCMD) $$target-$(VERSION)-linux-amd64 > $$target-$(VERSION)-linux-amd64.sha256; \
 	done
 
 	@echo "Completed build tasks for linux x64"
+
+.PHONY: linux-x64-links
+## linux-x64-links: generates download URLs for Linux x86 assets
+linux-x64-links:
+	@echo "Generating download links for linux x64 assets ..."
+
+	@for target in $(WHAT); do \
+		echo "  Generating $$target download links" && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-amd64" >> $(ROOT_PATH)/$(VERSION)-links.txt && \
+		echo "$(BASE_URL)/$(RELEASE_TAG)/$$target-$(VERSION)-linux-amd64.sha256" >> $(ROOT_PATH)/$(VERSION)-links.txt; \
+	done
+
+	@echo "Completed generating download links for linux x64 assets"
 
 .PHONY: linux
 ## linux: generates assets for Linux x86 and x64 distros
 linux: linux-x86 linux-x64
 	@echo "Completed all build tasks for linux"
 
+.PHONY: linux-links
+## linux-links: generates download URLs for Linux x86 and x64 assets
+linux-links: linux-x86-links linux-x64-links
+	@echo "Completed generating download links for linux x86 and x64 assets"
+
+.PHONY: links
+## links: generates download URLs for Windows and Linux x86 and x64 assets
+links: windows-x86-links windows-x64-links linux-x86-links linux-x64-links
+	@echo "Completed generating download links for all release assets"
+
 .PHONY: release-build
 ## release-build: generates assets for public release
-release-build: clean linux-x64
+release-build: clean linux-x64 linux-x64-links
+
 	@echo "Completed all tasks for release build"
