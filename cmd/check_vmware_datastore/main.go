@@ -192,6 +192,25 @@ func main() {
 		return
 	}
 
+	log.Debug().Msg("Compiling Performance Data details")
+
+	pd := []nagios.PerformanceData{
+		{
+			Label:             "datastore_usage",
+			Value:             fmt.Sprintf("%.2f", dsUsage.StorageUsedPercent),
+			UnitOfMeasurement: "%",
+			Warn:              fmt.Sprintf("%d", dsUsage.WarningThreshold),
+			Crit:              fmt.Sprintf("%d", dsUsage.CriticalThreshold),
+		},
+		{
+			Label:             "datastore_storage_remaining",
+			Value:             fmt.Sprintf("%d", dsUsage.StorageRemaining),
+			UnitOfMeasurement: "B",
+			Max:               fmt.Sprintf("%d", dsUsage.StorageTotal),
+			Min:               "0",
+		},
+	}
+
 	log.Debug().Msg("Evaluating datastore usage state")
 	switch {
 	case dsUsage.IsCriticalState():
@@ -215,6 +234,12 @@ func main() {
 			dsVMs,
 			dsUsage,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
@@ -242,6 +267,12 @@ func main() {
 			dsUsage,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
 		return
@@ -260,6 +291,12 @@ func main() {
 			dsVMs,
 			dsUsage,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
