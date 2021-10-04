@@ -30,7 +30,33 @@ var ErrDatastoreUsageThresholdCrossed = errors.New("datastore usage exceeds spec
 // DatastoreIDToNameIndex maps a Datastore's ID value to its name.
 type DatastoreIDToNameIndex map[string]string
 
-// DatastoreUsageSummary tracks usage details for a specific Datastore
+// DatastoreVMs provides an overview of all (visible) VirtualMachines residing
+// on a specific Datastore.
+type DatastoreVMs []DatastoreVM
+
+// DatastoreVM is a summary of details for a VirtualMachine found on a
+// specific datastore.
+type DatastoreVM struct {
+
+	// Name is the display name of the VirtualMachine.
+	Name string
+
+	// VMSize is the human readable or formatted size of the VirtualMachine.
+	VMSize string
+
+	// DatastoreUsage is the human readable or formatted percentage of the
+	// Datastore space consumed by this VirtualMachine.
+	DatastoreUsage string
+
+	// PowerState tracks the current power state for a VirtualMachine.
+	PowerState types.VirtualMachinePowerState
+
+	// DatastoreMOID is the MOID or MoRef ID for the Datastore where this
+	// VirtualMachine resides.
+	DatastoreMOID types.ManagedObjectReference
+}
+
+// DatastoreUsageSummary tracks usage details for a specific Datastore.
 type DatastoreUsageSummary struct {
 	Datastore               mo.Datastore
 	StorageRemainingPercent float64
@@ -40,12 +66,52 @@ type DatastoreUsageSummary struct {
 	StorageRemaining        int64
 	CriticalThreshold       int
 	WarningThreshold        int
+	VMs                     DatastoreVMs
+}
+
+// DatastoreVMsSummary evaluates provided Datastore and collection of
+// VirtualMachines and provides a basic human readable / formatted summary of
+// VirtualMachine details.
+func DatastoreVMsSummary(ds mo.Datastore, vms []mo.VirtualMachine) DatastoreVMs {
+
+	datastoreVMs := make(DatastoreVMs, 0, len(vms))
+
+	for _, vm := range vms {
+
+		var vmStorageUsed int64
+		for _, usage := range vm.Storage.PerDatastoreUsage {
+			if usage.Datastore == ds.Reference() {
+				vmStorageUsed += usage.Committed + usage.Uncommitted
+			}
+		}
+
+		vmPercentOfDSUsed := float64(vmStorageUsed) / float64(ds.Summary.Capacity) * 100
+		dsVM := DatastoreVM{
+			Name:           vm.Name,
+			VMSize:         units.ByteSize(vmStorageUsed).String(),
+			DatastoreUsage: fmt.Sprintf("%2.2f%%", vmPercentOfDSUsed),
+			PowerState:     vm.Runtime.PowerState,
+		}
+
+		datastoreVMs = append(datastoreVMs, dsVM)
+
+	}
+
+	return datastoreVMs
+
 }
 
 // NewDatastoreUsageSummary receives a Datastore and generates summary
 // information used to determine if usage levels have crossed user-specified
 // thresholds.
-func NewDatastoreUsageSummary(ds mo.Datastore, criticalThreshold int, warningThreshold int) DatastoreUsageSummary {
+// func NewDatastoreUsageSummary(ds mo.Datastore, dsVMs []mo.VirtualMachine, criticalThreshold int, warningThreshold int) DatastoreUsageSummary {
+func NewDatastoreUsageSummary(
+	ctx context.Context,
+	c *vim25.Client,
+	ds mo.Datastore,
+	criticalThreshold int,
+	warningThreshold int,
+) (DatastoreUsageSummary, error) {
 
 	storageRemainingPercentage := float64(ds.Summary.FreeSpace) / float64(ds.Summary.Capacity) * 100
 	storageUsedPercentage := 100 - storageRemainingPercentage
@@ -53,8 +119,14 @@ func NewDatastoreUsageSummary(ds mo.Datastore, criticalThreshold int, warningThr
 	storageTotal := ds.Summary.Capacity
 	storageUsed := storageTotal - storageRemaining
 
+	dsVMs, err := GetVMsFromDatastore(ctx, c, ds, true)
+	if err != nil {
+		return DatastoreUsageSummary{}, err
+	}
+
 	dsUsage := DatastoreUsageSummary{
 		Datastore:               ds,
+		VMs:                     DatastoreVMsSummary(ds, dsVMs),
 		StorageRemainingPercent: storageRemainingPercentage,
 		StorageUsedPercent:      storageUsedPercentage,
 		StorageTotal:            storageTotal,
@@ -64,7 +136,7 @@ func NewDatastoreUsageSummary(ds mo.Datastore, criticalThreshold int, warningThr
 		WarningThreshold:        warningThreshold,
 	}
 
-	return dsUsage
+	return dsUsage, nil
 
 }
 
@@ -79,6 +151,26 @@ func (dus DatastoreUsageSummary) IsWarningState() bool {
 // level threshold.
 func (dus DatastoreUsageSummary) IsCriticalState() bool {
 	return dus.StorageUsedPercent >= float64(dus.CriticalThreshold)
+}
+
+// NumVMsPoweredOn indicates how many VirtualMachines on a specific Datastore
+// are powered on.
+func (dsVMs DatastoreVMs) NumVMsPoweredOn() int {
+
+	var numOn int
+	for _, vm := range dsVMs {
+		if vm.PowerState == types.VirtualMachinePowerStatePoweredOn {
+			numOn++
+		}
+	}
+
+	return numOn
+}
+
+// NumVMsPoweredOff indicates how many VirtualMachines on a specific Datastore
+// are powered off OR suspended.
+func (dsVMs DatastoreVMs) NumVMsPoweredOff() int {
+	return len(dsVMs) - dsVMs.NumVMsPoweredOn()
 }
 
 // GetDatastores accepts a context, a connected client and a boolean value
@@ -265,7 +357,6 @@ func DatastoreUsageOneLineCheckSummary(
 // the web UI or in the body of many notifications.
 func DatastoreUsageReport(
 	c *vim25.Client,
-	dsVMs []mo.VirtualMachine,
 	dsUsageSummary DatastoreUsageSummary,
 ) string {
 
@@ -306,22 +397,13 @@ func DatastoreUsageReport(
 		nagios.CheckOutputEOL,
 	)
 
-	for _, vm := range dsVMs {
-
-		var vmStorageUsed int64
-		for _, usage := range vm.Storage.PerDatastoreUsage {
-			if usage.Datastore == dsUsageSummary.Datastore.Reference() {
-				vmStorageUsed += usage.Committed + usage.Uncommitted
-			}
-		}
-
-		vmPercentOfDSUsed := float64(vmStorageUsed) / float64(dsUsageSummary.StorageTotal) * 100
+	for _, vm := range dsUsageSummary.VMs {
 		fmt.Fprintf(
 			&report,
-			"* %s [Size: %v, Datastore Usage: %2.2f%%]%s",
+			"* %s [Size: %s, Datastore Usage: %s]%s",
 			vm.Name,
-			units.ByteSize(vmStorageUsed),
-			vmPercentOfDSUsed,
+			vm.VMSize,
+			vm.DatastoreUsage,
 			nagios.CheckOutputEOL,
 		)
 	}

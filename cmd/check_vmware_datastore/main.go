@@ -157,11 +157,30 @@ func main() {
 	log.Debug().Msg("Successfully retrieved datastore by name")
 
 	log.Debug().Msg("Generating datastore usage summary")
-	dsUsage := vsphere.NewDatastoreUsageSummary(
+	dsUsage, dsUsageErr := vsphere.NewDatastoreUsageSummary(
+		ctx,
+		c.Client,
 		datastore,
 		cfg.DatastoreUsageCritical,
 		cfg.DatastoreUsageWarning,
 	)
+	if dsUsageErr != nil {
+		log.Error().Err(dsUsageErr).Msg(
+			"error generating datastore usage summary",
+		)
+
+		nagiosExitState.LastError = dsUsageErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error generating summary for datastore %q",
+			nagios.StateCRITICALLabel,
+			cfg.DatastoreName,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+		return
+	}
+
+	log.Debug().Msg("Successfully generated datastore usage summary")
 
 	log.Debug().
 		Str("datastore_name", datastore.Name).
@@ -173,24 +192,6 @@ func main() {
 		Int("datastore_critical_threshold", dsUsage.CriticalThreshold).
 		Int("datastore_warning_threshold", dsUsage.WarningThreshold).
 		Msg("Datastore usage summary")
-
-	log.Debug().Msg("Retrieving VMs for datastore")
-	dsVMs, dsVMsFetchErr := vsphere.GetVMsFromDatastore(ctx, c.Client, datastore, true)
-	if dsVMsFetchErr != nil {
-		log.Error().Err(dsFetchErr).Msg(
-			"error retrieving VirtualMachines from datastore",
-		)
-
-		nagiosExitState.LastError = dsVMsFetchErr
-		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"%s: Error retrieving VirtualMachines from datastore %q",
-			nagios.StateCRITICALLabel,
-			cfg.DatastoreName,
-		)
-		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-		return
-	}
 
 	log.Debug().Msg("Compiling Performance Data details")
 
@@ -231,7 +232,6 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
 			c.Client,
-			dsVMs,
 			dsUsage,
 		)
 
@@ -263,7 +263,6 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
 			c.Client,
-			dsVMs,
 			dsUsage,
 		)
 
@@ -288,7 +287,6 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
 			c.Client,
-			dsVMs,
 			dsUsage,
 		)
 
