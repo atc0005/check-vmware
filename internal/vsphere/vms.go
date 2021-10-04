@@ -337,7 +337,7 @@ func FilterVMByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, erro
 
 	for _, vm := range vms {
 		// return match, if available
-		if vm.Summary.Vm.Value == vmID {
+		if vm.Self.Value == vmID {
 			return vm, nil
 		}
 	}
@@ -478,10 +478,10 @@ func dedupeVMs(vmsList []mo.VirtualMachine) []mo.VirtualMachine {
 	seen := make(map[string]struct{}, len(vmsList))
 	j := 0
 	for _, vm := range vmsList {
-		if _, ok := seen[vm.Summary.Vm.Value]; ok {
+		if _, ok := seen[vm.Self.Value]; ok {
 			continue
 		}
-		seen[vm.Summary.Vm.Value] = struct{}{}
+		seen[vm.Self.Value] = struct{}{}
 		vmsList[j] = vm
 		j++
 	}
