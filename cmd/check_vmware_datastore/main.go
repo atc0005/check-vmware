@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/units"
@@ -22,6 +23,10 @@ import (
 )
 
 func main() {
+
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
 
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
@@ -197,6 +202,10 @@ func main() {
 
 	pd := []nagios.PerformanceData{
 		{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(pluginStart).Milliseconds()),
+		},
+		{
 			Label:             "datastore_usage",
 			Value:             fmt.Sprintf("%.2f", dsUsage.StorageUsedPercent),
 			UnitOfMeasurement: "%",
@@ -209,6 +218,18 @@ func main() {
 			UnitOfMeasurement: "B",
 			Max:               fmt.Sprintf("%d", dsUsage.StorageTotal),
 			Min:               "0",
+		},
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(dsUsage.VMs)),
+		},
+		{
+			Label: "vms_powered_off",
+			Value: fmt.Sprintf("%d", dsUsage.VMs.NumVMsPoweredOff()),
+		},
+		{
+			Label: "vms_powered_on",
+			Value: fmt.Sprintf("%d", dsUsage.VMs.NumVMsPoweredOn()),
 		},
 	}
 
