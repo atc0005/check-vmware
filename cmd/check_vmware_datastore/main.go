@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/units"
@@ -22,6 +23,10 @@ import (
 )
 
 func main() {
+
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
 
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
@@ -157,11 +162,30 @@ func main() {
 	log.Debug().Msg("Successfully retrieved datastore by name")
 
 	log.Debug().Msg("Generating datastore usage summary")
-	dsUsage := vsphere.NewDatastoreUsageSummary(
+	dsUsage, dsUsageErr := vsphere.NewDatastoreUsageSummary(
+		ctx,
+		c.Client,
 		datastore,
 		cfg.DatastoreUsageCritical,
 		cfg.DatastoreUsageWarning,
 	)
+	if dsUsageErr != nil {
+		log.Error().Err(dsUsageErr).Msg(
+			"error generating datastore usage summary",
+		)
+
+		nagiosExitState.LastError = dsUsageErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error generating summary for datastore %q",
+			nagios.StateCRITICALLabel,
+			cfg.DatastoreName,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+		return
+	}
+
+	log.Debug().Msg("Successfully generated datastore usage summary")
 
 	log.Debug().
 		Str("datastore_name", datastore.Name).
@@ -174,27 +198,13 @@ func main() {
 		Int("datastore_warning_threshold", dsUsage.WarningThreshold).
 		Msg("Datastore usage summary")
 
-	log.Debug().Msg("Retrieving VMs for datastore")
-	dsVMs, dsVMsFetchErr := vsphere.GetVMsFromDatastore(ctx, c.Client, datastore, true)
-	if dsVMsFetchErr != nil {
-		log.Error().Err(dsFetchErr).Msg(
-			"error retrieving VirtualMachines from datastore",
-		)
-
-		nagiosExitState.LastError = dsVMsFetchErr
-		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"%s: Error retrieving VirtualMachines from datastore %q",
-			nagios.StateCRITICALLabel,
-			cfg.DatastoreName,
-		)
-		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-		return
-	}
-
 	log.Debug().Msg("Compiling Performance Data details")
 
 	pd := []nagios.PerformanceData{
+		{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(pluginStart).Milliseconds()),
+		},
 		{
 			Label:             "datastore_usage",
 			Value:             fmt.Sprintf("%.2f", dsUsage.StorageUsedPercent),
@@ -208,6 +218,18 @@ func main() {
 			UnitOfMeasurement: "B",
 			Max:               fmt.Sprintf("%d", dsUsage.StorageTotal),
 			Min:               "0",
+		},
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(dsUsage.VMs)),
+		},
+		{
+			Label: "vms_powered_off",
+			Value: fmt.Sprintf("%d", dsUsage.VMs.NumVMsPoweredOff()),
+		},
+		{
+			Label: "vms_powered_on",
+			Value: fmt.Sprintf("%d", dsUsage.VMs.NumVMsPoweredOn()),
 		},
 	}
 
@@ -231,7 +253,6 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
 			c.Client,
-			dsVMs,
 			dsUsage,
 		)
 
@@ -263,7 +284,6 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
 			c.Client,
-			dsVMs,
 			dsUsage,
 		)
 
@@ -288,7 +308,6 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
 			c.Client,
-			dsVMs,
 			dsUsage,
 		)
 
