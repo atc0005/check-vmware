@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -23,6 +24,10 @@ import (
 )
 
 func main() {
+
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
 
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
@@ -86,6 +91,8 @@ func main() {
 	log := cfg.Log.With().
 		Str("included_resource_pools", cfg.IncludedResourcePools.String()).
 		Str("excluded_resource_pools", cfg.ExcludedResourcePools.String()).
+		Int("num_excluded_resource_pools", len(cfg.ExcludedResourcePools)).
+		Int("num_included_resource_pools", len(cfg.IncludedResourcePools)).
 		Str("ignored_vms", cfg.IgnoredVMs.String()).
 		Bool("eval_powered_off", cfg.PoweredOff).
 		Logger()
@@ -224,15 +231,61 @@ func main() {
 		Int("vms_excluded_by_tools_issues", numVMsWithoutToolsIssues).
 		Msg("VMs after tools issues filtering")
 
+	log.Debug().Msg("Compiling Performance Data details")
+
+	pd := []nagios.PerformanceData{
+		{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(pluginStart).Milliseconds()),
+		},
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(vms)),
+		},
+		{
+			Label: "vms_excluded_by_name",
+			Value: fmt.Sprintf("%d", numVMsExcludedByName),
+		},
+		{
+			Label: "vms_excluded_by_power_state",
+			Value: fmt.Sprintf("%d", numVMsExcludedByPowerState),
+		},
+		{
+			Label: "vms_with_tools_issues",
+			Value: fmt.Sprintf("%d", numVMsWithToolsIssues),
+		},
+		{
+			Label: "vms_without_tools_issues",
+			Value: fmt.Sprintf("%d", numVMsWithoutToolsIssues),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", len(resourcePools)),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
+		Int("vms_with_tools_issues", numVMsWithToolsIssues).
+		Int("vms_without_tools_issues", numVMsWithoutToolsIssues).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Logger()
+
 	if len(vmsWithIssues) > 0 {
 
-		log.Error().
-			Int("vms_total", len(vms)).
-			Int("vms_without_issues", numVMsWithoutToolsIssues).
-			Int("vms_with_issues", numVMsWithToolsIssues).
-			Int("vms_excluded_by_name", numVMsExcludedByName).
-			Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
-			Msg("issues with VMware Tools found")
+		log.Error().Msg("issues with VMware Tools found")
 
 		serviceState := vsphere.GetVMToolsStatusSummary(vmsWithIssues)
 
@@ -260,6 +313,12 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = serviceState.ExitCode
 
@@ -295,6 +354,12 @@ func main() {
 		cfg.ExcludedResourcePools,
 		resourcePools,
 	)
+
+	if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+		log.Error().
+			Err(err).
+			Msg("failed to add performance data")
+	}
 
 	nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
