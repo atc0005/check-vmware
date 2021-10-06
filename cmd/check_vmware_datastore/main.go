@@ -196,6 +196,10 @@ func main() {
 		Str("datastore_storage_remaining", units.ByteSize(dsUsage.StorageRemaining).String()).
 		Int("datastore_critical_threshold", dsUsage.CriticalThreshold).
 		Int("datastore_warning_threshold", dsUsage.WarningThreshold).
+		Int("vms", len(dsUsage.VMs)).
+		Int("vms_powered_off", dsUsage.VMs.NumVMsPoweredOff()).
+		Int("vms_powered_on", dsUsage.VMs.NumVMsPoweredOn()).
+		Int("datastore_warning_threshold", dsUsage.WarningThreshold).
 		Msg("Datastore usage summary")
 
 	log.Debug().Msg("Compiling Performance Data details")
