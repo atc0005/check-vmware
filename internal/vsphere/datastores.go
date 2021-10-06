@@ -338,9 +338,10 @@ func DatastoreUsageOneLineCheckSummary(
 	}()
 
 	return fmt.Sprintf(
-		"%s: Datastore %s usage is %.2f%% of %s with %s remaining [WARNING: %d%% , CRITICAL: %d%%]",
+		"%s: Datastore %s usage (%d VMs) is %.2f%% of %s with %s remaining [WARNING: %d%% , CRITICAL: %d%%]",
 		stateLabel,
 		dsUsageSummary.Datastore.Name,
+		len(dsUsageSummary.VMs),
 		dsUsageSummary.StorageUsedPercent,
 		units.ByteSize(dsUsageSummary.StorageTotal),
 		units.ByteSize(dsUsageSummary.StorageRemaining),
@@ -376,7 +377,8 @@ func DatastoreUsageReport(
 		"Datastore Summary:%s%s"+
 			"* Name: %s%s"+
 			"* Used: %v (%.2f%%)%s"+
-			"* Remaining: %v (%.2f%%)%s%s",
+			"* Remaining: %v (%.2f%%)%s"+
+			"* VMs: %v %s%s",
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 		dsUsageSummary.Datastore.Name,
@@ -387,26 +389,49 @@ func DatastoreUsageReport(
 		units.ByteSize(dsUsageSummary.StorageRemaining),
 		dsUsageSummary.StorageRemainingPercent,
 		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"VMs on datastore:%s%s",
+		len(dsUsageSummary.VMs),
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 	)
 
-	for _, vm := range dsUsageSummary.VMs {
+	printVMSummary := func(powerState types.VirtualMachinePowerState) {
+
+		var powerStateVMs int
+		switch powerState {
+		case types.VirtualMachinePowerStatePoweredOn:
+			powerStateVMs = dsUsageSummary.VMs.NumVMsPoweredOn()
+		default:
+			powerStateVMs = dsUsageSummary.VMs.NumVMsPoweredOff()
+		}
+
 		fmt.Fprintf(
 			&report,
-			"* %s [Size: %s, Datastore Usage: %s]%s",
-			vm.Name,
-			vm.VMSize,
-			vm.DatastoreUsage,
+			"%d %s VMs on datastore:%s%s",
+			powerStateVMs,
+			powerState,
+			nagios.CheckOutputEOL,
 			nagios.CheckOutputEOL,
 		)
+
+		for _, vm := range dsUsageSummary.VMs {
+			if vm.PowerState == powerState {
+				fmt.Fprintf(
+					&report,
+					"* %s [Size: %s, Datastore Usage: %s]%s",
+					vm.Name,
+					vm.VMSize,
+					vm.DatastoreUsage,
+					nagios.CheckOutputEOL,
+				)
+			}
+		}
+
+		fmt.Fprintf(&report, nagios.CheckOutputEOL)
 	}
+
+	printVMSummary(types.VirtualMachinePowerStatePoweredOn)
+
+	printVMSummary(types.VirtualMachinePowerStatePoweredOff)
 
 	fmt.Fprintf(
 		&report,
