@@ -22,6 +22,11 @@ import (
 // GetVMToolsStatusSummary accepts a collection of VirtualMachines and checks
 // the VMware Tools status for each one, providing an overall Nagios state
 // label and exit code for the collection.
+//
+// NOTE: This function does *NOT* differentiate between VirtualMachines that
+// are powered on and those that are powered off. If only powered on
+// VirtualMachines should be evaluated, the caller should perform this
+// filtering first before passing the collection to this function.
 func GetVMToolsStatusSummary(vms []mo.VirtualMachine) nagios.ServiceState {
 
 	funcTimeStart := time.Now()
@@ -33,59 +38,46 @@ func GetVMToolsStatusSummary(vms []mo.VirtualMachine) nagios.ServiceState {
 		)
 	}()
 
-	var nagiosExitStateLabel string
-	var nagiosExitStateCode int
+	var serviceState nagios.ServiceState
 
-Loop:
 	for _, vm := range vms {
 
-		// check specific tools issue to determine final Nagios state
-		switch vm.Guest.ToolsStatus {
+		serviceState = getVMwareToolsServiceState(vm)
 
-		case types.VirtualMachineToolsStatusToolsOk:
-			continue
+		switch serviceState.ExitCode {
 
-		case types.VirtualMachineToolsStatusToolsOld:
+		// CRITICAL is as bad as it gets, so if we encounter this state go
+		// ahead and consider the entire collection in this "overall" state.
+		case nagios.StateCRITICALExitCode:
+			return serviceState
 
-			// Not severe enough to immediately break as other more severe
-			// issues may be present. Set state and allow the state to "carry"
-			// at function exit.
-			nagiosExitStateLabel = nagios.StateWARNINGLabel
-			nagiosExitStateCode = nagios.StateWARNINGExitCode
+		// UNKNOWN likely indicates an issue matching up the VMware Tools
+		// status with known API values, so consider the entire collection in
+		// this "overall" state.
+		case nagios.StateUNKNOWNExitCode:
+			return serviceState
 
-		case types.VirtualMachineToolsStatusToolsNotRunning:
-			nagiosExitStateLabel = nagios.StateCRITICALLabel
-			nagiosExitStateCode = nagios.StateCRITICALExitCode
-			break Loop
-
-		case types.VirtualMachineToolsStatusToolsNotInstalled:
-			nagiosExitStateLabel = nagios.StateCRITICALLabel
-			nagiosExitStateCode = nagios.StateCRITICALExitCode
-			break Loop
-
-		// This should not be reached
+		// For WARNING or OK states, we continue on to evaluating the next VM
+		// retaining the service state we just received. If we don't find a VM
+		// with a more severe service state we will return the last result as
+		// the "overall" state.
 		default:
-			nagiosExitStateLabel = nagios.StateUNKNOWNLabel
-			nagiosExitStateCode = nagios.StateUNKNOWNExitCode
-			break Loop
+			continue
 		}
 
 	}
 
-	return nagios.ServiceState{
-		Label:    nagiosExitStateLabel,
-		ExitCode: nagiosExitStateCode,
-	}
+	return serviceState
 }
 
 // FilterVMsWithToolsIssues filters the provided collection of VirtualMachines
 // to just those with non-OK status, unless powered off VMs are also
 // evaluated. In that case, ignore any powered off VirtualMachines with VMware
-// Tools in a toolsNotRunning state.
+// Tools in a "not running" state which are otherwise current or unmanaged.
 func FilterVMsWithToolsIssues(vms []mo.VirtualMachine, includePoweredOff bool) []mo.VirtualMachine {
 
 	// setup early so we can reference it from deferred stats output
-	var vmsWithIssues []mo.VirtualMachine
+	vmsWithIssues := make([]mo.VirtualMachine, 0, len(vms))
 
 	funcTimeStart := time.Now()
 
@@ -99,17 +91,15 @@ func FilterVMsWithToolsIssues(vms []mo.VirtualMachine, includePoweredOff bool) [
 	}(vms, &vmsWithIssues)
 
 	for _, vm := range vms {
-		switch {
 
-		// If sysadmin opted to evaluate powered off VMs, ignore any with a
-		// VMware Tools status of toolsNotRunning; considering the VMware
-		// Tools status as problematic for powered off VMs is misleading.
-		case includePoweredOff &&
-			vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff &&
-			vm.Guest.ToolsStatus == types.VirtualMachineToolsStatusToolsNotRunning:
+		// If sysadmin did not opt to evaluate powered off VMs and VM is
+		// powered off, skip evaluating VMware Tools state.
+		if !includePoweredOff &&
+			vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff {
 			continue
+		}
 
-		case vm.Guest.ToolsStatus != types.VirtualMachineToolsStatusToolsOk:
+		if getVMwareToolsServiceState(vm).ExitCode != nagios.StateOKExitCode {
 			vmsWithIssues = append(vmsWithIssues, vm)
 		}
 
@@ -203,10 +193,11 @@ func VMToolsReport(
 		for idx, vm := range vmsWithIssues {
 			fmt.Fprintf(
 				&vmsReport,
-				"* %02d) %s (%s)%s",
+				"* %02d) %s (%s, %s)%s",
 				idx+1,
 				vm.Name,
-				string(vm.Guest.ToolsStatus),
+				string(vm.Runtime.PowerState),
+				vm.Guest.ToolsVersionStatus2,
 				nagios.CheckOutputEOL,
 			)
 		}
@@ -289,4 +280,144 @@ func VMToolsReport(
 	)
 
 	return vmsReport.String()
+}
+
+// getVMwareToolsServiceState evaluates a VirtualMachine to determine an
+// overall service state for the VM's VMware Tools status.
+//
+// References:
+//
+// https://developer.vmware.com/docs/vsphere-automation/latest/vcenter/data-structures/Vm/Tools/VersionStatus/
+// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/7989f521-fd57-4fff-9653-e6a5d5265089/1fd5908d-b8ce-49ca-887a-fefb3656e828/doc/vim.vm.GuestInfo.ToolsVersionStatus.html
+// https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.vm.GuestInfo.ToolsVersionStatus.html
+func getVMwareToolsServiceState(vm mo.VirtualMachine) nagios.ServiceState {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute getVMwareToolsServiceState func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	switch {
+
+	// If VM is powered off, don't evaluate whether the VMware Tools
+	// status indicates "not running", focus only on the
+	// VirtualMachineToolsVersionStatus values in the toolsVersionStatus2
+	// API field.
+
+	// VM is powered on, but Tools are not running.
+	case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn &&
+		types.VirtualMachineToolsStatus(vm.Guest.ToolsRunningStatus) ==
+			types.VirtualMachineToolsStatusToolsNotRunning:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateCRITICALLabel,
+			ExitCode: nagios.StateCRITICALExitCode,
+		}
+
+	// VMware Tools is not installed.
+	case types.VirtualMachineToolsVersionStatus(vm.Guest.ToolsVersionStatus2) ==
+		types.VirtualMachineToolsVersionStatusGuestToolsNotInstalled:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateCRITICALLabel,
+			ExitCode: nagios.StateCRITICALExitCode,
+		}
+
+	// VMware Tools is installed, and the version is current.
+	case types.VirtualMachineToolsVersionStatus(vm.Guest.ToolsVersionStatus2) ==
+		types.VirtualMachineToolsVersionStatusGuestToolsCurrent:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateOKLabel,
+			ExitCode: nagios.StateOKExitCode,
+		}
+
+	// VMware Tools is installed, but it is not managed by VMware. This
+	// includes open-vm-tools or OSPs which should be managed by the guest
+	// operating system.
+	case types.VirtualMachineToolsVersionStatus(vm.Guest.ToolsVersionStatus2) ==
+		types.VirtualMachineToolsVersionStatusGuestToolsUnmanaged:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateOKLabel,
+			ExitCode: nagios.StateOKExitCode,
+		}
+
+	// VMware Tools is installed, but the version is too old.
+	case types.VirtualMachineToolsVersionStatus(vm.Guest.ToolsVersionStatus2) ==
+		types.VirtualMachineToolsVersionStatusGuestToolsTooOld:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateCRITICALLabel,
+			ExitCode: nagios.StateCRITICALExitCode,
+		}
+
+	// VMware Tools is installed, supported, but a newer version is
+	// available.
+	case types.VirtualMachineToolsVersionStatus(vm.Guest.ToolsVersionStatus2) ==
+		types.VirtualMachineToolsVersionStatusGuestToolsSupportedOld:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateWARNINGLabel,
+			ExitCode: nagios.StateWARNINGExitCode,
+		}
+
+	// VMware Tools is installed, but the version is not current.
+	//
+	// NOTE: This is a separate enum value in the API; it is not clear how
+	// it differs from the guestToolsSupportedOld value, so we check for
+	// it separately from that value.
+	case types.VirtualMachineToolsVersionStatus(vm.Guest.ToolsVersionStatus2) ==
+		types.VirtualMachineToolsVersionStatusGuestToolsNeedUpgrade:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateWARNINGLabel,
+			ExitCode: nagios.StateWARNINGExitCode,
+		}
+
+	// VMware Tools is installed, supported, and newer than the version
+	// available on the host.
+	case types.VirtualMachineToolsVersionStatus(vm.Guest.ToolsVersionStatus2) ==
+		types.VirtualMachineToolsVersionStatusGuestToolsSupportedNew:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateOKLabel,
+			ExitCode: nagios.StateOKExitCode,
+		}
+
+	// VMware Tools is installed, and the version is known to be too new
+	// to work correctly with this virtual machine.
+	case types.VirtualMachineToolsVersionStatus(vm.Guest.ToolsVersionStatus2) ==
+		types.VirtualMachineToolsVersionStatusGuestToolsTooNew:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateCRITICALLabel,
+			ExitCode: nagios.StateCRITICALExitCode,
+		}
+
+	// VMware Tools is installed, but the installed version is known to
+	// have a grave bug and should be immediately upgraded.
+	case types.VirtualMachineToolsVersionStatus(vm.Guest.ToolsVersionStatus2) ==
+		types.VirtualMachineToolsVersionStatusGuestToolsBlacklisted:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateCRITICALLabel,
+			ExitCode: nagios.StateCRITICALExitCode,
+		}
+
+	// We should only reach this point if the vSphere API has been extended
+	// and this library hasn't been updated to account for those changes.
+	default:
+
+		return nagios.ServiceState{
+			Label:    nagios.StateUNKNOWNLabel,
+			ExitCode: nagios.StateUNKNOWNExitCode,
+		}
+
+	}
+
 }
