@@ -217,7 +217,7 @@ func main() {
 			Int("vms_filtered", len(filteredVMs)).
 			Msg("issues with VMware Tools found")
 
-		stateLabel, stateExitCode := vsphere.GetVMToolsStatusSummary(vmsWithIssues)
+		serviceState := vsphere.GetVMToolsStatusSummary(vmsWithIssues)
 
 		nagiosExitState.LastError = fmt.Errorf(
 			"%d of %d VMs with VMware Tools issues",
@@ -226,7 +226,7 @@ func main() {
 		)
 
 		nagiosExitState.ServiceOutput = vsphere.VMToolsOneLineCheckSummary(
-			stateLabel,
+			serviceState.Label,
 			filteredVMs,
 			vmsWithIssues,
 			resourcePools,
@@ -244,7 +244,7 @@ func main() {
 			resourcePools,
 		)
 
-		nagiosExitState.ExitStatusCode = stateExitCode
+		nagiosExitState.ExitStatusCode = serviceState.ExitCode
 
 		return
 

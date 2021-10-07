@@ -20,9 +20,9 @@ import (
 )
 
 // GetVMToolsStatusSummary accepts a collection of VirtualMachines and checks
-// the ToolsStatus for each one providing an overall Nagios state label and
-// exit code for the collection.
-func GetVMToolsStatusSummary(vms []mo.VirtualMachine) (string, int) {
+// the VMware Tools status for each one, providing an overall Nagios state
+// label and exit code for the collection.
+func GetVMToolsStatusSummary(vms []mo.VirtualMachine) nagios.ServiceState {
 
 	funcTimeStart := time.Now()
 
@@ -72,8 +72,10 @@ Loop:
 
 	}
 
-	return nagiosExitStateLabel, nagiosExitStateCode
-
+	return nagios.ServiceState{
+		Label:    nagiosExitStateLabel,
+		ExitCode: nagiosExitStateCode,
+	}
 }
 
 // FilterVMsWithToolsIssues filters the provided collection of VirtualMachines
