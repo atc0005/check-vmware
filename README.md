@@ -2138,6 +2138,9 @@ SOFTWARE.
 - vSphere
   - [Go library for the VMware vSphere API](https://github.com/vmware/govmomi)
   - [vSphere Web Services API](https://code.vmware.com/apis/1067/vsphere)
+  - VMware Tools | VersionStatus field
+    - [vCenter Data Structures](https://developer.vmware.com/docs/vsphere-automation/latest/vcenter/data-structures/Vm/Tools/VersionStatus/)
+    - [vCenter Storage Monitoring Service API Reference](https://vdc-repo.vmware.com/vmwb-repository/dcr-public/7989f521-fd57-4fff-9653-e6a5d5265089/1fd5908d-b8ce-49ca-887a-fefb3656e828/doc/vim.vm.GuestInfo.ToolsVersionStatus.html)
 
 - Logging
   - <https://github.com/rs/zerolog>

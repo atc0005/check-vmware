@@ -73,7 +73,7 @@ func main() {
 	// content is shown in the detailed web UI and in notifications generated
 	// by Nagios.
 	nagiosExitState.CriticalThreshold =
-		"Tools not running (e.g., crashed, low memory scenario) or installed."
+		"VMware Tools not running, not installed, unsupported or blacklisted version."
 
 	nagiosExitState.WarningThreshold =
 		"Outdated VMware Tools installation."
@@ -204,9 +204,6 @@ func main() {
 		Msg("Filtered VMs")
 
 	log.Debug().Msg("Filter VMs to those with VMware Tools issues")
-	if cfg.PoweredOff {
-		log.Debug().Msg("Ignore powered off VMs with Tools status of toolsNotRunning")
-	}
 	vmsWithIssues := vsphere.FilterVMsWithToolsIssues(filteredVMs, cfg.PoweredOff)
 
 	if len(vmsWithIssues) > 0 {
