@@ -204,7 +204,10 @@ func main() {
 		Msg("Filtered VMs")
 
 	log.Debug().Msg("Filter VMs to those with VMware Tools issues")
-	vmsWithIssues := vsphere.FilterVMsWithToolsIssues(filteredVMs)
+	if cfg.PoweredOff {
+		log.Debug().Msg("Ignore powered off VMs with Tools status of toolsNotRunning")
+	}
+	vmsWithIssues := vsphere.FilterVMsWithToolsIssues(filteredVMs, cfg.PoweredOff)
 
 	if len(vmsWithIssues) > 0 {
 

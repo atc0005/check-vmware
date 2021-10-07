@@ -77,8 +77,10 @@ Loop:
 }
 
 // FilterVMsWithToolsIssues filters the provided collection of VirtualMachines
-// to just those with non-OK status.
-func FilterVMsWithToolsIssues(vms []mo.VirtualMachine) []mo.VirtualMachine {
+// to just those with non-OK status, unless powered off VMs are also
+// evaluated. In that case, ignore any powered off VirtualMachines with VMware
+// Tools in a toolsNotRunning state.
+func FilterVMsWithToolsIssues(vms []mo.VirtualMachine, includePoweredOff bool) []mo.VirtualMachine {
 
 	// setup early so we can reference it from deferred stats output
 	var vmsWithIssues []mo.VirtualMachine
@@ -95,9 +97,20 @@ func FilterVMsWithToolsIssues(vms []mo.VirtualMachine) []mo.VirtualMachine {
 	}(vms, &vmsWithIssues)
 
 	for _, vm := range vms {
-		if vm.Guest.ToolsStatus != types.VirtualMachineToolsStatusToolsOk {
+		switch {
+
+		// If sysadmin opted to evaluate powered off VMs, ignore any with a
+		// VMware Tools status of toolsNotRunning; considering the VMware
+		// Tools status as problematic for powered off VMs is misleading.
+		case includePoweredOff &&
+			vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff &&
+			vm.Guest.ToolsStatus == types.VirtualMachineToolsStatusToolsNotRunning:
+			continue
+
+		case vm.Guest.ToolsStatus != types.VirtualMachineToolsStatusToolsOk:
 			vmsWithIssues = append(vmsWithIssues, vm)
 		}
+
 	}
 
 	return vmsWithIssues
