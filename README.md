@@ -657,12 +657,41 @@ architectures and operating systems.
 
 #### `check_vmware_tools`
 
-| Tools Status        | Nagios State | Description                                                                                                              |
-| ------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `toolsOk`           | `OK`         | Ideal state, no problems with VMware Tools (or `open-vm-tools`) detected.                                                |
-| `toolsOld`          | `WARNING`    | Outdated VMware Tools installation. The host ESXi system was likely recently updated.                                    |
-| `toolsNotRunning`   | `CRITICAL`   | VMware Tools (or `open-vm-tools`) not currently running. It likely crashed or was terminated due to low memory scenario. |
-| `toolsNotInstalled` | `CRITICAL`   | Fresh virtual environment, or VMware Tools removed as part of an upgrade of an existing installation.                    |
+This plugin evaluates two fields from the [GuestInfo Data
+Object][vsphere-guestinfo-data-object] vSphere API:
+
+- `toolsRunningStatus`
+- `toolsVersionStatus2`
+
+The overall state of the service check is determined based on these fields,
+the power state of an evaluated VM and whether the `powered-off` flag has been
+specified:
+
+- If it has not, then powered off VMs are ignored.
+- If it has, then powered off VMs are evaluated for combinations of field
+  values that appear to be relevant.
+  - For example, this plugin does not consider VMware Tools with a "not
+    running" status to be a problem if the Virtual Machine is powered off.
+
+To simplify this table, most entries assume that the `powered-off` flag has
+been specified. If it is not specified in your Nagios instance, then powered
+off Virtual Machines will be ignored; the details of this table will not apply
+to those Virtual Machines.
+
+| VM Power State | `powered-off` flag | API Field Name        | API Field Value          | Nagios State | Description                                                                                                              |
+| -------------- | ------------------ | --------------------- | ------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Powered Off    | Yes                | `toolsRunningStatus`  | `guestToolsNotRunning`   | `OK`         | Virtual Machine is not running, so VMware Tools is not expected to run either.                                           |
+| Powered On     | N/A                | `toolsRunningStatus`  | `guestToolsNotRunning`   | `CRITICAL`   | VMware Tools (or `open-vm-tools`) not currently running. It likely crashed or was terminated due to low memory scenario. |
+| N/A            | Yes                | `toolsVersionStatus2` | `guestToolsNotInstalled` | `CRITICAL`   | VMware Tools is not installed.                                                                                           |
+| N/A            | Yes                | `toolsVersionStatus2` | `guestToolsCurrent`      | `OK`         | Ideal state, no problems with VMware Tools (or `open-vm-tools`) detected.                                                |
+| N/A            | Yes                | `toolsVersionStatus2` | `guestToolsUnmanaged`    | `OK`         | *Assumed* to be an `OK` state; VMware Tools is installed, but it is not managed by VMware (e.g., `open-vm-tools`).       |
+| N/A            | Yes                | `toolsVersionStatus2` | `guestToolsTooOld`       | `CRITICAL`   | VMware Tools is installed, but the version is too old.                                                                   |
+| N/A            | Yes                | `toolsVersionStatus2` | `guestToolsSupportedOld` | `WARNING`    | VMware Tools is installed, supported, but a newer version is available.                                                  |
+| N/A            | Yes                | `toolsVersionStatus2` | `guestToolsNeedUpgrade`  | `WARNING`    | VMware Tools is installed, but the version is not current. Assumed to be roughly equivalent to `guestToolsSupportedOld`. |
+| N/A            | Yes                | `toolsVersionStatus2` | `guestToolsSupportedNew` | `OK`         | VMware Tools is installed, supported, and newer than the version available on the host.                                  |
+| N/A            | Yes                | `toolsVersionStatus2` | `guestToolsTooNew`       | `CRITICAL`   | VMware Tools is installed, and the version is known to be too new to work correctly with this virtual machine.           |
+| N/A            | Yes                | `toolsRunningStatus2` | `guestToolsBlacklisted`  | `CRITICAL`   | VMware Tools is installed, but the installed version is known to have a grave bug and should be immediately upgraded.    |
+| N/A            | Yes                | `toolsVersionStatus2` | Unknown to this plugin   | `UNKNOWN`    | This field in the vSphere API has been extended and this library hasn't been updated to account for those changes.       |
 
 #### `check_vmware_vcpus`
 
@@ -2166,5 +2195,7 @@ SOFTWARE.
 [vsphere-default-alarms]: <https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.monitoring.doc/GUID-82933270-1D72-4CF3-A1AF-E5A1343F62DE.html>
 
 [nagios-state-types]: <https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/statetypes.html>
+
+[vsphere-guestinfo-data-object]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.vm.GuestInfo.html>
 
 <!-- []: PLACEHOLDER "DESCRIPTION_HERE" -->
