@@ -221,10 +221,14 @@ func GetHostSystemByName(ctx context.Context, c *vim25.Client, hsName string, da
 
 // FilterHostSystemByName accepts a collection of HostSystems and a HostSystem
 // name to filter against. An error is returned if the list of HostSystems is
-// empty or if a match was not found.
-func FilterHostSystemByName(hss []mo.HostSystem, hsName string) (mo.HostSystem, error) {
+// empty or if a match was not found. The matching HostSystem is returned
+// along with the number of HostSystems that were excluded.
+func FilterHostSystemByName(hss []mo.HostSystem, hsName string) (mo.HostSystem, int, error) {
 
 	funcTimeStart := time.Now()
+
+	// If error condition, no exclusions are made
+	numExcluded := 0
 
 	defer func() {
 		logger.Printf(
@@ -234,28 +238,34 @@ func FilterHostSystemByName(hss []mo.HostSystem, hsName string) (mo.HostSystem, 
 	}()
 
 	if len(hss) == 0 {
-		return mo.HostSystem{}, fmt.Errorf("received empty list of HostSystems to filter by name")
+		return mo.HostSystem{}, numExcluded, fmt.Errorf("received empty list of HostSystems to filter by name")
 	}
 
 	for _, hs := range hss {
 		if hs.Name == hsName {
-			return hs, nil
+			// we are excluding everything but the single name value match
+			numExcluded = len(hss) - 1
+			return hs, numExcluded, nil
 		}
 	}
 
-	return mo.HostSystem{}, fmt.Errorf(
+	return mo.HostSystem{}, numExcluded, fmt.Errorf(
 		"error: failed to retrieve HostSystem using provided name %q",
 		hsName,
 	)
 
 }
 
-// FilterHostSystemByID receives a collection of HostSystems and a HostSystem ID
-// to filter against. An error is returned if the list of HostSystems is empty
-// or if a match was not found.
-func FilterHostSystemByID(hss []mo.HostSystem, hsID string) (mo.HostSystem, error) {
+// FilterHostSystemByID receives a collection of HostSystems and a HostSystem
+// ID to filter against. An error is returned if the list of HostSystems is
+// empty or if a match was not found. The matching HostSystem is returned
+// along with the number of HostSystems that were excluded.
+func FilterHostSystemByID(hss []mo.HostSystem, hsID string) (mo.HostSystem, int, error) {
 
 	funcTimeStart := time.Now()
+
+	// If error condition, no exclusions are made
+	numExcluded := 0
 
 	defer func() {
 		logger.Printf(
@@ -265,18 +275,20 @@ func FilterHostSystemByID(hss []mo.HostSystem, hsID string) (mo.HostSystem, erro
 	}()
 
 	if len(hss) == 0 {
-		return mo.HostSystem{}, fmt.Errorf("received empty list of HostSystems to filter by ID")
+		return mo.HostSystem{}, numExcluded, fmt.Errorf("received empty list of HostSystems to filter by ID")
 	}
 
 	for _, hs := range hss {
 		// return match, if available
 
 		if hs.Summary.Host.Value == hsID {
-			return hs, nil
+			// we are excluding everything but the single ID value match
+			numExcluded = len(hss) - 1
+			return hs, numExcluded, nil
 		}
 	}
 
-	return mo.HostSystem{}, fmt.Errorf(
+	return mo.HostSystem{}, numExcluded, fmt.Errorf(
 		"error: failed to retrieve HostSystem using provided id %q",
 		hsID,
 	)
@@ -384,7 +396,7 @@ func HostSystemMemoryUsageOneLineCheckSummary(
 	}()
 
 	// drop any powered off/suspended VMs from our list
-	hsVMs = FilterVMsByPowerState(hsVMs, false)
+	hsVMs, _ = FilterVMsByPowerState(hsVMs, false)
 
 	var vmsMemUsedBytes int64 // int64 used to prevent int32 overflow
 	for _, vm := range hsVMs {
@@ -601,7 +613,7 @@ func HostSystemCPUUsageOneLineCheckSummary(
 	}()
 
 	// drop any powered off/suspended VMs from our list
-	hsVMs = FilterVMsByPowerState(hsVMs, false)
+	hsVMs, _ = FilterVMsByPowerState(hsVMs, false)
 
 	var vmsCPUUsage int64
 	for _, vm := range hsVMs {

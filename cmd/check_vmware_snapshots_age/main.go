@@ -198,8 +198,17 @@ func main() {
 		return
 	}
 
+	log.Debug().
+		Str("vms_evaluated", strings.Join(vsphere.VMNames(vms), ", ")).
+		Msg("Evaluated Virtual Machines")
+
 	log.Debug().Msg("Drop any VMs we've been asked to exclude from checks")
-	filteredVMs := vsphere.ExcludeVMsByName(vms, cfg.IgnoredVMs)
+	filteredVMs, numVMsExcludedByName := vsphere.ExcludeVMsByName(vms, cfg.IgnoredVMs)
+
+	log.Debug().
+		Str("vms_filtered_by_name", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Msg("VMs after name filtering")
 
 	// NOTE: This plugin is hard-coded to evaluate powered off and powered
 	// on VMs equally. I'm not sure whether ignoring powered off VMs by
@@ -210,15 +219,21 @@ func main() {
 	//
 	// Please expand on some use cases for ignoring powered off VMs by default.
 	//
-	// log.Debug().Msg("Filter VMs to specified power state")
-	// filteredVMs = vsphere.FilterVMsByPowerState(filteredVMs, cfg.PoweredOff)
-
-	log.Debug().
-		Str("virtual_machines", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
-		Msg("Filtered VMs")
+	// 	log.Debug().Msg("Filter VMs to specified power state")
+	// 	filteredVMs, numVMsExcludedByPowerState := vsphere.FilterVMsByPowerState(filteredVMs, cfg.PoweredOff)
+	//
+	// 	log.Debug().
+	// 		Str("vms_filtered_by_power_state", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
+	// 		Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
+	// 		Msg("VMs after power state filtering")
 
 	log.Debug().Msg("Filter VMs to those with snapshots")
-	vmsWithSnapshots := vsphere.FilterVMsWithSnapshots(filteredVMs)
+	vmsWithSnapshots, numVMsExcludedBySnapshots := vsphere.FilterVMsWithSnapshots(filteredVMs)
+
+	log.Debug().
+		Str("vms_filtered_by_snapshot_state", strings.Join(vsphere.VMNames(vmsWithSnapshots), ", ")).
+		Int("vms_excluded_by_snapshot_state", numVMsExcludedBySnapshots).
+		Msg("VMs after snapshot filtering")
 
 	log.Debug().Msg("Build snapshot sets for bulk processing")
 	snapshotSets := make(vsphere.SnapshotSummarySets, 0, len(vmsWithSnapshots))

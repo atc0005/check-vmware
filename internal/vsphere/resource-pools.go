@@ -22,7 +22,6 @@ import (
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
-	"github.com/vmware/govmomi/vim25/types"
 )
 
 // ErrResourcePoolMemoryUsageThresholdCrossed indicates that specified
@@ -378,20 +377,8 @@ func ResourcePoolsMemoryReport(
 		)
 	}
 
-	poweredVMs := FilterVMsByPowerState(rpsVMs, false)
-
-	// collect powered on/off counts for all VMs associated with specified
-	// Resource Pools (e.g., stats display)
-	var vmsPoweredOn int
-	var vmsPoweredOff int
-	for _, vm := range rpsVMs {
-		switch {
-		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn:
-			vmsPoweredOn++
-		default:
-			vmsPoweredOff++
-		}
-	}
+	poweredVMs, numVMsPoweredOff := FilterVMsByPowerState(rpsVMs, false)
+	numVMsPoweredOn := len(poweredVMs)
 
 	fmt.Fprintf(
 		&report,
@@ -402,11 +389,11 @@ func ResourcePoolsMemoryReport(
 	)
 
 	switch {
-	case vmsPoweredOn == 0:
+	case numVMsPoweredOn == 0:
 		fmt.Fprintf(
 			&report,
 			"* None (visible); %d powered off%s",
-			vmsPoweredOff,
+			numVMsPoweredOff,
 			nagios.CheckOutputEOL,
 		)
 
@@ -451,7 +438,7 @@ func ResourcePoolsMemoryReport(
 		fmt.Fprintf(
 			&report,
 			"* None (visible); %d powered off%s",
-			vmsPoweredOff,
+			numVMsPoweredOff,
 			nagios.CheckOutputEOL,
 		)
 

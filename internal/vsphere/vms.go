@@ -95,7 +95,7 @@ func (vpcs VirtualMachinePowerCycleUptimeStatus) TopTenOK() []mo.VirtualMachine 
 // Only powered on VMs are considered.
 func (vpcs VirtualMachinePowerCycleUptimeStatus) BottomTenOK() []mo.VirtualMachine {
 
-	poweredOnVMs := FilterVMsByPowerState(vpcs.VMsOK, false)
+	poweredOnVMs, _ := FilterVMsByPowerState(vpcs.VMsOK, false)
 
 	// sort before we sample the VMs so that we only get the ones with lowest
 	// power cycle uptime; require that the VM be powered on in order to sort
@@ -238,7 +238,7 @@ func GetVMsFromDatastore(ctx context.Context, c *vim25.Client, ds mo.Datastore, 
 	}
 
 	for i := range ds.Vm {
-		vm, err := FilterVMByID(allVMs, ds.Vm[i].Value)
+		vm, _, err := FilterVMByID(allVMs, ds.Vm[i].Value)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to retrieve VM for VM ID %s: %w",
@@ -288,10 +288,14 @@ func GetVMByName(ctx context.Context, c *vim25.Client, vmName string, datacenter
 
 // FilterVMByName accepts a collection of VirtualMachines and a VirtualMachine
 // name to filter against. An error is returned if the list of VirtualMachines
-// is empty or if a match was not found.
-func FilterVMByName(vms []mo.VirtualMachine, vmName string) (mo.VirtualMachine, error) {
+// is empty or if a match was not found. The matching VirtualMachine is
+// returned along with the number of VirtualMachines that were excluded.
+func FilterVMByName(vms []mo.VirtualMachine, vmName string) (mo.VirtualMachine, int, error) {
 
 	funcTimeStart := time.Now()
+
+	// If error condition, no VMs are excluded
+	numExcluded := 0
 
 	defer func() {
 		logger.Printf(
@@ -301,16 +305,18 @@ func FilterVMByName(vms []mo.VirtualMachine, vmName string) (mo.VirtualMachine, 
 	}()
 
 	if len(vms) == 0 {
-		return mo.VirtualMachine{}, fmt.Errorf("received empty list of virtual machines to filter by name")
+		return mo.VirtualMachine{}, numExcluded, fmt.Errorf("received empty list of virtual machines to filter by name")
 	}
 
 	for _, vm := range vms {
 		if vm.Name == vmName {
-			return vm, nil
+			// we are excluding everything but the single name value match
+			numExcluded = len(vms) - 1
+			return vm, numExcluded, nil
 		}
 	}
 
-	return mo.VirtualMachine{}, fmt.Errorf(
+	return mo.VirtualMachine{}, numExcluded, fmt.Errorf(
 		"error: failed to retrieve VirtualMachine using provided name %q",
 		vmName,
 	)
@@ -319,10 +325,14 @@ func FilterVMByName(vms []mo.VirtualMachine, vmName string) (mo.VirtualMachine, 
 
 // FilterVMByID receives a collection of VirtualMachines and a VirtualMachine
 // ID to filter against. An error is returned if the list of VirtualMachines
-// is empty or if a match was not found.
-func FilterVMByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, error) {
+// is empty or if a match was not found. The matching VirtualMachine is
+// returned along with the number of VirtualMachines that were excluded.
+func FilterVMByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, int, error) {
 
 	funcTimeStart := time.Now()
+
+	// If error condition, no VMs are excluded
+	numExcluded := 0
 
 	defer func() {
 		logger.Printf(
@@ -332,17 +342,21 @@ func FilterVMByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, erro
 	}()
 
 	if len(vms) == 0 {
-		return mo.VirtualMachine{}, fmt.Errorf("received empty list of virtual machines to filter by ID")
+		return mo.VirtualMachine{},
+			numExcluded,
+			fmt.Errorf("received empty list of virtual machines to filter by ID")
 	}
 
 	for _, vm := range vms {
 		// return match, if available
 		if vm.Self.Value == vmID {
-			return vm, nil
+			// we are excluding everything but the single ID value match
+			numExcluded = len(vms) - 1
+			return vm, numExcluded, nil
 		}
 	}
 
-	return mo.VirtualMachine{}, fmt.Errorf(
+	return mo.VirtualMachine{}, numExcluded, fmt.Errorf(
 		"error: failed to retrieve VirtualMachine using provided ID %q",
 		vmID,
 	)
@@ -351,16 +365,18 @@ func FilterVMByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, erro
 
 // ExcludeVMsByName receives a collection of VirtualMachines and a list of VMs
 // that should be ignored. A new collection minus ignored VirtualMachines is
-// returned. If the collection of VirtualMachine is empty, an empty collection
-// is returned. If the list of ignored VirtualMachines is empty, the same
-// items from the received collection of VirtualMachines is returned. If the
-// list of ignored VirtualMachines is greater than the list of received
+// returned along with the number of VMs that were excluded.
+//
+// If the collection of VirtualMachine is empty, an empty collection is
+// returned. If the list of ignored VirtualMachines is empty, the same items
+// from the received collection of VirtualMachines is returned. If the list of
+// ignored VirtualMachines is greater than the list of received
 // VirtualMachines, then only matching VirtualMachines will be excluded and
 // any others silently skipped.
-func ExcludeVMsByName(allVMs []mo.VirtualMachine, ignoreList []string) []mo.VirtualMachine {
+func ExcludeVMsByName(allVMs []mo.VirtualMachine, ignoreList []string) ([]mo.VirtualMachine, int) {
 
 	if len(allVMs) == 0 || len(ignoreList) == 0 {
-		return allVMs
+		return allVMs, 0
 	}
 
 	vmsToKeep := make([]mo.VirtualMachine, 0, len(allVMs))
@@ -376,15 +392,18 @@ func ExcludeVMsByName(allVMs []mo.VirtualMachine, ignoreList []string) []mo.Virt
 		return strings.ToLower(vmsToKeep[i].Name) < strings.ToLower(vmsToKeep[j].Name)
 	})
 
-	return vmsToKeep
+	numExcluded := len(allVMs) - len(vmsToKeep)
+
+	return vmsToKeep, numExcluded
 
 }
 
 // FilterVMsByPowerState accepts a collection of VirtualMachines and a boolean
 // value to indicate whether powered off VMs should be included in the
 // returned collection. If the collection of provided VirtualMachines is
-// empty, an empty collection is returned.
-func FilterVMsByPowerState(vms []mo.VirtualMachine, includePoweredOff bool) []mo.VirtualMachine {
+// empty, an empty collection is returned. The collection is returned along
+// with the number of VirtualMachines that were excluded.
+func FilterVMsByPowerState(vms []mo.VirtualMachine, includePoweredOff bool) ([]mo.VirtualMachine, int) {
 
 	// setup early so we can reference it from deferred stats output
 	filteredVMs := make([]mo.VirtualMachine, 0, len(vms))
@@ -401,7 +420,7 @@ func FilterVMsByPowerState(vms []mo.VirtualMachine, includePoweredOff bool) []mo
 	}(vms, &filteredVMs)
 
 	if len(vms) == 0 {
-		return vms
+		return vms, 0
 	}
 
 	for _, vm := range vms {
@@ -421,14 +440,17 @@ func FilterVMsByPowerState(vms []mo.VirtualMachine, includePoweredOff bool) []mo
 		}
 	}
 
-	return filteredVMs
+	numExcluded := len(vms) - len(filteredVMs)
+
+	return filteredVMs, numExcluded
 
 }
 
 // FilterVMsByPowerCycleUptime filters the provided collection of
 // VirtualMachines to just those with WARNING or CRITICAL values based on
-// provided thresholds.
-func FilterVMsByPowerCycleUptime(vms []mo.VirtualMachine, warningThreshold int, criticalThreshold int) []mo.VirtualMachine {
+// provided thresholds. The collection is returned along with the number of
+// VirtualMachines that were excluded.
+func FilterVMsByPowerCycleUptime(vms []mo.VirtualMachine, warningThreshold int, criticalThreshold int) ([]mo.VirtualMachine, int) {
 
 	// setup early so we can reference it from deferred stats output
 	var vmsWithIssues []mo.VirtualMachine
@@ -455,7 +477,9 @@ func FilterVMsByPowerCycleUptime(vms []mo.VirtualMachine, warningThreshold int, 
 		}
 	}
 
-	return vmsWithIssues
+	numExcluded := len(vms) - len(vmsWithIssues)
+
+	return vmsWithIssues, numExcluded
 
 }
 

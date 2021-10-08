@@ -63,8 +63,9 @@ func ExceedsAge(snapshotCreated time.Time, days int) bool {
 
 // FilterVMsWithSnapshots filters the provided collection of VirtualMachines
 // to just those with snapshots. Later steps are responsible for validating
-// whether those snapshots place the VMs into non-OK states.
-func FilterVMsWithSnapshots(vms []mo.VirtualMachine) []mo.VirtualMachine {
+// whether those snapshots place the VMs into non-OK states. The collection is
+// returned along with the number of VirtualMachines that were excluded.
+func FilterVMsWithSnapshots(vms []mo.VirtualMachine) ([]mo.VirtualMachine, int) {
 
 	// setup early so we can reference it from deferred stats output
 	var vmsWithSnapshots []mo.VirtualMachine
@@ -87,7 +88,9 @@ func FilterVMsWithSnapshots(vms []mo.VirtualMachine) []mo.VirtualMachine {
 		}
 	}
 
-	return vmsWithSnapshots
+	numExcluded := len(vms) - len(vmsWithSnapshots)
+
+	return vmsWithSnapshots, numExcluded
 
 }
 

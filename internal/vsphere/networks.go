@@ -82,10 +82,14 @@ func GetNetworkByName(ctx context.Context, c *vim25.Client, netName string, data
 
 // FilterNetworkByName accepts a collection of Networks and a Network name to
 // filter against. An error is returned if the list of Networks is empty or if
-// a match was not found.
-func FilterNetworkByName(nets []mo.Network, netName string) (mo.Network, error) {
+// a match was not found. The matching Network is returned along with the
+// number of Networks that were excluded.
+func FilterNetworkByName(nets []mo.Network, netName string) (mo.Network, int, error) {
 
 	funcTimeStart := time.Now()
+
+	// If error condition, no exclusions are made
+	numExcluded := 0
 
 	defer func() {
 		logger.Printf(
@@ -95,16 +99,18 @@ func FilterNetworkByName(nets []mo.Network, netName string) (mo.Network, error) 
 	}()
 
 	if len(nets) == 0 {
-		return mo.Network{}, fmt.Errorf("received empty list of networks to filter by name")
+		return mo.Network{}, numExcluded, fmt.Errorf("received empty list of networks to filter by name")
 	}
 
 	for _, net := range nets {
 		if net.Name == netName {
-			return net, nil
+			// we are excluding everything but the single name value match
+			numExcluded = len(nets) - 1
+			return net, numExcluded, nil
 		}
 	}
 
-	return mo.Network{}, fmt.Errorf(
+	return mo.Network{}, numExcluded, fmt.Errorf(
 		"error: failed to retrieve Network using provided name %q",
 		netName,
 	)
@@ -113,10 +119,14 @@ func FilterNetworkByName(nets []mo.Network, netName string) (mo.Network, error) 
 
 // FilterNetworkByID receives a collection of Networks and a Network ID to
 // filter against. An error is returned if the list of Networks is empty or if
-// a match was not found.
-func FilterNetworkByID(nets []mo.Network, netID string) (mo.Network, error) {
+// a match was not found. The matching Network is returned along with the
+// number of Networks that were excluded.
+func FilterNetworkByID(nets []mo.Network, netID string) (mo.Network, int, error) {
 
 	funcTimeStart := time.Now()
+
+	// If error condition, no exclusions are made
+	numExcluded := 0
 
 	defer func() {
 		logger.Printf(
@@ -126,17 +136,19 @@ func FilterNetworkByID(nets []mo.Network, netID string) (mo.Network, error) {
 	}()
 
 	if len(nets) == 0 {
-		return mo.Network{}, fmt.Errorf("received empty list of networks to filter by ID")
+		return mo.Network{}, numExcluded, fmt.Errorf("received empty list of networks to filter by ID")
 	}
 
 	for _, net := range nets {
 		// return match, if available
 		if net.Self.Value == netID {
-			return net, nil
+			// we are excluding everything but the single ID value match
+			numExcluded = len(nets) - 1
+			return net, numExcluded, nil
 		}
 	}
 
-	return mo.Network{}, fmt.Errorf(
+	return mo.Network{}, numExcluded, fmt.Errorf(
 		"error: failed to retrieve Network using provided id %q",
 		netID,
 	)

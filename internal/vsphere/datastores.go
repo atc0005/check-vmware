@@ -236,10 +236,14 @@ func GetDatastoreByName(ctx context.Context, c *vim25.Client, dsName string, dat
 
 // FilterDatastoreByName accepts a collection of Datastores and a Datastore
 // name to filter against. An error is returned if the list of Datastores is
-// empty or if a match was not found.
-func FilterDatastoreByName(dss []mo.Datastore, dsName string) (mo.Datastore, error) {
+// empty or if a match was not found. The matching Datastore is returned
+// along with the number of Datastores that were excluded.
+func FilterDatastoreByName(dss []mo.Datastore, dsName string) (mo.Datastore, int, error) {
 
 	funcTimeStart := time.Now()
+
+	// If error condition, no exclusions are made
+	numExcluded := 0
 
 	defer func() {
 		logger.Printf(
@@ -249,16 +253,18 @@ func FilterDatastoreByName(dss []mo.Datastore, dsName string) (mo.Datastore, err
 	}()
 
 	if len(dss) == 0 {
-		return mo.Datastore{}, fmt.Errorf("received empty list of datastores to filter by name")
+		return mo.Datastore{}, numExcluded, fmt.Errorf("received empty list of datastores to filter by name")
 	}
 
 	for _, ds := range dss {
 		if ds.Name == dsName {
-			return ds, nil
+			// we are excluding everything but the single name value match
+			numExcluded = len(dss) - 1
+			return ds, numExcluded, nil
 		}
 	}
 
-	return mo.Datastore{}, fmt.Errorf(
+	return mo.Datastore{}, numExcluded, fmt.Errorf(
 		"error: failed to retrieve Datastore using provided name %q",
 		dsName,
 	)
@@ -267,10 +273,14 @@ func FilterDatastoreByName(dss []mo.Datastore, dsName string) (mo.Datastore, err
 
 // FilterDatastoreByID receives a collection of Datastores and a Datastore ID
 // to filter against. An error is returned if the list of Datastores is empty
-// or if a match was not found.
-func FilterDatastoreByID(dss []mo.Datastore, dsID string) (mo.Datastore, error) {
+// or if a match was not found. The matching Datastore is returned along with
+// the number of Datastores that were excluded.
+func FilterDatastoreByID(dss []mo.Datastore, dsID string) (mo.Datastore, int, error) {
 
 	funcTimeStart := time.Now()
+
+	// If error condition, no exclusions are made
+	numExcluded := 0
 
 	defer func() {
 		logger.Printf(
@@ -280,7 +290,7 @@ func FilterDatastoreByID(dss []mo.Datastore, dsID string) (mo.Datastore, error) 
 	}()
 
 	if len(dss) == 0 {
-		return mo.Datastore{}, fmt.Errorf("received empty list of datastores to filter by ID")
+		return mo.Datastore{}, numExcluded, fmt.Errorf("received empty list of datastores to filter by ID")
 	}
 
 	for _, ds := range dss {
@@ -288,11 +298,13 @@ func FilterDatastoreByID(dss []mo.Datastore, dsID string) (mo.Datastore, error) 
 		// TODO: Refactor, use abstract type here
 		// ds.GetManagedEntity().Reference().Value
 		if ds.Summary.Datastore.Value == dsID {
-			return ds, nil
+			// we are excluding everything but the single name value match
+			numExcluded = len(dss) - 1
+			return ds, numExcluded, nil
 		}
 	}
 
-	return mo.Datastore{}, fmt.Errorf(
+	return mo.Datastore{}, numExcluded, fmt.Errorf(
 		"error: failed to retrieve Datastore using provided id %q",
 		dsID,
 	)
