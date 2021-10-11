@@ -416,6 +416,11 @@ func FilterVMsByPowerState(vms []mo.VirtualMachine, includePoweredOff bool) []mo
 			vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff:
 			filteredVMs = append(filteredVMs, vm)
 
+		// Consider suspended VMs to be "powered off"
+		case includePoweredOff &&
+			vm.Runtime.PowerState == types.VirtualMachinePowerStateSuspended:
+			filteredVMs = append(filteredVMs, vm)
+
 		}
 	}
 
