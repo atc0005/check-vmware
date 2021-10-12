@@ -170,7 +170,7 @@ func VirtualCPUsReport(
 	// Regardless of earlier decision whether to exclude powered off VMs from
 	// vCPU consumption calculations, we explicitly exclude here in order to
 	// limit evaluation of "most recently booted" to powered on VMs only.
-	poweredOnVMs := FilterVMsByPowerState(evaluatedVMs, false)
+	poweredOnVMs, _ := FilterVMsByPowerState(evaluatedVMs, false)
 
 	// sort before we sample the VMs so that we only get the ones with lowest
 	// power cycle uptime; require that the VM be powered on in order to sort

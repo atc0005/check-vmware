@@ -197,15 +197,25 @@ func main() {
 		return
 	}
 
-	log.Debug().Msg("Drop any VMs we've been asked to exclude from checks")
-	filteredVMs := vsphere.ExcludeVMsByName(vms, cfg.IgnoredVMs)
+	log.Debug().
+		Str("vms_evaluated", strings.Join(vsphere.VMNames(vms), ", ")).
+		Msg("Evaluated Virtual Machines")
 
-	log.Debug().Msg("Filter VMs to specified power state")
-	filteredVMs = vsphere.FilterVMsByPowerState(filteredVMs, cfg.PoweredOff)
+	log.Debug().Msg("Drop any VMs we've been asked to exclude from checks")
+	filteredVMs, numVMsExcludedByName := vsphere.ExcludeVMsByName(vms, cfg.IgnoredVMs)
 
 	log.Debug().
-		Str("virtual_machines", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
-		Msg("Filtered VMs")
+		Str("vms_filtered_by_name", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Msg("VMs after name filtering")
+
+	log.Debug().Msg("Filter VMs to specified power state")
+	filteredVMs, numVMsExcludedByPowerState := vsphere.FilterVMsByPowerState(filteredVMs, cfg.PoweredOff)
+
+	log.Debug().
+		Str("vms_filtered_by_power_state", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
+		Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
+		Msg("VMs after power state filtering")
 
 	// here we diverge from other plugins
 

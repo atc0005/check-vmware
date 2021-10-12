@@ -74,7 +74,9 @@ func GetVMToolsStatusSummary(vms []mo.VirtualMachine) nagios.ServiceState {
 // to just those with non-OK status, unless powered off VMs are also
 // evaluated. In that case, ignore any powered off VirtualMachines with VMware
 // Tools in a "not running" state which are otherwise current or unmanaged.
-func FilterVMsWithToolsIssues(vms []mo.VirtualMachine, includePoweredOff bool) []mo.VirtualMachine {
+// The collection is returned along with the number of VirtualMachines that
+// were excluded.
+func FilterVMsWithToolsIssues(vms []mo.VirtualMachine, includePoweredOff bool) ([]mo.VirtualMachine, int) {
 
 	// setup early so we can reference it from deferred stats output
 	vmsWithIssues := make([]mo.VirtualMachine, 0, len(vms))
@@ -105,7 +107,9 @@ func FilterVMsWithToolsIssues(vms []mo.VirtualMachine, includePoweredOff bool) [
 
 	}
 
-	return vmsWithIssues
+	numVMsWithoutIssues := len(vms) - len(vmsWithIssues)
+
+	return vmsWithIssues, numVMsWithoutIssues
 
 }
 

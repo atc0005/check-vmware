@@ -193,25 +193,45 @@ func main() {
 		return
 	}
 
-	log.Debug().Msg("Drop any VMs we've been asked to exclude from checks")
-	filteredVMs := vsphere.ExcludeVMsByName(vms, cfg.IgnoredVMs)
+	log.Debug().
+		Str("vms_evaluated", strings.Join(vsphere.VMNames(vms), ", ")).
+		Msg("Evaluated Virtual Machines")
 
-	log.Debug().Msg("Filter VMs to specified power state")
-	filteredVMs = vsphere.FilterVMsByPowerState(filteredVMs, cfg.PoweredOff)
+	log.Debug().Msg("Drop any VMs we've been asked to exclude from checks")
+	filteredVMs, numVMsExcludedByName := vsphere.ExcludeVMsByName(vms, cfg.IgnoredVMs)
 
 	log.Debug().
-		Str("virtual_machines", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
-		Msg("Filtered VMs")
+		Str("vms_filtered_by_name", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Msg("VMs after name filtering")
+
+	log.Debug().Msg("Filter VMs to specified power state")
+	filteredVMs, numVMsExcludedByPowerState := vsphere.FilterVMsByPowerState(filteredVMs, cfg.PoweredOff)
+
+	log.Debug().
+		Str("vms_filtered_by_power_state", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
+		Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
+		Msg("VMs after power state filtering")
 
 	log.Debug().Msg("Filter VMs to those with VMware Tools issues")
-	vmsWithIssues := vsphere.FilterVMsWithToolsIssues(filteredVMs, cfg.PoweredOff)
+	filteredVMs, numVMsWithoutToolsIssues := vsphere.FilterVMsWithToolsIssues(filteredVMs, cfg.PoweredOff)
+	vmsWithIssues := filteredVMs
+	numVMsWithToolsIssues := len(vmsWithIssues)
+
+	log.Debug().
+		Str("vms_filtered_by_tools_issues", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
+		Int("vms_with_tools_issues", numVMsWithToolsIssues).
+		Int("vms_excluded_by_tools_issues", numVMsWithoutToolsIssues).
+		Msg("VMs after tools issues filtering")
 
 	if len(vmsWithIssues) > 0 {
 
 		log.Error().
-			Int("vms_with_issues", len(vmsWithIssues)).
 			Int("vms_total", len(vms)).
-			Int("vms_filtered", len(filteredVMs)).
+			Int("vms_without_issues", numVMsWithoutToolsIssues).
+			Int("vms_with_issues", numVMsWithToolsIssues).
+			Int("vms_excluded_by_name", numVMsExcludedByName).
+			Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
 			Msg("issues with VMware Tools found")
 
 		serviceState := vsphere.GetVMToolsStatusSummary(vmsWithIssues)
@@ -251,7 +271,8 @@ func main() {
 
 	log.Debug().
 		Int("vms_total", len(vms)).
-		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_with_issues", numVMsWithToolsIssues).
+		Int("vms_without_issues", numVMsWithoutToolsIssues).
 		Msg("No problems with VMware Tools found")
 
 	nagiosExitState.LastError = nil

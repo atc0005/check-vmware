@@ -374,8 +374,9 @@ func (hvs HardwareVersions) MeetsMinVersion(minVer int) bool {
 }
 
 // FilterVMsWithOldHardware filters the provided collection of VirtualMachines
-// to just those with older hardware versions.
-func FilterVMsWithOldHardware(vms []mo.VirtualMachine, hwIndex HardwareVersionsIndex) []mo.VirtualMachine {
+// to just those with older hardware versions. The collection is returned
+// along with the number of VirtualMachines that were excluded.
+func FilterVMsWithOldHardware(vms []mo.VirtualMachine, hwIndex HardwareVersionsIndex) ([]mo.VirtualMachine, int) {
 
 	var vmsWithOldHardware []mo.VirtualMachine
 	for _, vm := range vms {
@@ -388,7 +389,9 @@ func FilterVMsWithOldHardware(vms []mo.VirtualMachine, hwIndex HardwareVersionsI
 		return strings.ToLower(vmsWithOldHardware[i].Name) > strings.ToLower(vmsWithOldHardware[j].Name)
 	})
 
-	return vmsWithOldHardware
+	numExcluded := len(vms) - len(vmsWithOldHardware)
+
+	return vmsWithOldHardware, numExcluded
 
 }
 
