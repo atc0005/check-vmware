@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/atc0005/go-nagios"
 
@@ -172,16 +173,16 @@ func main() {
 		Int("host_system_warning_threshold", hsUsage.WarningThreshold).
 		Msg("HostSystem CPU usage summary")
 
-	log.Debug().Msg("Retrieving VMs for host")
+	log.Debug().Msg("Retrieving VMs on host")
 	hsVMs, hsVMsFetchErr := vsphere.GetVMsFromContainer(ctx, c.Client, true, hostSystem.ManagedEntity)
 	if hsVMsFetchErr != nil {
 		log.Error().Err(hsVMsFetchErr).Msg(
-			"error retrieving VirtualMachines from host",
+			"error retrieving VirtualMachines on host",
 		)
 
 		nagiosExitState.LastError = hsVMsFetchErr
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"%s: Error retrieving VirtualMachines from host %q",
+			"%s: Error retrieving VirtualMachines on host %q",
 			nagios.StateCRITICALLabel,
 			cfg.HostSystemName,
 		)
@@ -189,6 +190,10 @@ func main() {
 
 		return
 	}
+
+	log.Debug().
+		Str("vms_on_host", strings.Join(vsphere.VMNames(hsVMs), ", ")).
+		Msg("Virtual Machines on host")
 
 	log.Debug().Msg("Evaluating host CPU usage state")
 	switch {
