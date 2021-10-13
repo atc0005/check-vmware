@@ -80,11 +80,11 @@ func GetNetworkByName(ctx context.Context, c *vim25.Client, netName string, data
 
 }
 
-// FilterNetworkByName accepts a collection of Networks and a Network name to
+// FilterNetworksByName accepts a collection of Networks and a Network name to
 // filter against. An error is returned if the list of Networks is empty or if
 // a match was not found. The matching Network is returned along with the
 // number of Networks that were excluded.
-func FilterNetworkByName(nets []mo.Network, netName string) (mo.Network, int, error) {
+func FilterNetworksByName(nets []mo.Network, netName string) (mo.Network, int, error) {
 
 	funcTimeStart := time.Now()
 
@@ -93,7 +93,7 @@ func FilterNetworkByName(nets []mo.Network, netName string) (mo.Network, int, er
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterNetworkByName func.\n",
+			"It took %v to execute FilterNetworksByName func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()
@@ -117,11 +117,11 @@ func FilterNetworkByName(nets []mo.Network, netName string) (mo.Network, int, er
 
 }
 
-// FilterNetworkByID receives a collection of Networks and a Network ID to
+// FilterNetworksByID receives a collection of Networks and a Network ID to
 // filter against. An error is returned if the list of Networks is empty or if
 // a match was not found. The matching Network is returned along with the
 // number of Networks that were excluded.
-func FilterNetworkByID(nets []mo.Network, netID string) (mo.Network, int, error) {
+func FilterNetworksByID(nets []mo.Network, netID string) (mo.Network, int, error) {
 
 	funcTimeStart := time.Now()
 
@@ -130,7 +130,7 @@ func FilterNetworkByID(nets []mo.Network, netID string) (mo.Network, int, error)
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterNetworkByID func.\n",
+			"It took %v to execute FilterNetworksByID func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()

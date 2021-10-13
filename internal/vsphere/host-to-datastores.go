@@ -306,7 +306,7 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 					)
 
 					dsID := dsIDLookupErr.DatastoreID
-					datastore, _, filterErr := FilterDatastoreByID(allDatastores, dsID)
+					datastore, _, filterErr := FilterDatastoresByID(allDatastores, dsID)
 					if filterErr != nil {
 
 						// This is our second attempt to lookup the

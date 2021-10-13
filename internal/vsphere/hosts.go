@@ -219,11 +219,11 @@ func GetHostSystemByName(ctx context.Context, c *vim25.Client, hsName string, da
 
 }
 
-// FilterHostSystemByName accepts a collection of HostSystems and a HostSystem
-// name to filter against. An error is returned if the list of HostSystems is
-// empty or if a match was not found. The matching HostSystem is returned
-// along with the number of HostSystems that were excluded.
-func FilterHostSystemByName(hss []mo.HostSystem, hsName string) (mo.HostSystem, int, error) {
+// FilterHostSystemsByName accepts a collection of HostSystems and a
+// HostSystem name to filter against. An error is returned if the list of
+// HostSystems is empty or if a match was not found. The matching HostSystem
+// is returned along with the number of HostSystems that were excluded.
+func FilterHostSystemsByName(hss []mo.HostSystem, hsName string) (mo.HostSystem, int, error) {
 
 	funcTimeStart := time.Now()
 
@@ -232,7 +232,7 @@ func FilterHostSystemByName(hss []mo.HostSystem, hsName string) (mo.HostSystem, 
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterHostSystemByName func.\n",
+			"It took %v to execute FilterHostSystemsByName func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()
@@ -256,11 +256,11 @@ func FilterHostSystemByName(hss []mo.HostSystem, hsName string) (mo.HostSystem, 
 
 }
 
-// FilterHostSystemByID receives a collection of HostSystems and a HostSystem
+// FilterHostSystemsByID receives a collection of HostSystems and a HostSystem
 // ID to filter against. An error is returned if the list of HostSystems is
 // empty or if a match was not found. The matching HostSystem is returned
 // along with the number of HostSystems that were excluded.
-func FilterHostSystemByID(hss []mo.HostSystem, hsID string) (mo.HostSystem, int, error) {
+func FilterHostSystemsByID(hss []mo.HostSystem, hsID string) (mo.HostSystem, int, error) {
 
 	funcTimeStart := time.Now()
 
@@ -269,7 +269,7 @@ func FilterHostSystemByID(hss []mo.HostSystem, hsID string) (mo.HostSystem, int,
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterHostSystemByID func.\n",
+			"It took %v to execute FilterHostSystemsByID func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()
