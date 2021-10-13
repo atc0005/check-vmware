@@ -221,12 +221,14 @@ func main() {
 		Msg("VMs after power state filtering")
 
 	log.Debug().Msg("Filter VMs to those with VMware Tools issues")
-	filteredVMs, numVMsWithoutToolsIssues := vsphere.FilterVMsWithToolsIssues(filteredVMs, cfg.PoweredOff)
-	vmsWithIssues := filteredVMs
+	// Create a new collection of VMs with just those found to have Tools
+	// issues. Keep filteredVMs collection as-is; we'll use that as our
+	// "baseline" against the list of VMs found with Tools issues.
+	vmsWithIssues, numVMsWithoutToolsIssues := vsphere.FilterVMsWithToolsIssues(filteredVMs, cfg.PoweredOff)
 	numVMsWithToolsIssues := len(vmsWithIssues)
 
 	log.Debug().
-		Str("vms_filtered_by_tools_issues", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
+		Str("vms_filtered_by_tools_issues", strings.Join(vsphere.VMNames(vmsWithIssues), ", ")).
 		Int("vms_with_tools_issues", numVMsWithToolsIssues).
 		Int("vms_excluded_by_tools_issues", numVMsWithoutToolsIssues).
 		Msg("VMs after tools issues filtering")
