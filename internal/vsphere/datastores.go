@@ -234,11 +234,11 @@ func GetDatastoreByName(ctx context.Context, c *vim25.Client, dsName string, dat
 
 }
 
-// FilterDatastoreByName accepts a collection of Datastores and a Datastore
+// FilterDatastoresByName accepts a collection of Datastores and a Datastore
 // name to filter against. An error is returned if the list of Datastores is
-// empty or if a match was not found. The matching Datastore is returned
-// along with the number of Datastores that were excluded.
-func FilterDatastoreByName(dss []mo.Datastore, dsName string) (mo.Datastore, int, error) {
+// empty or if a match was not found. The matching Datastore is returned along
+// with the number of Datastores that were excluded.
+func FilterDatastoresByName(dss []mo.Datastore, dsName string) (mo.Datastore, int, error) {
 
 	funcTimeStart := time.Now()
 
@@ -247,7 +247,7 @@ func FilterDatastoreByName(dss []mo.Datastore, dsName string) (mo.Datastore, int
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterDatastoreByName func.\n",
+			"It took %v to execute FilterDatastoresByName func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()
@@ -271,11 +271,11 @@ func FilterDatastoreByName(dss []mo.Datastore, dsName string) (mo.Datastore, int
 
 }
 
-// FilterDatastoreByID receives a collection of Datastores and a Datastore ID
+// FilterDatastoresByID receives a collection of Datastores and a Datastore ID
 // to filter against. An error is returned if the list of Datastores is empty
 // or if a match was not found. The matching Datastore is returned along with
 // the number of Datastores that were excluded.
-func FilterDatastoreByID(dss []mo.Datastore, dsID string) (mo.Datastore, int, error) {
+func FilterDatastoresByID(dss []mo.Datastore, dsID string) (mo.Datastore, int, error) {
 
 	funcTimeStart := time.Now()
 
@@ -284,7 +284,7 @@ func FilterDatastoreByID(dss []mo.Datastore, dsID string) (mo.Datastore, int, er
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterDatastoreByID func.\n",
+			"It took %v to execute FilterDatastoresByID func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()

@@ -238,7 +238,7 @@ func GetVMsFromDatastore(ctx context.Context, c *vim25.Client, ds mo.Datastore, 
 	}
 
 	for i := range ds.Vm {
-		vm, _, err := FilterVMByID(allVMs, ds.Vm[i].Value)
+		vm, _, err := FilterVMsByID(allVMs, ds.Vm[i].Value)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to retrieve VM for VM ID %s: %w",
@@ -286,11 +286,12 @@ func GetVMByName(ctx context.Context, c *vim25.Client, vmName string, datacenter
 
 }
 
-// FilterVMByName accepts a collection of VirtualMachines and a VirtualMachine
-// name to filter against. An error is returned if the list of VirtualMachines
-// is empty or if a match was not found. The matching VirtualMachine is
-// returned along with the number of VirtualMachines that were excluded.
-func FilterVMByName(vms []mo.VirtualMachine, vmName string) (mo.VirtualMachine, int, error) {
+// FilterVMsByName accepts a collection of VirtualMachines and a
+// VirtualMachine name to filter against. An error is returned if the list of
+// VirtualMachines is empty or if a match was not found. The matching
+// VirtualMachine is returned along with the number of VirtualMachines that
+// were excluded.
+func FilterVMsByName(vms []mo.VirtualMachine, vmName string) (mo.VirtualMachine, int, error) {
 
 	funcTimeStart := time.Now()
 
@@ -299,7 +300,7 @@ func FilterVMByName(vms []mo.VirtualMachine, vmName string) (mo.VirtualMachine, 
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterVMByName func.\n",
+			"It took %v to execute FilterVMsByName func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()
@@ -323,11 +324,11 @@ func FilterVMByName(vms []mo.VirtualMachine, vmName string) (mo.VirtualMachine, 
 
 }
 
-// FilterVMByID receives a collection of VirtualMachines and a VirtualMachine
+// FilterVMsByID receives a collection of VirtualMachines and a VirtualMachine
 // ID to filter against. An error is returned if the list of VirtualMachines
 // is empty or if a match was not found. The matching VirtualMachine is
 // returned along with the number of VirtualMachines that were excluded.
-func FilterVMByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, int, error) {
+func FilterVMsByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, int, error) {
 
 	funcTimeStart := time.Now()
 
@@ -336,7 +337,7 @@ func FilterVMByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, int,
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute FilterVMByID func.\n",
+			"It took %v to execute FilterVMsByID func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()
