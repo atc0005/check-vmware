@@ -408,6 +408,11 @@ func DatastoreUsageReport(
 
 	printVMSummary := func(powerState types.VirtualMachinePowerState) {
 
+		// Skip efforts to list VM summary details if there is nothing to show.
+		if len(dsUsageSummary.VMs) == 0 {
+			return
+		}
+
 		var powerStateVMs int
 		switch powerState {
 		case types.VirtualMachinePowerStatePoweredOn:
