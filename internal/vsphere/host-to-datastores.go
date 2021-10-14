@@ -343,9 +343,9 @@ func (hdi HostToDatastoreIndex) DatastoreIDToName(dsID string) (string, error) {
 }
 
 // ValidateVirtualMachinePairings receives a VirtualMachine ID, a collection
-// of Datastore IDs associated with the VM and an optional list of Datastore
-// names to ignore. A list of mismatched datastores is returned along with any
-// errors that may occur.
+// of all Datastores to evaluate, the Datastore IDs associated with the VM and
+// an optional list of Datastore names to ignore. A list of mismatched
+// datastores is returned along with any errors that may occur.
 func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 	vmHostID string,
 	allDatastores []mo.Datastore,
