@@ -38,6 +38,7 @@ const (
 	MgObjRefTypeResourcePool    string = "ResourcePool"
 	MgObjRefTypeHostSystem      string = "HostSystem"
 	MgObjRefTypeVirtualMachine  string = "VirtualMachine"
+	MgObjRefTypeVirtualApp      string = "VirtualApp"
 )
 
 // used with snapshots reports that provide Long Service Output

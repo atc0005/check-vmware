@@ -156,8 +156,8 @@ func GetVMs(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.Virtua
 }
 
 // GetVMsFromContainer receives one or many ManagedEntity values for Folder,
-// Datacenter, ComputeResource, ResourcePool, or HostSystem types and returns
-// a list of VirtualMachine object references.
+// Datacenter, ComputeResource, ResourcePool, VirtualApp or HostSystem types
+// and returns a list of VirtualMachine object references.
 //
 // The propsSubset boolean value indicates whether a subset of properties per
 // VirtualMachine are retrieved. If requested, a subset of all available
