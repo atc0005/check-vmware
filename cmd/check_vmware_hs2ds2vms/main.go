@@ -494,10 +494,81 @@ func main() {
 	// var vmsWithPairingIssues []mo.VirtualMachine
 	for _, vm := range filteredVMs {
 
-		hostName := h2dIdx[vm.Runtime.Host.Value].Host.Name
+		// Assert that VM host MOID value is available for each VM or abort.
+		// This field may be unavailable if sufficient permissions are not
+		// provided to the service account executing this plugin.
+		var hostMOID string
+		switch {
+
+		case vm.Runtime.Host == nil || vm.Runtime.Host.Value == "":
+			var lookupReason string
+
+			switch {
+			case vm.Runtime.Host == nil:
+				lookupReason = "MOID is nil"
+
+			case vm.Runtime.Host.Value == "":
+				lookupReason = "MOID is empty"
+			}
+
+			errMsg := fmt.Sprintf(
+				"error retrieving associated Host MOID for VM %s: %s",
+				vm.Name,
+				lookupReason,
+			)
+
+			log.Error().Msg(errMsg)
+
+			nagiosExitState.LastError = errors.New(errMsg)
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"%s: Error retrieving Host IDs for VMs in evaluated resource pools",
+				nagios.StateCRITICALLabel,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+			return
+
+		default:
+
+			// Safe to reference now that we have guarded against potential nil
+			// Host field pointer and empty MOID.
+			hostMOID = vm.Runtime.Host.Value
+
+			log.Debug().
+				Str("vm", vm.Name).
+				Str("hostMOID", vm.Runtime.Host.Value).
+				Msg("VM name and host MOID value")
+
+		}
+
+		// After asserting that the host MOID value is set for the VM we are
+		// evaluating, use that ID to get the host/datastores pairing (valid
+		// datastores for VMs running on the host).
+		vmHostDatastoresPairing, ok := h2dIdx[hostMOID]
+		if !ok {
+			// FAILURE due to host id lookup; this should not occur since we
+			// now (as of GH-393) create stub entries for hosts without
+			// matching datastores (via specified custom attribute).
+			errMsg := "error retrieving host/datastores pairing using Host MOID " + hostMOID
+			log.Error().Msg(errMsg)
+
+			nagiosExitState.LastError = errors.New(errMsg)
+
+			// Same "overall" failure scenario as failing to retrieve the host
+			// ID for a VM; the index lookup failure is what sets them apart.
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"%s: Error retrieving Host IDs for VMs in evaluated resource pools",
+				nagios.StateCRITICALLabel,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+			return
+		}
+
+		hostName := vmHostDatastoresPairing.Host.Name
 
 		mismatchedDatastores, lookupErr := h2dIdx.ValidateVirtualMachinePairings(
-			vm.Summary.Runtime.Host.Value,
+			hostMOID,
 			dss,
 			vm.Datastore,
 			cfg.IgnoredDatastores,
