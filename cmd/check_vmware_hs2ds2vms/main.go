@@ -166,7 +166,7 @@ func main() {
 
 	log.Debug().
 		Str("resource_pools", strings.Join(rpNames, ", ")).
-		Msg("")
+		Msg("evaluated resource pools")
 
 	log.Debug().Msg("Retrieving vms from eligible resource pools")
 	rpEntityVals := make([]mo.ManagedEntity, 0, len(resourcePools))
@@ -352,7 +352,7 @@ func main() {
 			Str("datastore", ds.Name).
 			Str("custom_attribute_name", ds.CustomAttribute.Name).
 			Str("custom_attribute_value", ds.CustomAttribute.Value).
-			Msg("")
+			Msg("datastores DatastoreWithCA list entry")
 	}
 
 	hostCustomAttributeName := cfg.HostCAName()
@@ -421,9 +421,10 @@ func main() {
 	for _, host := range hosts {
 		log.Debug().
 			Str("host", host.Name).
+			Str("hostMOID", host.Self.Value).
 			Str("custom_attribute_name", host.CustomAttribute.Name).
 			Str("custom_attribute_value", host.CustomAttribute.Value).
-			Msg("")
+			Msg("host, hostMOID and custom attributes used to build index")
 	}
 
 	h2dIdx, h2dIdxErr := vsphere.NewHostToDatastoreIndex(
@@ -480,8 +481,9 @@ func main() {
 
 		log.Debug().
 			Str("host", h2dIdx[hostID].Host.Name).
+			Str("hostMOID", hostID).
 			Str("datastores", dsNamesForHost).
-			Msg("host/datastores pairing")
+			Msg("host/datastores pairing from index")
 	}
 
 	// now process VMs
