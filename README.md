@@ -1561,7 +1561,7 @@ command definitions and Nagios configuration files.
 #### CLI invocation
 
 ```ShellSession
-/usr/lib/nagios/plugins/check_vmware_vhw --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --exclude-rp "Desktops" --ignore-vm "test1.example.com,redmine.example.com,TESTING-AC,RHEL7-TEST" --ca-name "Location" --ca-prefix-sep "-" --trust-cert --log-level info
+/usr/lib/nagios/plugins/check_vmware_hs2ds2vms --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --exclude-rp "Desktops" --ignore-vm "test1.example.com,redmine.example.com,TESTING-AC,RHEL7-TEST" --ca-name "Location" --ca-prefix-sep "-" --trust-cert --log-level info
 ```
 
 See the [configuration options](#configuration-options) section for all
