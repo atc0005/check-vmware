@@ -427,6 +427,9 @@ func main() {
 			Msg("host, hostMOID and custom attributes used to build index")
 	}
 
+	// Create host-to-datastore index for *all* hosts and datastores, even
+	// where a host has no matching datastores (via specificied literal or
+	// prefix custom attribute values).
 	h2dIdx, h2dIdxErr := vsphere.NewHostToDatastoreIndex(
 		hosts,
 		datastores,
