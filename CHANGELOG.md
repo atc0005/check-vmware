@@ -26,6 +26,81 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.21.0] - 2021-10-13
+
+### Overview
+
+- Expand support for Nagios Performance Data
+- Refactoring/cleanup
+- Bugfixes
+- Dependency updates
+- built using Go 1.16.9
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- Add additional Nagios Performance Data metrics
+  - `check_vmware_datastore` plugin
+    - `time`
+    - `vms`
+    - `vms_powered_on`
+    - `vms_powered_off`
+  - `check_vmware_tools` plugin
+    - `time`
+    - `vms`
+    - `vms_excluded_by_name`
+    - `vms_excluded_by_power_state`
+    - `vms_with_tools_issues`
+    - `vms_without_tools_issues`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+- Add project security policy
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.8` to `1.16.9`
+
+- `check_vmware_datastore` plugin
+  - (GH-361) List number of VMs on datastore along with their power state
+  - (GH-362) Refactor datastore usage summary generation
+- `check_vmware_tools` plugin
+  - refactor: Update Tools summary func to provide ServiceState
+  - (GH-366, GH-370) Consider additional VMware Tools status fields when
+    determining overall plugin state (`toolsStatus` is deprecated, see README
+    updates for details)
+  - (GH-372) Extend structured logging fields to include Performance Data
+    metrics
+- `check_vmware_host_cpu` plugin
+  - (GH-377) Log VMs found running on host
+- `check_vmware_host_memory` plugin
+  - (GH-378) Log VMs found running on host
+- `internal/vsphere` package
+  - (GH-375) Evaluate suspended VMs as powered off VMs
+  - (GH-373) Update `FilterXByY()` and `ExcludeXByY()` functions to return the
+    number of excluded items
+  - (GH-380) Update filter func names that return a single value to still use
+    plural source naming
+
+### Removed
+
+- Linux x86 assets no longer provided for new releases
+  - still available via local builds (e.g., `make linux` or `make linux-x86`)
+
+### Fixed
+
+- (GH-342) Download links generated incorrectly
+- (GH-340) Missing footnote reference for v0.20.0 release
+- (GH-358) Potential nil pointer dereference in `vsphere.FilterVMByID()`
+- (GH-359) Potential nil pointer dereference in `vsphere.dedupeVMs()`
+- (GH-365) Powered off VMs without running Tools are listed as problem VMs
+  when `--powered-off` flag is specified
+- (GH-374) The `vphere.FilterVMsByPowerState()` function should evaluate
+  suspended VMs
+
 ## [v0.20.0] - 2021-10-01
 
 ### Overview
@@ -980,7 +1055,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.20.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.21.0...HEAD
+[v0.21.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.21.0
 [v0.20.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.20.0
 [v0.19.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.19.1
 [v0.19.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.19.0
