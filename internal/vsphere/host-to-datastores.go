@@ -10,7 +10,6 @@ package vsphere
 import (
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -116,9 +115,17 @@ type VMToMismatchedDatastoreNames map[string]VMHostDatastoresPairing
 
 // NewHostToDatastoreIndex receives a collection of hosts and datastores
 // wrapped with user-specified Custom Attributes, prefix separators and a
-// boolean flag indicating whether prefix matching will be used. The resulting
-// HostToDatastoreIndex is returned if no errors occur, otherwise nil and the
-// error.
+// boolean flag indicating whether prefix matching will be used.
+//
+// The index is created using each ESXi host's MOID as the key and a
+// HostDatastoresPairing type as the value. This effectively provides a
+// mapping between a host and all datastores with matching specified custom
+// attribute. If no datastores are found with a matching specified custom
+// attribute, an empty list of datastores is recorded for the host to indicate
+// this.
+//
+// The resulting HostToDatastoreIndex is returned if no errors occur,
+// otherwise nil and the error.
 func NewHostToDatastoreIndex(
 	hosts []HostWithCA,
 	datastores []DatastoreWithCA,
@@ -129,13 +136,50 @@ func NewHostToDatastoreIndex(
 
 	h2dIdx := make(HostToDatastoreIndex)
 
+	// Review incoming hosts slice for problem entries.
+	for i, host := range hosts {
+		logger.Printf(
+			"index: %d, hostname: %v, hostID: %v",
+			i,
+			host.Name,
+			host.Self.Value,
+		)
+	}
+
+	// Review datastore slice for problem entries.
+	for i, datastore := range datastores {
+		logger.Printf(
+			"index: %d, datastore name: %v, datastore ID: %v",
+			i,
+			datastore.Name,
+			datastore.Self.Value,
+		)
+	}
+
+	// Ensure that we were given some useful values to work with, otherwise
+	// abort early.
+	switch {
+	case len(hosts) == 0:
+		return nil, errors.New("empty hosts list provided; at least one host is required")
+	case len(datastores) == 0:
+		return nil, errors.New("empty datastores list provided; at least one datastore is required")
+	case usingPrefixes && hostCASep == "":
+		return nil, errors.New("missing host custom attribute prefix; prefix is required if using attribute prefix matching")
+	case usingPrefixes && datastoreCASep == "":
+		return nil, errors.New("missing datastore custom attribute prefix; prefix is required if using attribute prefix matching")
+	}
+
 	for _, host := range hosts {
 
-		hostID := host.Summary.Host.Value
+		hostID := host.Self.Value
 
 		for _, datastore := range datastores {
 
-			if usingPrefixes {
+			// FIXME: Generating the hostCAValPrefix for each datastore is
+			// inefficient, but not a serious problem. Review this with
+			// future refactoring work.
+			switch {
+			case usingPrefixes:
 				hostCAValPrefix := strings.SplitN(
 					host.CustomAttribute.Value,
 					hostCASep,
@@ -153,19 +197,77 @@ func NewHostToDatastoreIndex(
 						Host:       host,
 						Datastores: append(h2dIdx[hostID].Datastores, datastore),
 					}
-				}
-			}
 
-			// not using prefixes, so literal values
-			if strings.EqualFold(datastore.CustomAttribute.Value, host.CustomAttribute.Value) {
-				h2dIdx[hostID] = HostDatastoresPairing{
-					Host:       host,
-					Datastores: append(h2dIdx[hostID].Datastores, datastore),
+					logger.Printf(
+						"successful match using prefix equal fold between datastore %q (%q) and host %q (%q)",
+						datastore.Name,
+						datastoreCAValPrefix,
+						host.Name,
+						hostCAValPrefix,
+					)
+
+					continue
 				}
+
+				logger.Printf(
+					"failed match using prefix equal fold between datastore %q (%q) and host %q (%q)",
+					datastore.Name,
+					datastoreCAValPrefix,
+					host.Name,
+					hostCAValPrefix,
+				)
+
+			default:
+				// not using prefixes, so literal values
+				if strings.EqualFold(datastore.CustomAttribute.Value, host.CustomAttribute.Value) {
+					h2dIdx[hostID] = HostDatastoresPairing{
+						Host:       host,
+						Datastores: append(h2dIdx[hostID].Datastores, datastore),
+					}
+
+					logger.Printf(
+						"successful match using literal equal fold between datastore %q (%q) and host %q (%q)",
+						datastore.Name,
+						datastore.CustomAttribute.Value,
+						host.Name,
+						host.CustomAttribute.Value,
+					)
+
+					continue
+				}
+
+				logger.Printf(
+					"failed match using literal equal fold between datastore %q (%q) and host %q (%q)",
+					datastore.Name,
+					datastore.CustomAttribute.Value,
+					host.Name,
+					host.CustomAttribute.Value,
+				)
 			}
 		}
+
+		// If we did not find any matching datastores for the host (via
+		// specified custom attribute) note as much by adding a
+		// HostDatastoresPairing entry to the index for the host with an empty
+		// datastores list.
+		if _, ok := h2dIdx[hostID]; !ok {
+			logger.Printf(
+				"Adding zero value entry for host [name: %s, id: %s",
+				host.Name,
+				hostID,
+			)
+
+			h2dIdx[hostID] = HostDatastoresPairing{
+				Host:       host,
+				Datastores: []DatastoreWithCA{},
+			}
+		}
+
 	}
 
+	// Baseline validation check. Unless an invalid custom attribute value was
+	// provided we should have at last one pairing for the provided hosts and
+	// datastores.
 	if len(h2dIdx) == 0 {
 		return nil, ErrHostDatastorePairingFailed
 	}
@@ -198,7 +300,7 @@ func (hdi HostToDatastoreIndex) DatastoreIDToNameIndex() DatastoreIDToNameIndex 
 	dsIdx := make(DatastoreIDToNameIndex)
 	for hostID := range hdi {
 		for _, ds := range hdi[hostID].Datastores {
-			dsIdx[ds.Summary.Datastore.Value] = ds.Name
+			dsIdx[ds.Self.Value] = ds.Name
 		}
 	}
 
@@ -212,7 +314,7 @@ func (hdi HostToDatastoreIndex) IsDatastoreIDInIndex(dsID string) bool {
 
 	for hostID := range hdi {
 		for _, ds := range hdi[hostID].Datastores {
-			if strings.EqualFold(dsID, ds.Summary.Datastore.Value) {
+			if strings.EqualFold(dsID, ds.Self.Value) {
 				return true
 			}
 		}
@@ -228,7 +330,7 @@ func (hdi HostToDatastoreIndex) DatastoreIDToName(dsID string) (string, error) {
 
 	for hostID := range hdi {
 		for _, ds := range hdi[hostID].Datastores {
-			if ds.Summary.Datastore.Value == dsID {
+			if ds.Self.Value == dsID {
 				return ds.Name, nil
 			}
 		}
@@ -241,9 +343,9 @@ func (hdi HostToDatastoreIndex) DatastoreIDToName(dsID string) (string, error) {
 }
 
 // ValidateVirtualMachinePairings receives a VirtualMachine ID, a collection
-// of Datastore IDs associated with the VM and an optional list of Datastore
-// names to ignore. A list of mismatched datastores is returned along with any
-// errors that may occur.
+// of all Datastores to evaluate, the Datastore IDs associated with the VM and
+// an optional list of Datastore names to ignore. A list of mismatched
+// datastores is returned along with any errors that may occur.
 func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 	vmHostID string,
 	allDatastores []mo.Datastore,
@@ -274,7 +376,7 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 	}
 
 	for _, hostPairedDS := range hdi[vmHostID].Datastores {
-		hostDatastoreIDs = append(hostDatastoreIDs, hostPairedDS.Summary.Datastore.Value)
+		hostDatastoreIDs = append(hostDatastoreIDs, hostPairedDS.Self.Value)
 	}
 
 	var datastoreMismatches []string
@@ -294,13 +396,7 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 				// possibility before reporting the lookup failure.
 				var dsIDLookupErr *ErrHostDatastoreIdxIDToNameLookupFailed
 				if errors.As(lookupErr, &dsIDLookupErr) {
-
-					// TODO: Switch this off after sufficient testing has
-					// been completed. For now, explicitly send to stderr
-					// to keep Nagios from routing it to notifications or
-					// the web UI
-					fmt.Fprintf(
-						os.Stderr,
+					logger.Printf(
 						"Initial lookup failed for %s\n",
 						vmDatastoreID,
 					)
@@ -324,13 +420,7 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 					}
 
 					if textutils.InList(datastore.Name, dsNamesToIgnore, true) {
-
-						// TODO: Switch this off after sufficient testing
-						// has been completed. For now, explicitly send to
-						// stderr to keep Nagios from routing it to
-						// notifications or the web UI
-						fmt.Fprintf(
-							os.Stderr,
+						logger.Printf(
 							"Second lookup successful; name: %s id: %s\n",
 							vmDatastoreID,
 							datastore.Name,
