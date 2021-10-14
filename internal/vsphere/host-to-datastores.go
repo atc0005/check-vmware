@@ -10,7 +10,6 @@ package vsphere
 import (
 	"errors"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -294,13 +293,7 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 				// possibility before reporting the lookup failure.
 				var dsIDLookupErr *ErrHostDatastoreIdxIDToNameLookupFailed
 				if errors.As(lookupErr, &dsIDLookupErr) {
-
-					// TODO: Switch this off after sufficient testing has
-					// been completed. For now, explicitly send to stderr
-					// to keep Nagios from routing it to notifications or
-					// the web UI
-					fmt.Fprintf(
-						os.Stderr,
+					logger.Printf(
 						"Initial lookup failed for %s\n",
 						vmDatastoreID,
 					)
@@ -324,13 +317,7 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 					}
 
 					if textutils.InList(datastore.Name, dsNamesToIgnore, true) {
-
-						// TODO: Switch this off after sufficient testing
-						// has been completed. For now, explicitly send to
-						// stderr to keep Nagios from routing it to
-						// notifications or the web UI
-						fmt.Fprintf(
-							os.Stderr,
+						logger.Printf(
 							"Second lookup successful; name: %s id: %s\n",
 							vmDatastoreID,
 							datastore.Name,
