@@ -130,7 +130,7 @@ func NewHostToDatastoreIndex(
 
 	for _, host := range hosts {
 
-		hostID := host.Summary.Host.Value
+		hostID := host.Self.Value
 
 		for _, datastore := range datastores {
 
@@ -197,7 +197,7 @@ func (hdi HostToDatastoreIndex) DatastoreIDToNameIndex() DatastoreIDToNameIndex 
 	dsIdx := make(DatastoreIDToNameIndex)
 	for hostID := range hdi {
 		for _, ds := range hdi[hostID].Datastores {
-			dsIdx[ds.Summary.Datastore.Value] = ds.Name
+			dsIdx[ds.Self.Value] = ds.Name
 		}
 	}
 
@@ -211,7 +211,7 @@ func (hdi HostToDatastoreIndex) IsDatastoreIDInIndex(dsID string) bool {
 
 	for hostID := range hdi {
 		for _, ds := range hdi[hostID].Datastores {
-			if strings.EqualFold(dsID, ds.Summary.Datastore.Value) {
+			if strings.EqualFold(dsID, ds.Self.Value) {
 				return true
 			}
 		}
@@ -227,7 +227,7 @@ func (hdi HostToDatastoreIndex) DatastoreIDToName(dsID string) (string, error) {
 
 	for hostID := range hdi {
 		for _, ds := range hdi[hostID].Datastores {
-			if ds.Summary.Datastore.Value == dsID {
+			if ds.Self.Value == dsID {
 				return ds.Name, nil
 			}
 		}
@@ -273,7 +273,7 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 	}
 
 	for _, hostPairedDS := range hdi[vmHostID].Datastores {
-		hostDatastoreIDs = append(hostDatastoreIDs, hostPairedDS.Summary.Datastore.Value)
+		hostDatastoreIDs = append(hostDatastoreIDs, hostPairedDS.Self.Value)
 	}
 
 	var datastoreMismatches []string
