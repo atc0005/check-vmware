@@ -182,6 +182,12 @@ func GetVMsFromContainer(ctx context.Context, c *vim25.Client, propsSubset bool,
 
 	for _, obj := range objs {
 
+		logger.Printf(
+			"Retrieving VirtualMachines from object %q of type %q",
+			obj.Name,
+			obj.Self.Type,
+		)
+
 		var vmsFromContainer []mo.VirtualMachine
 
 		err := getObjects(ctx, c, &vmsFromContainer, obj.Reference(), propsSubset)
