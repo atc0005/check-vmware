@@ -14,10 +14,11 @@ github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
 github.com/rs/zerolog/log
-# github.com/vmware/govmomi v0.26.1
+# github.com/vmware/govmomi v0.27.0
 ## explicit
 github.com/vmware/govmomi
 github.com/vmware/govmomi/find
+github.com/vmware/govmomi/history
 github.com/vmware/govmomi/internal
 github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
