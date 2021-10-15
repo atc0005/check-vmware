@@ -177,8 +177,20 @@ func GetEligibleRPs(ctx context.Context, c *vim25.Client, includeRPs []string, e
 		// Because this is a hidden pool and non-obvious, we try to avoid
 		// requiring the sysadmin to specify it explicitly.
 		if strings.EqualFold(rp.Name, ParentResourcePool) {
-			if len(includeRPs) != 0 {
-				continue
+
+			// Someone has explicitly requested that only ParentResourcePool
+			// be included for evaluation. Record it, skip all others.
+			if len(includeRPs) == 1 &&
+				strings.EqualFold(includeRPs[0], ParentResourcePool) {
+				rps = append(rps, rp)
+				break
+			}
+
+			// No inclusion or exclusion lists have been specified. Record
+			// ParentResourcePool, skip all others.
+			if len(includeRPs) == 0 && len(excludeRPs) == 0 {
+				rps = append(rps, rp)
+				break
 			}
 		}
 
