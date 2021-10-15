@@ -170,7 +170,7 @@ func GetVMsFromContainer(ctx context.Context, c *vim25.Client, propsSubset bool,
 
 	// declare this early so that we can grab a pointer to it in order to
 	// access the entries later
-	var vms []mo.VirtualMachine
+	var allVMs []mo.VirtualMachine
 
 	defer func(vms *[]mo.VirtualMachine) {
 		logger.Printf(
@@ -178,11 +178,13 @@ func GetVMsFromContainer(ctx context.Context, c *vim25.Client, propsSubset bool,
 			time.Since(funcTimeStart),
 			len(*vms),
 		)
-	}(&vms)
+	}(&allVMs)
 
 	for _, obj := range objs {
 
-		err := getObjects(ctx, c, &vms, obj.Reference(), propsSubset)
+		var vmsFromContainer []mo.VirtualMachine
+
+		err := getObjects(ctx, c, &vmsFromContainer, obj.Reference(), propsSubset)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to retrieve VirtualMachines from object: %s: %w",
@@ -190,17 +192,20 @@ func GetVMsFromContainer(ctx context.Context, c *vim25.Client, propsSubset bool,
 				err,
 			)
 		}
+
+		allVMs = append(allVMs, vmsFromContainer...)
+
 	}
 
 	// remove any potential duplicate entries which could occur if we are
 	// evaluating the (default, hidden) 'Resources' Resource Pool
-	vms = dedupeVMs(vms)
+	allVMs = dedupeVMs(allVMs)
 
-	sort.Slice(vms, func(i, j int) bool {
-		return strings.ToLower(vms[i].Name) < strings.ToLower(vms[j].Name)
+	sort.Slice(allVMs, func(i, j int) bool {
+		return strings.ToLower(allVMs[i].Name) < strings.ToLower(allVMs[j].Name)
 	})
 
-	return vms, nil
+	return allVMs, nil
 
 }
 
