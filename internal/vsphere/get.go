@@ -55,6 +55,15 @@ func getResourcePoolPropsSubset() []string {
 		"runtime",
 	}
 }
+func getVirtualAppPropsSubset() []string {
+	// https://code.vmware.com/apis/1067/vsphere
+	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.VirtualApp.html
+
+	// All of the properties that we need from a VirtualApp are inherited from
+	// the enclosing ResourcePool, so we just use the same properties list
+	// here also.
+	return getResourcePoolPropsSubset()
+}
 func getHostSystemPropsSubset() []string {
 	// https://code.vmware.com/apis/1067/vsphere
 	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.HostSystem.html
@@ -116,15 +125,18 @@ func getObjects(ctx context.Context, c *vim25.Client, dst interface{}, objRef ty
 	var objCount int
 	defer func(count *int, kind *string) {
 		logger.Printf(
-			"It took %v to execute getObjects func (and retrieve %d %s objects).\n",
+			"It took %v to execute getObjects func (and retrieve %d %s objects from %s).\n",
 			time.Since(funcTimeStart),
 			*count,
 			*kind,
+			objRef.Type,
 		)
 	}(&objCount, &objKind)
 
 	// Create a view of caller-specified objects
 	m := view.NewManager(c)
+
+	logger.Printf("Requested objRef type is %s", objRef.Type)
 
 	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.view.ContainerView.html
 	switch objRef.Type {
@@ -133,6 +145,12 @@ func getObjects(ctx context.Context, c *vim25.Client, dst interface{}, objRef ty
 	case MgObjRefTypeComputeResource:
 	case MgObjRefTypeResourcePool:
 	case MgObjRefTypeHostSystem:
+
+	// A VirtualApp is not documented as a supported managed object type to
+	// use for a container view, but testing has shown that it works for our
+	// purposes.
+	case MgObjRefTypeVirtualApp:
+
 	default:
 		return fmt.Errorf(
 			"unsupported container type specified for ContainerView: %s",
@@ -212,6 +230,16 @@ func getObjects(ctx context.Context, c *vim25.Client, dst interface{}, objRef ty
 
 		if propsSubset {
 			props = getResourcePoolPropsSubset()
+		}
+
+	case *[]mo.VirtualApp:
+		defer func() {
+			objCount = len(*u)
+		}()
+		objKind = "VirtualApp"
+
+		if propsSubset {
+			props = getVirtualAppPropsSubset()
 		}
 
 	default:
