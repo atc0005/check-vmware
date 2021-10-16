@@ -17,6 +17,7 @@ or endorsed by VMware, Inc.
 - [Project home](#project-home)
 - [Overview](#overview)
   - [Output](#output)
+  - [Performance Data](#performance-data)
   - [Optional evaluation](#optional-evaluation)
   - [`check_vmware_tools`](#check_vmware_tools)
   - [`check_vmware_vcpus`](#check_vmware_vcpus)
@@ -148,18 +149,18 @@ or endorsed by VMware, Inc.
 
 ## Project home
 
-See [our GitHub repo](https://github.com/atc0005/check-vmware) for the latest
-code, to file an issue or submit improvements for review and potential
-inclusion into the project.
+See [our GitHub repo][repo-url] for the latest code, to file an issue or
+submit improvements for review and potential inclusion into the project.
 
 Just to be 100% clear: this project is not affiliated with or endorsed by
 VMware, Inc.
 
 ## Overview
 
-This repo contains various tools used to monitor/validate VMware environments.
+This repo contains various tools and plugins used to monitor/validate VMware
+environments.
 
-| Tool Name                         | Description                                                                         |
+| Plugin or Tool Name               | Description                                                                         |
 | --------------------------------- | ----------------------------------------------------------------------------------- |
 | `check_vmware_tools`              | Nagios plugin used to monitor VMware Tools installations.                           |
 | `check_vmware_vcpus`              | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
@@ -199,6 +200,37 @@ here](https://github.com/atc0005/check-vmware/discussions/323). Future
 releases of this project may modify plugins to not emit to `stderr` by default
 or the example command definitions may be updated to specify the `--log-level
 "disabled"` CLI flag.
+
+### Performance Data
+
+Adding support for Performance Data / Metrics to plugins in this project is an
+ongoing effort.
+
+Consult the table below (and the GH issues listed) for the metrics implemented
+thus far, the applicable GH issue for pending work and the [Add Performance
+Data / Metrics support](https://github.com/atc0005/check-vmware/projects/1)
+project board for a quick overview of work.
+
+Please provide feedback on the applicable issue(s) if you have any, good or
+bad.
+
+| Plugin                            | Emitted Performance Data / Metrics                                                                                                                                                                          |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `check_vmware_tools`              | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `vms_with_tools_issues`, `vms_without_tools_issues`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated` |
+| `check_vmware_vcpus`              | TBD. See GH-355 for details.                                                                                                                                                                                |
+| `check_vmware_vhw`                | TBD. See GH-356 for details.                                                                                                                                                                                |
+| `check_vmware_hs2ds2vms`          | TBD. See GH-348 for details.                                                                                                                                                                                |
+| `check_vmware_datastore`          | `time`, `datastore_usage`, `datastore_storage_remaining`, `vms`, `vms_powered_on`, `vms_powered_off`                                                                                                        |
+| `check_vmware_snapshots_age`      | TBD. See GH-351 for details.                                                                                                                                                                                |
+| `check_vmware_snapshots_count`    | TBD. See GH-352 for details.                                                                                                                                                                                |
+| `check_vmware_snapshots_size`     | TBD. See GH-353 for details.                                                                                                                                                                                |
+| `check_vmware_rps_memory`         | TBD. See GH-350 for details.                                                                                                                                                                                |
+| `check_vmware_host_memory`        | TBD. See GH-347 for details.                                                                                                                                                                                |
+| `check_vmware_host_cpu`           | TBD. See GH-346 for details.                                                                                                                                                                                |
+| `check_vmware_vm_power_uptime`    | TBD. See GH-357 for details.                                                                                                                                                                                |
+| `check_vmware_disk_consolidation` | TBD. See GH-345 for details.                                                                                                                                                                                |
+| `check_vmware_question`           | TBD. See GH-349 for details.                                                                                                                                                                                |
+| `check_vmware_alarms`             | TBD. See GH-344 for details.                                                                                                                                                                                |
 
 ### Optional evaluation
 
