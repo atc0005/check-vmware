@@ -26,6 +26,46 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.21.1] - 2021-10-16
+
+### Overview
+
+- Refactoring/cleanup
+- Bugfixes
+- Dependency updates
+- built using Go 1.16.9
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-389) Add CodeQL analysis GitHub Actions workflow
+
+### Changed
+
+- (GH-406) Cover Performance Data metrics work in README
+- (GH-403) Note type of container for retrieved VMs via debug log message
+
+- Dependencies
+  - `vmware/govmomi`
+    - `v0.26.1` to `v0.27.0`
+
+### Fixed
+
+- (GH-391) README CLI example for `check_vmware_hs2ds2vms` lists
+  `check_vmware_vhw` plugin instead
+- (GH-393) `check_vmware_hs2ds2vms` plugin emits empty string in place of ESXi
+  host for mismatched VM
+- (GH-397) Unable to retrieve VirtualMachine objects from VirtualApp
+  "containers"
+- (GH-400) When called from `vsphere.GetVMsFromContainer()`, the
+  `vsphere.getObjects()` function reports incorrect number of objects
+  retrieved
+- (GH-399) `vsphere.GetEligibleRPs()` should exit early if the hidden/parent
+  `Resources` ResourcePool is evaluated
+  - light testing indicates that this can reduce plugin runtime for applicable
+    plugins as much as 2x and is particularly notable when evaluating 200+ VMs
+
 ## [v0.21.0] - 2021-10-13
 
 ### Overview
@@ -1055,7 +1095,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.21.1...HEAD
+[v0.21.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.21.1
 [v0.21.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.21.0
 [v0.20.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.20.0
 [v0.19.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.19.1
