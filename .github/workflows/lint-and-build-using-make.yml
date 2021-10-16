@@ -52,8 +52,8 @@ jobs:
       - name: Run Go linting tools using project Makefile
         run: make linting
 
-  build_code_with_makefile:
-    name: Build codebase using Makefile
+  build_code_with_makefile_all_recipe:
+    name: Build codebase using Makefile all recipe
     runs-on: ubuntu-latest
     # Default: 360 minutes
     timeout-minutes: 40
@@ -71,5 +71,27 @@ jobs:
       - name: Install Ubuntu packages
         run: apt-get update && apt-get install -y --no-install-recommends make gcc bsdmainutils
 
-      - name: Build using project Makefile
+      - name: Build using project Makefile all recipe
         run: make all
+
+  build_code_with_makefile_quick_recipe:
+    name: Build codebase using Makefile quick recipe
+    runs-on: ubuntu-latest
+    # Default: 360 minutes
+    timeout-minutes: 40
+    container:
+      image: "index.docker.io/golang:latest"
+
+    steps:
+      - name: Print go version
+        run: go version
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2.3.4
+
+      # bsdmainutils provides "column" which is used by the Makefile
+      - name: Install Ubuntu packages
+        run: apt-get update && apt-get install -y --no-install-recommends make bsdmainutils
+
+      - name: Build using project Makefile quick recipe
+        run: make quick
