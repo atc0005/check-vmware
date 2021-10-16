@@ -94,6 +94,7 @@ BASE_URL				= https://github.com/atc0005/check-vmware/releases/download
 #	explicitly disable use of cgo
 #	removes potential need for linkage against local c library (e.g., glibc)
 BUILDCMD				=	CGO_ENABLED=0 go build -mod=vendor -trimpath -a -ldflags "-s -w -X $(VERSION_VAR_PKG).version=$(VERSION)"
+QUICK_BUILDCMD			=	go build -mod=vendor
 GOCLEANCMD				=	go clean -mod=vendor ./...
 GITCLEANCMD				= 	git clean -xfd
 CHECKSUMCMD				=	sha256sum -b
@@ -177,6 +178,18 @@ gitclean:
 .PHONY: pristine
 ## pristine: run goclean and gitclean to remove local changes
 pristine: goclean gitclean
+
+.PHONY: quick
+## quick: generates non-release binaries for current platform, arch
+quick:
+	@echo "Building non-release assets for current platform, arch ..."
+
+	@for target in $(WHAT); do \
+		echo "  Building $$target binary" && \
+		$(QUICK_BUILDCMD) ${PWD}/cmd/$$target; \
+	done
+
+	@echo "Completed tasks for quick build"
 
 .PHONY: all
 # https://stackoverflow.com/questions/3267145/makefile-execute-another-target
