@@ -18,7 +18,6 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 
 	"github.com/atc0005/check-vmware/internal/config"
-	"github.com/atc0005/check-vmware/internal/textutils"
 	"github.com/atc0005/check-vmware/internal/vsphere"
 
 	zlog "github.com/rs/zerolog/log"
@@ -211,7 +210,7 @@ func main() {
 
 	// here we diverge from other plugins
 
-	dss, dssErr := vsphere.GetDatastores(ctx, c.Client, true)
+	allDS, dssErr := vsphere.GetDatastores(ctx, c.Client, true)
 	if dssErr != nil {
 		log.Error().Err(dssErr).Msg(
 			"error retrieving list of datastores",
@@ -227,42 +226,41 @@ func main() {
 		return
 	}
 
-	dsNames := make([]string, 0, len(dss))
-	for _, ds := range dss {
-		dsNames = append(dsNames, ds.Name)
+	dsCustomAttributeName := cfg.DatastoreCAName()
+	dsWithCAs, dsLookupErr := vsphere.GetDatastoresWithCA(
+		allDS,
+		cfg.IgnoredDatastores,
+		dsCustomAttributeName,
+		cfg.IgnoreMissingCustomAttribute,
+	)
+	if dsLookupErr != nil {
+
+		log.Error().Err(dsLookupErr).
+			Str("custom_attribute_name", dsCustomAttributeName).
+			Msg("error retrieving datastores with specified Custom Attribute")
+
+		nagiosExitState.LastError = dsLookupErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error retrieving datastores with Custom Attribute %q",
+			nagios.StateCRITICALLabel,
+			dsCustomAttributeName,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+		return
+
 	}
 
-	// validate the list of ignored datastores
-	if len(cfg.IgnoredDatastores) > 0 {
-		for _, ignDSName := range cfg.IgnoredDatastores {
-			if !textutils.InList(ignDSName, dsNames, true) {
-
-				validateIgnoredDSErr := fmt.Errorf(
-					"error validating list of ignored datastores",
-				)
-				validateIgnoredDSErrMsg := fmt.Sprintf(
-					"datastore %s could not be ignored as requested; "+
-						"could not locate datastore within vSphere inventory",
-					ignDSName,
-				)
-				log.Error().Err(validateIgnoredDSErr).
-					Msg(validateIgnoredDSErrMsg)
-
-				nagiosExitState.LastError = validateIgnoredDSErr
-				nagiosExitState.ServiceOutput = fmt.Sprintf(
-					"%s: %s",
-					nagios.StateCRITICALLabel,
-					validateIgnoredDSErrMsg,
-				)
-				nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-				return
-
-			}
-		}
+	// Debug logging for troubleshooting purposes.
+	for _, ds := range dsWithCAs {
+		log.Debug().
+			Str("datastore", ds.Name).
+			Str("custom_attribute_name", ds.CustomAttribute.Name).
+			Str("custom_attribute_value", ds.CustomAttribute.Value).
+			Msg("datastores DatastoreWithCA list entry")
 	}
 
-	hss, hsErr := vsphere.GetHostSystems(ctx, c.Client, true)
+	allHosts, hsErr := vsphere.GetHostSystems(ctx, c.Client, true)
 	if hsErr != nil {
 		log.Error().Err(hsErr).Msg(
 			"error retrieving list of hosts",
@@ -278,147 +276,32 @@ func main() {
 		return
 	}
 
-	dsCustomAttributeName := cfg.DatastoreCAName()
-	datastores := make([]vsphere.DatastoreWithCA, 0, len(dss))
-
-	for _, ds := range dss {
-
-		// if user opted to ignore the Datastore, skip attempts to retrieve
-		// Custom Attribute for it.
-		if textutils.InList(ds.Name, cfg.IgnoredDatastores, true) {
-			continue
-		}
-
-		caVal, caValErr := vsphere.GetObjectCAVal(dsCustomAttributeName, ds.ManagedEntity)
-		if caValErr != nil {
-			switch {
-
-			case errors.Is(caValErr, vsphere.ErrCustomAttributeNotSet):
-
-				// emit message even if the plugin is allowed to ignore the
-				// problem; this is not shown in the UI or notifications, only
-				// if running the plugin manually.
-				log.Error().Err(caValErr).
-					Str("custom_attribute_name", dsCustomAttributeName).
-					Str("datastore", ds.Name).
-					Msg("specified Custom Attribute not set on datastore")
-
-				if !cfg.IgnoreMissingCustomAttribute {
-					nagiosExitState.LastError = caValErr
-					nagiosExitState.ServiceOutput = fmt.Sprintf(
-						"%s: Custom Attribute %q not set on datastore %q",
-						nagios.StateCRITICALLabel,
-						dsCustomAttributeName,
-						ds.Name,
-					)
-					nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-					return
-				}
-
-				caVal = vsphere.CustomAttributeValNotSet
-
-			// custom attributes are set, but some other error occurred
-			case caValErr != nil:
-
-				log.Error().Err(caValErr).
-					Str("custom_attribute_name", dsCustomAttributeName).
-					Msg("error retrieving value for provided Custom Attribute")
-
-				nagiosExitState.LastError = caValErr
-				nagiosExitState.ServiceOutput = fmt.Sprintf(
-					"%s: Error retrieving value for provided Custom Attribute %q",
-					nagios.StateCRITICALLabel,
-					dsCustomAttributeName,
-				)
-				nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-				return
-
-			}
-		}
-
-		datastores = append(datastores, vsphere.DatastoreWithCA{
-			Datastore: ds,
-			CustomAttribute: vsphere.PairingCustomAttribute{
-				Name:  dsCustomAttributeName,
-				Value: caVal,
-			},
-		})
-	}
-
-	for _, ds := range datastores {
-		log.Debug().
-			Str("datastore", ds.Name).
-			Str("custom_attribute_name", ds.CustomAttribute.Name).
-			Str("custom_attribute_value", ds.CustomAttribute.Value).
-			Msg("datastores DatastoreWithCA list entry")
-	}
-
 	hostCustomAttributeName := cfg.HostCAName()
-	hosts := make([]vsphere.HostWithCA, 0, len(hss))
-	for _, host := range hss {
-		caVal, caValErr := vsphere.GetObjectCAVal(hostCustomAttributeName, host.ManagedEntity)
-		if caValErr != nil {
-			switch {
+	hostsWithCAs, hostsLookupErr := vsphere.GetHostsWithCA(
+		allHosts,
+		hostCustomAttributeName,
+		cfg.IgnoreMissingCustomAttribute,
+	)
+	if hostsLookupErr != nil {
 
-			case errors.Is(caValErr, vsphere.ErrCustomAttributeNotSet):
+		log.Error().Err(hostsLookupErr).
+			Str("custom_attribute_name", hostCustomAttributeName).
+			Msg("error retrieving hosts with specified Custom Attribute")
 
-				// emit message even if the plugin is allowed to ignore the
-				// problem (reminder: this is not shown in the UI or
-				// notifications, only if running the plugin manually)
-				log.Error().Err(caValErr).
-					Str("custom_attribute_name", hostCustomAttributeName).
-					Str("host", host.Name).
-					Msg("specified Custom Attribute not set on host")
+		nagiosExitState.LastError = hostsLookupErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error retrieving hosts with Custom Attribute %q",
+			nagios.StateCRITICALLabel,
+			hostCustomAttributeName,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
-				if !cfg.IgnoreMissingCustomAttribute {
-					nagiosExitState.LastError = caValErr
-					nagiosExitState.ServiceOutput = fmt.Sprintf(
-						"%s: Custom Attribute %q not set on host %q",
-						nagios.StateCRITICALLabel,
-						hostCustomAttributeName,
-						host.Name,
-					)
-					nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-					return
-				}
-
-				caVal = vsphere.CustomAttributeValNotSet
-
-			case caValErr != nil:
-				log.Error().Err(caValErr).
-					Str("custom_attribute_name", hostCustomAttributeName).
-					Str("host", host.Name).
-					Msg("error retrieving value for provided Custom Attribute")
-
-				nagiosExitState.LastError = caValErr
-				nagiosExitState.ServiceOutput = fmt.Sprintf(
-					"%s: Error retrieving value for provided Custom Attribute %q from host %q",
-					nagios.StateCRITICALLabel,
-					hostCustomAttributeName,
-					host.Name,
-				)
-				nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-				return
-			}
-		}
-
-		// here is where you decide on whether we're processing prefixes
-
-		hosts = append(hosts, vsphere.HostWithCA{
-			HostSystem: host,
-			CustomAttribute: vsphere.PairingCustomAttribute{
-				Name:  hostCustomAttributeName,
-				Value: caVal,
-			},
-		})
+		return
 
 	}
 
-	for _, host := range hosts {
+	// Debug logging for troubleshooting purposes.
+	for _, host := range hostsWithCAs {
 		log.Debug().
 			Str("host", host.Name).
 			Str("hostMOID", host.Self.Value).
@@ -431,18 +314,14 @@ func main() {
 	// where a host has no matching datastores (via specificied literal or
 	// prefix custom attribute values).
 	h2dIdx, h2dIdxErr := vsphere.NewHostToDatastoreIndex(
-		hosts,
-		datastores,
+		hostsWithCAs,
+		dsWithCAs,
 		cfg.UsingCAPrefixes(),
 		cfg.HostCASep(),
 		cfg.DatastoreCASep(),
 	)
 
 	// make sure we have at least one pairing, otherwise bail
-	//
-	// TODO: Should this instead be a length check and we explicitly return
-	// the vsphere.ErrHostDatastorePairingFailed error, or keep this like it
-	// is?
 	if h2dIdxErr != nil {
 
 		var errMsg string
@@ -472,6 +351,7 @@ func main() {
 
 	}
 
+	// Debug logging for troubleshooting purposes.
 	for hostID, pairing := range h2dIdx {
 
 		dsNamesForHost := func(pairings vsphere.HostDatastoresPairing) string {
@@ -490,146 +370,26 @@ func main() {
 	}
 
 	// now process VMs
-	vmDatastoresPairingIssues := make(vsphere.VMToMismatchedDatastoreNames)
-	// var vmsWithPairingIssues []mo.VirtualMachine
-	for _, vm := range filteredVMs {
+	vmDatastoresPairingIssues, lookupErr := vsphere.GetVMDatastorePairingIssues(
+		filteredVMs,
+		h2dIdx,
+		allDS,
+		cfg.IgnoredDatastores,
+	)
+	if lookupErr != nil {
+		errMsg := "Error retrieving VMs/Datastores pairing issues"
 
-		// Assert that VM host MOID value is available for each VM or abort.
-		// This field may be unavailable if sufficient permissions are not
-		// provided to the service account executing this plugin.
-		var hostMOID string
-		switch {
+		log.Error().Err(lookupErr).Msg(errMsg)
 
-		case vm.Runtime.Host == nil || vm.Runtime.Host.Value == "":
-			var lookupReason string
-
-			switch {
-			case vm.Runtime.Host == nil:
-				lookupReason = "MOID is nil"
-
-			case vm.Runtime.Host.Value == "":
-				lookupReason = "MOID is empty"
-			}
-
-			errMsg := fmt.Sprintf(
-				"error retrieving associated Host MOID for VM %s: %s",
-				vm.Name,
-				lookupReason,
-			)
-
-			log.Error().Msg(errMsg)
-
-			nagiosExitState.LastError = errors.New(errMsg)
-			nagiosExitState.ServiceOutput = fmt.Sprintf(
-				"%s: Error retrieving Host IDs for VMs in evaluated resource pools",
-				nagios.StateCRITICALLabel,
-			)
-			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-			return
-
-		default:
-
-			// Safe to reference now that we have guarded against potential nil
-			// Host field pointer and empty MOID.
-			hostMOID = vm.Runtime.Host.Value
-
-			log.Debug().
-				Str("vm", vm.Name).
-				Str("hostMOID", vm.Runtime.Host.Value).
-				Msg("VM name and host MOID value")
-
-		}
-
-		// After asserting that the host MOID value is set for the VM we are
-		// evaluating, use that ID to get the host/datastores pairing (valid
-		// datastores for VMs running on the host).
-		vmHostDatastoresPairing, ok := h2dIdx[hostMOID]
-		if !ok {
-			// FAILURE due to host id lookup; this should not occur since we
-			// now (as of GH-393) create stub entries for hosts without
-			// matching datastores (via specified custom attribute).
-			errMsg := "error retrieving host/datastores pairing using Host MOID " + hostMOID
-			log.Error().Msg(errMsg)
-
-			nagiosExitState.LastError = errors.New(errMsg)
-
-			// Same "overall" failure scenario as failing to retrieve the host
-			// ID for a VM; the index lookup failure is what sets them apart.
-			nagiosExitState.ServiceOutput = fmt.Sprintf(
-				"%s: Error retrieving Host IDs for VMs in evaluated resource pools",
-				nagios.StateCRITICALLabel,
-			)
-			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-			return
-		}
-
-		hostName := vmHostDatastoresPairing.Host.Name
-
-		mismatchedDatastores, lookupErr := h2dIdx.ValidateVirtualMachinePairings(
-			hostMOID,
-			dss,
-			vm.Datastore,
-			cfg.IgnoredDatastores,
+		nagiosExitState.LastError = lookupErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: %s",
+			nagios.StateCRITICALLabel,
+			errMsg,
 		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
-		if lookupErr != nil {
-
-			log.Error().Err(lookupErr).
-				// Str("extended_error_msg", extendedErrMsg).
-				Str("vm", vm.Name).
-				// Str("datastore", datastore.Name).
-				Msg("Error occurred while validating VM/Host/Datastore match")
-
-			nagiosExitState.LastError = lookupErr
-			nagiosExitState.ServiceOutput = fmt.Sprintf(
-				"%s: Error occurred while validating VM/Host/Datastore match for VM %s on host %s",
-				nagios.StateCRITICALLabel,
-				vm.Name,
-				hostName,
-			)
-			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-
-			return
-		}
-
-		vmDatastoreNames := vsphere.DatastoreIDsToNames(vm.Datastore, dss)
-
-		switch {
-		// expected failure scenario; set LongServiceOutput using report func
-		case len(mismatchedDatastores) > 0:
-
-			// TODO: Should this be error level and shown by default, or debug
-			// level and muted?
-			log.Debug().
-				Str("host", hostName).
-				Str("vm", vm.Name).
-				Bool("validation_failed", true).
-				Str("vm_datastores_all", strings.Join(vmDatastoreNames, ", ")).
-				Str("vm_datastores_mismatched", strings.Join(mismatchedDatastores, ", ")).
-				Msg("VM/Host/Datastore validation failed")
-
-			// collect problem VirtualMachine objects for later review
-			// vmsWithPairingIssues = append(vmsWithPairingIssues, vm)
-
-			// index mismatched datastore names by VirtualMachine name, also for
-			// later review
-			vmDatastoresPairingIssues[vm.Name] = vsphere.VMHostDatastoresPairing{
-				HostName:       hostName,
-				DatastoreNames: mismatchedDatastores,
-			}
-
-		default:
-
-			log.Debug().
-				Str("host", hostName).
-				Str("vm", vm.Name).
-				Bool("validation_failed", false).
-				Str("vm_datastores_all", strings.Join(vmDatastoreNames, ", ")).
-				Msg("all datastores for vm matched to current host")
-
-		}
+		return
 	}
 
 	numMismatches := len(vmDatastoresPairingIssues)
@@ -684,10 +444,7 @@ func main() {
 	default:
 		// success if we made it here
 
-		log.Debug().
-			Int("vms_total", len(vms)).
-			Int("vms_filtered", len(filteredVMs)).
-			Msg("No problems with VMware Tools found")
+		log.Debug().Msg("No mismatched Host/Datastore/VM pairings detected")
 
 		nagiosExitState.LastError = nil
 
