@@ -113,6 +113,307 @@ type HostToDatastoreIndex map[string]HostDatastoresPairing
 // names based on the current host for the VirtualMachine.
 type VMToMismatchedDatastoreNames map[string]VMHostDatastoresPairing
 
+// GetVMDatastorePairingIssues receives a list of VirtualMachines and a
+// HostToDatastoreIndex to evaluate each VirtualMachine by. A
+// VMHostDatastoresPairing index is returned noting improperly paired
+// VirtualMachines (if any) and an error (if applicable).
+func GetVMDatastorePairingIssues(vms []mo.VirtualMachine, h2dIdx HostToDatastoreIndex, dss []mo.Datastore, ignoredDatastoreNames []string) (VMToMismatchedDatastoreNames, error) {
+
+	vmDatastoresPairingIssues := make(VMToMismatchedDatastoreNames)
+
+	for _, vm := range vms {
+
+		// Assert that VM host MOID value is available for each VM or abort.
+		// This field may be unavailable if sufficient permissions are not
+		// provided to the service account executing this plugin.
+		var hostMOID string
+		switch {
+
+		case vm.Runtime.Host == nil || vm.Runtime.Host.Value == "":
+			var lookupReason string
+
+			switch {
+			case vm.Runtime.Host == nil:
+				lookupReason = "MOID is nil"
+
+			case vm.Runtime.Host.Value == "":
+				lookupReason = "MOID is empty"
+			}
+
+			errMsg := fmt.Sprintf(
+				"error retrieving associated Host MOID for VM %s: %s",
+				vm.Name,
+				lookupReason,
+			)
+
+			return nil, errors.New(errMsg)
+
+		default:
+
+			// Safe to reference now that we have guarded against potential
+			// nil Host field pointer and empty MOID.
+			hostMOID = vm.Runtime.Host.Value
+
+			logger.Printf(
+				"VM name and host MOID: %q, %q",
+				vm.Name,
+				hostMOID,
+			)
+
+		}
+
+		// After asserting that the host MOID value is set for the VM we are
+		// evaluating, use that ID to get the host/datastores pairing (valid
+		// datastores for VMs running on the host).
+		vmHostDatastoresPairing, ok := h2dIdx[hostMOID]
+		if !ok {
+			// FAILURE due to host id lookup; this should not occur since we
+			// now (as of GH-393) create stub entries for hosts without
+			// matching datastores (via specified custom attribute).
+			errMsg := "error retrieving host/datastores pairing using Host MOID " + hostMOID
+
+			logger.Printf(
+				"error retrieving host/datastores pairing using Host MOID %s",
+				hostMOID,
+			)
+
+			return nil, errors.New(errMsg)
+		}
+
+		hostName := vmHostDatastoresPairing.Host.Name
+
+		mismatchedDatastores, lookupErr := h2dIdx.ValidateVirtualMachinePairings(
+			hostMOID,
+			dss,
+			vm.Datastore,
+			ignoredDatastoreNames,
+		)
+
+		if lookupErr != nil {
+
+			errMsg := fmt.Sprintf(
+				"error occurred while validating VM/Host/Datastore match for vm %s and host %s",
+				vm.Name,
+				hostName,
+			)
+
+			logger.Print(errMsg)
+
+			return nil, errors.New(errMsg)
+		}
+
+		vmDatastoreNames := DatastoreIDsToNames(vm.Datastore, dss)
+
+		switch {
+		case len(mismatchedDatastores) > 0:
+
+			logger.Printf(
+				"VM/Host/Datastore validation failed for VM %s on host %s",
+				vm.Name,
+				hostName,
+			)
+
+			logger.Printf(
+				"All datastores: %v",
+				strings.Join(vmDatastoreNames, ", "),
+			)
+
+			logger.Printf(
+				"VM/Datastores mismatched: %v",
+				strings.Join(mismatchedDatastores, ", "),
+			)
+
+			// index mismatched datastore names by VirtualMachine name, also
+			// for later review
+			vmDatastoresPairingIssues[vm.Name] = VMHostDatastoresPairing{
+				HostName:       hostName,
+				DatastoreNames: mismatchedDatastores,
+			}
+
+		default:
+
+			logger.Printf(
+				"All datastores for VM %q matched to host %q",
+				vm.Name,
+				hostName,
+			)
+
+		}
+	}
+
+	return vmDatastoresPairingIssues, nil
+
+}
+
+// GetHostsWithCA receives a collection of Hosts, a Custom Attribute to filter
+// Hosts by and a boolean flag indicating whether Hosts missing a Custom
+// Attribute should be ignored. A collection of HostWithCA is returned along
+// with an error (if applicable).
+func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ignoreMissingCA bool) ([]HostWithCA, error) {
+
+	hostsWithCAs := make([]HostWithCA, 0, len(allHosts))
+
+	for _, host := range allHosts {
+		caVal, caValErr := GetObjectCAVal(hostCustomAttributeName, host.ManagedEntity)
+		if caValErr != nil {
+			switch {
+
+			case errors.Is(caValErr, ErrCustomAttributeNotSet):
+
+				logger.Printf(
+					"specified Custom Attribute %q not set on host %q",
+					hostCustomAttributeName,
+					host.Name,
+				)
+
+				if !ignoreMissingCA {
+
+					return nil, fmt.Errorf(
+						"specified Custom Attribute %s not set on datastore %s: %w",
+						hostCustomAttributeName,
+						host.Name,
+						ErrCustomAttributeNotSet,
+					)
+				}
+
+				caVal = CustomAttributeValNotSet
+
+			case caValErr != nil:
+				logger.Printf(
+					"error retrieving value for provided Custom Attribute %q: %v",
+					hostCustomAttributeName,
+					caValErr,
+				)
+
+				return nil, fmt.Errorf(
+					"error retrieving value for provided Custom Attribute %s: %w",
+					hostCustomAttributeName,
+					caValErr,
+				)
+			}
+		}
+
+		hostsWithCAs = append(hostsWithCAs, HostWithCA{
+			HostSystem: host,
+			CustomAttribute: PairingCustomAttribute{
+				Name:  hostCustomAttributeName,
+				Value: caVal,
+			},
+		})
+
+	}
+
+	return hostsWithCAs, nil
+}
+
+// GetDatastoresWithCA receives a collection of Datastores, a list of
+// datastore names that should be ignored or excluded from evaluation, a
+// Custom Attribute to filter Datastores by and a boolean flag indicating
+// whether datastores missing a Custom Attribute should be ignored. A
+// collection of DatastoreWithCA is returned along with an error (if
+// applicable).
+func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, dsCustomAttributeName string, ignoreMissingCA bool) ([]DatastoreWithCA, error) {
+
+	dsNames := make([]string, 0, len(allDS))
+	for _, ds := range allDS {
+		dsNames = append(dsNames, ds.Name)
+	}
+
+	// validate the list of ignored datastores
+	if len(ignoredDatastoreNames) > 0 {
+		for _, ignDSName := range ignoredDatastoreNames {
+			if !textutils.InList(ignDSName, dsNames, true) {
+
+				validateIgnoredDSErr := errors.New(
+					"error validating list of ignored datastores",
+				)
+				validateIgnoredDSErrMsg := fmt.Sprintf(
+					"datastore %s could not be ignored as requested; "+
+						"could not locate datastore within vSphere inventory",
+					ignDSName,
+				)
+
+				logger.Printf(
+					"%v: %v",
+					validateIgnoredDSErr,
+					validateIgnoredDSErrMsg,
+				)
+
+				return nil, fmt.Errorf(
+					"%v: %v",
+					validateIgnoredDSErr,
+					validateIgnoredDSErrMsg,
+				)
+
+			}
+		}
+	}
+
+	datastoresWithCA := make([]DatastoreWithCA, 0, len(allDS))
+
+	for _, ds := range allDS {
+
+		// if user opted to ignore the Datastore, skip attempts to retrieve
+		// Custom Attribute for it.
+		if textutils.InList(ds.Name, ignoredDatastoreNames, true) {
+			continue
+		}
+
+		caVal, caValErr := GetObjectCAVal(dsCustomAttributeName, ds.ManagedEntity)
+		if caValErr != nil {
+			switch {
+
+			case errors.Is(caValErr, ErrCustomAttributeNotSet):
+
+				logger.Printf(
+					"specified Custom Attribute %q not set on datastore %q",
+					dsCustomAttributeName,
+					ds.Name,
+				)
+
+				if !ignoreMissingCA {
+
+					return nil, fmt.Errorf(
+						"specified Custom Attribute %s not set on datastore %s: %w",
+						dsCustomAttributeName,
+						ds.Name,
+						ErrCustomAttributeNotSet,
+					)
+				}
+
+				caVal = CustomAttributeValNotSet
+
+			// custom attributes are set, but some other error occurred
+			case caValErr != nil:
+
+				logger.Printf(
+					"error retrieving value for provided Custom Attribute %q: %v",
+					dsCustomAttributeName,
+					caValErr,
+				)
+
+				return nil, fmt.Errorf(
+					"error retrieving value for provided Custom Attribute %s: %w",
+					dsCustomAttributeName,
+					caValErr,
+				)
+
+			}
+		}
+
+		datastoresWithCA = append(datastoresWithCA, DatastoreWithCA{
+			Datastore: ds,
+			CustomAttribute: PairingCustomAttribute{
+				Name:  dsCustomAttributeName,
+				Value: caVal,
+			},
+		})
+	}
+
+	return datastoresWithCA, nil
+
+}
+
 // NewHostToDatastoreIndex receives a collection of hosts and datastores
 // wrapped with user-specified Custom Attributes, prefix separators and a
 // boolean flag indicating whether prefix matching will be used.
@@ -252,7 +553,7 @@ func NewHostToDatastoreIndex(
 		// datastores list.
 		if _, ok := h2dIdx[hostID]; !ok {
 			logger.Printf(
-				"Adding zero value entry for host [name: %s, id: %s",
+				"Adding zero value entry for host [name: %s, id: %s]",
 				host.Name,
 				hostID,
 			)
