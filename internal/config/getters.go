@@ -12,9 +12,9 @@ import (
 	"time"
 )
 
-// Timeout converts the user-specified connection timeout value in
-// seconds to an appropriate time duration value for use with setting
-// initial connection attempt timeout value.
+// Timeout converts the user-specified plugin runtime/execution timeout value
+// in seconds to an appropriate time duration value for use with setting
+// context deadline value.
 func (c Config) Timeout() time.Duration {
 	return time.Duration(c.timeout) * time.Second
 }

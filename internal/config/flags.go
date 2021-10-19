@@ -277,8 +277,8 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 	flag.IntVar(&c.Port, "p", defaultPort, portFlagHelp+" (shorthand)")
 	flag.IntVar(&c.Port, "port", defaultPort, portFlagHelp)
 
-	flag.IntVar(&c.timeout, "t", defaultConnectTimeout, timeoutConnectFlagHelp)
-	flag.IntVar(&c.timeout, "timeout", defaultConnectTimeout, timeoutConnectFlagHelp)
+	flag.IntVar(&c.timeout, "t", defaultPluginRuntimeTimeout, timeoutPluginRuntimeFlagHelp)
+	flag.IntVar(&c.timeout, "timeout", defaultPluginRuntimeTimeout, timeoutPluginRuntimeFlagHelp)
 
 	flag.StringVar(&c.LoggingLevel, "ll", defaultLogLevel, logLevelFlagHelp)
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)

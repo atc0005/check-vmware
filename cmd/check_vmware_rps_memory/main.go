@@ -67,6 +67,8 @@ func main() {
 		vsphere.EnableLogging()
 	}
 
+	// Set context deadline equal to user-specified timeout value for plugin
+	// runtime/execution.
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout())
 	defer cancel()
 
