@@ -26,6 +26,36 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.22.0] - 2021-10-19
+
+### Overview
+
+- Refactoring/cleanup
+- Bugfixes
+- Dependency updates
+- built using Go 1.16.9
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- (GH-408) Add `quick` Makefile recipe
+
+### Changed
+
+- Dependencies
+  - `actions/checkout`
+    - `v2.3.4` to `v2.3.5`
+
+- (GH-394) Refactor check_vmware_hs2ds2vms plugin
+
+### Fixed
+
+- (GH-410) Dependabot did not create a PR for actions/checkout 2.3.5
+- (GH-413) Update GHAW doc comment headers to list correct repo
+- (GH-414) Timeout handling is unclear: connection timeout or plugin
+  runtime/execution timeout?
+
 ## [v0.21.1] - 2021-10-16
 
 ### Overview
@@ -1095,7 +1125,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.21.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.22.0...HEAD
+[v0.22.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.22.0
 [v0.21.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.21.1
 [v0.21.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.21.0
 [v0.20.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.20.0
