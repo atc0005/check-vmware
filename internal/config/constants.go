@@ -16,7 +16,7 @@ const (
 	serverFlagHelp                                  string = "The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance."
 	trustCertFlagHelp                               string = "Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option."
 	portFlagHelp                                    string = "TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS)."
-	timeoutConnectFlagHelp                          string = "Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned."
+	timeoutPluginRuntimeFlagHelp                    string = "Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned."
 	brandingFlagHelp                                string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
 	usernameFlagHelp                                string = "Username with permission to access specified ESXi host or vCenter instance."
 	passwordFlagHelp                                string = "Password used to login to ESXi host or vCenter instance."
@@ -131,8 +131,8 @@ const (
 	defaultVCPUsMaxAllowed               int = 0
 	defaultResourcePoolsMemoryMaxAllowed int = 0
 
-	// Default timeout (in seconds) used when connecting to a remote server
-	defaultConnectTimeout int = 10
+	// Default timeout (in seconds) used for plugin runtime
+	defaultPluginRuntimeTimeout int = 10
 
 	defaultCustomAttributeName string = ""
 

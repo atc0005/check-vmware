@@ -341,9 +341,8 @@ type Config struct {
 	// Port is the TCP port used by the certifcate-enabled service.
 	Port int
 
-	// timeout is the number of seconds allowed before the connection attempt
-	// to a standalone ESXi host or vCenter instance is abandoned and an error
-	// returned.
+	// timeout is the value in seconds allowed before a plugin execution
+	// attempt is abandoned and an error returned.
 	timeout int
 
 	// VCPUsAllocatedWarning specifies the percentage of vCPUs allocation (as

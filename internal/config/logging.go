@@ -79,7 +79,7 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 		Str("version", Version()).
 		Str("logging_level", c.LoggingLevel).
 		Str("plugin_type", pluginTypeLabel(pluginType)).
-		Str("connection_timeout", c.Timeout().String()).
+		Str("plugin_timeout", c.Timeout().String()).
 		Str("username", c.Username).
 		Str("user_domain", c.Domain).
 		Bool("trust_cert", c.TrustCert).
