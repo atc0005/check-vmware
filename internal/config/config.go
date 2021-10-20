@@ -449,6 +449,11 @@ type Config struct {
 	// alarms are evaluated in addition to unacknowledged ones.
 	EvaluateAcknowledgedAlarms bool
 
+	// TriggerReloadStateData indicates whether the state data for evaluated
+	// objects (e.g., VirtualMachines) will be reloaded/refreshed prior to
+	// evaluation of specific properties.
+	TriggerReloadStateData bool
+
 	// Whether the certificate should be trusted as-is without validation.
 	TrustCert bool
 
