@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -23,6 +24,10 @@ import (
 )
 
 func main() {
+
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
 
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
@@ -224,22 +229,71 @@ func main() {
 	// here we diverge from other plugins
 
 	log.Debug().Msg("Evaluating interactive question status")
-	vmsWaitingOnInput := make([]mo.VirtualMachine, 0, len(filteredVMs))
-	for _, vm := range filteredVMs {
-		if vm.Summary.Runtime.Question != nil {
-			vmsWaitingOnInput = append(vmsWaitingOnInput, vm)
-		}
+	vmsWaitingOnInput, numVMsExcludedByQuestionStatus := vsphere.FilterVMsByInteractiveQuestionStatus(filteredVMs)
+	numVMsWaitingOnInput := len(vmsWaitingOnInput)
+
+	log.Debug().
+		Str("vms_filtered_by_interactive_question_status", strings.Join(vsphere.VMNames(vmsWaitingOnInput), ", ")).
+		Int("vms_waiting_on_input", numVMsWaitingOnInput).
+		Int("vms_excluded_by_interactive_question_status", numVMsExcludedByQuestionStatus).
+		Msg("VMs after interactive question status filtering")
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("vms_requiring_input", numVMsWaitingOnInput).
+		Int("vms_not_requiring_input", numVMsExcludedByQuestionStatus).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Logger()
+
+	log.Debug().Msg("Compiling Performance Data details")
+
+	pd := []nagios.PerformanceData{
+		{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(pluginStart).Milliseconds()),
+		},
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(vms)),
+		},
+		{
+			Label: "vms_excluded_by_name",
+			Value: fmt.Sprintf("%d", numVMsExcludedByName),
+		},
+		{
+			Label: "vms_requiring_input",
+			Value: fmt.Sprintf("%d", numVMsWaitingOnInput),
+		},
+		{
+			Label: "vms_not_requiring_input",
+			Value: fmt.Sprintf("%d", numVMsExcludedByQuestionStatus),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", len(resourcePools)),
+		},
 	}
 
 	switch {
-	case len(vmsWaitingOnInput) > 0:
+	case numVMsWaitingOnInput > 0:
 
 		// *ANY* VMs requiring interactive feedback results in a CRITICAL state.
 
 		vmsList := strings.Join(vsphere.VMNames(vmsWaitingOnInput), ", ")
 
 		log.Error().
-			Int("needing_feedback", len(vmsWaitingOnInput)).
+			Int("needing_feedback", numVMsWaitingOnInput).
 			Str("virtual_machines", vmsList).
 			Msg("Virtual Machines found blocked by interactive question")
 
@@ -263,6 +317,12 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
@@ -294,6 +354,12 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 

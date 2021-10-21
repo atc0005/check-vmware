@@ -530,6 +530,39 @@ func FilterVMsByDiskConsolidationState(vms []mo.VirtualMachine) ([]mo.VirtualMac
 
 }
 
+// FilterVMsByInteractiveQuestionStatus accepts a collection of
+// VirtualMachines and evaluates whether their Question flag is set. If the
+// collection of provided VirtualMachines is empty, an empty collection is
+// returned. The collection is returned along with the number of
+// VirtualMachines that were excluded.
+func FilterVMsByInteractiveQuestionStatus(vms []mo.VirtualMachine) ([]mo.VirtualMachine, int) {
+
+	// setup early so we can reference it from deferred stats output
+	var vmsWaitingOnInput []mo.VirtualMachine
+
+	funcTimeStart := time.Now()
+
+	defer func(vms []mo.VirtualMachine, filteredVMs *[]mo.VirtualMachine) {
+		logger.Printf(
+			"It took %v to execute FilterVMsByInteractiveQuestionStatus func (for %d VMs, yielding %d VMs).\n",
+			time.Since(funcTimeStart),
+			len(vms),
+			len(*filteredVMs),
+		)
+	}(vms, &vmsWaitingOnInput)
+
+	for _, vm := range vms {
+		if vm.Summary.Runtime.Question != nil {
+			vmsWaitingOnInput = append(vmsWaitingOnInput, vm)
+		}
+	}
+
+	numExcluded := len(vms) - len(vmsWaitingOnInput)
+
+	return vmsWaitingOnInput, numExcluded
+
+}
+
 // dedupeVMs receives a list of VirtualMachine values potentially containing
 // one or more duplicate values and returns a new list of unique
 // VirtualMachine values.
