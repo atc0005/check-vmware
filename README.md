@@ -470,6 +470,34 @@ Machine require consolidation. This can happen when a snapshot is deleted, but
 its associated disk is not committed back to the base disk. This situation can
 cause backup failures and performance issues.
 
+By default, this plugin does not trigger a state reload for each Virtual
+Machine that it evaluates, instead evaluating the disk consolidation status as
+currently reflected in the vSphere environment. The state data appears to only
+be updated during vMotion and Fault Tolerant related methods, when a VM is
+first added to inventory or when manually reloaded via the vSphere web UI. If
+not refreshed by one of these tasks or a custom job configured on the cluster
+the consolidation status may be stale.
+
+You can work around this potentially stale state by specifying a
+`--trigger-reload` flag for this plugin. This flag enables a state reload for
+each evaluated Virtual Machine. This reload will refresh state data for the
+Virtual Machine to ensure that the disk consolidation status reflects the
+actual state of the VM. This option does not come without a cost however.
+
+Due to the time required for each reload operation to complete, this plugin
+can require a much longer timeout value than other plugins which only evaluate
+(and not refresh) existing state data for vSphere objects. You should
+configure the `--timeout` value for this plugin accordingly and also configure
+the timeout settings in your monitoring system (e.g., `service_check_timeout`
+within `nagios.cfg` for Nagios) to permit longer plugin execution times.
+
+Instead of enabling this flag, you may wish to schedule a job on the cluster
+or an "admin box" that handles the reload/refresh of each Virtual Machine.
+This will be significantly faster than evaluating the state of each VM every
+time the associated service check executes and depending on the frequency of
+the job should be "fresh enough" to allow this plugin to accurately detect
+disk consolidation needs.
+
 ### `check_vmware_question`
 
 Nagios plugin used to monitor whether a Virtual Machine is blocked from
@@ -536,6 +564,7 @@ Filtering is available for explicitly *including* or *excluding* based on:
   - Host CPU usage
   - Virtual Machine (power cycle) uptime
   - Virtual Machine disk consolidation status
+    - with optional forced refresh of Virtual Machine state data
   - Virtual Machine interactive question status
   - Triggered Alarms in one or more datacenters
 
@@ -1159,6 +1188,7 @@ based on feedback.
 | `include-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
 | `exclude-rp`      | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                                                                                                                             |
 | `ignore-vm`       | No       |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                                                                                           |
+| `trigger-reload`  | No       | `false` | No     | `true`, `false`                                                         | Trigger a reload operation for each VM evaluated. This option ensures that the most current state data is evaluated, but increases plugin runtime. If using this, you should also adjust the `--timeout` value and potentially your monitor system's service check timeout setting.                                        |
 
 #### `check_vmware_question`
 
@@ -2020,7 +2050,7 @@ define command{
 #### CLI invocation
 
 ```ShellSession
-/usr/lib/nagios/plugins/check_vmware_disk_consolidation --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com  --trust-cert --log-level info
+/usr/lib/nagios/plugins/check_vmware_disk_consolidation --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com  --trust-cert --log-level info --trigger-reload --timeout 110
 ```
 
 See the [configuration options](#configuration-options) section for all
@@ -2040,18 +2070,50 @@ Of note:
     plugin directly via CLI (often for troubleshooting)
     - see [Output](#output) for potential conflicts with some monitoring
       systems
+- A forced state data reload/refresh is triggered for each evaluated Virtual
+  Machine
+  - NOTE: this operation is expensive, omit to rely on existing (potentially
+    stale) state data
+  - see [`check_vmware_disk_consolidation`](#check_vmware_disk_consolidation)
+    section for additional details, including potential alternatives to the
+    use of this flag
+- A custom timeout value is specified
+  - NOTE: in order for this timeout value to be respected, you may need to
+    adjust the service check timeout value in your monitoring system (e.g.,
+    `service_check_timeout` value in your `nagios.cfg` file)
 
 #### Command definition
 
 ```shell
 # /etc/nagios-plugins/config/vmware-disk-consolidation.cfg
 
-# Look at all pools, all VMs. This variation of the command is most useful for
-# environments where all VMs are monitored equally.
+# Look at all pools, all VMs.  Use existing (potentially stale) state data for
+# evaluation of disk consolidation status instead of triggering (potentially
+# expensive) reload/refresh of state data.
+#
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally and no filtering based on pool membership or VM name
+# is needed.
 define command{
     command_name    check_vmware_disk_consolidation
     command_line    /usr/lib/nagios/plugins/check_vmware_disk_consolidation --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info
     }
+
+# Look at all pools, all VMs, trigger potentially expensive reload operation
+# on each evaluated VM.
+#
+# This variation of the command is most useful for environments where all VMs
+# are monitored equally and where the time required to reload/refresh data
+# data for each VM is acceptable.
+#
+# The tradeoff in having current state data comes at the cost of increased
+# execution time. If this proves too expensive for your environment, you may
+# wish to schedule a job on the cluster to handle refreshing state data.
+define command{
+    command_name    check_vmware_disk_consolidation_trigger_reload
+    command_line    /usr/lib/nagios/plugins/check_vmware_disk_consolidation --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info --trigger-reload --timeout 110
+    }
+
 ```
 
 ### `check_vmware_question` Nagios plugin

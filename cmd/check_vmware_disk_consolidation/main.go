@@ -223,13 +223,47 @@ func main() {
 
 	// here we diverge from other plugins
 
-	log.Debug().Msg("Evaluating disk consolidation needed flag")
-	vmsNeedingConsolidation := make([]mo.VirtualMachine, 0, len(filteredVMs))
-	for _, vm := range filteredVMs {
-		if vm.Runtime.ConsolidationNeeded != nil && *vm.Runtime.ConsolidationNeeded {
-			vmsNeedingConsolidation = append(vmsNeedingConsolidation, vm)
+	// State reload/refresh operation for remaining VMs is potentially
+	// expensive, so only perform this step if requested.
+	switch {
+	case cfg.TriggerReloadStateData:
+		log.Debug().
+			Bool("trigger_state_reload", cfg.TriggerReloadStateData).
+			Msg("Triggering reload of each VirtualMachine to ensure fresh metadata")
+		vmEntityVals := make([]mo.ManagedEntity, 0, len(filteredVMs))
+		for i := range filteredVMs {
+			vmEntityVals = append(vmEntityVals, filteredVMs[i].ManagedEntity)
 		}
+		if err := vsphere.TriggerEntityStateReload(ctx, c.Client, vmEntityVals); err != nil {
+			log.Error().Err(err).Msg(
+				"error triggering state reload for VMs",
+			)
+
+			nagiosExitState.LastError = err
+			nagiosExitState.ServiceOutput = fmt.Sprintf(
+				"%s: Error triggering state reload for VMs",
+				nagios.StateCRITICALLabel,
+			)
+			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+			return
+		}
+
+	default:
+		log.Debug().
+			Bool("trigger_state_reload", cfg.TriggerReloadStateData).
+			Msg("Trigger reload flag not specified, skipping reload/refresh of VirtualMachine state data")
+
 	}
+
+	log.Debug().Msg("Filter VMs to those needing disk consolidation")
+	vmsNeedingConsolidation, numVMsExcludedByConsolidationState := vsphere.FilterVMsByDiskConsolidationState(filteredVMs)
+
+	log.Debug().
+		Str("vms_filtered_by_disk_consolidation_status", strings.Join(vsphere.VMNames(vmsNeedingConsolidation), ", ")).
+		Int("vms_needing_consolidation", len(vmsNeedingConsolidation)).
+		Int("vms_excluded_by_consolidation_state", numVMsExcludedByConsolidationState).
+		Msg("VMs after disk consolidation needed filtering")
 
 	switch {
 	case len(vmsNeedingConsolidation) > 0:

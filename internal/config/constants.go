@@ -75,6 +75,7 @@ const (
 	excludedAlarmStatusesFlagHelp                   string = "If specified, triggered alarms will only be evaluated if the alarm status (e.g., \"yellow\") DOES NOT case-insensitively match one of the specified keywords (e.g., \"yellow\" or \"warning\") and is not explicitly excluded by another filter in the pipeline; while multiple explicit inclusions are allowed, explicit exclusions have precedence over explicit inclusions and will exclude the triggered alarm from further evaluation."
 	includedAlarmEntityResourcePoolsFlagHelp        string = "If specified, triggered alarms will only be evaluated if the associated entity is part of one of the specified Resource Pools (case-insensitive match on the name) and is not explicitly excluded by another filter in the pipeline; while multiple explicit inclusions are allowed, explicit exclusions have precedence over explicit inclusions and will exclude the triggered alarm from further evaluation."
 	excludedAlarmEntityResourcePoolsFlagHelp        string = "If specified, triggered alarms will only be evaluated if the associated entity is NOT part of one of the specified Resource Pools (case-insensitive match on the name) and is not explicitly excluded by another filter in the pipeline; while multiple explicit inclusions are allowed, explicit exclusions have precedence over explicit inclusions and will exclude the triggered alarm from further evaluation."
+	triggerReloadStateDataFlagHelp                  string = "Toggles (potentially expensive) reload/refresh of state data for evaluated vSphere objects. This is disabled by default."
 )
 
 // Default flag settings if not overridden by user input
@@ -91,6 +92,7 @@ const (
 	defaultDisplayVersionAndExit        bool   = false
 	defaultPoweredOff                   bool   = false
 	defaultEvaluateAcknowledgedAlarms   bool   = false
+	defaultTriggerReloadStateData       bool   = false
 	defaultVCPUsAllocatedCritical       int    = 100
 	defaultVCPUsAllocatedWarning        int    = 95
 	defaultIgnoreMissingCustomAttribute bool   = false

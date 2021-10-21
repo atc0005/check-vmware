@@ -105,6 +105,7 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.BoolVar(&c.TriggerReloadStateData, "trigger-reload", defaultTriggerReloadStateData, triggerReloadStateDataFlagHelp)
 
 		// NOTE: This plugin is hard-coded to evaluate powered off and powered
 		// on VMs equally. I'm not sure whether ignoring powered off VMs by

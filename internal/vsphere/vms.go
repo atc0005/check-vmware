@@ -495,6 +495,41 @@ func FilterVMsByPowerCycleUptime(vms []mo.VirtualMachine, warningThreshold int, 
 
 }
 
+// FilterVMsByDiskConsolidationState accepts a collection of VirtualMachines
+// and evaluates whether their ConsolidationNeeded flag is set. This function
+// assumes that the caller has already initiated a "reload" of each
+// VirtualMachine in order to retrieve the most current status of its
+// ConsolidationNeeded field. If the collection of provided VirtualMachines is
+// empty, an empty collection is returned. The collection is returned along
+// with the number of VirtualMachines that were excluded.
+func FilterVMsByDiskConsolidationState(vms []mo.VirtualMachine) ([]mo.VirtualMachine, int) {
+
+	// setup early so we can reference it from deferred stats output
+	var vmsNeedingConsolidation []mo.VirtualMachine
+
+	funcTimeStart := time.Now()
+
+	defer func(vms []mo.VirtualMachine, filteredVMs *[]mo.VirtualMachine) {
+		logger.Printf(
+			"It took %v to execute FilterVMsByDiskConsolidationState func (for %d VMs, yielding %d VMs).\n",
+			time.Since(funcTimeStart),
+			len(vms),
+			len(*filteredVMs),
+		)
+	}(vms, &vmsNeedingConsolidation)
+
+	for _, vm := range vms {
+		if vm.Runtime.ConsolidationNeeded != nil && *vm.Runtime.ConsolidationNeeded {
+			vmsNeedingConsolidation = append(vmsNeedingConsolidation, vm)
+		}
+	}
+
+	numExcluded := len(vms) - len(vmsNeedingConsolidation)
+
+	return vmsNeedingConsolidation, numExcluded
+
+}
+
 // dedupeVMs receives a list of VirtualMachine values potentially containing
 // one or more duplicate values and returns a new list of unique
 // VirtualMachine values.

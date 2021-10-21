@@ -42,7 +42,7 @@ hosts or vCenter instances).
 
 • Virtual Machine (power cycle) uptime
 
-• Virtual Machine disk consolidation status
+• Virtual Machine disk consolidation status (with optional forced refresh of Virtual Machine state data)
 
 • Virtual Machine interactive question status
 
