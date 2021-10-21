@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -23,6 +24,10 @@ import (
 )
 
 func main() {
+
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
 
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
@@ -257,23 +262,73 @@ func main() {
 	}
 
 	log.Debug().Msg("Filter VMs to those needing disk consolidation")
+	// Create a new collection of VMs with just those found to require disk
+	// consolidation. Keep filteredVMs collection as-is; we'll use that as our
+	// "baseline" against the list of VMs found requiring disk consolidation.
 	vmsNeedingConsolidation, numVMsExcludedByConsolidationState := vsphere.FilterVMsByDiskConsolidationState(filteredVMs)
+	numVMsRequiringDiskConsolidation := len(vmsNeedingConsolidation)
 
 	log.Debug().
 		Str("vms_filtered_by_disk_consolidation_status", strings.Join(vsphere.VMNames(vmsNeedingConsolidation), ", ")).
-		Int("vms_needing_consolidation", len(vmsNeedingConsolidation)).
+		Int("vms_needing_consolidation", numVMsRequiringDiskConsolidation).
 		Int("vms_excluded_by_consolidation_state", numVMsExcludedByConsolidationState).
 		Msg("VMs after disk consolidation needed filtering")
 
+	log.Debug().Msg("Compiling Performance Data details")
+
+	pd := []nagios.PerformanceData{
+		{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(pluginStart).Milliseconds()),
+		},
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(vms)),
+		},
+		{
+			Label: "vms_excluded_by_name",
+			Value: fmt.Sprintf("%d", numVMsExcludedByName),
+		},
+		{
+			Label: "vms_with_consolidation_need",
+			Value: fmt.Sprintf("%d", numVMsRequiringDiskConsolidation),
+		},
+		{
+			Label: "vms_without_consolidation_need",
+			Value: fmt.Sprintf("%d", numVMsExcludedByConsolidationState),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", len(resourcePools)),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("vms_with_consolidation_need", numVMsRequiringDiskConsolidation).
+		Int("vms_without_consolidation_need", numVMsExcludedByConsolidationState).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Logger()
+
 	switch {
-	case len(vmsNeedingConsolidation) > 0:
+	case numVMsRequiringDiskConsolidation > 0:
 
 		// *ANY* VMs requiring disk consolidation results in a CRITICAL state.
 
 		vmsList := strings.Join(vsphere.VMNames(vmsNeedingConsolidation), ", ")
 
 		log.Error().
-			Int("needing_consolidation", len(vmsNeedingConsolidation)).
 			Str("virtual_machines", vmsList).
 			Msg("Virtual Machines found in need of disk consolidation")
 
@@ -297,6 +352,12 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
@@ -328,6 +389,12 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
