@@ -26,6 +26,78 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.23.0] - 2021-10-22
+
+### Overview
+
+- Expand support for Nagios Performance Data
+- Refactoring/cleanup
+- Bugfixes
+- Dependency updates
+- built using Go 1.16.9
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- Add additional Nagios Performance Data metrics
+  - (GH-346) `check_vmware_host_cpu` plugin
+    - `time`
+    - `cpu_usage`
+    - `cpu_total`
+    - `cpu_remaining`
+    - `vms`
+    - `vms_powered_off`
+    - `vms_powered_on`
+  - (GH-347) `check_vmware_host_memory` plugin
+    - `time`
+    - `memory_usage`
+    - `memory_total`
+    - `memory_remaining`
+    - `vms`
+    - `vms_powered_off`
+    - `vms_powered_on`
+  - (GH-349) `check_vmware_question` plugin
+    - `time`
+    - `vms`
+    - `vms_excluded_by_name`
+    - `vms_requiring_input`
+    - `vms_not_requiring_input`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+  - (GH-345) `check_vmware_disk_consolidation` plugin
+    - `time`
+    - `vms`
+    - `vms_excluded_by_name`
+    - `vms_with_consolidation_need`
+    - `vms_without_consolidation_need`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+- `check_vmware_disk_consolidation` plugin
+  - (GH-419) Add `--trigger-reload` flag to (optionally) force state reload
+    for Virtual Machines before checking their disk consolidation status
+    - NOTE: Omitting the flag retains previous plugin behavior of only
+      checking the current state as recorded by vSphere (faster, but with
+      potentially stale data)
+
+### Changed
+
+- Dependencies
+  - `vmware/govmomi`
+    - `v0.27.0` to `v0.27.1`
+
+### Fixed
+
+- (GH-278) Issue with `check_vmware_disk_consolidation` plugin
+- (GH-293) Review `check_vmware_disk_consolidation` results
+- (GH-424) Incorrect CPU speed UoM provided by `(vsphere.CPUSpeed).String()`
+- (GH-425) Potential nil pointer dereference in
+  `vsphere.NewHostSystemCPUUsageSummary()`
+- (GH-430) Potential nil pointer dereference in
+  `vsphere.NewHostSystemMemoryUsageSummary()`
+
 ## [v0.22.0] - 2021-10-19
 
 ### Overview
@@ -1125,7 +1197,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.23.0...HEAD
+[v0.23.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.23.0
 [v0.22.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.22.0
 [v0.21.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.21.1
 [v0.21.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.21.0
