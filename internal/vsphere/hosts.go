@@ -30,6 +30,12 @@ var ErrHostSystemMemoryUsageThresholdCrossed = errors.New("host memory usage exc
 // usage has exceeded a given threshold
 var ErrHostSystemCPUUsageThresholdCrossed = errors.New("host CPU usage exceeds specified threshold")
 
+// ErrHostSystemHardwarePropertiesUnavailable indicates that specified host
+// hardware properties are unavailable. This is likely due to permission
+// issues for the service account or a shallow host properties retrieval
+// request (coding error).
+var ErrHostSystemHardwarePropertiesUnavailable = errors.New("host hardware properties unavailable")
+
 // HostSystemMemorySummary tracks memory usage details for a specific
 // HostSystem.
 type HostSystemMemorySummary struct {
@@ -102,7 +108,14 @@ func NewHostSystemMemoryUsageSummary(hs mo.HostSystem, criticalThreshold int, wa
 // NewHostSystemCPUUsageSummary receives a HostSystem and generates summary
 // information used to determine if usage levels have crossed user-specified
 // thresholds.
-func NewHostSystemCPUUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) HostSystemCPUSummary {
+func NewHostSystemCPUUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) (HostSystemCPUSummary, error) {
+
+	if hs.Summary.Hardware == nil {
+		return HostSystemCPUSummary{}, fmt.Errorf(
+			"error creating HostSystemCPUSummary: %w",
+			ErrHostSystemHardwarePropertiesUnavailable,
+		)
+	}
 
 	numCPUCores := hs.Summary.Hardware.NumCpuCores
 
@@ -128,7 +141,7 @@ func NewHostSystemCPUUsageSummary(hs mo.HostSystem, criticalThreshold int, warni
 		WarningThreshold:    warningThreshold,
 	}
 
-	return hsUsage
+	return hsUsage, nil
 
 }
 
