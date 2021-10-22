@@ -12,9 +12,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/units"
+	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/atc0005/check-vmware/internal/config"
 	"github.com/atc0005/check-vmware/internal/vsphere"
@@ -23,6 +25,10 @@ import (
 )
 
 func main() {
+
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
 
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
@@ -210,16 +216,76 @@ func main() {
 		Str("vms_on_host", strings.Join(vsphere.VMNames(hsVMs), ", ")).
 		Msg("Virtual Machines on host")
 
+	// _, numVMsPoweredOff := vsphere.FilterVMsByPowerState(hsVMs, false)
+	// numVMsPoweredOn := len(hsVMs) - numVMsPoweredOff
+
+	var numVMsPoweredOn int
+	var numVMsPoweredOff int
+	for _, vm := range hsVMs {
+		switch {
+		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn:
+			numVMsPoweredOn++
+		default:
+			numVMsPoweredOff++
+		}
+	}
+
+	log.Debug().Msg("Compiling Performance Data details")
+
+	pd := []nagios.PerformanceData{
+		{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(pluginStart).Milliseconds()),
+		},
+		{
+			Label:             "memory_usage",
+			Value:             fmt.Sprintf("%.2f", hsUsage.MemoryUsedPercent),
+			UnitOfMeasurement: "%",
+			Warn:              fmt.Sprintf("%d", cfg.HostSystemCPUUseWarning),
+			Crit:              fmt.Sprintf("%d", cfg.HostSystemCPUUseCritical),
+		},
+		{
+			Label:             "memory_total",
+			Value:             fmt.Sprintf("%d", hsUsage.MemoryTotal),
+			UnitOfMeasurement: "Hz",
+		},
+		{
+			Label:             "memory_remaining",
+			Value:             fmt.Sprintf("%d", hsUsage.MemoryRemaining),
+			UnitOfMeasurement: "B",
+			Max:               fmt.Sprintf("%d", hsUsage.MemoryTotal),
+			Min:               "0",
+		},
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(hsVMs)),
+		},
+		{
+			Label: "vms_powered_off",
+			Value: fmt.Sprintf("%d", numVMsPoweredOff),
+		},
+		{
+			Label: "vms_powered_on",
+			Value: fmt.Sprintf("%d", numVMsPoweredOn),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Str("host_name", hostSystem.Name).
+		Int("vms_total", len(hsVMs)).
+		Int("vms_powered_off", numVMsPoweredOff).
+		Int("vms_powered_on", numVMsPoweredOn).
+		Float64("host_memory_usage_used_percentage", hsUsage.MemoryUsedPercent).
+		Float64("host_memory_usage_remaining_percentage", hsUsage.MemoryRemainingPercent).
+		Str("host_memory_remaining", units.ByteSize(hsUsage.MemoryRemaining).String()).
+		Logger()
+
 	log.Debug().Msg("Evaluating host memory usage state")
 	switch {
 	case hsUsage.IsCriticalState():
 
-		log.Error().
-			Str("host_name", hostSystem.Name).
-			Float64("host_system_usage_used_percentage", hsUsage.MemoryUsedPercent).
-			Float64("host_system_usage_remaining_percentage", hsUsage.MemoryRemainingPercent).
-			Str("host_system_memory_remaining", units.ByteSize(hsUsage.MemoryRemaining).String()).
-			Msg("host memory usage threshold crossed")
+		log.Error().Msg("host memory usage threshold crossed")
 
 		nagiosExitState.LastError = vsphere.ErrHostSystemMemoryUsageThresholdCrossed
 
@@ -235,18 +301,19 @@ func main() {
 			hsUsage,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
 
 	case hsUsage.IsWarningState():
 
-		log.Error().
-			Str("host_name", hostSystem.Name).
-			Float64("host_usage_used_percentage", hsUsage.MemoryUsedPercent).
-			Float64("host_usage_remaining_percentage", hsUsage.MemoryRemainingPercent).
-			Str("host_memory_remaining", units.ByteSize(hsUsage.MemoryRemaining).String()).
-			Msg("host memory usage threshold crossed")
+		log.Error().Msg("host memory usage threshold crossed")
 
 		nagiosExitState.LastError = vsphere.ErrHostSystemMemoryUsageThresholdCrossed
 
@@ -261,6 +328,12 @@ func main() {
 			hsVMs,
 			hsUsage,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
@@ -283,6 +356,12 @@ func main() {
 			hsVMs,
 			hsUsage,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
