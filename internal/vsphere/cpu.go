@@ -42,9 +42,9 @@ const (
 func (cpu CPUSpeed) String() string {
 	switch {
 	case cpu >= YHz:
-		return fmt.Sprintf("%.1f EHz", float64(cpu)/YHz)
+		return fmt.Sprintf("%.1f YHz", float64(cpu)/YHz)
 	case cpu >= ZHz:
-		return fmt.Sprintf("%.1f EHz", float64(cpu)/ZHz)
+		return fmt.Sprintf("%.1f ZHz", float64(cpu)/ZHz)
 	case cpu >= EHz:
 		return fmt.Sprintf("%.1f EHz", float64(cpu)/EHz)
 	case cpu >= PHz:
