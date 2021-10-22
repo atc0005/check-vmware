@@ -159,11 +159,23 @@ func main() {
 	log.Debug().Msg("Successfully retrieved host by name")
 
 	log.Debug().Msg("Generating host memory usage summary")
-	hsUsage := vsphere.NewHostSystemMemoryUsageSummary(
+	hsUsage, hsUsageErr := vsphere.NewHostSystemMemoryUsageSummary(
 		hostSystem,
 		cfg.HostSystemMemoryUseCritical,
 		cfg.HostSystemMemoryUseWarning,
 	)
+	if hsUsageErr != nil {
+		log.Error().Err(hsUsageErr).Msg("error creating host memory usage summary")
+
+		nagiosExitState.LastError = hsUsageErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error creating host memory usage summary",
+			nagios.StateCRITICALLabel,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+		return
+	}
 
 	log.Debug().
 		Str("host_system_name", hostSystem.Name).

@@ -75,8 +75,16 @@ type HostSystemCPUSummary struct {
 
 // NewHostSystemMemoryUsageSummary receives a HostSystem and generates summary
 // information used to determine if usage levels have crossed user-specified
-// thresholds.
-func NewHostSystemMemoryUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) HostSystemMemorySummary {
+// thresholds. If required information is not accessible (e.g., permissions
+// issue for service account) an error is returned indicating this.
+func NewHostSystemMemoryUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) (HostSystemMemorySummary, error) {
+
+	if hs.Summary.Hardware == nil {
+		return HostSystemMemorySummary{}, fmt.Errorf(
+			"error creating HostSystemMemorySummary: %w",
+			ErrHostSystemHardwarePropertiesUnavailable,
+		)
+	}
 
 	// total memory in bytes
 	memoryTotal := hs.Hardware.MemorySize
@@ -101,13 +109,14 @@ func NewHostSystemMemoryUsageSummary(hs mo.HostSystem, criticalThreshold int, wa
 		WarningThreshold:       warningThreshold,
 	}
 
-	return hsUsage
+	return hsUsage, nil
 
 }
 
 // NewHostSystemCPUUsageSummary receives a HostSystem and generates summary
 // information used to determine if usage levels have crossed user-specified
-// thresholds.
+// thresholds. If required information is not accessible (e.g., permissions
+// issue for service account) an error is returned indicating this.
 func NewHostSystemCPUUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) (HostSystemCPUSummary, error) {
 
 	if hs.Summary.Hardware == nil {
