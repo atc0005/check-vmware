@@ -164,11 +164,23 @@ func main() {
 	log.Debug().Msg("Successfully retrieved host by name")
 
 	log.Debug().Msg("Generating host CPU usage summary")
-	hsUsage := vsphere.NewHostSystemCPUUsageSummary(
+	hsUsage, hsUsageErr := vsphere.NewHostSystemCPUUsageSummary(
 		hostSystem,
 		cfg.HostSystemCPUUseCritical,
 		cfg.HostSystemCPUUseWarning,
 	)
+	if hsUsageErr != nil {
+		log.Error().Err(hsUsageErr).Msg("error creating host CPU usage summary")
+
+		nagiosExitState.LastError = hsUsageErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error creating host CPU usage summary",
+			nagios.StateCRITICALLabel,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+		return
+	}
 
 	log.Debug().
 		Str("host_system_name", hostSystem.Name).
