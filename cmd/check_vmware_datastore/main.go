@@ -219,6 +219,13 @@ func main() {
 			Crit:              fmt.Sprintf("%d", dsUsage.CriticalThreshold),
 		},
 		{
+			Label:             "datastore_storage_used",
+			Value:             fmt.Sprintf("%d", dsUsage.StorageUsed),
+			UnitOfMeasurement: "B",
+			Max:               fmt.Sprintf("%d", dsUsage.StorageTotal),
+			Min:               "0",
+		},
+		{
 			Label:             "datastore_storage_remaining",
 			Value:             fmt.Sprintf("%d", dsUsage.StorageRemaining),
 			UnitOfMeasurement: "B",
