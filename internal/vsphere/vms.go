@@ -1189,7 +1189,8 @@ func VMInteractiveQuestionReport(
 
 			var question string
 			switch {
-			case vm.Summary.Runtime.Question.Text != "":
+			case vm.Summary.Runtime.Question != nil &&
+				vm.Summary.Runtime.Question.Text != "":
 				question = vm.Summary.Runtime.Question.Text
 			default:
 				question = "unknown"
