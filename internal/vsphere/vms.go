@@ -1196,11 +1196,25 @@ func VMInteractiveQuestionReport(
 				question = "unknown"
 			}
 
+			possibleAnswers := make([]string, 0, len(vm.Summary.Runtime.Question.Choice.ChoiceInfo))
+			for _, e := range vm.Summary.Runtime.Question.Choice.ChoiceInfo {
+				ed := e.(*types.ElementDescription)
+				// possibleAnswers = append(possibleAnswers, fmt.Sprintf(
+				// 	"'%s > %s'",
+				// 	ed.Key, ed.Description.Label,
+				// ))
+				possibleAnswers = append(possibleAnswers, fmt.Sprintf(
+					"'%s'",
+					ed.Description.Label,
+				))
+			}
+
 			fmt.Fprintf(
 				&report,
-				"* %s (%q)%s",
+				"* %s (%q [%s])%s",
 				vm.Name,
 				question,
+				strings.Join(possibleAnswers, ", "),
 				nagios.CheckOutputEOL,
 			)
 		}
