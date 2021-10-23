@@ -247,7 +247,7 @@ func main() {
 		{
 			Label:             "memory_total",
 			Value:             fmt.Sprintf("%d", hsUsage.MemoryTotal),
-			UnitOfMeasurement: "Hz",
+			UnitOfMeasurement: "B",
 		},
 		{
 			Label:             "memory_remaining",
