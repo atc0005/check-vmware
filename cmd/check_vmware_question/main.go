@@ -297,7 +297,7 @@ func main() {
 			Str("virtual_machines", vmsList).
 			Msg("Virtual Machines found blocked by interactive question")
 
-		nagiosExitState.LastError = vsphere.ErrVirtualMachineDiskConsolidationNeeded
+		nagiosExitState.LastError = vsphere.ErrVirtualMachineInteractiveResponseNeeded
 
 		nagiosExitState.ServiceOutput = vsphere.VMInteractiveQuestionOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
