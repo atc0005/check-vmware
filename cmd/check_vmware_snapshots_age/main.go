@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -23,6 +24,10 @@ import (
 )
 
 func main() {
+
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
 
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
@@ -258,15 +263,67 @@ func main() {
 		)
 	}
 
+	log.Debug().Msg("Compiling Performance Data details")
+
+	numVMsWithCriticalSnapshots, numCriticalSnapshots := snapshotSets.ExceedsAge(cfg.SnapshotsAgeCritical)
+	numVMsWithWarningSnapshots, numWarningSnapshots := snapshotSets.ExceedsAge(cfg.SnapshotsAgeWarning)
+
+	pd := []nagios.PerformanceData{
+		{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(pluginStart).Milliseconds()),
+		},
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(vms)),
+		},
+		{
+			Label: "vms_with_critical_snapshots",
+			Value: fmt.Sprintf("%d", numVMsWithCriticalSnapshots),
+		},
+		{
+			Label: "vms_with_warning_snapshots",
+			Value: fmt.Sprintf("%d", numVMsWithWarningSnapshots),
+		},
+		{
+			Label: "critical_snapshots",
+			Value: fmt.Sprintf("%d", numCriticalSnapshots),
+		},
+		{
+			Label: "warning_snapshots",
+			Value: fmt.Sprintf("%d", numWarningSnapshots),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", len(resourcePools)),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("num_vms_with_critical_snapshots", numVMsWithCriticalSnapshots).
+		Int("num_snapshots_age_critical", numCriticalSnapshots).
+		Int("num_vms_with_warning_snapshots", numVMsWithWarningSnapshots).
+		Int("num_snapshots_age_warning", numWarningSnapshots).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Logger()
+
 	switch {
 
 	case snapshotSets.IsAgeCriticalState():
 
-		vmsWithOldSnapshots, oldSnapshots := snapshotSets.ExceedsAge(cfg.SnapshotsAgeCritical)
-
 		log.Error().
-			Int("num_vms_with_critical_snapshots", vmsWithOldSnapshots).
-			Int("num_snapshots_age_critical", oldSnapshots).
 			Msg("Snapshot sets contain a snapshot which exceeds specified age in days")
 
 		nagiosExitState.LastError = vsphere.ErrSnapshotAgeThresholdCrossed
@@ -293,17 +350,19 @@ func main() {
 			resourcePools,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
 
 	case snapshotSets.IsAgeWarningState():
 
-		vmsWithOldSnapshots, oldSnapshots := snapshotSets.ExceedsAge(cfg.SnapshotsAgeWarning)
-
 		log.Error().
-			Int("num_vms_with_warning_snapshots", vmsWithOldSnapshots).
-			Int("num_snapshots_age_warning", oldSnapshots).
 			Msg("Snapshot sets contain one or more snapshots which exceed specified age in days")
 
 		nagiosExitState.LastError = vsphere.ErrSnapshotAgeThresholdCrossed
@@ -330,11 +389,19 @@ func main() {
 			resourcePools,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
 		return
 
 	default:
+
+		log.Debug().Msg("No snapshots found which exceed specified age in days")
 
 		nagiosExitState.LastError = nil
 
@@ -359,6 +426,12 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
