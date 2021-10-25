@@ -201,7 +201,6 @@ func main() {
 		Int("vms", len(dsUsage.VMs)).
 		Int("vms_powered_off", dsUsage.VMs.NumVMsPoweredOff()).
 		Int("vms_powered_on", dsUsage.VMs.NumVMsPoweredOn()).
-		Int("datastore_warning_threshold", dsUsage.WarningThreshold).
 		Msg("Datastore usage summary")
 
 	log.Debug().Msg("Compiling Performance Data details")
@@ -246,16 +245,26 @@ func main() {
 		},
 	}
 
+	// Update logger with new performance data related fields
+	log = log.With().
+		Str("datastore_name", datastore.Name).
+		Float64("datastore_usage_used_percentage", dsUsage.StorageUsedPercent).
+		Float64("datastore_usage_remaining_percentage", dsUsage.StorageRemainingPercent).
+		Str("datastore_storage_total", units.ByteSize(dsUsage.StorageTotal).String()).
+		Str("datastore_storage_used", units.ByteSize(dsUsage.StorageUsed).String()).
+		Str("datastore_storage_remaining", units.ByteSize(dsUsage.StorageRemaining).String()).
+		Int("datastore_critical_threshold", dsUsage.CriticalThreshold).
+		Int("datastore_warning_threshold", dsUsage.WarningThreshold).
+		Int("vms", len(dsUsage.VMs)).
+		Int("vms_powered_off", dsUsage.VMs.NumVMsPoweredOff()).
+		Int("vms_powered_on", dsUsage.VMs.NumVMsPoweredOn()).
+		Logger()
+
 	log.Debug().Msg("Evaluating datastore usage state")
 	switch {
 	case dsUsage.IsCriticalState():
 
-		log.Error().
-			Str("datastore_name", datastore.Name).
-			Float64("datastore_usage_used_percentage", dsUsage.StorageUsedPercent).
-			Float64("datastore_usage_remaining_percentage", dsUsage.StorageRemainingPercent).
-			Str("datastore_storage_remaining", units.ByteSize(dsUsage.StorageRemaining).String()).
-			Msg("Datastore usage CRITICAL")
+		log.Error().Msg("Datastore usage CRITICAL")
 
 		nagiosExitState.LastError = vsphere.ErrDatastoreUsageThresholdCrossed
 
@@ -281,12 +290,7 @@ func main() {
 
 	case dsUsage.IsWarningState():
 
-		log.Error().
-			Str("datastore_name", datastore.Name).
-			Float64("datastore_usage_used_percentage", dsUsage.StorageUsedPercent).
-			Float64("datastore_usage_remaining_percentage", dsUsage.StorageRemainingPercent).
-			Str("datastore_storage_remaining", units.ByteSize(dsUsage.StorageRemaining).String()).
-			Msg("Datastore usage CRITICAL")
+		log.Error().Msg("Datastore usage CRITICAL")
 
 		nagiosExitState.LastError = vsphere.ErrDatastoreUsageThresholdCrossed
 
@@ -311,6 +315,8 @@ func main() {
 		return
 
 	default:
+
+		log.Debug().Msg("Datastore usage within specified thresholds")
 
 		nagiosExitState.LastError = nil
 
