@@ -26,6 +26,41 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.24.0] - 2021-10-25
+
+### Overview
+
+- Expand support for Nagios Performance Data
+- Tweaks to `check_vmware_question` plugin
+- Bugfixes
+- built using Go 1.16.9
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- Add additional Nagios Performance Data metrics
+  - (GH-435) `check_vmware_host_cpu` plugin
+    - `cpu_used`
+  - (GH-435) `check_vmware_host_memory` plugin
+    - `memory_used`
+  - (GH-435) `check_vmware_datastore` plugin
+    - `datastore_storage_used`
+
+### Changed
+
+- (GH-422) Extend `check_vmware_question` plugin to list pending question(s)
+  in `LongServiceOutput`
+
+### Fixed
+
+- (GH-436) Incorrect UoM used by `memory_total` metric for
+  `check_vmware_host_memory` plugin
+- (GH-439) Potential nil pointer dereference in
+  `vsphere.VMInteractiveQuestionReport()` func
+- (GH-442) Incorrect error value returned by `check_vmware_question plugin`
+  when interactive response needed
+
 ## [v0.23.0] - 2021-10-22
 
 ### Overview
@@ -1197,7 +1232,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.24.0...HEAD
+[v0.24.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.24.0
 [v0.23.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.23.0
 [v0.22.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.22.0
 [v0.21.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.21.1
