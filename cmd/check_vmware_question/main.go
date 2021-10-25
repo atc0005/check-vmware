@@ -238,16 +238,6 @@ func main() {
 		Int("vms_excluded_by_interactive_question_status", numVMsExcludedByQuestionStatus).
 		Msg("VMs after interactive question status filtering")
 
-	// Update logger with new performance data related fields
-	log = log.With().
-		Int("vms_total", len(vms)).
-		Int("vms_filtered", len(filteredVMs)).
-		Int("vms_excluded_by_name", numVMsExcludedByName).
-		Int("vms_requiring_input", numVMsWaitingOnInput).
-		Int("vms_not_requiring_input", numVMsExcludedByQuestionStatus).
-		Int("resource_pools_evaluated", len(resourcePools)).
-		Logger()
-
 	log.Debug().Msg("Compiling Performance Data details")
 
 	pd := []nagios.PerformanceData{
@@ -284,6 +274,16 @@ func main() {
 			Value: fmt.Sprintf("%d", len(resourcePools)),
 		},
 	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("vms_requiring_input", numVMsWaitingOnInput).
+		Int("vms_not_requiring_input", numVMsExcludedByQuestionStatus).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Logger()
 
 	switch {
 	case numVMsWaitingOnInput > 0:
