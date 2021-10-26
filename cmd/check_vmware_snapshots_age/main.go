@@ -265,8 +265,8 @@ func main() {
 
 	log.Debug().Msg("Compiling Performance Data details")
 
-	numVMsWithCriticalSnapshots, numCriticalSnapshots := snapshotSets.ExceedsAge(cfg.SnapshotsAgeCritical)
-	numVMsWithWarningSnapshots, numWarningSnapshots := snapshotSets.ExceedsAge(cfg.SnapshotsAgeWarning)
+	numVMsWithCriticalSnapshots, numCriticalSnapshots := snapshotSets.AgeCriticalSnapshots()
+	numVMsWithWarningSnapshots, numWarningSnapshots := snapshotSets.AgeWarningSnapshots()
 
 	pd := []nagios.PerformanceData{
 		{

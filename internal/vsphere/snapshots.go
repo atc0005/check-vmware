@@ -169,6 +169,10 @@ type SnapshotSummarySet struct {
 	// snapshots associated with a specific VirtualMachine.
 	Snapshots []SnapshotSummary
 
+	// thresholds collects the snapshot threshold values used to determine
+	// whether a snapshot is in a non-OK state.
+	thresholds SnapshotThresholds
+
 	// setSizeWarningState indicates whether this snapshot set is considered in a
 	// WARNING state based on cumulative size of all snapshots in the set
 	// crossing snapshot size threshold.
@@ -630,6 +634,79 @@ func (sss SnapshotSummarySets) IsSizeCriticalState() bool {
 	return false
 }
 
+// AgeCriticalSnapshots returns the number of sets and number of snapshots
+// from all of those sets that are older than the specified CRITICAL age
+// threshold. This effectively provides the number of VirtualMachines with
+// CRITICAL snapshots and the total CRITICAL snapshots across all
+// VirtualMachines.
+func (sss SnapshotSummarySets) AgeCriticalSnapshots() (int, int) {
+
+	// Skip attempts to process empty collection.
+	if len(sss) == 0 {
+		return 0, 0
+	}
+
+	// Each SnapshotSummarySet records the thresholds used to create it, so we
+	// can pull the threshold values needed from the first item in the
+	// SnapshotSummarySets collection.
+	ageCritical := sss[0].thresholds.AgeCritical
+
+	return sss.ExceedsAge(ageCritical)
+}
+
+// AgeWarningSnapshots returns the number of sets and number of snapshots from
+// all of those sets that are older than the specified WARNING age threshold
+// but have *not* yet crossed the CRITICAL threshold. This effectively
+// provides the number of VirtualMachines with WARNING snapshots and the total
+// WARNING snapshots across all VirtualMachines.
+func (sss SnapshotSummarySets) AgeWarningSnapshots() (int, int) {
+
+	// Skip attempts to process empty collection.
+	if len(sss) == 0 {
+		return 0, 0
+	}
+
+	var warningSnapshots int
+	var vmsWithWarningSnapshots int
+
+	for i := range sss {
+
+		logger.Printf("Evaluating WARNING snapshots for %s", sss[i].VMName)
+
+		// Each snapshot "set" is composed of all of the snapshots for an
+		// individual VM. If we take the WARNING snapshots and subtract the
+		// snapshots in a CRITICAL state, we should have only the snapshots
+		// which have crossed the WARNING threshold, but not yet crossed the
+		// CRITICAL threshold.
+		//
+		// TODO: See GH-449, GH-451 for future refactoring work.
+
+		snapsCritical := sss[i].ExceedsAge(sss[i].thresholds.AgeCritical)
+		logger.Printf("snapsCritical: %d", snapsCritical)
+
+		snapsWarning := sss[i].ExceedsAge(sss[i].thresholds.AgeWarning)
+		logger.Printf("snapsWarning: %d", snapsWarning)
+
+		if snapsWarning > snapsCritical {
+			logger.Printf("Recording WARNING state for VM %s", sss[i].VMName)
+			vmsWithWarningSnapshots++
+
+			snapsWarning -= snapsCritical
+			logger.Printf("snapsWarning after adjustment: %d", snapsWarning)
+
+			logger.Printf("Recording %d warning snapshots for %s", snapsWarning, sss[i].VMName)
+			warningSnapshots += snapsWarning
+		} else {
+			logger.Printf("VM %s: fewer warning snapshots than critical, ignoring snapshot set", sss[i].VMName)
+
+		}
+
+	}
+
+	return vmsWithWarningSnapshots, warningSnapshots
+
+}
+
 // SnapshotsIndex is a mapping of Snapshot ManagedObjectReference to a tree of
 // snapshot details. This type is intended to help with producing a superset
 // type combining a summary of snapshot metadata with the original
@@ -720,6 +797,7 @@ func NewSnapshotSummarySet(
 			setSizeCriticalState:  false,
 			setCountWarningState:  false,
 			setCountCriticalState: false,
+			thresholds:            snapshotThresholds,
 		}
 	}
 
@@ -964,6 +1042,7 @@ func NewSnapshotSummarySet(
 		setSizeCriticalState:  ExceedsSize(setSize, int64(snapshotThresholds.SizeCritical)),
 		setCountWarningState:  len(snapshots) > snapshotThresholds.CountWarning,
 		setCountCriticalState: len(snapshots) > snapshotThresholds.CountCritical,
+		thresholds:            snapshotThresholds,
 	}
 
 }
