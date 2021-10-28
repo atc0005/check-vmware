@@ -267,6 +267,7 @@ func main() {
 
 	numVMsWithCriticalSnapshots, numCriticalSnapshots := snapshotSets.AgeCriticalSnapshots()
 	numVMsWithWarningSnapshots, numWarningSnapshots := snapshotSets.AgeWarningSnapshots()
+	numSnapshots := snapshotSets.Snapshots()
 
 	pd := []nagios.PerformanceData{
 		{
@@ -284,6 +285,10 @@ func main() {
 		{
 			Label: "vms_with_warning_snapshots",
 			Value: fmt.Sprintf("%d", numVMsWithWarningSnapshots),
+		},
+		{
+			Label: "snapshots",
+			Value: fmt.Sprintf("%d", numSnapshots),
 		},
 		{
 			Label: "critical_snapshots",
@@ -310,6 +315,7 @@ func main() {
 	// Update logger with new performance data related fields
 	log = log.With().
 		Int("vms_total", len(vms)).
+		Int("snapshots_total", numSnapshots).
 		Int("vms_filtered", len(filteredVMs)).
 		Int("vms_excluded_by_name", numVMsExcludedByName).
 		Int("num_vms_with_critical_snapshots", numVMsWithCriticalSnapshots).
