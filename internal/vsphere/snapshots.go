@@ -612,7 +612,7 @@ func (sss SnapshotSummarySets) IsCountCriticalState() bool {
 }
 
 // IsSizeWarningState indicates whether the snapshot sets have exceeded the
-// size WARNING threshold.
+// size WARNING threshold, but NOT the size CRITICAL threshold.
 func (sss SnapshotSummarySets) IsSizeWarningState() bool {
 	for i := range sss {
 		if sss[i].IsSizeWarningState() {
@@ -638,7 +638,7 @@ func (sss SnapshotSummarySets) IsSizeCriticalState() bool {
 // AgeCriticalSnapshots returns the number of sets and number of snapshots
 // from all of those sets that are older than the specified CRITICAL age
 // threshold. This effectively provides the number of VirtualMachines with
-// CRITICAL snapshots and the total CRITICAL snapshots across all
+// (age) CRITICAL snapshots and the total (age) CRITICAL snapshots across all
 // VirtualMachines.
 func (sss SnapshotSummarySets) AgeCriticalSnapshots() (int, int) {
 
@@ -658,8 +658,8 @@ func (sss SnapshotSummarySets) AgeCriticalSnapshots() (int, int) {
 // AgeWarningSnapshots returns the number of sets and number of snapshots from
 // all of those sets that are older than the specified WARNING age threshold
 // but have *not* yet crossed the CRITICAL threshold. This effectively
-// provides the number of VirtualMachines with WARNING snapshots and the total
-// WARNING snapshots across all VirtualMachines.
+// provides the number of VirtualMachines with (age) WARNING snapshots and the
+// total (age) WARNING snapshots across all VirtualMachines.
 func (sss SnapshotSummarySets) AgeWarningSnapshots() (int, int) {
 
 	// Skip attempts to process empty collection.
@@ -667,29 +667,101 @@ func (sss SnapshotSummarySets) AgeWarningSnapshots() (int, int) {
 		return 0, 0
 	}
 
-	// Track how many VMs have snapshots in a WARNING state.
+	// Track how many VMs have snapshot sets in a WARNING state and how many
+	// snapshots in each set are in a WARNING state (each snapshot is
+	// evaluated individually based on their age).
 	snapsIdx := make(map[string]int)
 
 	// Each snapshot set represents all of the snapshots for a VirtualMachine.
 	for _, set := range sss {
 
-		logger.Printf("Evaluating WARNING snapshots for %s", set.VMName)
+		logger.Printf("Evaluating age WARNING snapshots for %s", set.VMName)
 
 		for _, snapshot := range set.Snapshots {
 			if snapshot.IsAgeWarningState() {
 				logger.Printf(
-					"Snapshot %q is in WARNING state, incrementing counter",
+					"Snapshot %q is in age WARNING state, incrementing counter",
 					snapshot.Name,
 				)
 
 				snapsIdx[set.VMName]++
 
 				logger.Printf(
-					"VM %s has %d WARNING snapshots recorded",
+					"VM %s has %d age WARNING snapshots recorded",
 					snapshot.Name,
 					snapsIdx[set.VMName],
 				)
 			}
+		}
+	}
+
+	var warningSnapshots int
+	var vmsWithWarningSnapshots int
+	for k := range snapsIdx {
+		vmsWithWarningSnapshots++
+		warningSnapshots += snapsIdx[k]
+	}
+
+	return vmsWithWarningSnapshots, warningSnapshots
+
+}
+
+// SizeCriticalSnapshots returns the number of sets and number of snapshots
+// from all of those sets whose cumulative size is larger than the specified
+// CRITICAL size threshold. This effectively provides the number of
+// VirtualMachines with (size) CRITICAL snapshots and the total (size)
+// CRITICAL snapshots across all VirtualMachines.
+func (sss SnapshotSummarySets) SizeCriticalSnapshots() (int, int) {
+
+	// Skip attempts to process empty collection.
+	if len(sss) == 0 {
+		return 0, 0
+	}
+
+	// Each SnapshotSummarySet records the thresholds used to create it, so we
+	// can pull the threshold values needed from the first item in the
+	// SnapshotSummarySets collection.
+	sizeCritical := sss[0].thresholds.SizeCritical
+
+	return sss.ExceedsSize(sizeCritical)
+}
+
+// SizeWarningSnapshots returns the number of sets and number of snapshots
+// from all of those sets whose cumulative size is larger than the specified
+// WARNING age threshold but have *not* yet crossed the CRITICAL threshold.
+// This effectively provides the number of VirtualMachines with (size) WARNING
+// snapshots and the total (size) WARNING snapshots across all
+// VirtualMachines.
+func (sss SnapshotSummarySets) SizeWarningSnapshots() (int, int) {
+
+	// Skip attempts to process empty collection.
+	if len(sss) == 0 {
+		return 0, 0
+	}
+
+	// Track how many VMs have snapshot sets in a WARNING state and how many
+	// snapshots there are in the set (all considered to be in the same
+	// state).
+	snapsIdx := make(map[string]int)
+
+	// Each snapshot set represents all of the snapshots for a VirtualMachine.
+	for _, set := range sss {
+
+		logger.Printf("Evaluating cumulative size WARNING snapshots for %s", set.VMName)
+
+		if set.IsSizeWarningState() {
+			logger.Printf(
+				"Snapshot set for %s is in cumulative size WARNING state, recording snapshots count for VM",
+				set.VMName,
+			)
+
+			// Collect number of snapshots from set
+			snapsIdx[set.VMName] = len(set.Snapshots)
+			logger.Printf(
+				"VM %s has %d size WARNING snapshots recorded",
+				set.VMName,
+				snapsIdx[set.VMName],
+			)
 		}
 	}
 
