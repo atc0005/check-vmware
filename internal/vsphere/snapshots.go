@@ -1313,12 +1313,19 @@ func writeSnapshotsListEntries(
 	}
 
 	switch {
+	case unitName == snapshotThresholdTypeAge:
+		printSnapshotHeader("", true)
+	case unitName == snapshotThresholdTypeCount:
+		printSnapshotHeader("for VMs", true)
+	case unitName == snapshotThresholdTypeSize:
+		printSnapshotHeader("", true)
+	}
+
+	switch {
 
 	case unitName == snapshotThresholdTypeAge &&
 		(snapshotSummarySets.IsAgeCriticalState() ||
 			snapshotSummarySets.IsAgeWarningState()):
-
-		printSnapshotHeader("", true)
 
 		for _, snapSet := range snapshotSummarySets {
 			for _, snap := range snapSet.Snapshots {
@@ -1340,8 +1347,6 @@ func writeSnapshotsListEntries(
 	case unitName == snapshotThresholdTypeCount &&
 		(snapshotSummarySets.IsCountCriticalState() ||
 			snapshotSummarySets.IsCountWarningState()):
-
-		printSnapshotHeader("for VMs", true)
 
 		// filter to sets with at least WARNING level threshold exceptions
 		// (should catch CRITICAL exceptions as well)
@@ -1369,8 +1374,6 @@ func writeSnapshotsListEntries(
 		(snapshotSummarySets.IsSizeCriticalState() ||
 			snapshotSummarySets.IsSizeWarningState()):
 
-		printSnapshotHeader("", true)
-
 		for _, snapSet := range snapshotSummarySets {
 			if snapSet.IsSizeWarningState() || snapSet.IsSizeCriticalState() {
 				for _, snap := range snapSet.Snapshots {
@@ -1393,11 +1396,18 @@ func writeSnapshotsListEntries(
 	}
 
 	switch {
+	case unitName == snapshotThresholdTypeAge:
+		printSnapshotHeader("", false)
+	case unitName == snapshotThresholdTypeCount:
+		printSnapshotHeader("for VMs", false)
+	case unitName == snapshotThresholdTypeSize:
+		printSnapshotHeader("", false)
+	}
+
+	switch {
 
 	case unitName == snapshotThresholdTypeAge &&
 		snapshotSummarySets.HasNotYetExceededAge(snapshotWarningThreshold):
-
-		printSnapshotHeader("", false)
 
 		for _, snapSet := range snapshotSummarySets {
 			for _, snap := range snapSet.Snapshots {
@@ -1420,8 +1430,6 @@ func writeSnapshotsListEntries(
 	case unitName == snapshotThresholdTypeCount &&
 		snapshotSummarySets.HasNotYetExceededCount(snapshotWarningThreshold):
 
-		printSnapshotHeader("for VMs", false)
-
 		for _, snapSet := range snapshotSummarySets {
 			if !(snapSet.IsCountCriticalState() || snapSet.IsCountWarningState()) {
 				for _, snap := range snapSet.Snapshots {
@@ -1441,8 +1449,6 @@ func writeSnapshotsListEntries(
 
 	case unitName == snapshotThresholdTypeSize &&
 		snapshotSummarySets.HasNotYetExceededSize(snapshotWarningThreshold):
-
-		printSnapshotHeader("", false)
 
 		for _, snapSet := range snapshotSummarySets {
 			if !(snapSet.IsSizeWarningState() ||
