@@ -1270,23 +1270,56 @@ func writeSnapshotsListEntries(
 
 	listEntryTemplate := "* %q [Age: %v, Size (item: %v, sum: %v), Name: %q, Datastore: %q]\n"
 
-	fmt.Fprintf(
-		w,
-		"Snapshots exceeding WARNING (%d %s) or CRITICAL (%d %s) %s thresholds:%s%s",
-		snapshotWarningThreshold,
-		unitSuffix,
-		snapshotCriticalThreshold,
-		unitSuffix,
-		unitName,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
+	printSnapshotHeader := func(forWhat string, exceeding bool) {
+
+		// Remove any provided whitespace, append one leading and trailing
+		// space if a subject was provided.
+		forWhat = strings.TrimSpace(forWhat)
+		switch {
+		case forWhat == "":
+			forWhat = " "
+		default:
+			forWhat = " " + forWhat + " "
+		}
+
+		switch {
+		case exceeding:
+
+			fmt.Fprintf(
+				w,
+				"Snapshots%sexceeding WARNING (%d %s) or CRITICAL (%d %s) %s thresholds:%s%s",
+				forWhat,
+				snapshotWarningThreshold,
+				unitSuffix,
+				snapshotCriticalThreshold,
+				unitSuffix,
+				unitName,
+				nagios.CheckOutputEOL,
+				nagios.CheckOutputEOL,
+			)
+		default:
+
+			fmt.Fprintf(
+				w,
+				"%sSnapshots%s*not yet* exceeding %s thresholds:%s%s",
+				nagios.CheckOutputEOL,
+				forWhat,
+				unitName,
+				nagios.CheckOutputEOL,
+				nagios.CheckOutputEOL,
+			)
+		}
+
+	}
 
 	switch {
 
 	case unitName == snapshotThresholdTypeAge &&
 		(snapshotSummarySets.IsAgeCriticalState() ||
 			snapshotSummarySets.IsAgeWarningState()):
+
+		printSnapshotHeader("", true)
+
 		for _, snapSet := range snapshotSummarySets {
 			for _, snap := range snapSet.Snapshots {
 				if snap.IsAgeCriticalState() || snap.IsAgeWarningState() {
@@ -1307,6 +1340,8 @@ func writeSnapshotsListEntries(
 	case unitName == snapshotThresholdTypeCount &&
 		(snapshotSummarySets.IsCountCriticalState() ||
 			snapshotSummarySets.IsCountWarningState()):
+
+		printSnapshotHeader("for VMs", true)
 
 		// filter to sets with at least WARNING level threshold exceptions
 		// (should catch CRITICAL exceptions as well)
@@ -1333,6 +1368,9 @@ func writeSnapshotsListEntries(
 	case unitName == snapshotThresholdTypeSize &&
 		(snapshotSummarySets.IsSizeCriticalState() ||
 			snapshotSummarySets.IsSizeWarningState()):
+
+		printSnapshotHeader("", true)
+
 		for _, snapSet := range snapshotSummarySets {
 			if snapSet.IsSizeWarningState() || snapSet.IsSizeCriticalState() {
 				for _, snap := range snapSet.Snapshots {
@@ -1354,19 +1392,13 @@ func writeSnapshotsListEntries(
 		fmt.Fprintln(w, "* None detected")
 	}
 
-	fmt.Fprintf(
-		w,
-		"%sSnapshots *not yet* exceeding %s thresholds:%s%s",
-		nagios.CheckOutputEOL,
-		unitName,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
 	switch {
 
 	case unitName == snapshotThresholdTypeAge &&
 		snapshotSummarySets.HasNotYetExceededAge(snapshotWarningThreshold):
+
+		printSnapshotHeader("", false)
+
 		for _, snapSet := range snapshotSummarySets {
 			for _, snap := range snapSet.Snapshots {
 				if !(snap.IsAgeCriticalState() ||
@@ -1388,6 +1420,8 @@ func writeSnapshotsListEntries(
 	case unitName == snapshotThresholdTypeCount &&
 		snapshotSummarySets.HasNotYetExceededCount(snapshotWarningThreshold):
 
+		printSnapshotHeader("for VMs", false)
+
 		for _, snapSet := range snapshotSummarySets {
 			if !(snapSet.IsCountCriticalState() || snapSet.IsCountWarningState()) {
 				for _, snap := range snapSet.Snapshots {
@@ -1407,6 +1441,9 @@ func writeSnapshotsListEntries(
 
 	case unitName == snapshotThresholdTypeSize &&
 		snapshotSummarySets.HasNotYetExceededSize(snapshotWarningThreshold):
+
+		printSnapshotHeader("", false)
+
 		for _, snapSet := range snapshotSummarySets {
 			if !(snapSet.IsSizeWarningState() ||
 				snapSet.IsSizeCriticalState()) {
