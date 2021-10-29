@@ -776,6 +776,64 @@ func (sss SnapshotSummarySets) SizeWarningSnapshots() (int, int) {
 
 }
 
+// CountCriticalSnapshots returns the number of sets and number of snapshots
+// from all of those sets that are greater than the specified CRITICAL count
+// threshold. This effectively provides the number of VirtualMachines with
+// CRITICAL snapshots and the total CRITICAL snapshots across all
+// VirtualMachines.
+func (sss SnapshotSummarySets) CountCriticalSnapshots() (int, int) {
+
+	// Skip attempts to process empty collection.
+	if len(sss) == 0 {
+		return 0, 0
+	}
+
+	// Each SnapshotSummarySet records the thresholds used to create it, so we
+	// can pull the threshold values needed from the first item in the
+	// SnapshotSummarySets collection.
+	countCritical := sss[0].thresholds.CountCritical
+
+	numVMsWithExcessSnaps, numExcessSnaps, _ :=
+		sss.ExcessSnapshots(countCritical)
+
+	return numVMsWithExcessSnaps, numExcessSnaps
+}
+
+// CountWarningSnapshots returns the number of sets and number of snapshots
+// from all of those sets that are greater than the specified WARNING age
+// threshold but have *not* yet crossed the CRITICAL threshold. This
+// effectively provides the number of VirtualMachines with WARNING snapshots
+// and the total WARNING snapshots across all VirtualMachines.
+func (sss SnapshotSummarySets) CountWarningSnapshots() (int, int) {
+
+	// FIXME: Are "warning snapshots" those above a permitted count (e.g., if
+	// 5 snapshots are present and the threshold is 4, do we report 1?), or
+	// all snapshots once the threshold is reached (e.g., using the same 5
+	// snapshots example, we report 5?)
+
+	// Skip attempts to process empty collection.
+	if len(sss) == 0 {
+		return 0, 0
+	}
+
+	var numVMsWithExcessSnaps int
+	var numExcessSnaps int
+
+	if sss.IsCountWarningState() {
+
+		// Each SnapshotSummarySet records the thresholds used to create it, so we
+		// can pull the threshold values needed from the first item in the
+		// SnapshotSummarySets collection.
+		countWarning := sss[0].thresholds.CountWarning
+
+		numVMsWithExcessSnaps, numExcessSnaps, _ =
+			sss.ExcessSnapshots(countWarning)
+	}
+
+	return numVMsWithExcessSnaps, numExcessSnaps
+
+}
+
 // SnapshotsIndex is a mapping of Snapshot ManagedObjectReference to a tree of
 // snapshot details. This type is intended to help with producing a superset
 // type combining a summary of snapshot metadata with the original
