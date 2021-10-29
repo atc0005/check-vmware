@@ -67,7 +67,7 @@ func ValidateRPs(ctx context.Context, c *vim25.Client, includeRPs []string, excl
 		// method when a view is no longer needed. This practice frees memory
 		// on the server.
 		if err := v.Destroy(ctx); err != nil {
-			fmt.Println("Error occurred while destroying view")
+			logger.Printf("Error occurred while destroying view: %s", err)
 		}
 	}()
 
