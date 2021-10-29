@@ -38,6 +38,19 @@ func main() {
 	// defer this from the start so it is the last deferred function to run
 	defer nagiosExitState.ReturnCheckResults()
 
+	// Track plugin runtime, emit this metric regardless of exit point/cause.
+	defer func(exitState *nagios.ExitState, start time.Time) {
+		runtimeMetric := nagios.PerformanceData{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
+		}
+		if err := exitState.AddPerfData(false, runtimeMetric); err != nil {
+			zlog.Error().
+				Err(err).
+				Msg("failed to add time (runtime) performance data metric")
+		}
+	}(&nagiosExitState, pluginStart)
+
 	// Disable library debug logging output by default
 	// vsphere.EnableLogging()
 	vsphere.DisableLogging()
@@ -270,10 +283,8 @@ func main() {
 	numSnapshots := snapshotSets.Snapshots()
 
 	pd := []nagios.PerformanceData{
-		{
-			Label: "time",
-			Value: fmt.Sprintf("%dms", time.Since(pluginStart).Milliseconds()),
-		},
+		// The `time` (runtime) metric is appended at plugin exit, so do not
+		// duplicate it here.
 		{
 			Label: "vms",
 			Value: fmt.Sprintf("%d", len(vms)),
