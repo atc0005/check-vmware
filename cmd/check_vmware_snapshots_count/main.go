@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -23,6 +24,10 @@ import (
 )
 
 func main() {
+
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
 
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
@@ -258,17 +263,77 @@ func main() {
 		)
 	}
 
+	log.Debug().Msg("Compiling Performance Data details")
+
+	numVMsWithCriticalSnapshots, numCriticalSnapshots := snapshotSets.CountCriticalSnapshots()
+	numVMsWithWarningSnapshots, numWarningSnapshots := snapshotSets.CountWarningSnapshots()
+	numSnapshots := snapshotSets.Snapshots()
+
+	pd := []nagios.PerformanceData{
+		{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(pluginStart).Milliseconds()),
+		},
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(vms)),
+		},
+		{
+			Label: "vms_with_critical_snapshots",
+			Value: fmt.Sprintf("%d", numVMsWithCriticalSnapshots),
+		},
+		{
+			Label: "vms_with_warning_snapshots",
+			Value: fmt.Sprintf("%d", numVMsWithWarningSnapshots),
+		},
+		{
+			Label: "snapshots",
+			Value: fmt.Sprintf("%d", numSnapshots),
+		},
+		{
+			Label: "critical_snapshots",
+			Value: fmt.Sprintf("%d", numCriticalSnapshots),
+		},
+		{
+			Label: "warning_snapshots",
+			Value: fmt.Sprintf("%d", numWarningSnapshots),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", len(resourcePools)),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Int("snapshots_total", numSnapshots).
+		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("num_vms_with_critical_snapshots", numVMsWithCriticalSnapshots).
+		Int("num_snapshots_count_critical", numCriticalSnapshots).
+		Int("num_vms_with_warning_snapshots", numVMsWithWarningSnapshots).
+		Int("num_snapshots_count_warning", numWarningSnapshots).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Logger()
+
 	switch {
 
 	case snapshotSets.IsCountCriticalState():
 
-		numVMsWithExcessSnaps, numExcessSnaps, snapshotsTotal :=
+		_, numExcessSnaps, _ :=
 			snapshotSets.ExcessSnapshots(cfg.SnapshotsCountCritical)
 
 		log.Error().
-			Int("num_vms_with_critical_num_snapshots", numVMsWithExcessSnaps).
 			Int("num_snapshots_in_excess", numExcessSnaps).
-			Int("num_snapshots_total", snapshotsTotal).
 			Msg("Snapshot sets exceed number of specified (permitted) snapshots per VM")
 
 		nagiosExitState.LastError = vsphere.ErrSnapshotCountThresholdCrossed
@@ -293,19 +358,23 @@ func main() {
 			resourcePools,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
 
 	case snapshotSets.IsCountWarningState():
 
-		numVMsWithExcessSnaps, numExcessSnaps, snapshotsTotal :=
+		_, numExcessSnaps, _ :=
 			snapshotSets.ExcessSnapshots(cfg.SnapshotsCountWarning)
 
 		log.Error().
-			Int("num_vms_with_warning_num_snapshots", numVMsWithExcessSnaps).
 			Int("num_snapshots_in_excess", numExcessSnaps).
-			Int("num_snapshots_total", snapshotsTotal).
 			Msg("Snapshot sets exceed number of specified (permitted) snapshots per VM")
 
 		nagiosExitState.LastError = vsphere.ErrSnapshotCountThresholdCrossed
@@ -330,11 +399,19 @@ func main() {
 			resourcePools,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
 		return
 
 	default:
+
+		log.Debug().Msg("No VMs found with snapshots exceeding specified count")
 
 		nagiosExitState.LastError = nil
 
@@ -357,6 +434,12 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
