@@ -252,8 +252,8 @@ func main() {
 			Label:             "memory_usage",
 			Value:             fmt.Sprintf("%.2f", hsUsage.MemoryUsedPercent),
 			UnitOfMeasurement: "%",
-			Warn:              fmt.Sprintf("%d", cfg.HostSystemCPUUseWarning),
-			Crit:              fmt.Sprintf("%d", cfg.HostSystemCPUUseCritical),
+			Warn:              fmt.Sprintf("%d", cfg.HostSystemMemoryUseWarning),
+			Crit:              fmt.Sprintf("%d", cfg.HostSystemMemoryUseCritical),
 		},
 		{
 			Label:             "memory_total",
