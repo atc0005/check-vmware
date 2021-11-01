@@ -22,7 +22,7 @@ var ErrRuntimeTimeoutReached = errors.New("plugin runtime exceeded specified tim
 // receives an error, evaluates whether it contains specific errors in its
 // chain and then (potentially) appends additional details for later use. This
 // updated error chain is returned to the caller, preserving the original
-// wrapper error. The original error is returned unmodified if no annotations
+// wrapped error. The original error is returned unmodified if no annotations
 // were deemed necessary.
 func AnnotateError(err error) error {
 
