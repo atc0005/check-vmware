@@ -26,6 +26,79 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.25.0] - 2021-11-01
+
+### Overview
+
+- Expand support for Nagios Performance Data
+- Refactored `check_vmware_snapshots_*` plugins
+- Append additional context to errors related to plugin runtime timeouts
+- Bugfixes
+- Dependency updates
+- built using Go 1.16.9
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- Add additional Nagios Performance Data metrics
+  - (GH-446, GH-459) `check_vmware_snapshots_age` plugin
+    - `time`
+    - `vms`
+    - `vms_with_critical_snapshots`
+    - `vms_with_warning_snapshots`
+    - `snapshots`
+    - `critical_snapshots`
+    - `warning_snapshots`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+  - (GH-353) `check_vmware_snapshots_size` plugin
+    - `time`
+    - `vms`
+    - `vms_with_critical_snapshots`
+    - `vms_with_warning_snapshots`
+    - `snapshots`
+    - `critical_snapshots`
+    - `warning_snapshots`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+  - (GH-352) `check_vmware_snapshots_count` plugin
+    - `time`
+    - `vms`
+    - `vms_with_critical_snapshots`
+    - `vms_with_warning_snapshots`
+    - `snapshots`
+    - `critical_snapshots`
+    - `warning_snapshots`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+
+### Changed
+
+- Dependencies
+  - `github/codeql-action`
+    - `v1.0.19` to `v1.0.21`
+
+- (GH-463) Annotate `context deadline exceeded` errors with additional human
+  readable details
+
+### Fixed
+
+- (GH-448) Tweak logging for datastore plugin
+- (GH-451) Update `check_vmware_snapshots_*` plugins to track crossing of
+  thresholds, use methods to determine exactly one of CRITICAL or WARNING
+  state
+- (GH-455) Snapshots list headers for the `check_vmware_snapshots_count`
+  plugin do not have the right context
+- (GH-461) Provide time (runtime) performance data metric for all exit points
+  from plugins
+- (GH-462) `Error occurred while destroying view` message emitted to stdout
+- (GH-468) Threshold values for `memory_usage` metric for
+  `check_vmware_host_memory` plugin are always zero
+
 ## [v0.24.0] - 2021-10-25
 
 ### Overview
@@ -1232,7 +1305,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.24.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.25.0...HEAD
+[v0.25.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.25.0
 [v0.24.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.24.0
 [v0.23.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.23.0
 [v0.22.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.22.0
