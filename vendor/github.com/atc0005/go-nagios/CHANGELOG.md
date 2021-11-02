@@ -26,17 +26,31 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.8.1] - 2021-11-02
+
+### Changed
+
+- Dependencies
+  - `actions/checkout`
+    - `v2.3.4` to `v2.3.5`
+
+### Fixed
+
+- (GH-98) Performance Data emitted when `ServiceOutput` and
+  `LongServiceOutput` empty
+- (GH-96) CHANGELOG | Fix typo and clarify perfdata support
+
 ## [v0.8.0] - 2021-09-30
 
 ### Added
 
-- Add initial support for collecting and formatting performance data
+- Add initial support for collecting, formatting & emitting performance data
 
 ### Changed
 
 - Dependencies
   - `actions/setup-node`
-    - (`v2.4.0` to `v2.4.1`
+    - `v2.4.0` to `v2.4.1`
 
 ### Fixed
 
@@ -287,7 +301,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.8.1...HEAD
+[v0.8.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.1
 [v0.8.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.0
 [v0.7.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.7.0
 [v0.6.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.6.1

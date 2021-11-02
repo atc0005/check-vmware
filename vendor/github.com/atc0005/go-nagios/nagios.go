@@ -335,13 +335,14 @@ func (es *ExitState) ReturnCheckResults() {
 		fmt.Printf("%s%s%s", CheckOutputEOL, es.BrandingCallback(), CheckOutputEOL)
 	}
 
-	// Generate formatted performance data if provided.
-	if len(es.perfData) != 0 {
+	// Generate formatted performance data if provided. Only emit if a
+	// one-line summary is set by client code.
+	if len(es.perfData) != 0 && es.ServiceOutput != "" {
 
 		// Performance data metrics are appended to plugin output. These
 		// metrics are provided as a single line, leading with a pipe
 		// character, a space and one or more metrics each separated from
-		// another by a single space. single space.
+		// another by a single space.
 		fmt.Print(" |")
 
 		for _, pd := range es.perfData {
