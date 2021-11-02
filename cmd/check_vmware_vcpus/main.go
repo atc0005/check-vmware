@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -24,6 +25,10 @@ import (
 
 func main() {
 
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
+
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
 		LastError:      nil,
@@ -32,6 +37,26 @@ func main() {
 
 	// defer this from the start so it is the last deferred function to run
 	defer nagiosExitState.ReturnCheckResults()
+
+	// Collect last minute details just before ending plugin execution.
+	defer func(exitState *nagios.ExitState, start time.Time) {
+
+		// Record plugin runtime, emit this metric regardless of exit
+		// point/cause.
+		runtimeMetric := nagios.PerformanceData{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
+		}
+		if err := exitState.AddPerfData(false, runtimeMetric); err != nil {
+			zlog.Error().
+				Err(err).
+				Msg("failed to add time (runtime) performance data metric")
+		}
+
+		// Annotate errors (if applicable) with additional context to aid in
+		// troubleshooting.
+		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
 	// vsphere.EnableLogging()
@@ -250,18 +275,77 @@ func main() {
 	}
 
 	log.Debug().
-		Float32("vcpus_percent_used", vCPUsPercentageUsedOfAllowed).
+		Float32("vcpus_usage", vCPUsPercentageUsedOfAllowed).
 		Int32("vcpus_remaining", vCPUsRemaining).
 		Msg("")
 
+	log.Debug().Msg("Compiling Performance Data details")
+
+	pd := []nagios.PerformanceData{
+		// The `time` (runtime) metric is appended at plugin exit, so do not
+		// duplicate it here.
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(vms)),
+		},
+		{
+			Label: "vms_excluded_by_name",
+			Value: fmt.Sprintf("%d", numVMsExcludedByName),
+		},
+		{
+			Label: "vms_excluded_by_power_state",
+			Value: fmt.Sprintf("%d", numVMsExcludedByPowerState),
+		},
+		{
+			Label:             "vcpus_usage",
+			Value:             fmt.Sprintf("%.2f", vCPUsPercentageUsedOfAllowed),
+			UnitOfMeasurement: "%",
+			Warn:              fmt.Sprintf("%d", cfg.VCPUsAllocatedWarning),
+			Crit:              fmt.Sprintf("%d", cfg.VCPUsAllocatedCritical),
+		},
+		{
+			Label: "vcpus_used",
+			Value: fmt.Sprintf("%d", vCPUsAllocated),
+			Max:   fmt.Sprintf("%d", cfg.VCPUsMaxAllowed),
+			Min:   fmt.Sprintf("%d", 0),
+		},
+		{
+			Label: "vcpus_remaining",
+			Value: fmt.Sprintf("%d", vCPUsRemaining),
+			Max:   fmt.Sprintf("%d", cfg.VCPUsMaxAllowed),
+			Min:   fmt.Sprintf("%d", 0),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", len(resourcePools)),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
+		Float32("vcpus_usage", vCPUsPercentageUsedOfAllowed).
+		Int32("vcpus_used", vCPUsAllocated).
+		Int32("vcpus_remaining", vCPUsRemaining).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Logger()
+
+	log.Debug().Msg("Evaluating vCPU usage")
 	switch {
 	case vCPUsPercentageUsedOfAllowed > float32(cfg.VCPUsAllocatedCritical):
 
-		log.Error().
-			Float32("vcpus_percent_used", vCPUsPercentageUsedOfAllowed).
-			Int32("vcpus_remaining", vCPUsRemaining).
-			Int("vms_filtered", len(filteredVMs)).
-			Msg("vCPUs allocation")
+		log.Error().Msg("vCPUs allocation CRITICAL")
 
 		nagiosExitState.LastError = vsphere.ErrVCPUsUsageThresholdCrossed
 
@@ -286,17 +370,19 @@ func main() {
 			resourcePools,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
 
 	case vCPUsPercentageUsedOfAllowed > float32(cfg.VCPUsAllocatedWarning):
 
-		log.Error().
-			Float32("vcpus_percent_used", vCPUsPercentageUsedOfAllowed).
-			Int32("vcpus_remaining", vCPUsRemaining).
-			Int("vms_filtered", len(filteredVMs)).
-			Msg("vCPUs allocation warning")
+		log.Error().Msg("vCPUs allocation WARNING")
 
 		nagiosExitState.LastError = vsphere.ErrVCPUsUsageThresholdCrossed
 
@@ -321,11 +407,19 @@ func main() {
 			resourcePools,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
 		return
 
 	default:
+
+		log.Debug().Msg("vCPUs allocation OK")
 
 		nagiosExitState.LastError = nil
 
@@ -349,6 +443,12 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
