@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -24,6 +25,10 @@ import (
 
 func main() {
 
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
+
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
 		LastError:      nil,
@@ -32,6 +37,26 @@ func main() {
 
 	// defer this from the start so it is the last deferred function to run
 	defer nagiosExitState.ReturnCheckResults()
+
+	// Collect last minute details just before ending plugin execution.
+	defer func(exitState *nagios.ExitState, start time.Time) {
+
+		// Record plugin runtime, emit this metric regardless of exit
+		// point/cause.
+		runtimeMetric := nagios.PerformanceData{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
+		}
+		if err := exitState.AddPerfData(false, runtimeMetric); err != nil {
+			zlog.Error().
+				Err(err).
+				Msg("failed to add time (runtime) performance data metric")
+		}
+
+		// Annotate errors (if applicable) with additional context to aid in
+		// troubleshooting.
+		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
 	// vsphere.EnableLogging()
@@ -228,6 +253,47 @@ func main() {
 		cfg.VMPowerCycleUptimeCritical,
 	)
 
+	log.Debug().Msg("Compiling Performance Data details")
+
+	pd := []nagios.PerformanceData{
+		// The `time` (runtime) metric is appended at plugin exit, so do not
+		// duplicate it here.
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(vms)),
+		},
+		{
+			Label: "vms_with_critical_power_uptime",
+			Value: fmt.Sprintf("%d", len(uptimeSummary.VMsCritical)),
+		},
+		{
+			Label: "vms_with_warning_power_uptime",
+			Value: fmt.Sprintf("%d", len(uptimeSummary.VMsWarning)),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", len(resourcePools)),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("num_vms_with_critical_power_uptime", len(uptimeSummary.VMsCritical)).
+		Int("num_vms_with_warning_power_uptime", len(uptimeSummary.VMsWarning)).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Logger()
+
 	log.Debug().Msg("Evaluating VM power cycle uptime")
 	switch {
 	case len(uptimeSummary.VMsCritical) > 0:
@@ -256,6 +322,12 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
@@ -288,6 +360,12 @@ func main() {
 			resourcePools,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
 		return
@@ -318,6 +396,12 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
