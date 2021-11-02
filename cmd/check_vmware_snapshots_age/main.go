@@ -355,6 +355,7 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsAgeOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
 			snapshotSets,
+			snapshotThresholds,
 			filteredVMs,
 			resourcePools,
 		)
@@ -362,6 +363,7 @@ func main() {
 		nagiosExitState.LongServiceOutput = vsphere.SnapshotsAgeReport(
 			c.Client,
 			snapshotSets,
+			snapshotThresholds,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,
@@ -392,6 +394,7 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsAgeOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
 			snapshotSets,
+			snapshotThresholds,
 			filteredVMs,
 			resourcePools,
 		)
@@ -399,6 +402,7 @@ func main() {
 		nagiosExitState.LongServiceOutput = vsphere.SnapshotsAgeReport(
 			c.Client,
 			snapshotSets,
+			snapshotThresholds,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,
@@ -428,6 +432,7 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsAgeOneLineCheckSummary(
 			nagios.StateOKLabel,
 			snapshotSets,
+			snapshotThresholds,
 			filteredVMs,
 			resourcePools,
 		)
@@ -435,6 +440,7 @@ func main() {
 		nagiosExitState.LongServiceOutput = vsphere.SnapshotsAgeReport(
 			c.Client,
 			snapshotSets,
+			snapshotThresholds,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,
