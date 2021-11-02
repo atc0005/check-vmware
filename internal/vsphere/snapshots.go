@@ -1180,6 +1180,7 @@ func NewSnapshotSummarySet(
 func SnapshotsAgeOneLineCheckSummary(
 	stateLabel string,
 	snapshotSets SnapshotSummarySets,
+	snapshotThresholds SnapshotThresholds,
 	evaluatedVMs []mo.VirtualMachine,
 	rps []mo.ResourcePool,
 ) string {
@@ -1192,11 +1193,6 @@ func SnapshotsAgeOneLineCheckSummary(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	// Each SnapshotSummarySet records the thresholds used to create it, so we
-	// can pull the threshold values needed from the first item in the
-	// SnapshotSummarySets collection.
-	snapshotThresholds := snapshotSets[0].thresholds
 
 	switch {
 
@@ -1250,6 +1246,7 @@ func SnapshotsAgeOneLineCheckSummary(
 func SnapshotsCountOneLineCheckSummary(
 	stateLabel string,
 	snapshotSets SnapshotSummarySets,
+	snapshotThresholds SnapshotThresholds,
 	evaluatedVMs []mo.VirtualMachine,
 	rps []mo.ResourcePool,
 ) string {
@@ -1262,11 +1259,6 @@ func SnapshotsCountOneLineCheckSummary(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	// Each SnapshotSummarySet records the thresholds used to create it, so we
-	// can pull the threshold values needed from the first item in the
-	// SnapshotSummarySets collection.
-	snapshotThresholds := snapshotSets[0].thresholds
 
 	switch {
 
@@ -1320,6 +1312,7 @@ func SnapshotsCountOneLineCheckSummary(
 func SnapshotsSizeOneLineCheckSummary(
 	stateLabel string,
 	snapshotSets SnapshotSummarySets,
+	snapshotThresholds SnapshotThresholds,
 	evaluatedVMs []mo.VirtualMachine,
 	rps []mo.ResourcePool,
 ) string {
@@ -1332,11 +1325,6 @@ func SnapshotsSizeOneLineCheckSummary(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	// Each SnapshotSummarySet records the thresholds used to create it, so we
-	// can pull the threshold values needed from the first item in the
-	// SnapshotSummarySets collection.
-	snapshotThresholds := snapshotSets[0].thresholds
 
 	switch {
 
@@ -1713,6 +1701,7 @@ func writeSnapshotsReportFooter(
 func SnapshotsAgeReport(
 	c *vim25.Client,
 	snapshotSummarySets SnapshotSummarySets,
+	snapshotThresholds SnapshotThresholds,
 	allVMs []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
 	vmsWithIssues []mo.VirtualMachine,
@@ -1733,11 +1722,6 @@ func SnapshotsAgeReport(
 	}()
 
 	var report strings.Builder
-
-	// Each SnapshotSummarySet records the thresholds used to create it, so we
-	// can pull the threshold values needed from the first item in the
-	// SnapshotSummarySets collection.
-	snapshotThresholds := snapshotSummarySets[0].thresholds
 
 	writeSnapshotsListEntries(
 		&report,
@@ -1773,6 +1757,7 @@ func SnapshotsAgeReport(
 func SnapshotsSizeReport(
 	c *vim25.Client,
 	snapshotSummarySets SnapshotSummarySets,
+	snapshotThresholds SnapshotThresholds,
 	allVMs []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
 	vmsWithIssues []mo.VirtualMachine,
@@ -1793,11 +1778,6 @@ func SnapshotsSizeReport(
 	}()
 
 	var report strings.Builder
-
-	// Each SnapshotSummarySet records the thresholds used to create it, so we
-	// can pull the threshold values needed from the first item in the
-	// SnapshotSummarySets collection.
-	snapshotThresholds := snapshotSummarySets[0].thresholds
 
 	writeSnapshotsListEntries(
 		&report,
@@ -1833,6 +1813,7 @@ func SnapshotsSizeReport(
 func SnapshotsCountReport(
 	c *vim25.Client,
 	snapshotSummarySets SnapshotSummarySets,
+	snapshotThresholds SnapshotThresholds,
 	allVMs []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
 	vmsWithIssues []mo.VirtualMachine,
@@ -1853,11 +1834,6 @@ func SnapshotsCountReport(
 	}()
 
 	var report strings.Builder
-
-	// Each SnapshotSummarySet records the thresholds used to create it, so we
-	// can pull the threshold values needed from the first item in the
-	// SnapshotSummarySets collection.
-	snapshotThresholds := snapshotSummarySets[0].thresholds
 
 	// TODO: See if it's feasible to merge with writeSnapshotsListEntries later
 	writeSnapshotsListEntries(

@@ -359,6 +359,7 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsCountOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
 			snapshotSets,
+			snapshotThresholds,
 			filteredVMs,
 			resourcePools,
 		)
@@ -366,6 +367,7 @@ func main() {
 		nagiosExitState.LongServiceOutput = vsphere.SnapshotsCountReport(
 			c.Client,
 			snapshotSets,
+			snapshotThresholds,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,
@@ -400,6 +402,7 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsCountOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
 			snapshotSets,
+			snapshotThresholds,
 			filteredVMs,
 			resourcePools,
 		)
@@ -407,6 +410,7 @@ func main() {
 		nagiosExitState.LongServiceOutput = vsphere.SnapshotsCountReport(
 			c.Client,
 			snapshotSets,
+			snapshotThresholds,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,
@@ -436,6 +440,7 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsCountOneLineCheckSummary(
 			nagios.StateOKLabel,
 			snapshotSets,
+			snapshotThresholds,
 			filteredVMs,
 			resourcePools,
 		)
@@ -443,6 +448,7 @@ func main() {
 		nagiosExitState.LongServiceOutput = vsphere.SnapshotsCountReport(
 			c.Client,
 			snapshotSets,
+			snapshotThresholds,
 			vms,
 			filteredVMs,
 			vmsWithSnapshots,
