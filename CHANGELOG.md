@@ -26,6 +26,25 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.25.1] - 2021-11-02
+
+### Overview
+
+- Bugfixes
+- built using Go 1.16.9
+  - Statically linked
+  - Linux (x86, x64)
+
+### Changed
+
+- Dependencies
+  - `atc0005/go-nagios`
+    - `v0.8.0` to `v0.8.1`
+
+### Fixed
+
+- (GH-473) Runtime error after deploying v0.25.0
+
 ## [v0.25.0] - 2021-11-01
 
 ### Overview
@@ -1305,7 +1324,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.25.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.25.1...HEAD
+[v0.25.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.25.1
 [v0.25.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.25.0
 [v0.24.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.24.0
 [v0.23.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.23.0
