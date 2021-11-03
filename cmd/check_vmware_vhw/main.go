@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -24,6 +25,10 @@ import (
 
 func main() {
 
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
+
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
 		LastError:      nil,
@@ -32,6 +37,26 @@ func main() {
 
 	// defer this from the start so it is the last deferred function to run
 	defer nagiosExitState.ReturnCheckResults()
+
+	// Collect last minute details just before ending plugin execution.
+	defer func(exitState *nagios.ExitState, start time.Time) {
+
+		// Record plugin runtime, emit this metric regardless of exit
+		// point/cause.
+		runtimeMetric := nagios.PerformanceData{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
+		}
+		if err := exitState.AddPerfData(false, runtimeMetric); err != nil {
+			zlog.Error().
+				Err(err).
+				Msg("failed to add time (runtime) performance data metric")
+		}
+
+		// Annotate errors (if applicable) with additional context to aid in
+		// troubleshooting.
+		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
 	// vsphere.EnableLogging()
@@ -250,6 +275,70 @@ func main() {
 		Int("vms_with_default_hardware_version", defaultHardwareVersion.Count()).
 		Msg("")
 
+	log.Debug().Msg("Compiling Performance Data details")
+
+	pd := []nagios.PerformanceData{
+		// The `time` (runtime) metric is appended at plugin exit, so do not
+		// duplicate it here.
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(vms)),
+		},
+		{
+			Label: "vms_excluded_by_name",
+			Value: fmt.Sprintf("%d", numVMsExcludedByName),
+		},
+		{
+			Label: "vms_excluded_by_power_state",
+			Value: fmt.Sprintf("%d", numVMsExcludedByPowerState),
+		},
+		{
+			Label: "hardware_versions_unique",
+			Value: fmt.Sprintf("%d", hardwareVersionsIdx.Count()),
+		},
+		{
+			Label: "hardware_versions_newest",
+			Value: fmt.Sprintf("%d", hardwareVersionsIdx.Newest().Count()),
+		},
+		{
+			Label: "hardware_versions_default",
+			Value: fmt.Sprintf("%d", defaultHardwareVersion.Count()),
+		},
+		{
+			Label: "hardware_versions_oldest",
+			Value: fmt.Sprintf("%d", hardwareVersionsIdx.Oldest().Count()),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", len(resourcePools)),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
+		Int("hardware_versions_unique", hardwareVersionsIdx.Count()).
+		Int("hardware_versions_newest", hardwareVersionsIdx.Newest().Count()).
+		Int("hardware_versions_oldest", hardwareVersionsIdx.Oldest().Count()).
+		Int("default_hardware_version", defaultHardwareVersion.VersionNumber()).
+		Str("hardware_newest", hardwareVersionsIdx.Newest().String()).
+		Str("hardware_oldest", hardwareVersionsIdx.Oldest().String()).
+		Str("outdated_hardware_list", strings.Join(
+			hardwareVersionsIdx.Outdated().VersionNames(), ", ")).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Logger()
+
 	if cfg.VirtualHardwareApplyHomogeneousVersionCheck() {
 
 		// Record thresholds for use as Nagios "Long Service Output" content. This
@@ -264,13 +353,7 @@ func main() {
 		// uniform version across all VirtualMachines.
 		case hardwareVersionsIdx.Count() > 1:
 
-			log.Error().
-				Int("vms_filtered", len(filteredVMs)).
-				Int("unique_hardware_versions", hardwareVersionsIdx.Count()).
-				Str("newest_hardware", hardwareVersionsIdx.Newest().String()).
-				Str("outdated_hardware_list", strings.Join(
-					hardwareVersionsIdx.Outdated().VersionNames(), ", ")).
-				Msg("Virtual Hardware versions inconsistency detected")
+			log.Error().Msg("Virtual Hardware versions inconsistency detected")
 
 			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
 
@@ -296,6 +379,12 @@ func main() {
 				resourcePools,
 			)
 
+			if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+				log.Error().
+					Err(err).
+					Msg("failed to add performance data")
+			}
+
 			nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
 			return
@@ -303,6 +392,8 @@ func main() {
 		default:
 
 			// same hardware version
+
+			log.Debug().Msg("Homogenous hardware versions found")
 
 			nagiosExitState.LastError = nil
 
@@ -327,6 +418,12 @@ func main() {
 				cfg.ExcludedResourcePools,
 				resourcePools,
 			)
+
+			if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+				log.Error().
+					Err(err).
+					Msg("failed to add performance data")
+			}
 
 			nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
@@ -353,11 +450,6 @@ func main() {
 		case !hardwareVersions.MeetsMinVersion(cfg.VirtualHardwareMinimumVersion):
 
 			log.Error().
-				Int("vms_filtered", len(filteredVMs)).
-				Int("unique_hardware_versions", hardwareVersionsIdx.Count()).
-				Str("newest_hardware", hardwareVersionsIdx.Newest().String()).
-				Str("outdated_hardware_list", strings.Join(
-					hardwareVersionsIdx.Outdated().VersionNames(), ", ")).
 				Msg("Virtual Hardware versions older than the specified minimum version detected")
 
 			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
@@ -384,11 +476,20 @@ func main() {
 				resourcePools,
 			)
 
+			if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+				log.Error().
+					Err(err).
+					Msg("failed to add performance data")
+			}
+
 			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 			return
 
 		default:
+
+			log.Debug().Msg("Minimum hardware version met")
+
 			nagiosExitState.LastError = nil
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
@@ -412,6 +513,12 @@ func main() {
 				cfg.ExcludedResourcePools,
 				resourcePools,
 			)
+
+			if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+				log.Error().
+					Err(err).
+					Msg("failed to add performance data")
+			}
 
 			nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
@@ -438,12 +545,6 @@ func main() {
 		case !hardwareVersions.MeetsMinVersion(defaultHardwareVersion.VersionNumber()):
 
 			log.Error().
-				Int("vms_filtered", len(filteredVMs)).
-				Int("unique_hardware_versions", hardwareVersionsIdx.Count()).
-				Str("newest_hardware", hardwareVersionsIdx.Newest().String()).
-				Int("default_hardware_version", defaultHardwareVersion.VersionNumber()).
-				Str("outdated_hardware_list", strings.Join(
-					hardwareVersionsIdx.Outdated().VersionNames(), ", ")).
 				Msg("Virtual Hardware versions older than the host or cluster default version detected")
 
 			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
@@ -470,11 +571,20 @@ func main() {
 				resourcePools,
 			)
 
+			if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+				log.Error().
+					Err(err).
+					Msg("failed to add performance data")
+			}
+
 			nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
 			return
 
 		default:
+
+			log.Debug().Msg("Default hardware version met")
+
 			nagiosExitState.LastError = nil
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
@@ -498,6 +608,12 @@ func main() {
 				cfg.ExcludedResourcePools,
 				resourcePools,
 			)
+
+			if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+				log.Error().
+					Err(err).
+					Msg("failed to add performance data")
+			}
 
 			nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
@@ -529,11 +645,6 @@ func main() {
 		case !hardwareVersions.MeetsMinVersion(criticalThresholdVerNum):
 
 			log.Error().
-				Int("vms_filtered", len(filteredVMs)).
-				Int("unique_hardware_versions", hardwareVersionsIdx.Count()).
-				Str("newest_hardware", hardwareVersionsIdx.Newest().String()).
-				Str("outdated_hardware_list", strings.Join(
-					hardwareVersionsIdx.Outdated().VersionNames(), ", ")).
 				Msg("Virtual Hardware versions older than the specified minimum version detected")
 
 			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
@@ -560,6 +671,12 @@ func main() {
 				resourcePools,
 			)
 
+			if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+				log.Error().
+					Err(err).
+					Msg("failed to add performance data")
+			}
+
 			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 			return
@@ -567,11 +684,6 @@ func main() {
 		case !hardwareVersions.MeetsMinVersion(warningThresholdVerNum):
 
 			log.Error().
-				Int("vms_filtered", len(filteredVMs)).
-				Int("unique_hardware_versions", hardwareVersionsIdx.Count()).
-				Str("newest_hardware", hardwareVersionsIdx.Newest().String()).
-				Str("outdated_hardware_list", strings.Join(
-					hardwareVersionsIdx.Outdated().VersionNames(), ", ")).
 				Msg("Virtual Hardware versions older than the specified minimum version detected")
 
 			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
@@ -598,11 +710,21 @@ func main() {
 				resourcePools,
 			)
 
+			if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+				log.Error().
+					Err(err).
+					Msg("failed to add performance data")
+			}
+
 			nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
 			return
 
 		default:
+
+			log.Debug().
+				Msg("Virtual Hardware versions meet the specified minimum version")
+
 			nagiosExitState.LastError = nil
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
@@ -626,6 +748,12 @@ func main() {
 				cfg.ExcludedResourcePools,
 				resourcePools,
 			)
+
+			if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+				log.Error().
+					Err(err).
+					Msg("failed to add performance data")
+			}
 
 			nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
