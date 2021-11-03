@@ -57,9 +57,11 @@ type HardwareVersion struct {
 // HardwareVersions represents a collection of HardwareVersion.
 type HardwareVersions []HardwareVersion
 
-// NewHardwareVersion creates a new HardwareVersion value using a provided
-// string with "vmx-" prefix (e.g., vmx-15).
-func NewHardwareVersion(verStr string) HardwareVersion {
+// newHardwareVersionString creates a new HardwareVersion value using a
+// provided string with "vmx-" prefix (e.g., vmx-15). The number of Virtual
+// Machines with this specific virtual hardware version and other fields are
+// not set.
+func newHardwareVersionString(verStr string) HardwareVersion {
 	return HardwareVersion{
 		value: verStr,
 	}
@@ -74,13 +76,20 @@ func NewHardwareVersion(verStr string) HardwareVersion {
 //
 // The default version may not be the very latest version supported in the
 // cluster (e.g., v14 is the default, but v15 is the latest supported).
-func DefaultHardwareVersion(ctx context.Context, c *vim25.Client, hostName string, clusterName string, datacenterName string) (HardwareVersion, error) {
+func DefaultHardwareVersion(
+	ctx context.Context,
+	c *vim25.Client,
+	hostName string,
+	clusterName string,
+	datacenterName string,
+	hardwareVersionsIdx HardwareVersionsIndex,
+) (HardwareVersion, error) {
 
 	funcTimeStart := time.Now()
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute DefaultHardwareVersionfunc.\n",
+			"It took %v to execute DefaultHardwareVersion func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()
@@ -182,7 +191,59 @@ func DefaultHardwareVersion(ctx context.Context, c *vim25.Client, hostName strin
 
 	}
 
-	return NewHardwareVersion(opt.Returnval.Version), nil
+	defaultHardwareVersionStr := opt.Returnval.Version
+
+	// the number of VMs with this specific hardware version
+	hwVersionCount := hardwareVersionsIdx[defaultHardwareVersionStr]
+
+	// the version string of the highest version recorded in the index
+	newestVerStr := hardwareVersionsIdx.Newest().value
+
+	defaultIsHighestVersion := (defaultHardwareVersionStr == newestVerStr)
+
+	hwVersion := HardwareVersion{
+		value:   opt.Returnval.Version,
+		count:   hwVersionCount,
+		highest: defaultIsHighestVersion,
+	}
+
+	return hwVersion, nil
+
+}
+
+// NewHardwareVersionsIndex creates an index of hardware version to number of
+// Virtual Machines present with that hardware version. An error is returned
+// if there is an issue accessing a Virtual Machine's configuration.
+func NewHardwareVersionsIndex(vms []mo.VirtualMachine) (HardwareVersionsIndex, error) {
+
+	funcTimeStart := time.Now()
+
+	hardwareVersionsIdx := make(HardwareVersionsIndex)
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute NewHardwareVersionsIndex func (and retrieve index for %d hardware versions).\n",
+			time.Since(funcTimeStart),
+			hardwareVersionsIdx.Count(),
+		)
+	}()
+
+	for _, vm := range vms {
+
+		if vm.Config == nil {
+			return nil, fmt.Errorf(
+				"configuration info unavailable for VM %s",
+				vm.Name,
+			)
+		}
+
+		logger.Printf("VM %q has hardware version %q", vm.Name, vm.Config.Version)
+
+		// record the hardware version and count of that version
+		hardwareVersionsIdx[vm.Config.Version]++
+	}
+
+	return hardwareVersionsIdx, nil
 
 }
 
@@ -426,7 +487,7 @@ func VirtualHardwareOneLineCheckSummary(
 			continue
 		}
 
-		hwVersion := NewHardwareVersion(vm.Config.Version)
+		hwVersion := newHardwareVersionString(vm.Config.Version)
 		hwVerNum := hwVersion.VersionNumber()
 		if hwVerNum < minHardwareVersion {
 			outdatedVMs++
@@ -564,7 +625,7 @@ func VirtualHardwareReport(
 				continue
 			}
 
-			hwVersion := NewHardwareVersion(vm.Config.Version)
+			hwVersion := newHardwareVersionString(vm.Config.Version)
 			hwVerNum := hwVersion.VersionNumber()
 			if hwVerNum < minHardwareVersion {
 				fmt.Fprintf(
