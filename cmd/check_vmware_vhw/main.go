@@ -206,7 +206,21 @@ func main() {
 		Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
 		Msg("VMs after power state filtering")
 
-		// here we diverge from other plugins
+	// here we diverge from other plugins
+
+	hardwareVersionsIdx, hwIdxErr := vsphere.NewHardwareVersionsIndex(filteredVMs)
+	if hwIdxErr != nil {
+		log.Error().Err(hwIdxErr).Msg("error creating virtual hardware index")
+
+		nagiosExitState.LastError = hwIdxErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Error creating index of virtual hardware versions",
+			nagios.StateCRITICALLabel,
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+		return
+	}
 
 	defaultHardwareVersion, getDefVerErr := vsphere.DefaultHardwareVersion(
 		ctx,
@@ -214,6 +228,7 @@ func main() {
 		cfg.HostSystemName,
 		cfg.ClusterName,
 		cfg.DatacenterName,
+		hardwareVersionsIdx,
 	)
 	if getDefVerErr != nil {
 		log.Error().Err(getDefVerErr).Msg(
@@ -232,18 +247,8 @@ func main() {
 
 	log.Debug().
 		Int("default_hardware_version", defaultHardwareVersion.VersionNumber()).
+		Int("vms_with_default_hardware_version", defaultHardwareVersion.Count()).
 		Msg("")
-
-	hardwareVersionsIdx := make(vsphere.HardwareVersionsIndex)
-	for _, vm := range filteredVMs {
-		log.Debug().
-			Str("vm_name", vm.Name).
-			Str("hardware_version", vm.Config.Version).
-			Msg("")
-
-		// record the hardware version and count of that version
-		hardwareVersionsIdx[vm.Config.Version]++
-	}
 
 	if cfg.VirtualHardwareApplyHomogeneousVersionCheck() {
 
