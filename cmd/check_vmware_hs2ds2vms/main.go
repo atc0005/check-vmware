@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -25,6 +26,10 @@ import (
 
 func main() {
 
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
+
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
 		LastError:      nil,
@@ -33,6 +38,26 @@ func main() {
 
 	// defer this from the start so it is the last deferred function to run
 	defer nagiosExitState.ReturnCheckResults()
+
+	// Collect last minute details just before ending plugin execution.
+	defer func(exitState *nagios.ExitState, start time.Time) {
+
+		// Record plugin runtime, emit this metric regardless of exit
+		// point/cause.
+		runtimeMetric := nagios.PerformanceData{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
+		}
+		if err := exitState.AddPerfData(false, runtimeMetric); err != nil {
+			zlog.Error().
+				Err(err).
+				Msg("failed to add time (runtime) performance data metric")
+		}
+
+		// Annotate errors (if applicable) with additional context to aid in
+		// troubleshooting.
+		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
 	// vsphere.EnableLogging()
@@ -396,6 +421,62 @@ func main() {
 
 	numMismatches := len(vmDatastoresPairingIssues)
 
+	log.Debug().Msg("Compiling Performance Data details")
+
+	pd := []nagios.PerformanceData{
+		// The `time` (runtime) metric is appended at plugin exit, so do not
+		// duplicate it here.
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(vms)),
+		},
+		{
+			Label: "vms_excluded_by_name",
+			Value: fmt.Sprintf("%d", numVMsExcludedByName),
+		},
+		{
+			Label: "vms_excluded_by_power_state",
+			Value: fmt.Sprintf("%d", numVMsExcludedByPowerState),
+		},
+		{
+			Label: "pairing_issues",
+			Value: fmt.Sprintf("%d", numMismatches),
+		},
+		{
+			Label: "datastores",
+			Value: fmt.Sprintf("%d", len(allDS)),
+		},
+		{
+			Label: "hosts",
+			Value: fmt.Sprintf("%d", len(allHosts)),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", len(resourcePools)),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Int("vms_filtered", len(filteredVMs)).
+		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
+		Int("pairing_issues", numMismatches).
+		Int("datastores", len(allDS)).
+		Int("hosts", len(allHosts)).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Int("mismatched_vms_count", numMismatches).
+		Logger()
+
 	switch {
 	// expected failure scenario; set LongServiceOutput using report func
 	case numMismatches > 0:
@@ -407,7 +488,6 @@ func main() {
 		sort.Strings(vmNames)
 
 		log.Error().
-			Int("mismatched_vms_count", numMismatches).
 			Str("mismatched_vms_list", strings.Join(vmNames, ", ")).
 			Msg("VM/Host/Datastore validation failed")
 
@@ -438,6 +518,12 @@ func main() {
 			cfg.DatastoreCAName(),
 			cfg.HostCAName(),
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
@@ -475,6 +561,12 @@ func main() {
 			cfg.DatastoreCAName(),
 			cfg.HostCAName(),
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
