@@ -141,6 +141,14 @@ func main() {
 	}
 	log.Debug().Msg("Successfully logged into vSphere environment")
 
+	defer func() {
+		if err := c.Logout(ctx); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to logout")
+		}
+	}()
+
 	// At this point we're logged in, ready to retrieve a list of VMs. If
 	// specified, we should limit VMs based on include/exclude lists. First,
 	// we'll make sure that all specified resource pools actually exist in the
