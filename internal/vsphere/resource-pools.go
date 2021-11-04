@@ -179,17 +179,19 @@ func GetEligibleRPs(ctx context.Context, c *vim25.Client, includeRPs []string, e
 		if strings.EqualFold(rp.Name, ParentResourcePool) {
 
 			// Someone has explicitly requested that only ParentResourcePool
-			// be included for evaluation. Record it, skip all others.
+			// be included for evaluation. Record it, ignore any previously
+			// recorded, skip all others.
 			if len(includeRPs) == 1 &&
 				strings.EqualFold(includeRPs[0], ParentResourcePool) {
-				rps = append(rps, rp)
+				rps = []mo.ResourcePool{rp}
 				break
 			}
 
 			// No inclusion or exclusion lists have been specified. Record
-			// ParentResourcePool, skip all others.
+			// ParentResourcePool, ignore any previously recorded, skip all
+			// others.
 			if len(includeRPs) == 0 && len(excludeRPs) == 0 {
-				rps = append(rps, rp)
+				rps = []mo.ResourcePool{rp}
 				break
 			}
 		}
