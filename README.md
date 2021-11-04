@@ -259,7 +259,8 @@ but Max vCPUs allocation is required before this plugin can be used. See the
 
 Nagios plugin used to monitor virtual hardware versions.
 
-This plugin supports four monitoring modes:
+This plugin supports four independent monitoring modes; only one mode can be
+used at a time.
 
 1. Homogeneous version check
 1. Outdated-by or threshold range check
@@ -764,8 +765,9 @@ to those Virtual Machines.
 
 #### `check_vmware_vhw`
 
-This plugin supports multiple modes. Each mode applies slightly different
-logic for determining plugin state.
+This plugin supports multiple (independent) modes. Each mode applies slightly
+different logic for determining plugin state. Only one mode can be used at a
+time.
 
 ##### Homogeneous version check
 
@@ -947,10 +949,14 @@ logic for determining plugin state.
 
 #### `check_vmware_vhw`
 
-This plugin supports multiple monitoring modes. Each mode has options which
-are incompatible with the others. As of this writing these monitoring modes
-are *not* implemented as subcommands, though this may change in the future
-based on feedback.
+This plugin supports multiple (independent) monitoring modes. Only one mode
+can be used at a time and each mode has options which are incompatible with
+the others.
+
+As of this writing, these monitoring modes are *not* implemented as
+subcommands, though this may change in the future based on feedback. See the
+[examples](#check_vmware_vhw-nagios-plugin) for this plugin for more
+information.
 
 | Flag                             | Required  | Default | Repeat | Possible                                                                | Description                                                                                                                                                                                                                                                                                                                                                                                   |
 | -------------------------------- | --------- | ------- | ------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1375,9 +1381,10 @@ command definitions and Nagios configuration files.
 
 ### `check_vmware_vhw` Nagios plugin
 
-This plugin supports four monitoring modes. Each is incompatible with the
-other, so an example is provided for each mode. See the [overview](#overview)
-section for further information.
+This plugin supports four independent monitoring modes; only one mode can be
+used at a time. Due to this, it is beneficial to have separate command
+definitions for each. See the examples for each mode below or the
+[overview](#overview) section for further information.
 
 #### Homogeneous version check
 
