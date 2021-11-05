@@ -216,7 +216,7 @@ func main() {
 			Msg("")
 	}
 
-	clusterMemory, getMemErr := vsphere.GetHostSystemsTotalMemory(ctx, c.Client, false)
+	clusterMemoryInBytes, getMemErr := vsphere.GetHostSystemsTotalMemory(ctx, c.Client, false)
 	if getMemErr != nil {
 		log.Error().Err(getMemErr).Msg(
 			"error retrieving hosts memory capacity",
@@ -233,16 +233,14 @@ func main() {
 		return
 	}
 
-	clusterMemoryInGB := clusterMemory / units.GB
 	memoryPercentageUsedOfClusterCapacity := vsphere.MemoryUsedPercentage(
 		aggregateMemoryUsageInBytes,
-		int(clusterMemoryInGB),
+		clusterMemoryInBytes,
 	)
 
 	log.Debug().
-		Int64("cluster_memory_bytes", clusterMemory).
-		Int64("cluster_memory_gb", clusterMemoryInGB).
-		Str("cluster_memory_hr", units.ByteSize(clusterMemory).String()).
+		Int64("cluster_memory_bytes", clusterMemoryInBytes).
+		Str("cluster_memory_hr", units.ByteSize(clusterMemoryInBytes).String()).
 		Float64("percent_memory_used_from_cluster_raw", memoryPercentageUsedOfClusterCapacity).
 		Str("percent_memory_used_from_cluster_hr", fmt.Sprintf("%0.2f", memoryPercentageUsedOfClusterCapacity)).
 		Msg("")
@@ -252,10 +250,10 @@ func main() {
 		Str("aggregate_memory_usage_hr", units.ByteSize(aggregateMemoryUsageInBytes).String()).
 		Msg("Finished evaluating Resource Pool memory usage")
 
-	memoryPercentageUsedOfAllowed := vsphere.MemoryUsedPercentage(aggregateMemoryUsageInBytes, cfg.ResourcePoolsMemoryMaxAllowed)
+	memoryUsageMaxInBytes := (int64(cfg.ResourcePoolsMemoryMaxAllowed) * units.GB)
+	memoryPercentageUsedOfAllowed := vsphere.MemoryUsedPercentage(aggregateMemoryUsageInBytes, memoryUsageMaxInBytes)
 	var memoryRemainingInBytes int64
 
-	memoryUsageMaxInBytes := (int64(cfg.ResourcePoolsMemoryMaxAllowed) * units.GB)
 	switch {
 	case aggregateMemoryUsageInBytes > memoryUsageMaxInBytes:
 		memoryRemainingInBytes = 0
@@ -308,16 +306,16 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.RPMemoryUsageOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
 			aggregateMemoryUsageInBytes,
-			cfg.ResourcePoolsMemoryMaxAllowed,
-			clusterMemoryInGB,
+			memoryUsageMaxInBytes,
+			clusterMemoryInBytes,
 			resourcePools,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.ResourcePoolsMemoryReport(
 			c.Client,
 			aggregateMemoryUsageInBytes,
-			cfg.ResourcePoolsMemoryMaxAllowed,
-			clusterMemoryInGB,
+			memoryUsageMaxInBytes,
+			clusterMemoryInBytes,
 			cfg.IncludedResourcePools,
 			cfg.ExcludedResourcePools,
 			resourcePools,
@@ -343,16 +341,16 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.RPMemoryUsageOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
 			aggregateMemoryUsageInBytes,
-			cfg.ResourcePoolsMemoryMaxAllowed,
-			clusterMemoryInGB,
+			memoryUsageMaxInBytes,
+			clusterMemoryInBytes,
 			resourcePools,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.ResourcePoolsMemoryReport(
 			c.Client,
 			aggregateMemoryUsageInBytes,
-			cfg.ResourcePoolsMemoryMaxAllowed,
-			clusterMemoryInGB,
+			memoryUsageMaxInBytes,
+			clusterMemoryInBytes,
 			cfg.IncludedResourcePools,
 			cfg.ExcludedResourcePools,
 			resourcePools,
@@ -370,16 +368,16 @@ func main() {
 		nagiosExitState.ServiceOutput = vsphere.RPMemoryUsageOneLineCheckSummary(
 			nagios.StateOKLabel,
 			aggregateMemoryUsageInBytes,
-			cfg.ResourcePoolsMemoryMaxAllowed,
-			clusterMemoryInGB,
+			memoryUsageMaxInBytes,
+			clusterMemoryInBytes,
 			resourcePools,
 		)
 
 		nagiosExitState.LongServiceOutput = vsphere.ResourcePoolsMemoryReport(
 			c.Client,
 			aggregateMemoryUsageInBytes,
-			cfg.ResourcePoolsMemoryMaxAllowed,
-			clusterMemoryInGB,
+			memoryUsageMaxInBytes,
+			clusterMemoryInBytes,
 			cfg.IncludedResourcePools,
 			cfg.ExcludedResourcePools,
 			resourcePools,
