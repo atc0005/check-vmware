@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/units"
@@ -25,6 +26,10 @@ import (
 
 func main() {
 
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
+
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
 		LastError:      nil,
@@ -33,6 +38,26 @@ func main() {
 
 	// defer this from the start so it is the last deferred function to run
 	defer nagiosExitState.ReturnCheckResults()
+
+	// Collect last minute details just before ending plugin execution.
+	defer func(exitState *nagios.ExitState, start time.Time) {
+
+		// Record plugin runtime, emit this metric regardless of exit
+		// point/cause.
+		runtimeMetric := nagios.PerformanceData{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
+		}
+		if err := exitState.AddPerfData(false, runtimeMetric); err != nil {
+			zlog.Error().
+				Err(err).
+				Msg("failed to add time (runtime) performance data metric")
+		}
+
+		// Annotate errors (if applicable) with additional context to aid in
+		// troubleshooting.
+		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
 	// vsphere.EnableLogging()
@@ -290,16 +315,66 @@ func main() {
 		return
 	}
 
+	log.Debug().Msg("Compiling Performance Data details")
+
+	pd := []nagios.PerformanceData{
+		// The `time` (runtime) metric is appended at plugin exit, so do not
+		// duplicate it here.
+		{
+			Label: "vms",
+			Value: fmt.Sprintf("%d", len(vms)),
+		},
+		{
+			Label:             "memory_usage",
+			Value:             fmt.Sprintf("%.2f", memoryPercentageUsedOfAllowed),
+			UnitOfMeasurement: "%",
+			Warn:              fmt.Sprintf("%d", cfg.ResourcePoolsMemoryUseWarning),
+			Crit:              fmt.Sprintf("%d", cfg.ResourcePoolsMemoryUseCritical),
+		},
+		{
+			Label:             "memory_used",
+			Value:             fmt.Sprintf("%d", aggregateMemoryUsageInBytes),
+			UnitOfMeasurement: "B",
+			Max:               fmt.Sprintf("%d", cfg.ResourcePoolsMemoryMaxAllowed),
+			Min:               fmt.Sprintf("%d", 0),
+		},
+		{
+			Label:             "memory_remaining",
+			Value:             fmt.Sprintf("%d", memoryRemainingInBytes),
+			UnitOfMeasurement: "B",
+			Max:               fmt.Sprintf("%d", cfg.ResourcePoolsMemoryMaxAllowed),
+			Min:               fmt.Sprintf("%d", 0),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", len(resourcePools)),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("vms_total", len(vms)).
+		Str("memory_usage", fmt.Sprintf("%.2f%%", memoryPercentageUsedOfAllowed)).
+		Int64("memory_used", aggregateMemoryUsageInBytes).
+		Int64("memory_remaining_bytes", memoryRemainingInBytes).
+		Str("memory_remaining_hr", units.ByteSize(memoryRemainingInBytes).String()).
+		Int64("max_allowed_memory_bytes", memoryUsageMaxInBytes).
+		Str("max_allowed_memory_bytes_hr", units.ByteSize(memoryUsageMaxInBytes).String()).
+		Int("resource_pools_evaluated", len(resourcePools)).
+		Logger()
+
 	switch {
 	case memoryPercentageUsedOfAllowed > float64(cfg.ResourcePoolsMemoryUseCritical):
 
-		log.Error().
-			Str("memory_usage", fmt.Sprintf("%.2f%%", memoryPercentageUsedOfAllowed)).
-			Int64("memory_remaining_bytes", memoryRemainingInBytes).
-			Str("memory_remaining_hr", units.ByteSize(memoryRemainingInBytes).String()).
-			Int64("max_allowed_memory_bytes", memoryUsageMaxInBytes).
-			Str("max_allowed_memory_bytes_hr", units.ByteSize(memoryUsageMaxInBytes).String()).
-			Msg("memory usage critical")
+		log.Error().Msg("memory usage critical")
 
 		nagiosExitState.LastError = vsphere.ErrResourcePoolMemoryUsageThresholdCrossed
 
@@ -322,19 +397,19 @@ func main() {
 			vms,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
 
 	case memoryPercentageUsedOfAllowed > float64(cfg.ResourcePoolsMemoryUseWarning):
 
-		log.Error().
-			Str("memory_usage", fmt.Sprintf("%.2f%%", memoryPercentageUsedOfAllowed)).
-			Int64("memory_remaining_bytes", memoryRemainingInBytes).
-			Str("memory_remaining_hr", units.ByteSize(memoryRemainingInBytes).String()).
-			Int64("max_allowed_memory_bytes", memoryUsageMaxInBytes).
-			Str("max_allowed_memory_bytes_hr", units.ByteSize(memoryUsageMaxInBytes).String()).
-			Msg("memory usage warning")
+		log.Error().Msg("memory usage warning")
 
 		nagiosExitState.LastError = vsphere.ErrResourcePoolMemoryUsageThresholdCrossed
 
@@ -357,11 +432,19 @@ func main() {
 			vms,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
 
 		return
 
 	default:
+
+		log.Debug().Msg("memory usage ok")
 
 		nagiosExitState.LastError = nil
 
@@ -383,6 +466,12 @@ func main() {
 			resourcePools,
 			vms,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
