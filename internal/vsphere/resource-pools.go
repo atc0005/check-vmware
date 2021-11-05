@@ -262,11 +262,10 @@ func GetRPByName(ctx context.Context, c *vim25.Client, rpName string, datacenter
 // memory usage as a percentage of the specified maximum memory allowed to be
 // used.
 func MemoryUsedPercentage(
-	aggregateMemoryUsage int64,
-	maxMemoryUsageInGB int,
+	aggregateMemoryUsageInBytesInBytes int64,
+	maxMemoryUsageInBytes int64,
 ) float64 {
-	aggregateMemoryUsageInGB := float64(aggregateMemoryUsage) / units.GB
-	memoryPercentageUsedOfAllowed := (aggregateMemoryUsageInGB / float64(maxMemoryUsageInGB)) * 100
+	memoryPercentageUsedOfAllowed := (float64(aggregateMemoryUsageInBytesInBytes) / float64(maxMemoryUsageInBytes)) * 100
 
 	return memoryPercentageUsedOfAllowed
 }
@@ -276,9 +275,9 @@ func MemoryUsedPercentage(
 // notifications.
 func RPMemoryUsageOneLineCheckSummary(
 	stateLabel string,
-	aggregateMemoryUsage int64,
-	maxMemoryUsageInGB int,
-	clusterMemoryInGB int64,
+	aggregateMemoryUsageInBytes int64,
+	maxMemoryUsageInBytes int64,
+	clusterMemoryInBytes int64,
 	rps []mo.ResourcePool,
 ) string {
 
@@ -291,42 +290,41 @@ func RPMemoryUsageOneLineCheckSummary(
 		)
 	}()
 
-	memoryPercentageUsedOfAllowed := MemoryUsedPercentage(aggregateMemoryUsage, maxMemoryUsageInGB)
+	memoryPercentageUsedOfAllowed := MemoryUsedPercentage(aggregateMemoryUsageInBytes, maxMemoryUsageInBytes)
 	memoryPercentageUsedOfClusterCapacity := MemoryUsedPercentage(
-		aggregateMemoryUsage,
-		int(clusterMemoryInGB),
+		aggregateMemoryUsageInBytes,
+		clusterMemoryInBytes,
 	)
-	memoryUsageMax := (int64(maxMemoryUsageInGB) * units.GB)
 
 	switch {
 
-	case aggregateMemoryUsage > memoryUsageMax:
+	case aggregateMemoryUsageInBytes > maxMemoryUsageInBytes:
 		return fmt.Sprintf(
 			"%s: %s (%.1f%%) memory used of %s allowed, "+
 				"%.2f%% of %s total capacity (evaluated %d Resource Pools)",
 			stateLabel,
-			units.ByteSize(aggregateMemoryUsage),
+			units.ByteSize(aggregateMemoryUsageInBytes),
 			memoryPercentageUsedOfAllowed,
-			units.ByteSize(memoryUsageMax),
+			units.ByteSize(maxMemoryUsageInBytes),
 			memoryPercentageUsedOfClusterCapacity,
-			units.ByteSize(clusterMemoryInGB*units.GB),
+			units.ByteSize(clusterMemoryInBytes),
 			len(rps),
 		)
 
 	default:
-		memoryRemaining := memoryUsageMax - aggregateMemoryUsage
+		memoryRemaining := maxMemoryUsageInBytes - aggregateMemoryUsageInBytes
 		return fmt.Sprintf(
 			"%s: %s memory used (%0.1f%%), %.2f%% of %s total capacity; "+
 				"%s (%0.1f%%) of %s remaining "+
 				"(evaluated %d Resource Pools)",
 			stateLabel,
-			units.ByteSize(aggregateMemoryUsage),
+			units.ByteSize(aggregateMemoryUsageInBytes),
 			memoryPercentageUsedOfAllowed,
 			memoryPercentageUsedOfClusterCapacity,
-			units.ByteSize(clusterMemoryInGB*units.GB),
+			units.ByteSize(clusterMemoryInBytes),
 			units.ByteSize(memoryRemaining),
 			float64(100)-memoryPercentageUsedOfAllowed,
-			units.ByteSize(memoryUsageMax),
+			units.ByteSize(maxMemoryUsageInBytes),
 			len(rps),
 		)
 
@@ -341,9 +339,9 @@ func RPMemoryUsageOneLineCheckSummary(
 // many notifications.
 func ResourcePoolsMemoryReport(
 	c *vim25.Client,
-	aggregateMemoryUsage int64,
-	maxMemoryUsageInGB int,
-	clusterMemoryInGB int64,
+	aggregateMemoryUsageInBytes int64,
+	maxMemoryUsageInBytes int64,
+	clusterMemoryInBytes int64,
 	includeRPs []string,
 	excludeRPs []string,
 	rps []mo.ResourcePool,
@@ -375,10 +373,10 @@ func ResourcePoolsMemoryReport(
 		rpIDtoNameIdx[rp.Self.Value] = rp.Name
 
 		rpMemoryUsage := rp.Summary.GetResourcePoolSummary().QuickStats.HostMemoryUsage * units.MB
-		rpMemoryPercentageUsed := MemoryUsedPercentage(rpMemoryUsage, maxMemoryUsageInGB)
+		rpMemoryPercentageUsed := MemoryUsedPercentage(rpMemoryUsage, maxMemoryUsageInBytes)
 		memoryPercentageUsedOfClusterCapacity := MemoryUsedPercentage(
 			rpMemoryUsage,
-			int(clusterMemoryInGB),
+			clusterMemoryInBytes,
 		)
 		fmt.Fprintf(
 			&report,
