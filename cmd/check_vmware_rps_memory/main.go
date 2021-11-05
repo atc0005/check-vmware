@@ -198,12 +198,18 @@ func main() {
 		Str("resource_pools", strings.Join(rpNames, ", ")).
 		Msg("")
 
-	var aggregateMemoryUsage int64
+	var aggregateMemoryUsageInBytes int64
 	for _, rp := range resourcePools {
 		// Per vSphere API docs, `rp.Runtime.Memory.OverallUsage` was
 		// deprecated in v6.5, so we use `hostMemoryUsage` instead.
+		//
+		// The `hostMemoryUsage` property tracks consummed host memory in MB.
+		// This includes the overhead memory of a virtual machine. We multiply
+		// by units.MB in order to get the number of bytes in order to match
+		// the same unit of measurement used by the `host.Hardware.MemorySize`
+		// property.
 		rpMemoryUsage := rp.Summary.GetResourcePoolSummary().QuickStats.HostMemoryUsage * units.MB
-		aggregateMemoryUsage += rpMemoryUsage
+		aggregateMemoryUsageInBytes += rpMemoryUsage
 		log.Debug().
 			Str("resource_pool_name", rp.Name).
 			Str("resource_pool_memory_usage", units.ByteSize(rpMemoryUsage).String()).
@@ -229,7 +235,7 @@ func main() {
 
 	clusterMemoryInGB := clusterMemory / units.GB
 	memoryPercentageUsedOfClusterCapacity := vsphere.MemoryUsedPercentage(
-		aggregateMemoryUsage,
+		aggregateMemoryUsageInBytes,
 		int(clusterMemoryInGB),
 	)
 
@@ -242,24 +248,28 @@ func main() {
 		Msg("")
 
 	log.Debug().
-		Int64("aggregate_memory_usage_raw", aggregateMemoryUsage).
-		Str("aggregate_memory_usage_human_readable", units.ByteSize(aggregateMemoryUsage).String()).
+		Int64("aggregate_memory_usage_bytes", aggregateMemoryUsageInBytes).
+		Str("aggregate_memory_usage_hr", units.ByteSize(aggregateMemoryUsageInBytes).String()).
 		Msg("Finished evaluating Resource Pool memory usage")
 
-	memoryPercentageUsedOfAllowed := vsphere.MemoryUsedPercentage(aggregateMemoryUsage, cfg.ResourcePoolsMemoryMaxAllowed)
-	var memoryRemaining int64
+	memoryPercentageUsedOfAllowed := vsphere.MemoryUsedPercentage(aggregateMemoryUsageInBytes, cfg.ResourcePoolsMemoryMaxAllowed)
+	var memoryRemainingInBytes int64
 
+	memoryUsageMaxInBytes := (int64(cfg.ResourcePoolsMemoryMaxAllowed) * units.GB)
 	switch {
-	case aggregateMemoryUsage > int64(cfg.ResourcePoolsMemoryMaxAllowed):
-		memoryRemaining = 0
+	case aggregateMemoryUsageInBytes > memoryUsageMaxInBytes:
+		memoryRemainingInBytes = 0
 	default:
-		memoryRemaining = int64(cfg.ResourcePoolsMemoryMaxAllowed) - aggregateMemoryUsage
+		memoryRemainingInBytes = memoryUsageMaxInBytes - aggregateMemoryUsageInBytes
 	}
 
 	log.Debug().
-		Float64("memory_percent_used", memoryPercentageUsedOfAllowed).
-		Int64("memory_remaining", memoryRemaining).
-		Msg("")
+		Str("memory_usage", fmt.Sprintf("%.2f%%", memoryPercentageUsedOfAllowed)).
+		Int64("memory_remaining_bytes", memoryRemainingInBytes).
+		Str("memory_remaining_hr", units.ByteSize(memoryRemainingInBytes).String()).
+		Int64("max_allowed_memory_bytes", memoryUsageMaxInBytes).
+		Str("max_allowed_memory_bytes_hr", units.ByteSize(memoryUsageMaxInBytes).String()).
+		Msg("memory usage")
 
 	log.Debug().Msg("Retrieving vms from eligible resource pools")
 	rpEntityVals := make([]mo.ManagedEntity, 0, len(resourcePools))
@@ -286,15 +296,18 @@ func main() {
 	case memoryPercentageUsedOfAllowed > float64(cfg.ResourcePoolsMemoryUseCritical):
 
 		log.Error().
-			Float64("memory_percent_used", memoryPercentageUsedOfAllowed).
-			Int64("memory_remaining", memoryRemaining).
+			Str("memory_usage", fmt.Sprintf("%.2f%%", memoryPercentageUsedOfAllowed)).
+			Int64("memory_remaining_bytes", memoryRemainingInBytes).
+			Str("memory_remaining_hr", units.ByteSize(memoryRemainingInBytes).String()).
+			Int64("max_allowed_memory_bytes", memoryUsageMaxInBytes).
+			Str("max_allowed_memory_bytes_hr", units.ByteSize(memoryUsageMaxInBytes).String()).
 			Msg("memory usage critical")
 
 		nagiosExitState.LastError = vsphere.ErrResourcePoolMemoryUsageThresholdCrossed
 
 		nagiosExitState.ServiceOutput = vsphere.RPMemoryUsageOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
-			aggregateMemoryUsage,
+			aggregateMemoryUsageInBytes,
 			cfg.ResourcePoolsMemoryMaxAllowed,
 			clusterMemoryInGB,
 			resourcePools,
@@ -302,7 +315,7 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.ResourcePoolsMemoryReport(
 			c.Client,
-			aggregateMemoryUsage,
+			aggregateMemoryUsageInBytes,
 			cfg.ResourcePoolsMemoryMaxAllowed,
 			clusterMemoryInGB,
 			cfg.IncludedResourcePools,
@@ -318,15 +331,18 @@ func main() {
 	case memoryPercentageUsedOfAllowed > float64(cfg.ResourcePoolsMemoryUseWarning):
 
 		log.Error().
-			Float64("memory_percent_used", memoryPercentageUsedOfAllowed).
-			Int64("memory_remaining", memoryRemaining).
+			Str("memory_usage", fmt.Sprintf("%.2f%%", memoryPercentageUsedOfAllowed)).
+			Int64("memory_remaining_bytes", memoryRemainingInBytes).
+			Str("memory_remaining_hr", units.ByteSize(memoryRemainingInBytes).String()).
+			Int64("max_allowed_memory_bytes", memoryUsageMaxInBytes).
+			Str("max_allowed_memory_bytes_hr", units.ByteSize(memoryUsageMaxInBytes).String()).
 			Msg("memory usage warning")
 
 		nagiosExitState.LastError = vsphere.ErrResourcePoolMemoryUsageThresholdCrossed
 
 		nagiosExitState.ServiceOutput = vsphere.RPMemoryUsageOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
-			aggregateMemoryUsage,
+			aggregateMemoryUsageInBytes,
 			cfg.ResourcePoolsMemoryMaxAllowed,
 			clusterMemoryInGB,
 			resourcePools,
@@ -334,7 +350,7 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.ResourcePoolsMemoryReport(
 			c.Client,
-			aggregateMemoryUsage,
+			aggregateMemoryUsageInBytes,
 			cfg.ResourcePoolsMemoryMaxAllowed,
 			clusterMemoryInGB,
 			cfg.IncludedResourcePools,
@@ -353,7 +369,7 @@ func main() {
 
 		nagiosExitState.ServiceOutput = vsphere.RPMemoryUsageOneLineCheckSummary(
 			nagios.StateOKLabel,
-			aggregateMemoryUsage,
+			aggregateMemoryUsageInBytes,
 			cfg.ResourcePoolsMemoryMaxAllowed,
 			clusterMemoryInGB,
 			resourcePools,
@@ -361,7 +377,7 @@ func main() {
 
 		nagiosExitState.LongServiceOutput = vsphere.ResourcePoolsMemoryReport(
 			c.Client,
-			aggregateMemoryUsage,
+			aggregateMemoryUsageInBytes,
 			cfg.ResourcePoolsMemoryMaxAllowed,
 			clusterMemoryInGB,
 			cfg.IncludedResourcePools,

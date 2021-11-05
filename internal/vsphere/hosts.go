@@ -318,10 +318,10 @@ func FilterHostSystemsByID(hss []mo.HostSystem, hsID string) (mo.HostSystem, int
 }
 
 // GetHostSystemsTotalMemory returns the total memory capacity for all
-// HostSystems. Unless requested, offline or otherwise unavailable hosts are
-// included for evaluation based on the assumption that offline hosts are
-// offline for only a brief time and should still be considered part of
-// overall cluster capacity.
+// HostSystems in bytes. Unless requested, offline or otherwise unavailable
+// hosts are included for evaluation based on the assumption that offline
+// hosts are offline for only a brief time and should still be considered part
+// of overall cluster capacity.
 func GetHostSystemsTotalMemory(ctx context.Context, c *vim25.Client, excludeOffline bool) (int64, error) {
 
 	funcTimeStart := time.Now()
@@ -387,9 +387,10 @@ func GetHostSystemsTotalMemory(ctx context.Context, c *vim25.Client, excludeOffl
 		}
 
 		logger.Printf(
-			"Host %s has %s memory capacity.\n",
+			"Host %s has %s (%d bytes) memory capacity.\n",
 			host.Name,
 			units.ByteSize(host.Hardware.MemorySize),
+			host.Hardware.MemorySize,
 		)
 
 		clusterMemory += host.Hardware.MemorySize
