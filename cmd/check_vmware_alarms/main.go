@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -24,6 +25,10 @@ import (
 
 func main() {
 
+	// Start the timer. We'll use this to emit the plugin runtime as a
+	// performance data metric.
+	pluginStart := time.Now()
+
 	// Set initial "state" as valid, adjust as we go.
 	var nagiosExitState = nagios.ExitState{
 		LastError:      nil,
@@ -32,6 +37,26 @@ func main() {
 
 	// defer this from the start so it is the last deferred function to run
 	defer nagiosExitState.ReturnCheckResults()
+
+	// Collect last minute details just before ending plugin execution.
+	defer func(exitState *nagios.ExitState, start time.Time) {
+
+		// Record plugin runtime, emit this metric regardless of exit
+		// point/cause.
+		runtimeMetric := nagios.PerformanceData{
+			Label: "time",
+			Value: fmt.Sprintf("%dms", time.Since(start).Milliseconds()),
+		}
+		if err := exitState.AddPerfData(false, runtimeMetric); err != nil {
+			zlog.Error().
+				Err(err).
+				Msg("failed to add time (runtime) performance data metric")
+		}
+
+		// Annotate errors (if applicable) with additional context to aid in
+		// troubleshooting.
+		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
 	// vsphere.EnableLogging()
@@ -227,17 +252,77 @@ func main() {
 		EvaluateAcknowledgedAlarms:       cfg.EvaluateAcknowledgedAlarms,
 	}
 
-	switch {
+	log.Debug().Msg("Compiling Performance Data details")
 
-	case len(triggeredAlarms) > 0:
-
-		// Filter Triggered Alarms using requested settings.
+	var numTriggeredAlarmsToReport int
+	if len(triggeredAlarms) > 0 {
+		// Filter Triggered Alarms using requested settings, marking alarms as
+		// explicitly included or excluded, but retaining them in the
+		// collection for further potential evaluation.
 		triggeredAlarms.Filter(triggeredAlarmFilters)
 
-		numTriggeredAlarmsToReport := len(triggeredAlarms) - triggeredAlarms.NumExcluded()
+		numTriggeredAlarmsToReport = len(triggeredAlarms) - triggeredAlarms.NumExcluded()
+		if numTriggeredAlarmsToReport < 0 {
+			numTriggeredAlarmsToReport = 0
+		}
+
 		log.Debug().
 			Int("remaining_triggered_alarms", numTriggeredAlarmsToReport).
 			Msg("triggered alarms remaining after filtering")
+	}
+
+	pd := []nagios.PerformanceData{
+		// The `time` (runtime) metric is appended at plugin exit, so do not
+		// duplicate it here.
+		{
+			Label: "datacenters",
+			Value: fmt.Sprintf("%d", len(dcs)),
+		},
+		{
+			Label: "triggered_alarms",
+			Value: fmt.Sprintf("%d", len(triggeredAlarms)),
+		},
+		{
+			Label: "triggered_alarms_included",
+			Value: fmt.Sprintf("%d", numTriggeredAlarmsToReport),
+		},
+		{
+			Label: "triggered_alarms_excluded",
+			Value: fmt.Sprintf("%d", triggeredAlarms.NumExcluded()),
+		},
+		{
+			Label: "triggered_alarms_critical",
+			Value: fmt.Sprintf("%d", triggeredAlarms.NumCriticalState(false)),
+		},
+		{
+			Label: "triggered_alarms_warning",
+			Value: fmt.Sprintf("%d", triggeredAlarms.NumWarningState(false)),
+		},
+		{
+			Label: "triggered_alarms_unknown",
+			Value: fmt.Sprintf("%d", triggeredAlarms.NumUnknownState(false)),
+		},
+		{
+			Label: "triggered_alarms_ok",
+			Value: fmt.Sprintf("%d", triggeredAlarms.NumOKState(false)),
+		},
+	}
+
+	// Update logger with new performance data related fields
+	log = log.With().
+		Int("datacenters", len(dcs)).
+		Int("triggered_alarms", len(triggeredAlarms)).
+		Int("triggered_alarms_included", numTriggeredAlarmsToReport).
+		Int("triggered_alarms_excluded", triggeredAlarms.NumExcluded()).
+		Int("triggered_alarms_critical", triggeredAlarms.NumCriticalState(false)).
+		Int("triggered_alarms_warning", triggeredAlarms.NumWarningState(false)).
+		Int("triggered_alarms_unknown", triggeredAlarms.NumUnknownState(false)).
+		Int("triggered_alarms_ok", triggeredAlarms.NumOKState(false)).
+		Logger()
+
+	switch {
+
+	case len(triggeredAlarms) > 0:
 
 		if !triggeredAlarms.IsOKState(false) {
 			log.Error().
@@ -293,6 +378,12 @@ func main() {
 			dcsEvalNames,
 		)
 
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
+
 		return
 
 	default:
@@ -317,6 +408,12 @@ func main() {
 			cfg.DatacenterNames,
 			dcsEvalNames,
 		)
+
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
+		}
 
 		return
 
