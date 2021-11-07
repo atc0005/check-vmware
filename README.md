@@ -203,34 +203,37 @@ or the example command definitions may be updated to specify the `--log-level
 
 ### Performance Data
 
-Adding support for Performance Data / Metrics to plugins in this project is an
-ongoing effort.
+Initial support has been added for emitting Performance Data / Metrics, but
+refinement suggestions are welcome.
 
-Consult the table below (and the GH issues listed) for the metrics implemented
-thus far, the applicable GH issue for pending work and the [Add Performance
-Data / Metrics support](https://github.com/atc0005/check-vmware/projects/1)
-project board for a quick overview of work.
+Consult the table below for the metrics implemented thus far, [the original
+discussion thread](https://github.com/atc0005/check-vmware/discussions/315)
+and the [Add Performance Data / Metrics
+support](https://github.com/atc0005/check-vmware/projects/1) project board for
+an index of the initial implementation work.
 
-Please provide feedback on the applicable issue(s) if you have any, good or
-bad.
+Please add to an existing
+[Discussion](https://github.com/atc0005/check-vmware/discussions) thread or
+[open a new one](https://github.com/atc0005/check-vmware/discussions/new) with
+any feedback that you may have. Thanks in advance!
 
-| Plugin                            | Emitted Performance Data / Metrics                                                                                                                                                                          |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `check_vmware_tools`              | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `vms_with_tools_issues`, `vms_without_tools_issues`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated` |
-| `check_vmware_vcpus`              | TBD. See GH-355 for details.                                                                                                                                                                                |
-| `check_vmware_vhw`                | TBD. See GH-356 for details.                                                                                                                                                                                |
-| `check_vmware_hs2ds2vms`          | TBD. See GH-348 for details.                                                                                                                                                                                |
-| `check_vmware_datastore`          | `time`, `datastore_usage`, `datastore_storage_remaining`, `vms`, `vms_powered_on`, `vms_powered_off`                                                                                                        |
-| `check_vmware_snapshots_age`      | TBD. See GH-351 for details.                                                                                                                                                                                |
-| `check_vmware_snapshots_count`    | TBD. See GH-352 for details.                                                                                                                                                                                |
-| `check_vmware_snapshots_size`     | TBD. See GH-353 for details.                                                                                                                                                                                |
-| `check_vmware_rps_memory`         | TBD. See GH-350 for details.                                                                                                                                                                                |
-| `check_vmware_host_memory`        | TBD. See GH-347 for details.                                                                                                                                                                                |
-| `check_vmware_host_cpu`           | TBD. See GH-346 for details.                                                                                                                                                                                |
-| `check_vmware_vm_power_uptime`    | TBD. See GH-357 for details.                                                                                                                                                                                |
-| `check_vmware_disk_consolidation` | TBD. See GH-345 for details.                                                                                                                                                                                |
-| `check_vmware_question`           | TBD. See GH-349 for details.                                                                                                                                                                                |
-| `check_vmware_alarms`             | TBD. See GH-344 for details.                                                                                                                                                                                |
+| Plugin                            | Emitted Performance Data / Metrics                                                                                                                                                                                                                                      |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `check_vmware_tools`              | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `vms_with_tools_issues`, `vms_without_tools_issues`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                             |
+| `check_vmware_vcpus`              | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `vcpus_usage`, `vcpus_used`, `vcpus_remaining`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                  |
+| `check_vmware_vhw`                | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `hardware_versions_unique`, `hardware_versions_newest`, `hardware_versions_default`, `hardware_versions_oldest`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated` |
+| `check_vmware_hs2ds2vms`          | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `pairing_issues`, `datastores`, `hosts`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                         |
+| `check_vmware_datastore`          | `time`, `datastore_usage`, `datastore_storage_used`, `datastore_storage_remaining`, `vms`, `vms_powered_off`, `vms_powered_on`                                                                                                                                          |
+| `check_vmware_snapshots_age`      | `time`, `vms`, `vms_with_critical_snapshots`, `vms_with_warning_snapshots`, `snapshots`, `critical_snapshots`, `warning_snapshots`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                    |
+| `check_vmware_snapshots_count`    | `time`, `vms`, `vms_with_critical_snapshots`, `vms_with_warning_snapshots`, `snapshots`, `critical_snapshots`, `warning_snapshots`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                    |
+| `check_vmware_snapshots_size`     | `time`, `vms`, `vms_with_critical_snapshots`, `vms_with_warning_snapshots`, `snapshots`, `critical_snapshots`, `warning_snapshots`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                    |
+| `check_vmware_rps_memory`         | `time`, `vms`, `memory_usage`, `memory_used`, `memory_remaining`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                                                      |
+| `check_vmware_host_memory`        | `time`, `memory_usage`, `memory_total`, `memory_used`, `memory_remaining`, `vms`, `vms_powered_off`, `vms_powered_on`                                                                                                                                                   |
+| `check_vmware_host_cpu`           | `time`, `cpu_usage`, `cpu_total`, `cpu_used`, `cpu_remaining`, `vms`, `vms_powered_off`, `vms_powered_on`                                                                                                                                                               |
+| `check_vmware_vm_power_uptime`    | `time`, `vms`, `vms_with_critical_power_uptime`, `vms_with_warning_power_uptime`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                                      |
+| `check_vmware_disk_consolidation` | `time`, `vms`, `vms_excluded_by_name`, `vms_with_consolidation_need`, `vms_without_consolidation_need`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                |
+| `check_vmware_question`           | `time`, `vms`, `vms_excluded_by_name`, `vms_requiring_input`, `vms_not_requiring_input`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                               |
+| `check_vmware_alarms`             | `time`, `datacenters`, `triggered_alarms`, `triggered_alarms_included`, `triggered_alarms_excluded`, `triggered_alarms_critical`, `triggered_alarms_warning`, `triggered_alarms_unknown`, `triggered_alarms_ok`                                                         |
 
 ### Optional evaluation
 
