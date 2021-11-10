@@ -26,6 +26,108 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.26.0] - 2021-11-10
+
+### Overview
+
+- Expand support for Nagios Performance Data
+- Bugfixes
+- Dependency updates
+- built using Go 1.16.10
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- Add additional Nagios Performance Data metrics
+  - (GH-357) `check_vmware_vm_power_uptime` plugin
+    - `time`
+    - `vms`
+    - `vms_with_critical_power_uptime`
+    - `vms_with_warning_power_uptime`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+  - (GH-355) `check_vmware_vcpus` plugin
+    - `time`
+    - `vms`
+    - `vms_excluded_by_name`
+    - `vms_excluded_by_power_state`
+    - `vcpus_usage`
+    - `vcpus_used`
+    - `vcpus_remaining`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+  - (GH-356) `check_vmware_vhw` plugin
+    - `time`
+    - `vms`
+    - `vms_excluded_by_name`
+    - `vms_excluded_by_power_state`
+    - `hardware_versions_unique`
+    - `hardware_versions_newest`
+    - `hardware_versions_default`
+    - `hardware_versions_oldest`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+  - (GH-348) `check_vmware_hs2ds2vms` plugin
+    - `time`
+    - `vms`
+    - `vms_excluded_by_name`
+    - `vms_excluded_by_power_state`
+    - `pairing_issues`
+    - `datastores`
+    - `hosts`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+  - (GH-344) `check_vmware_alarms` plugin
+    - `time`
+    - `datacenters`
+    - `triggered_alarms`
+    - `triggered_alarms_excluded`
+    - `triggered_alarms_included`
+    - `triggered_alarms_critical`
+    - `triggered_alarms_warning`
+    - `triggered_alarms_unknown`
+    - `triggered_alarms_ok`
+  - (GH-350) `check_vmware_rps_memory` plugin
+    - `time`
+    - `vms`
+    - `memory_usage`
+    - `memory_used`
+    - `memory_remaining`
+    - `resource_pools_excluded`
+    - `resource_pools_included`
+    - `resource_pools_evaluated`
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.16.9` to `1.16.10`
+  - `github/codeql-action`
+    - `v1.0.21` to `v1.0.22`
+  - `rs/zerolog`
+    - `v1.25.0` to `v1.26.0`
+  - `actions/checkout`
+    - `v2.3.5` to `v2.4.0`
+
+### Fixed
+
+- (GH-484) `vsphere.DefaultHardwareVersion()`, `vsphere.NewHardwareVersion()`
+  fail to set count of Virtual Machines at this version
+- (GH-483) `check_vmware_vhw` | Clarify that only one monitoring mode (at a
+  time) is supported
+- (GH-489) `check_vmware_hs2ds2vms` plugin does not explicitly close session
+- (GH-491) Makefile | `go get` executable installation deprecated
+- (GH-494) Early exit logic for `vsphere.GetEligibleRPs()` is incomplete
+- (GH-496) Incorrect calculation of memory remaining in evaluated resource
+  pools for `check_vmware_rps_memory` plugin
+- (GH-500) Use bytes as baseline value for RPs memory plugin
+- (GH-333) Update documentation to reflect support for Performance Data output
+
 ## [v0.25.1] - 2021-11-02
 
 ### Overview
@@ -1324,7 +1426,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.25.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.26.0...HEAD
+[v0.26.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.26.0
 [v0.25.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.25.1
 [v0.25.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.25.0
 [v0.24.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.24.0
