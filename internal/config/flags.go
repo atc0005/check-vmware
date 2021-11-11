@@ -159,6 +159,39 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.DatastoreUsageCritical, "ds-usage-critical", defaultDatastoreUsageCritical, datastoreUsageCriticalFlagHelp)
 		flag.IntVar(&c.DatastoreUsageCritical, "dsuc", defaultDatastoreUsageCritical, datastoreUsageCriticalFlagHelp+" (shorthand)")
 
+	case pluginType.DatastoresPerformance:
+
+		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
+
+		flag.StringVar(&c.DatastoreName, "ds-name", defaultDatastoreName, datastoreNameFlagHelp)
+
+		flag.BoolVar(&c.IgnoreMissingDatastorePerfMetrics, "ds-ignore-missing-metrics", defaultIgnoreMissingDatastoreMetrics, ignoreMissingDatastorePerfMetricsFlagHelp)
+		flag.BoolVar(&c.IgnoreMissingDatastorePerfMetrics, "dsim", defaultIgnoreMissingDatastoreMetrics, ignoreMissingDatastorePerfMetricsFlagHelp+" (shorthand)")
+
+		flag.BoolVar(&c.HideHistoricalDatastorePerfMetricSets, "ds-hide-historical-metric-sets", defaultHideHistoricalDatastorePerfMetricSets, hideHistoricalDatastorePerfMetricSetsFlagHelp)
+		flag.BoolVar(&c.HideHistoricalDatastorePerfMetricSets, "dshhms", defaultHideHistoricalDatastorePerfMetricSets, hideHistoricalDatastorePerfMetricSetsFlagHelp+" (shorthand)")
+
+		flag.Var(&c.datastoreReadLatencyWarning, "ds-read-latency-warning", datastoreReadLatencyWarningFlagHelp)
+		flag.Var(&c.datastoreReadLatencyWarning, "dsrlw", datastoreReadLatencyWarningFlagHelp+" (shorthand)")
+
+		flag.Var(&c.datastoreReadLatencyCritical, "ds-read-latency-critical", datastoreReadLatencyCriticalFlagHelp)
+		flag.Var(&c.datastoreReadLatencyCritical, "dsrlc", datastoreReadLatencyCriticalFlagHelp+" (shorthand)")
+
+		flag.Var(&c.datastoreWriteLatencyWarning, "ds-write-latency-warning", datastoreWriteLatencyWarningFlagHelp)
+		flag.Var(&c.datastoreWriteLatencyWarning, "dswlw", datastoreWriteLatencyWarningFlagHelp+" (shorthand)")
+
+		flag.Var(&c.datastoreWriteLatencyCritical, "ds-write-latency-critical", datastoreWriteLatencyCriticalFlagHelp)
+		flag.Var(&c.datastoreWriteLatencyCritical, "dswlc", datastoreWriteLatencyCriticalFlagHelp+" (shorthand)")
+
+		flag.Var(&c.datastoreVMLatencyWarning, "ds-vm-latency-warning", datastoreVMLatencyWarningFlagHelp)
+		flag.Var(&c.datastoreVMLatencyWarning, "dsvmlw", datastoreVMLatencyWarningFlagHelp+" (shorthand)")
+
+		flag.Var(&c.datastoreVMLatencyCritical, "ds-vm-latency-critical", datastoreVMLatencyCriticalFlagHelp)
+		flag.Var(&c.datastoreVMLatencyCritical, "dsvmlc", datastoreVMLatencyCriticalFlagHelp+" (shorthand)")
+
+		flag.Var(&c.datastorePerformancePercentileSet, "ds-latency-percentile-set", datastoreLatencyPercintileSetFlagHelp)
+		flag.Var(&c.datastorePerformancePercentileSet, "dslps", datastoreLatencyPercintileSetFlagHelp+" (shorthand)")
+
 	case pluginType.HostSystemMemory:
 
 		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)

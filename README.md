@@ -29,6 +29,12 @@ or endorsed by VMware, Inc.
     - [Default is minimum required version check](#default-is-minimum-required-version-check)
   - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms)
   - [`check_vmware_datastore`](#check_vmware_datastore)
+  - [`check_vmware_datastore_performance`](#check_vmware_datastore_performance)
+    - [Overview](#overview-1)
+    - [Requirements](#requirements)
+    - [How datastore performance metrics are evaluated](#how-datastore-performance-metrics-are-evaluated)
+    - [Performance Data metrics](#performance-data-metrics)
+    - [Stability of this plugin](#stability-of-this-plugin)
   - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age)
   - [`check_vmware_snapshots_count`](#check_vmware_snapshots_count)
   - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size)
@@ -41,7 +47,7 @@ or endorsed by VMware, Inc.
   - [`check_vmware_alarms`](#check_vmware_alarms)
 - [Features](#features)
 - [Changelog](#changelog)
-- [Requirements](#requirements)
+- [Requirements](#requirements-1)
   - [Building source code](#building-source-code)
   - [Running](#running)
 - [Installation](#installation)
@@ -61,6 +67,7 @@ or endorsed by VMware, Inc.
       - [Default is minimum required version check](#default-is-minimum-required-version-check-1)
     - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-1)
     - [`check_vmware_datastore`](#check_vmware_datastore-1)
+    - [`check_vmware_datastore_performance`](#check_vmware_datastore_performance-1)
     - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age-1)
     - [`check_vmware_snapshots_count`](#check_vmware_snapshots_count-1)
     - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size-1)
@@ -77,6 +84,7 @@ or endorsed by VMware, Inc.
     - [`check_vmware_vhw`](#check_vmware_vhw-2)
     - [`check_vmware_hs2ds2vms`](#check_vmware_hs2ds2vms-2)
     - [`check_vmware_datastore`](#check_vmware_datastore-2)
+    - [`check_vmware_datastore_performance`](#check_vmware_datastore_performance-2)
     - [`check_vmware_snapshots_age`](#check_vmware_snapshots_age-2)
     - [`check_vmware_snapshots_count`](#check_vmware_snapshots_count-2)
     - [`check_vmware_snapshots_size`](#check_vmware_snapshots_size-2)
@@ -115,36 +123,39 @@ or endorsed by VMware, Inc.
   - [`check_vmware_datastore` Nagios plugin](#check_vmware_datastore-nagios-plugin)
     - [CLI invocation](#cli-invocation-7)
     - [Command definition](#command-definition-7)
-  - [`check_vmware_snapshots_age` Nagios plugin](#check_vmware_snapshots_age-nagios-plugin)
+  - [`check_vmware_datastore_performance` Nagios plugin](#check_vmware_datastore_performance-nagios-plugin)
     - [CLI invocation](#cli-invocation-8)
     - [Command definition](#command-definition-8)
-  - [`check_vmware_snapshots_count` Nagios plugin](#check_vmware_snapshots_count-nagios-plugin)
+  - [`check_vmware_snapshots_age` Nagios plugin](#check_vmware_snapshots_age-nagios-plugin)
     - [CLI invocation](#cli-invocation-9)
     - [Command definition](#command-definition-9)
-  - [`check_vmware_snapshots_size` Nagios plugin](#check_vmware_snapshots_size-nagios-plugin)
+  - [`check_vmware_snapshots_count` Nagios plugin](#check_vmware_snapshots_count-nagios-plugin)
     - [CLI invocation](#cli-invocation-10)
     - [Command definition](#command-definition-10)
-  - [`check_vmware_rps_memory` Nagios plugin](#check_vmware_rps_memory-nagios-plugin)
+  - [`check_vmware_snapshots_size` Nagios plugin](#check_vmware_snapshots_size-nagios-plugin)
     - [CLI invocation](#cli-invocation-11)
     - [Command definition](#command-definition-11)
-  - [`check_vmware_host_memory` Nagios plugin](#check_vmware_host_memory-nagios-plugin)
+  - [`check_vmware_rps_memory` Nagios plugin](#check_vmware_rps_memory-nagios-plugin)
     - [CLI invocation](#cli-invocation-12)
     - [Command definition](#command-definition-12)
-  - [`check_vmware_host_cpu` Nagios plugin](#check_vmware_host_cpu-nagios-plugin)
+  - [`check_vmware_host_memory` Nagios plugin](#check_vmware_host_memory-nagios-plugin)
     - [CLI invocation](#cli-invocation-13)
     - [Command definition](#command-definition-13)
-  - [`check_vmware_vm_power_uptime` Nagios plugin](#check_vmware_vm_power_uptime-nagios-plugin)
+  - [`check_vmware_host_cpu` Nagios plugin](#check_vmware_host_cpu-nagios-plugin)
     - [CLI invocation](#cli-invocation-14)
     - [Command definition](#command-definition-14)
-  - [`check_vmware_disk_consolidation` Nagios plugin](#check_vmware_disk_consolidation-nagios-plugin)
+  - [`check_vmware_vm_power_uptime` Nagios plugin](#check_vmware_vm_power_uptime-nagios-plugin)
     - [CLI invocation](#cli-invocation-15)
     - [Command definition](#command-definition-15)
-  - [`check_vmware_question` Nagios plugin](#check_vmware_question-nagios-plugin)
+  - [`check_vmware_disk_consolidation` Nagios plugin](#check_vmware_disk_consolidation-nagios-plugin)
     - [CLI invocation](#cli-invocation-16)
     - [Command definition](#command-definition-16)
-  - [`check_vmware_alarms` Nagios plugin](#check_vmware_alarms-nagios-plugin)
+  - [`check_vmware_question` Nagios plugin](#check_vmware_question-nagios-plugin)
     - [CLI invocation](#cli-invocation-17)
     - [Command definition](#command-definition-17)
+  - [`check_vmware_alarms` Nagios plugin](#check_vmware_alarms-nagios-plugin)
+    - [CLI invocation](#cli-invocation-18)
+    - [Command definition](#command-definition-18)
 - [License](#license)
 - [References](#references)
 
@@ -161,23 +172,24 @@ VMware, Inc.
 This repo contains various tools and plugins used to monitor/validate VMware
 environments.
 
-| Plugin or Tool Name               | Description                                                                         |
-| --------------------------------- | ----------------------------------------------------------------------------------- |
-| `check_vmware_tools`              | Nagios plugin used to monitor VMware Tools installations.                           |
-| `check_vmware_vcpus`              | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
-| `check_vmware_vhw`                | Nagios plugin used to monitor virtual hardware versions.                            |
-| `check_vmware_hs2ds2vms`          | Nagios plugin used to monitor host/datastore/vm pairings.                           |
-| `check_vmware_datastore`          | Nagios plugin used to monitor datastore usage.                                      |
-| `check_vmware_snapshots_age`      | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
-| `check_vmware_snapshots_count`    | Nagios plugin used to monitor the count of Virtual Machine snapshots.               |
-| `check_vmware_snapshots_size`     | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
-| `check_vmware_rps_memory`         | Nagios plugin used to monitor memory usage across Resource Pools.                   |
-| `check_vmware_host_memory`        | Nagios plugin used to monitor memory usage for a specific ESXi host system.         |
-| `check_vmware_host_cpu`           | Nagios plugin used to monitor CPU usage for a specific ESXi host system.            |
-| `check_vmware_vm_power_uptime`    | Nagios plugin used to monitor VM power cycle uptime.                                |
-| `check_vmware_disk_consolidation` | Nagios plugin used to monitor VM disk consolidation status.                         |
-| `check_vmware_question`           | Nagios plugin used to monitor VM interactive question status.                       |
-| `check_vmware_alarms`             | Nagios plugin used to monitor for Triggered Alarms in one or more datacenters.      |
+| Plugin or Tool Name                  | Description                                                                         |
+| ------------------------------------ | ----------------------------------------------------------------------------------- |
+| `check_vmware_tools`                 | Nagios plugin used to monitor VMware Tools installations.                           |
+| `check_vmware_vcpus`                 | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
+| `check_vmware_vhw`                   | Nagios plugin used to monitor virtual hardware versions.                            |
+| `check_vmware_hs2ds2vms`             | Nagios plugin used to monitor host/datastore/vm pairings.                           |
+| `check_vmware_datastore`             | Nagios plugin used to monitor datastore usage.                                      |
+| `check_vmware_datastore_performance` | Nagios plugin used to monitor datastore performance.                                |
+| `check_vmware_snapshots_age`         | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
+| `check_vmware_snapshots_count`       | Nagios plugin used to monitor the count of Virtual Machine snapshots.               |
+| `check_vmware_snapshots_size`        | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
+| `check_vmware_rps_memory`            | Nagios plugin used to monitor memory usage across Resource Pools.                   |
+| `check_vmware_host_memory`           | Nagios plugin used to monitor memory usage for a specific ESXi host system.         |
+| `check_vmware_host_cpu`              | Nagios plugin used to monitor CPU usage for a specific ESXi host system.            |
+| `check_vmware_vm_power_uptime`       | Nagios plugin used to monitor VM power cycle uptime.                                |
+| `check_vmware_disk_consolidation`    | Nagios plugin used to monitor VM disk consolidation status.                         |
+| `check_vmware_question`              | Nagios plugin used to monitor VM interactive question status.                       |
+| `check_vmware_alarms`                | Nagios plugin used to monitor for Triggered Alarms in one or more datacenters.      |
 
 ### Output
 
@@ -218,23 +230,24 @@ Please add to an existing
 [open a new one](https://github.com/atc0005/check-vmware/discussions/new) with
 any feedback that you may have. Thanks in advance!
 
-| Plugin                            | Emitted Performance Data / Metrics                                                                                                                                                                                                                                      |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `check_vmware_tools`              | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `vms_with_tools_issues`, `vms_without_tools_issues`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                             |
-| `check_vmware_vcpus`              | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `vcpus_usage`, `vcpus_used`, `vcpus_remaining`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                  |
-| `check_vmware_vhw`                | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `hardware_versions_unique`, `hardware_versions_newest`, `hardware_versions_default`, `hardware_versions_oldest`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated` |
-| `check_vmware_hs2ds2vms`          | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `pairing_issues`, `datastores`, `hosts`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                         |
-| `check_vmware_datastore`          | `time`, `datastore_usage`, `datastore_storage_used`, `datastore_storage_remaining`, `vms`, `vms_powered_off`, `vms_powered_on`                                                                                                                                          |
-| `check_vmware_snapshots_age`      | `time`, `vms`, `vms_with_critical_snapshots`, `vms_with_warning_snapshots`, `snapshots`, `critical_snapshots`, `warning_snapshots`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                    |
-| `check_vmware_snapshots_count`    | `time`, `vms`, `vms_with_critical_snapshots`, `vms_with_warning_snapshots`, `snapshots`, `critical_snapshots`, `warning_snapshots`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                    |
-| `check_vmware_snapshots_size`     | `time`, `vms`, `vms_with_critical_snapshots`, `vms_with_warning_snapshots`, `snapshots`, `critical_snapshots`, `warning_snapshots`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                    |
-| `check_vmware_rps_memory`         | `time`, `vms`, `memory_usage`, `memory_used`, `memory_remaining`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                                                      |
-| `check_vmware_host_memory`        | `time`, `memory_usage`, `memory_total`, `memory_used`, `memory_remaining`, `vms`, `vms_powered_off`, `vms_powered_on`                                                                                                                                                   |
-| `check_vmware_host_cpu`           | `time`, `cpu_usage`, `cpu_total`, `cpu_used`, `cpu_remaining`, `vms`, `vms_powered_off`, `vms_powered_on`                                                                                                                                                               |
-| `check_vmware_vm_power_uptime`    | `time`, `vms`, `vms_with_critical_power_uptime`, `vms_with_warning_power_uptime`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                                      |
-| `check_vmware_disk_consolidation` | `time`, `vms`, `vms_excluded_by_name`, `vms_with_consolidation_need`, `vms_without_consolidation_need`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                |
-| `check_vmware_question`           | `time`, `vms`, `vms_excluded_by_name`, `vms_requiring_input`, `vms_not_requiring_input`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                               |
-| `check_vmware_alarms`             | `time`, `datacenters`, `triggered_alarms`, `triggered_alarms_included`, `triggered_alarms_excluded`, `triggered_alarms_critical`, `triggered_alarms_warning`, `triggered_alarms_unknown`, `triggered_alarms_ok`                                                         |
+| Plugin                               | Emitted Performance Data / Metrics                                                                                                                                                                                                                                      |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `check_vmware_tools`                 | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `vms_with_tools_issues`, `vms_without_tools_issues`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                             |
+| `check_vmware_vcpus`                 | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `vcpus_usage`, `vcpus_used`, `vcpus_remaining`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                  |
+| `check_vmware_vhw`                   | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `hardware_versions_unique`, `hardware_versions_newest`, `hardware_versions_default`, `hardware_versions_oldest`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated` |
+| `check_vmware_hs2ds2vms`             | `time`, `vms`, `vms_excluded_by_name`, `vms_excluded_by_power_state`, `pairing_issues`, `datastores`, `hosts`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                         |
+| `check_vmware_datastore`             | `time`, `datastore_usage`, `datastore_storage_used`, `datastore_storage_remaining`, `vms`, `vms_powered_off`, `vms_powered_on`                                                                                                                                          |
+| `check_vmware_datastore_performance` | `time`, `p*_read_latency`, `p*_write_latency`, `p*_vm_latency`, `p*_read_iops`, `p*_write_iops`, `vms`, `vms_powered_off`, `vms_powered_on` (where `*` is a placeholder for `90`, `80`, `70`, `60` & `50` percentiles)                                                  |
+| `check_vmware_snapshots_age`         | `time`, `vms`, `vms_with_critical_snapshots`, `vms_with_warning_snapshots`, `snapshots`, `critical_snapshots`, `warning_snapshots`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                    |
+| `check_vmware_snapshots_count`       | `time`, `vms`, `vms_with_critical_snapshots`, `vms_with_warning_snapshots`, `snapshots`, `critical_snapshots`, `warning_snapshots`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                    |
+| `check_vmware_snapshots_size`        | `time`, `vms`, `vms_with_critical_snapshots`, `vms_with_warning_snapshots`, `snapshots`, `critical_snapshots`, `warning_snapshots`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                    |
+| `check_vmware_rps_memory`            | `time`, `vms`, `memory_usage`, `memory_used`, `memory_remaining`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                                                      |
+| `check_vmware_host_memory`           | `time`, `memory_usage`, `memory_total`, `memory_used`, `memory_remaining`, `vms`, `vms_powered_off`, `vms_powered_on`                                                                                                                                                   |
+| `check_vmware_host_cpu`              | `time`, `cpu_usage`, `cpu_total`, `cpu_used`, `cpu_remaining`, `vms`, `vms_powered_off`, `vms_powered_on`                                                                                                                                                               |
+| `check_vmware_vm_power_uptime`       | `time`, `vms`, `vms_with_critical_power_uptime`, `vms_with_warning_power_uptime`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                                      |
+| `check_vmware_disk_consolidation`    | `time`, `vms`, `vms_excluded_by_name`, `vms_with_consolidation_need`, `vms_without_consolidation_need`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                |
+| `check_vmware_question`              | `time`, `vms`, `vms_excluded_by_name`, `vms_requiring_input`, `vms_not_requiring_input`, `resource_pools_excluded`, `resource_pools_included`, `resource_pools_evaluated`                                                                                               |
+| `check_vmware_alarms`                | `time`, `datacenters`, `triggered_alarms`, `triggered_alarms_included`, `triggered_alarms_excluded`, `triggered_alarms_critical`, `triggered_alarms_warning`, `triggered_alarms_unknown`, `triggered_alarms_ok`                                                         |
 
 ### Optional evaluation
 
@@ -347,6 +360,124 @@ Nagios plugin used to monitor datastore usage.
 In addition to reporting current datastore usage, this plugin also reports
 which VMs reside on the datastore along with their percentage of the total
 datastore space used.
+
+### `check_vmware_datastore_performance`
+
+#### Overview
+
+Nagios plugin used to monitor datastore performance.
+
+In addition to reporting current [datastore performance
+details][vsphere-storage-performance-summary-data-object], this plugin also
+reports which VMs reside on the datastore along with their percentage of the
+total datastore space used. This is intended to help pinpoint potential causes
+of high latency at a glance.
+
+#### Requirements
+
+This plugin requires that the `Statistics Collection` setting (part of
+`Storage I/O Control`) for a monitored datastore be enabled. If it is not,
+this plugin is unable to evaluate performance for a specified datastore. This
+plugin attempts to detect and report this condition so that vSphere
+administrators can assist with enabling this feature.
+
+To help with locating datastores in need of adjustment, the following PowerCLI
+snippet may be used:
+
+```powershell
+$credential = Get-Credential -Message "Enter your credentials (DOMAIN\ID)"
+$server = Connect-VIServer -Server vc1.example.com -Credential $credential
+
+Get-View -ViewType Datastore |
+    Where-Object {$_.IormConfiguration.StatsCollectionEnabled -eq $false} |
+    Select -Property Name, @{Label="StatsCollectionEnabled"; Expression={$_.IormConfiguration.StatsCollectionEnabled}} |
+    Sort-Object -Property Name
+
+Disconnect-VIServer $server
+```
+
+Available settings For `Storage I/O Control`:
+
+- `Disabled`
+- `Statistics enabled but Storage I/O disabled`
+- `Statistics and Storage I/O enabled`
+
+#### How datastore performance metrics are evaluated
+
+Performance metrics are provided by vSphere in aggregated quantiles over a
+period of time (intervals). Aggregated metrics correspond with a specific
+percentile. As of this plugin's initial development, vSphere provides metrics
+associated with these percentiles:
+
+- `90`
+- `80`
+- `70`
+- `60`
+- `50`
+
+If not otherwise specified, percentile `90` is used to evaluate datastore
+performance metrics. While the vSphere API provides metrics in multiple
+intervals (one active, up to seven historical), only the active interval is
+used for evaluating current datastore performance.
+
+There is a brief window between when the current interval ends and the new
+active interval begins that no metrics are available for the active interval.
+Testing shows that this is approximately 30 minutes. The current plugin design
+is to omit performance data latency metrics if no metrics are available. This
+is done in an attempt to prevent skewing historical data already collected.
+
+This plugin accepts flags to:
+
+- specify individual latency metric thresholds (e.g., read latency CRITICAL,
+  read latency WARNING, write latency ...)
+- specify percentile *sets*
+  - multiple sets supported, each composed of a percentile and pairs of
+    CRITICAL and WARNING threshold values
+
+If you specify a percentile set, the plugin will not accept individual latency
+threshold flags. The reverse is also true, specifying one or more latency
+threshold flags is incompatible with specifying one or more percentile sets.
+
+By specifying multiple percentile sets, you are indicating that crossing the
+thresholds of any one set is enough to trigger a state change.
+
+#### Performance Data metrics
+
+This plugin emits Nagios performance data metrics for each percentile in the
+active interval that is not completely of value `0`. Any percentile with all
+`0` metrics are omitted from the performance data metrics collected & emitted
+by the plugin.
+
+Please provide feedback by [opening a new
+issue](https://github.com/atc0005/check-vmware/issues/new) or commenting on
+the original discussion thread [here
+(GH-316)](https://github.com/atc0005/check-vmware/discussions/316) if you find
+that this decision causes problems with gathering metrics.
+
+#### Stability of this plugin
+
+**NOTE**: This plugin uses the [`QueryDatastorePerformanceSummary()` method
+provided by the `StorageResourceManager` Managed
+Object][vsphere-query-datastore-performance-summary-method]. While available
+since vSphere API 5.1, this API is marked as experimental (and subject to
+change/removal):
+
+> This is an experimental interface that is not intended for use in production
+> code.
+
+In addition to using the experimental `QueryDatastorePerformanceSummary()`
+API, this plugin uses the deprecated `statsCollectionEnabled` property from
+the [`StorageIORMInfo` Data
+Object][vsphere-storage-io-resource-management-data-object] to determine
+whether `Statistics Collection` is enabled for a datastore. Using the
+prescribed `enabled` property for [that Data
+Object][vsphere-storage-io-resource-management-data-object] to determine
+`Statistics Collection` does not work.
+
+If you use this plugin, please provide feedback by [opening a new discussion
+thread](https://github.com/atc0005/check-vmware/discussions/new) or commenting
+on the original discussion thread [here
+(GH-316)](https://github.com/atc0005/check-vmware/discussions/316).
 
 ### `check_vmware_snapshots_age`
 
@@ -561,6 +692,7 @@ Filtering is available for explicitly *including* or *excluding* based on:
     - default is minimum required version check
   - Host/Datastore/Virtual Machine pairings (using provided Custom Attribute)
   - Datastore usage
+  - Datastore performance
   - Snapshots age
   - Snapshots count
   - Snapshots size
@@ -649,6 +781,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_vhw/`
      - `go build -mod=vendor ./cmd/check_vmware_hs2ds2vms/`
      - `go build -mod=vendor ./cmd/check_vmware_datastore/`
+     - `go build -mod=vendor ./cmd/check_vmware_datastore_performance/`
      - `go build -mod=vendor ./cmd/check_vmware_snapshots_age/`
      - `go build -mod=vendor ./cmd/check_vmware_snapshots_count/`
      - `go build -mod=vendor ./cmd/check_vmware_snapshots_size/`
@@ -674,6 +807,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_vhw/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_hs2ds2vms/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_datastore/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_datastore_performance/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_age/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_count/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_size/`
@@ -820,6 +954,17 @@ time.
 | `OK`         | Ideal state, Datastore usage within bounds.                      |
 | `WARNING`    | Datastore usage crossed user-specified threshold for this state. |
 | `CRITICAL`   | Datastore usage crossed user-specified threshold for this state. |
+
+#### `check_vmware_datastore_performance`
+
+**TODO**: Research & note why metric sets might contain all values of `0`.
+
+| Nagios State | Description                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------------ |
+| `OK`         | Ideal state, Datastore performance within bounds for the active interval for the chosen percentile(s). |
+| `UNKNOWN`    | Datastore performance metric sets are all value `0` or metrics collection for a datastore is disabled. |
+| `WARNING`    | Datastore performance crossed user-specified latency thresholds for this state.                        |
+| `CRITICAL`   | Datastore performance crossed user-specified latency thresholds for this state.                        |
 
 #### `check_vmware_snapshots_age`
 
@@ -1034,6 +1179,33 @@ information.
 | `ds-name`                   | **Yes**  |         | No     | *valid datastore name*                                                  | Datastore name as it is found within the vSphere inventory.                                                                                                                                            |
 | `dsuc`, `ds-usage-critical` | No       | `95`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of a datastore's storage usage (as a whole number) when a `CRITICAL` threshold is reached.                                                                                    |
 | `dsuw`, `ds-usage-warning`  | No       | `90`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of a datastore's storage usage (as a whole number) when a `WARNING` threshold is reached.                                                                                     |
+
+#### `check_vmware_datastore_performance`
+
+| Flag                                       | Required | Default                | Repeat | Possible                                                                | Description                                                                                                                                                                                            |
+| ------------------------------------------ | -------- | ---------------------- | ------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `branding`                                 | No       | `false`                | No     | `branding`                                                              | Toggles emission of branding details with plugin status details. This output is disabled by default.                                                                                                   |
+| `h`, `help`                                | No       | `false`                | No     | `h`, `help`                                                             | Show Help text along with the list of supported flags.                                                                                                                                                 |
+| `v`, `version`                             | No       | `false`                | No     | `v`, `version`                                                          | Whether to display application version and then immediately exit application.                                                                                                                          |
+| `ll`, `log-level`                          | No       | `info`                 | No     | `disabled`, `panic`, `fatal`, `error`, `warn`, `info`, `debug`, `trace` | Log message priority filter. Log messages with a lower level are ignored. Log messages are sent to `stderr` by default. See [Output](#output) for more information.                                    |
+| `p`, `port`                                | No       | `443`                  | No     | *positive whole number between 1-65535, inclusive*                      | TCP port of the remote ESXi host or vCenter instance. This is usually 443 (HTTPS).                                                                                                                     |
+| `t`, `timeout`                             | No       | `10`                   | No     | *positive whole number of seconds*                                      | Timeout value in seconds allowed before a plugin execution attempt is abandoned and an error returned.                                                                                                 |
+| `s`, `server`                              | **Yes**  |                        | No     | *fully-qualified domain name or IP Address*                             | The fully-qualified domain name or IP Address of the remote ESXi host or vCenter instance.                                                                                                             |
+| `u`, `username`                            | **Yes**  |                        | No     | *valid username*                                                        | Username with permission to access specified ESXi host or vCenter instance.                                                                                                                            |
+| `pw`, `password`                           | **Yes**  |                        | No     | *valid password*                                                        | Password used to login to ESXi host or vCenter instance.                                                                                                                                               |
+| `domain`                                   | No       |                        | No     | *valid user domain*                                                     | (Optional) domain for user account used to login to ESXi host or vCenter instance.                                                                                                                     |
+| `trust-cert`                               | No       | `false`                | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                  |
+| `dc-name`                                  | No       |                        | No     | *valid vSphere datacenter name*                                         | Specifies the name of a vSphere Datacenter. If not specified, applicable plugins will attempt to use the default datacenter found in the vSphere environment. Not applicable to standalone ESXi hosts. |
+| `ds-name`                                  | **Yes**  |                        | No     | *valid datastore name*                                                  | Datastore name as it is found within the vSphere inventory.                                                                                                                                            |
+| `dsim`, `ds-ignore-missing-metrics`        | No       | `false`                | No     | `true`, `false`                                                         | Toggles how missing Datastore Performance metrics will be handled.This is believed to occur when a datastore is newly created and metrics have not yet been collected.                                 |
+| `dshhms`, `ds-hide-historical-metric-sets` | No       | `false`                | No     | `true`, `false`                                                         | Toggles display of historical Datastore Performance metrics at plugin completion. By default historical metrics are listed.                                                                            |
+| `dsrlc`, `ds-read-latency-critical`        | No       | `15`                   | No     | *positive whole number or float*                                        | Specifies the read latency of a datastore's storage (in ms) when a `CRITICAL` threshold is reached. The default percentile is used (`90`).                                                             |
+| `dsrlw`, `ds-read-latency-warning`         | No       | `30`                   | No     | *positive whole number or float*                                        | Specifies the read latency of a datastore's storage (in ms) when a `WARNING` threshold is reached. The default percentile is used (`90`).                                                              |
+| `dswlc`, `ds-write-latency-critical`       | No       | `15`                   | No     | *positive whole number or float*                                        | Specifies the write latency of a datastore's storage (in ms) when a `CRITICAL` threshold is reached. The default percentile is used (`90`).                                                            |
+| `dswlw`, `ds-write-latency-warning`        | No       | `30`                   | No     | *positive whole number or float*                                        | Specifies the write latency of a datastore's storage (in ms) when a `WARNING` threshold is reached. The default percentile is used (`90`).                                                             |
+| `dsvmlc`, `ds-vm-latency-critical`         | No       | `15`                   | No     | *positive whole number or float*                                        | Specifies the latency (in ms) as observed by VMs using the datastore when a `CRITICAL` threshold is reached. The default percentile is used (`90`).                                                    |
+| `dsvmlw`, `ds-vm-latency-warning`          | No       | `30`                   | No     | *positive whole number or float*                                        | Specifies the latency (in ms) as observed by VMs using the datastore when a `WARNING` threshold is reached. The default percentile is used (`90`).                                                     |
+| `dslps`, `ds-latency-percentile-set`       | No       | `90,15,30,15,30,15,30` | Yes    | *complete percentile set* in `P,RLW,RLC,WLW,WLC,VMLW,VMLC` format       | Specifies the performance percentile set used for threshold calculations. Incompatible with individual latency threshold flags. All comma-separated field values are required for each set.            |
 
 #### `check_vmware_snapshots_age`
 
@@ -1743,6 +1915,72 @@ command-line settings supported by this plugin along with descriptions of
 each. See the [contrib](#contrib) section for information regarding example
 command definitions and Nagios configuration files.
 
+### `check_vmware_datastore_performance` Nagios plugin
+
+#### CLI invocation
+
+```ShellSession
+/usr/lib/nagios/plugins/check_vmware_datastore_performance --server vc1.example.com --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --ds-latency-percentile-set '90,15,30,15,30,15,30' --ds-name "HUSVM-DC1-vol6" --trust-cert  --log-level info
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
+Of note:
+
+- We use a datastore performance percentile set instead of individual latency
+  flags
+  - `90`th percentile
+  - read latency `WARNING` threshold of `15 ms`
+  - read latency `CRITICAL` threshold of `30 ms`
+  - write latency `WARNING` threshold of `15 ms`
+  - write latency `CRITICAL` threshold of `30 ms`
+  - vm latency `WARNING` threshold of `15 ms`
+  - vm latency `CRITICAL` threshold of `30 ms`
+- Due to plugin design, only the active interval is evaluated for threshold
+  violations
+  - historical interval metrics are reported via `LongServiceOutput` *unless*
+    the flag to skip emitting those metrics is specified
+- Certificate warnings are ignored.
+  - not best practice, but many vCenter instances use self-signed certs per
+    various freely available guides
+- Service Check results output is sent to `stdout`
+- Logging output is enabled at the `info` level.
+  - logging output is sent to `stderr` by default
+  - logging output is intended to be seen when invoking the
+    plugin directly via CLI (often for troubleshooting)
+    - see [Output](#output) for potential conflicts with some monitoring
+      systems
+
+#### Command definition
+
+```shell
+# /etc/nagios-plugins/config/vmware-datastores-performance.cfg
+
+# Look at specific datastore and explicitly provide custom WARNING and
+# CRITICAL latency threshold values via individual flags.
+define command{
+    command_name    check_vmware_datastore_performance_via_individual_flags
+    command_line    $USER1$/check_vmware_datastore_performance --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ds-read-latency-warning '$ARG4$' --ds-read-latency-critical '$ARG5$' --ds-write-latency-warning '$ARG6$' --ds-write-latency-critical '$ARG7$' --ds-vm-latency-warning '$ARG8$' --ds-vm-latency-critical '$ARG9$' --ds-name '$ARG10$' --trust-cert  --log-level info
+    }
+
+# Look at specific datastore and explicitly provide custom WARNING and
+# CRITICAL latency threshold values for a single percentile via a percentile
+# flag set.
+define command{
+    command_name    check_vmware_datastore_performance_via_1percentile_set
+    command_line    $USER1$/check_vmware_datastore_performance --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ds-latency-percentile-set '$ARG4$' --ds-name '$ARG5$' --trust-cert  --log-level info
+    }
+
+```
+
+See the [configuration options](#configuration-options) section for all
+command-line settings supported by this plugin along with descriptions of
+each. See the [contrib](#contrib) section for information regarding example
+command definitions and Nagios configuration files.
+
 ### `check_vmware_snapshots_age` Nagios plugin
 
 #### CLI invocation
@@ -2302,5 +2540,11 @@ SOFTWARE.
 [nagios-state-types]: <https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/statetypes.html>
 
 [vsphere-guestinfo-data-object]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.vm.GuestInfo.html>
+
+[vsphere-query-datastore-performance-summary-method]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/bf660c0a-f060-46e8-a94d-4b5e6ffc77ad/208bc706-e281-49b6-a0ce-b402ec19ef82/SDK/vsphere-ws/docs/ReferenceGuide/vim.StorageResourceManager.html#queryDatastorePerformanceSummary>
+
+[vsphere-storage-performance-summary-data-object]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.StorageResourceManager.StoragePerformanceSummary.html>
+
+[vsphere-storage-io-resource-management-data-object]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.StorageResourceManager.IORMConfigInfo.html>
 
 <!-- []: PLACEHOLDER "DESCRIPTION_HERE" -->

@@ -151,3 +151,77 @@ func (c Config) UserAgent() string {
 	)
 
 }
+
+// DatastorePerfThresholds returns Datastore Performance Summary latency
+// thresholds for the default percentile. If defined by the user, those values
+// are returned. If the user did not specify individual threshold values,
+// default values are returned.
+func (c Config) DatastorePerfThresholds() DSPerformanceSummaryThresholds {
+
+	readLatencyWarning := defaultDatastoreReadLatencyWarning
+	if c.datastoreReadLatencyWarning.isSet {
+		readLatencyWarning = c.datastoreReadLatencyWarning.value
+	}
+
+	readLatencyCritical := defaultDatastoreReadLatencyCritical
+	if c.datastoreReadLatencyCritical.isSet {
+		readLatencyCritical = c.datastoreReadLatencyCritical.value
+	}
+
+	writeLatencyWarning := defaultDatastoreWriteLatencyWarning
+	if c.datastoreWriteLatencyWarning.isSet {
+		writeLatencyWarning = c.datastoreWriteLatencyWarning.value
+	}
+
+	writeLatencyCritical := defaultDatastoreWriteLatencyCritical
+	if c.datastoreWriteLatencyCritical.isSet {
+		writeLatencyCritical = c.datastoreWriteLatencyCritical.value
+	}
+
+	vmLatencyWarning := defaultDatastoreVMLatencyWarning
+	if c.datastoreVMLatencyWarning.isSet {
+		vmLatencyWarning = c.datastoreVMLatencyWarning.value
+	}
+
+	vmLatencyCritical := defaultDatastoreVMLatencyCritical
+	if c.datastoreVMLatencyCritical.isSet {
+		vmLatencyCritical = c.datastoreVMLatencyCritical.value
+	}
+
+	return DSPerformanceSummaryThresholds{
+		ReadLatencyWarning:   readLatencyWarning,
+		ReadLatencyCritical:  readLatencyCritical,
+		WriteLatencyWarning:  writeLatencyWarning,
+		WriteLatencyCritical: writeLatencyCritical,
+		VMLatencyWarning:     vmLatencyWarning,
+		VMLatencyCritical:    vmLatencyCritical,
+	}
+
+}
+
+// DatastorePerfPercentileSet returns a mapping of Datastore Performance
+// Summary percentile to latency thresholds. This mapping is used to evaluate
+// Datastore Performance metrics to determine overall plugin state.
+func (c Config) DatastorePerfPercentileSet() MultiValueDSPerfPercentileSetFlag {
+
+	switch {
+
+	// A percentile set wasn't explicitly defined, so use the
+	// explicit/specified individual latency metric flag values (or default as
+	// set by the flags package) to build a default percentile set.
+	case len(c.datastorePerformancePercentileSet) == 0:
+
+		return MultiValueDSPerfPercentileSetFlag{
+			defaultDatastorePerfSumPercentile: c.DatastorePerfThresholds(),
+		}
+
+	default:
+
+		// At least one percentile set *was* defined, so return the set for
+		// evaluation. Ignore any thresholds set by individual latency metric
+		// flags.
+		return c.datastorePerformancePercentileSet
+
+	}
+
+}

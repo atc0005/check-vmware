@@ -28,6 +28,8 @@ hosts or vCenter instances).
 
 • Datastore usage
 
+• Datastore performance
+
 • Snapshots age
 
 • Snapshots count

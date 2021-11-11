@@ -53,6 +53,7 @@ contrib
         │   └── config
         │       ├── send2teams.cfg
         │       ├── vmware-alarms.cfg
+        │       ├── vmware-datastores-performance.cfg
         │       ├── vmware-datastores.cfg
         │       ├── vmware-disk-consolidation.cfg
         │       ├── vmware-host-cpu.cfg
@@ -93,7 +94,7 @@ contrib
             ├── nagios.cfg
             └── resource.cfg
 
-13 directories, 33 files
+13 directories, 34 files
 ```
 
 ### Overview
