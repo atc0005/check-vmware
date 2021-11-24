@@ -1317,7 +1317,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name    check_vmware_tools
-    command_line    /usr/lib/nagios/plugins/check_vmware_tools --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert  --log-level info
+    command_line    $USER1$/check_vmware_tools --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert  --log-level info
     }
 ```
 
@@ -1373,7 +1373,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name    check_vmware_vcpus
-    command_line    /usr/lib/nagios/plugins/check_vmware_vcpus --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --vcpus-warning '$ARG4$' --vcpus-critical '$ARG5$' --vcpus-max-allowed '$ARG6$' --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_vcpus --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --vcpus-warning '$ARG4$' --vcpus-critical '$ARG5$' --vcpus-max-allowed '$ARG6$' --trust-cert --log-level info
     }
 ```
 
@@ -1437,7 +1437,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name    check_vmware_vhw_homogeneous
-    command_line    /usr/lib/nagios/plugins/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --trust-cert --log-level info
     }
 ```
 
@@ -1496,7 +1496,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name    check_vmware_vhw_thresholds
-    command_line    /usr/lib/nagios/plugins/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --outdated-by-warning '$ARG4$' --outdated-by-critical '$ARG5$' --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --outdated-by-warning '$ARG4$' --outdated-by-critical '$ARG5$' --trust-cert --log-level info
     }
 
 ```
@@ -1555,7 +1555,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name    check_vmware_vhw_minreq
-    command_line    /usr/lib/nagios/plugins/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --minimum-version '$ARG4$' --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --minimum-version '$ARG4$' --trust-cert --log-level info
     }
 
 ```
@@ -1618,7 +1618,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name    check_vmware_vhw_defreq
-    command_line    /usr/lib/nagios/plugins/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --cluster-name '$ARG4$' --default-is-minimum-version --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_vhw --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --cluster-name '$ARG4$' --default-is-minimum-version --trust-cert --log-level info
     }
 
 ```
@@ -1689,7 +1689,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name   check_vmware_hs2ds2vms
-    command_line   /usr/lib/nagios/plugins/check_vmware_hs2ds2vms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ca-name '$ARG4$' --ca-prefix-sep '$ARG5$' --trust-cert --log-level info
+    command_line   $USER1$/check_vmware_hs2ds2vms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ca-name '$ARG4$' --ca-prefix-sep '$ARG5$' --trust-cert --log-level info
     }
 ```
 
@@ -1733,7 +1733,7 @@ Of note:
 # CRITICAL threshold values.
 define command{
     command_name    check_vmware_datastore
-    command_line    /usr/lib/nagios/plugins/check_vmware_tools --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ds-usage-warning '$ARG4$' --ds-usage-critical '$ARG5$' --ds-name '$ARG6$' --trust-cert  --log-level info
+    command_line    $USER1$/check_vmware_tools --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ds-usage-warning '$ARG4$' --ds-usage-critical '$ARG5$' --ds-name '$ARG6$' --trust-cert  --log-level info
     }
 ```
 
@@ -1783,7 +1783,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name    check_vmware_snapshots_age
-    command_line    /usr/lib/nagios/plugins/check_vmware_snapshots_age --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --age-warning '$ARG4$' --age-critical '$ARG5$' --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_snapshots_age --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --age-warning '$ARG4$' --age-critical '$ARG5$' --trust-cert --log-level info
     }
 ```
 
@@ -1828,7 +1828,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name    check_vmware_snapshots_count
-    command_line    /usr/lib/nagios/plugins/check_vmware_snapshots_count --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --count-warning '$ARG4$' --count-critical '$ARG5$' --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_snapshots_count --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --count-warning '$ARG4$' --count-critical '$ARG5$' --trust-cert --log-level info
     }
 ```
 
@@ -1873,7 +1873,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name    check_vmware_snapshots_size
-    command_line    /usr/lib/nagios/plugins/check_vmware_snapshots_size --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --size-warning '$ARG4$' --size-critical '$ARG5$' --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_snapshots_size --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --size-warning '$ARG4$' --size-critical '$ARG5$' --trust-cert --log-level info
     }
 ```
 
@@ -1924,7 +1924,7 @@ specified Resource Pools are evaluated.
 # This variation of the command does not allow exclusions
 define command{
     command_name    check_vmware_resource_pools_include_pools
-    command_line    /usr/lib/nagios/plugins/check_vmware_rps_memory --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --memory-use-warning '$ARG4$' --memory-use-critical '$ARG5$' --memory-max-allowed '$ARG6$' --include-rp '$ARG7$' --trust-cert  --log-level info
+    command_line    $USER1$/check_vmware_rps_memory --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --memory-use-warning '$ARG4$' --memory-use-critical '$ARG5$' --memory-max-allowed '$ARG6$' --include-rp '$ARG7$' --trust-cert  --log-level info
     }
 ```
 
@@ -1970,7 +1970,7 @@ Of note:
 # threshold values.
 define command{
     command_name    check_vmware_host_memory
-    command_line    /usr/lib/nagios/plugins/check_vmware_host_memory --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --memory-usage-warning '$ARG4$' --memory-usage-critical '$ARG5$' --host-name '$ARG6$' --trust-cert  --log-level info
+    command_line    $USER1$/check_vmware_host_memory --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --memory-usage-warning '$ARG4$' --memory-usage-critical '$ARG5$' --host-name '$ARG6$' --trust-cert  --log-level info
     }
 ```
 
@@ -2011,7 +2011,7 @@ Of note:
 # threshold values.
 define command{
     command_name    check_vmware_host_cpu
-    command_line    /usr/lib/nagios/plugins/check_vmware_host_cpu --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --cpu-usage-warning '$ARG4$' --cpu-usage-critical '$ARG5$' --host-name '$ARG6$' --trust-cert  --log-level info
+    command_line    $USER1$/check_vmware_host_cpu --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --cpu-usage-warning '$ARG4$' --cpu-usage-critical '$ARG5$' --host-name '$ARG6$' --trust-cert  --log-level info
     }
 ```
 
@@ -2051,7 +2051,7 @@ Of note:
 # are monitored equally.
 define command{
     command_name    check_vmware_vm_power_uptime
-    command_line    /usr/lib/nagios/plugins/check_vmware_vm_power_uptime --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --uptime-warning '$ARG4$' --uptime-critical '$ARG5$' --trust-cert  --log-level info
+    command_line    $USER1$/check_vmware_vm_power_uptime --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --uptime-warning '$ARG4$' --uptime-critical '$ARG5$' --trust-cert  --log-level info
     }
 ```
 
@@ -2106,7 +2106,7 @@ Of note:
 # is needed.
 define command{
     command_name    check_vmware_disk_consolidation
-    command_line    /usr/lib/nagios/plugins/check_vmware_disk_consolidation --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_disk_consolidation --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info
     }
 
 # Look at all pools, all VMs, trigger potentially expensive reload operation
@@ -2121,7 +2121,7 @@ define command{
 # wish to schedule a job on the cluster to handle refreshing state data.
 define command{
     command_name    check_vmware_disk_consolidation_trigger_reload
-    command_line    /usr/lib/nagios/plugins/check_vmware_disk_consolidation --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info --trigger-reload --timeout 110
+    command_line    $USER1$/check_vmware_disk_consolidation --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info --trigger-reload --timeout 110
     }
 
 ```
@@ -2161,7 +2161,7 @@ Of note:
 # environments where all VMs are monitored equally.
 define command{
     command_name    check_vmware_question
-    command_line    /usr/lib/nagios/plugins/check_vmware_question --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_question --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$'  --trust-cert --log-level info
     }
 ```
 
@@ -2219,14 +2219,14 @@ Of note:
 # any triggered alarms which have been previously acknowledged.
 define command{
     command_name    check_vmware_alarms
-    command_line    /usr/lib/nagios/plugins/check_vmware_alarms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_alarms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --trust-cert --log-level info
     }
 
 # Look at triggered alarms within specified datacenters. Do not evaluate any
 # triggered alarms which have been previously acknowledged.
 define command{
     command_name    check_vmware_alarms_specific_dc
-    command_line    /usr/lib/nagios/plugins/check_vmware_alarms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --dc-name '$ARG4$' --trust-cert --log-level info
+    command_line    $USER1$/check_vmware_alarms --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --dc-name '$ARG4$' --trust-cert --log-level info
     }
 ```
 
