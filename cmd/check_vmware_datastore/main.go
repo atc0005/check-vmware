@@ -308,7 +308,7 @@ func main() {
 
 	case dsUsage.IsWarningState():
 
-		log.Error().Msg("Datastore usage CRITICAL")
+		log.Error().Msg("Datastore usage WARNING")
 
 		nagiosExitState.LastError = vsphere.ErrDatastoreUsageThresholdCrossed
 
