@@ -144,13 +144,13 @@ func NewDatastoreUsageSummary(
 // level threshold.
 func (dus DatastoreUsageSummary) IsWarningState() bool {
 	return dus.StorageUsedPercent < float64(dus.CriticalThreshold) &&
-		dus.StorageUsedPercent >= float64(dus.WarningThreshold)
+		dus.StorageUsedPercent > float64(dus.WarningThreshold)
 }
 
 // IsCriticalState indicates whether Datastore usage has crossed the CRITICAL
 // level threshold.
 func (dus DatastoreUsageSummary) IsCriticalState() bool {
-	return dus.StorageUsedPercent >= float64(dus.CriticalThreshold)
+	return dus.StorageUsedPercent > float64(dus.CriticalThreshold)
 }
 
 // NumVMsPoweredOn indicates how many VirtualMachines on a specific Datastore
