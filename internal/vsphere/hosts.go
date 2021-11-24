@@ -171,13 +171,13 @@ func (hss HostSystemMemorySummary) IsCriticalState() bool {
 // WARNING level threshold.
 func (hss HostSystemCPUSummary) IsWarningState() bool {
 	return hss.CPUUsedPercent < float64(hss.CriticalThreshold) &&
-		hss.CPUUsedPercent >= float64(hss.WarningThreshold)
+		hss.CPUUsedPercent > float64(hss.WarningThreshold)
 }
 
 // IsCriticalState indicates whether HostSystem CPU usage has crossed the
 // CRITICAL level threshold.
 func (hss HostSystemCPUSummary) IsCriticalState() bool {
-	return hss.CPUUsedPercent >= float64(hss.CriticalThreshold)
+	return hss.CPUUsedPercent > float64(hss.CriticalThreshold)
 }
 
 // GetHostSystems accepts a context, a connected client and a boolean value
