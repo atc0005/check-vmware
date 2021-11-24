@@ -158,13 +158,13 @@ func NewHostSystemCPUUsageSummary(hs mo.HostSystem, criticalThreshold int, warni
 // WARNING level threshold.
 func (hss HostSystemMemorySummary) IsWarningState() bool {
 	return hss.MemoryUsedPercent < float64(hss.CriticalThreshold) &&
-		hss.MemoryUsedPercent >= float64(hss.WarningThreshold)
+		hss.MemoryUsedPercent > float64(hss.WarningThreshold)
 }
 
 // IsCriticalState indicates whether HostSystem memory usage has crossed the
 // CRITICAL level threshold.
 func (hss HostSystemMemorySummary) IsCriticalState() bool {
-	return hss.MemoryUsedPercent >= float64(hss.CriticalThreshold)
+	return hss.MemoryUsedPercent > float64(hss.CriticalThreshold)
 }
 
 // IsWarningState indicates whether HostSystem CPU usage has crossed the
