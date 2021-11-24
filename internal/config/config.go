@@ -20,7 +20,7 @@ import (
 // Updated via Makefile builds. Setting placeholder value here so that
 // something resembling a version string will be provided for non-Makefile
 // builds.
-var version string = "x.y.z"
+var version = "x.y.z"
 
 // ErrVersionRequested indicates that the user requested application version
 // information.
