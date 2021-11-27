@@ -119,7 +119,17 @@ type VMToMismatchedDatastoreNames map[string]VMHostDatastoresPairing
 // VirtualMachines (if any) and an error (if applicable).
 func GetVMDatastorePairingIssues(vms []mo.VirtualMachine, h2dIdx HostToDatastoreIndex, dss []mo.Datastore, ignoredDatastoreNames []string) (VMToMismatchedDatastoreNames, error) {
 
+	funcTimeStart := time.Now()
+
 	vmDatastoresPairingIssues := make(VMToMismatchedDatastoreNames)
+
+	defer func(issues *VMToMismatchedDatastoreNames) {
+		logger.Printf(
+			"It took %v to execute GetVMDatastorePairingIssues func (and retrieve %d VMToMismatchedDatastoreNames).\n",
+			time.Since(funcTimeStart),
+			len(*issues),
+		)
+	}(&vmDatastoresPairingIssues)
 
 	for _, vm := range vms {
 
@@ -251,7 +261,17 @@ func GetVMDatastorePairingIssues(vms []mo.VirtualMachine, h2dIdx HostToDatastore
 // with an error (if applicable).
 func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ignoreMissingCA bool) ([]HostWithCA, error) {
 
+	funcTimeStart := time.Now()
+
 	hostsWithCAs := make([]HostWithCA, 0, len(allHosts))
+
+	defer func(hosts *[]HostWithCA) {
+		logger.Printf(
+			"It took %v to execute GetHostsWithCA func (and retrieve %d HostWithCAs).\n",
+			time.Since(funcTimeStart),
+			len(*hosts),
+		)
+	}(&hostsWithCAs)
 
 	for _, host := range allHosts {
 		caVal, caValErr := GetObjectCAVal(hostCustomAttributeName, host.ManagedEntity)
@@ -314,10 +334,22 @@ func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ig
 // applicable).
 func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, dsCustomAttributeName string, ignoreMissingCA bool) ([]DatastoreWithCA, error) {
 
+	funcTimeStart := time.Now()
+
 	dsNames := make([]string, 0, len(allDS))
 	for _, ds := range allDS {
 		dsNames = append(dsNames, ds.Name)
 	}
+
+	datastoresWithCA := make([]DatastoreWithCA, 0, len(allDS))
+
+	defer func(dss *[]DatastoreWithCA) {
+		logger.Printf(
+			"It took %v to execute GetDatastoresWithCA func (and retrieve %d DatastoreWithCAs).\n",
+			time.Since(funcTimeStart),
+			len(*dss),
+		)
+	}(&datastoresWithCA)
 
 	// validate the list of ignored datastores
 	if len(ignoredDatastoreNames) > 0 {
@@ -348,8 +380,6 @@ func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, d
 			}
 		}
 	}
-
-	datastoresWithCA := make([]DatastoreWithCA, 0, len(allDS))
 
 	for _, ds := range allDS {
 
@@ -434,6 +464,15 @@ func NewHostToDatastoreIndex(
 	hostCASep string,
 	datastoreCASep string,
 ) (HostToDatastoreIndex, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute NewHostToDatastoreIndex func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	h2dIdx := make(HostToDatastoreIndex)
 
@@ -580,7 +619,18 @@ func NewHostToDatastoreIndex(
 // DatastoreNames returns a list of all Datastore names in the index.
 func (hdi HostToDatastoreIndex) DatastoreNames() []string {
 
+	funcTimeStart := time.Now()
+
 	var dsNames []string
+
+	defer func(dss *[]string) {
+		logger.Printf(
+			"It took %v to execute DatastoreNames func (and retrieve %d Datastore names).\n",
+			time.Since(funcTimeStart),
+			len(*dss),
+		)
+	}(&dsNames)
+
 	for hostID := range hdi {
 		for _, ds := range hdi[hostID].Datastores {
 			dsNames = append(dsNames, ds.Name)
@@ -597,6 +647,15 @@ func (hdi HostToDatastoreIndex) DatastoreNames() []string {
 
 // DatastoreIDToNameIndex returns an index of all Datastore IDs to names in the index.
 func (hdi HostToDatastoreIndex) DatastoreIDToNameIndex() DatastoreIDToNameIndex {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute DatastoreIDToNameIndex func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	dsIdx := make(DatastoreIDToNameIndex)
 	for hostID := range hdi {
@@ -629,6 +688,15 @@ func (hdi HostToDatastoreIndex) IsDatastoreIDInIndex(dsID string) bool {
 // is returned if the name could not be retrieved from the index.
 func (hdi HostToDatastoreIndex) DatastoreIDToName(dsID string) (string, error) {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute DatastoreIDToName func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	for hostID := range hdi {
 		for _, ds := range hdi[hostID].Datastores {
 			if ds.Self.Value == dsID {
@@ -653,6 +721,15 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 	vmDatastoreRefs []types.ManagedObjectReference,
 	dsNamesToIgnore []string,
 ) ([]string, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute ValidateVirtualMachinePairings func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	// fmt.Println("All datastores length:", len(allDatastores))
 	// fmt.Println("vmDatastoreRefs length:", len(vmDatastoreRefs))

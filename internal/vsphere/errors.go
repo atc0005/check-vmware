@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 )
 
 // ErrRuntimeTimeoutReached indicates that plugin runtime exceeded specified
@@ -25,6 +26,15 @@ var ErrRuntimeTimeoutReached = errors.New("plugin runtime exceeded specified tim
 // wrapped error. The original error is returned unmodified if no annotations
 // were deemed necessary.
 func AnnotateError(err error) error {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute AnnotateError func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	switch {
 

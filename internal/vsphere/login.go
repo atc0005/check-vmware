@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/vmware/govmomi"
 )
@@ -31,6 +32,15 @@ func Login(
 ) (*govmomi.Client, error) {
 
 	// TODO: Do we really need to support user domains?
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute Login func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	vCenterURL := fmt.Sprintf("https://%s:%d/sdk", server, port)
 

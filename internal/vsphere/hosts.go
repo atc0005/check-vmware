@@ -79,6 +79,15 @@ type HostSystemCPUSummary struct {
 // issue for service account) an error is returned indicating this.
 func NewHostSystemMemoryUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) (HostSystemMemorySummary, error) {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute NewHostSystemMemoryUsageSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	if hs.Summary.Hardware == nil {
 		return HostSystemMemorySummary{}, fmt.Errorf(
 			"error creating HostSystemMemorySummary: %w",
@@ -118,6 +127,15 @@ func NewHostSystemMemoryUsageSummary(hs mo.HostSystem, criticalThreshold int, wa
 // thresholds. If required information is not accessible (e.g., permissions
 // issue for service account) an error is returned indicating this.
 func NewHostSystemCPUUsageSummary(hs mo.HostSystem, criticalThreshold int, warningThreshold int) (HostSystemCPUSummary, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute NewHostSystemCPUUsageSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	if hs.Summary.Hardware == nil {
 		return HostSystemCPUSummary{}, fmt.Errorf(
@@ -328,7 +346,7 @@ func GetHostSystemsTotalMemory(ctx context.Context, c *vim25.Client, excludeOffl
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute GetHostSystemTotalMemory func.\n",
+			"It took %v to execute GetHostSystemsTotalMemory func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()

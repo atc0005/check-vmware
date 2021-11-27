@@ -10,6 +10,7 @@ package vsphere
 import (
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
@@ -48,6 +49,15 @@ var ErrAvailableFieldValueNotDefined = errors.New("no custom attributes defined 
 // not found.
 func CustomAttrKeyToValue(caKey int32, customValue []types.BaseCustomFieldValue) (string, error) {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute CustomAttrKeyToValue func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	switch {
 
 	// this vSphere object has at least one custom attribute set
@@ -85,6 +95,15 @@ func CustomAttrKeyToValue(caKey int32, customValue []types.BaseCustomFieldValue)
 // match is not found.
 func CustomAttrNameToKey(caName string, availableField []types.CustomFieldDef) (int32, error) {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute CustomAttrNameToKey func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	switch {
 	// this vSphere object has at least one custom attribute defined for its
 	// type (though not necessarily set)
@@ -117,6 +136,15 @@ func CustomAttrNameToKey(caName string, availableField []types.CustomFieldDef) (
 // returned if the value could not be retrieved indicating the cause of the
 // failure.
 func GetObjectCAVal(caName string, obj mo.ManagedEntity) (string, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute GetObjectCAVal func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	caKey, keyLookupErr := CustomAttrNameToKey(caName, obj.AvailableField)
 	if keyLookupErr != nil {

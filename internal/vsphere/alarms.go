@@ -169,6 +169,16 @@ func (tas TriggeredAlarms) NumExcludedFinal() int {
 // FilterByKey returns the matching TriggeredAlarm for the provided unique
 // identifier (key) for a TriggeredAlarm.
 func (tas TriggeredAlarms) FilterByKey(key string) (TriggeredAlarm, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterByKey func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	for i := range tas {
 		if tas[i].Key == key {
 			return tas[i], nil
@@ -201,6 +211,15 @@ func (tas TriggeredAlarms) CountPerDatacenter() map[string]int {
 // order.
 func (tas TriggeredAlarms) Keys(evalAcknowledged bool, evalExcluded bool) []string {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute Keys func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	keys := make([]string, 0, len(tas))
 	for i := range tas {
 		switch {
@@ -226,6 +245,15 @@ func (tas TriggeredAlarms) Keys(evalAcknowledged bool, evalExcluded bool) []stri
 // excluded. Keys are returned in ascending order.
 func (tas TriggeredAlarms) KeysExcluded() []string {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute KeysExcluded func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	keysExcl := make([]string, 0, len(tas))
 	for i := range tas {
 		if tas[i].Exclude {
@@ -244,6 +272,15 @@ func (tas TriggeredAlarms) KeysExcluded() []string {
 // Datacenters returns a list of Datacenter names associated with the
 // collection of TriggeredAlarms.
 func (tas TriggeredAlarms) Datacenters() []string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute Datacenters func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	dcsIdx := make(map[string]struct{})
 	dcs := make([]string, 0, len(tas))
@@ -267,6 +304,15 @@ func (tas TriggeredAlarms) Datacenters() []string {
 // ResourcePools returns a list of ResourcePool names associated with the
 // collection of TriggeredAlarms.
 func (tas TriggeredAlarms) ResourcePools() []string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute ResourcePools func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	rpsIdx := make(map[string]struct{})
 	rps := make([]string, 0, len(tas))
@@ -297,6 +343,15 @@ func (tas TriggeredAlarms) ResourcePools() []string {
 // filtering the collection; processing of inclusion or exclusion lists should
 // be performed prior to calling this method.
 func (tas TriggeredAlarms) HasCriticalState(evalExcluded bool) bool {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute HasCriticalState func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	if len(tas) == 0 {
 		return false
@@ -331,6 +386,15 @@ func (tas TriggeredAlarms) HasCriticalState(evalExcluded bool) bool {
 // prior to calling this method.
 func (tas TriggeredAlarms) NumCriticalState(evalExcluded bool) int {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute NumCriticalState func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	if len(tas) == 0 {
 		return 0
 	}
@@ -360,6 +424,15 @@ func (tas TriggeredAlarms) NumCriticalState(evalExcluded bool) int {
 // filtering the collection; processing of inclusion or exclusion lists should
 // be performed prior to calling this method.
 func (tas TriggeredAlarms) HasWarningState(evalExcluded bool) bool {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute HasWarningState func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	if len(tas) == 0 {
 		return false
@@ -394,6 +467,15 @@ func (tas TriggeredAlarms) HasWarningState(evalExcluded bool) bool {
 // be performed prior to calling this method.
 func (tas TriggeredAlarms) NumWarningState(evalExcluded bool) int {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute NumWarningState func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	if len(tas) == 0 {
 		return 0
 	}
@@ -424,6 +506,15 @@ func (tas TriggeredAlarms) NumWarningState(evalExcluded bool) int {
 // filtering the collection; processing of inclusion or exclusion lists should
 // be performed prior to calling this method.
 func (tas TriggeredAlarms) HasUnknownState(evalExcluded bool) bool {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute HasUnknownState func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	if len(tas) == 0 {
 		return false
@@ -457,6 +548,15 @@ func (tas TriggeredAlarms) HasUnknownState(evalExcluded bool) bool {
 // filtering the collection; processing of inclusion or exclusion lists should
 // be performed prior to calling this method.
 func (tas TriggeredAlarms) NumUnknownState(evalExcluded bool) int {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute NumUnknownState func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	if len(tas) == 0 {
 		return 0
@@ -508,6 +608,15 @@ func (tas TriggeredAlarms) IsOKState(evalExcluded bool) bool {
 // the collection; processing of inclusion or exclusion lists should be
 // performed prior to calling this method.
 func (tas TriggeredAlarms) NumOKState(evalExcluded bool) int {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute NumOKState func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	var numOKState int
 
@@ -564,6 +673,15 @@ func (ta TriggeredAlarm) logIncluded(explicit bool) {
 // TriggeredAlarm has been marked for inclusion or exclusion, mostly for
 // debugging purposes.
 func logTriggeredAlarmMarked(triggeredAlarm TriggeredAlarm, keep bool, explicit bool) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute logTriggeredAlarmMarked func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	markType := "implicitly"
 	if explicit {
