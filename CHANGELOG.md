@@ -26,6 +26,67 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.28.0] - 2021-XX-XX
+
+### Overview
+
+- placeholder
+- Breaking changes
+  - the `check_vmware_datastore` plugin has been renamed
+- built using Go 1.16.10
+  - Statically linked
+  - Linux (x86, x64)
+
+### Breaking
+
+- (GH-510) `check_vmware_datastore` plugin
+  - this plugin has been renamed to `check_vmware_datastore_space`
+
+### Added
+
+- placeholder
+
+### Changed
+
+- placeholder
+
+### Fixed
+
+- placeholder
+
+## [v0.27.0] - 2021-XX-XX
+
+### Overview
+
+- New plugin
+- Bugfixes
+- Dependency updates
+- Deprecated plugin name
+  - will be renamed in the `v0.28.0` release
+- built using Go 1.16.10
+  - Statically linked
+  - Linux (x86, x64)
+
+### Added
+
+- placeholder
+
+### Changed
+
+- placeholder
+
+### Deprecated
+
+- (GH-510) `check_vmware_datastore` plugin
+  - this plugin will be renamed in the `v0.28.0` release to
+    `check_vmware_datastore_space`
+  - documentation, `Makefile` and other changes will be applied in the
+    `v0.28.0` release to accommodate the rename of this plugin
+
+### Fixed
+
+- placeholder
+
 ## [v0.26.0] - 2021-11-10
 
 ### Overview
@@ -1426,7 +1487,9 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.26.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.27.0...HEAD
+[v0.28.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.28.0
+[v0.27.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.27.0
 [v0.26.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.26.0
 [v0.25.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.25.1
 [v0.25.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.25.0
