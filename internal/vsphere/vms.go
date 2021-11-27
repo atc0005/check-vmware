@@ -49,7 +49,18 @@ type VirtualMachinePowerCycleUptimeStatus struct {
 // specified power cycle uptime thresholds. VirtualMachines which have yet to
 // exceed specified thresholds are not listed.
 func (vpcs VirtualMachinePowerCycleUptimeStatus) VMNames() string {
+
+	funcTimeStart := time.Now()
+
 	vmNames := make([]string, 0, len(vpcs.VMsCritical)+len(vpcs.VMsWarning))
+
+	defer func(names *[]string) {
+		logger.Printf(
+			"It took %v to execute VMNames func (and retrieve %d Datastores).\n",
+			time.Since(funcTimeStart),
+			len(*names),
+		)
+	}(&vmNames)
 
 	for _, vm := range vpcs.VMsWarning {
 		vmNames = append(vmNames, vm.Name)
@@ -68,6 +79,15 @@ func (vpcs VirtualMachinePowerCycleUptimeStatus) VMNames() string {
 // TopTenOK is a helper method that returns at most ten VMs with the highest
 // power cycle uptime values that have yet to exceed specified thresholds.
 func (vpcs VirtualMachinePowerCycleUptimeStatus) TopTenOK() []mo.VirtualMachine {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute TopTenOK func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	// sort before we sample the VMs so that we only get the ones with highest
 	// power cycle uptime
@@ -94,6 +114,15 @@ func (vpcs VirtualMachinePowerCycleUptimeStatus) TopTenOK() []mo.VirtualMachine 
 // power cycle uptime values that have yet to exceed specified thresholds.
 // Only powered on VMs are considered.
 func (vpcs VirtualMachinePowerCycleUptimeStatus) BottomTenOK() []mo.VirtualMachine {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute BottomTenOK func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	poweredOnVMs, _ := FilterVMsByPowerState(vpcs.VMsOK, false)
 
@@ -387,6 +416,15 @@ func FilterVMsByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, int
 // any others silently skipped.
 func ExcludeVMsByName(allVMs []mo.VirtualMachine, ignoreList []string) ([]mo.VirtualMachine, int) {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute ExcludeVMsByName func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	if len(allVMs) == 0 || len(ignoreList) == 0 {
 		return allVMs, 0
 	}
@@ -598,6 +636,15 @@ func dedupeVMs(vmsList []mo.VirtualMachine) []mo.VirtualMachine {
 // VMNames receives a list of VirtualMachine values and returns a new list of
 // VirtualMachine Name values.
 func VMNames(vmsList []mo.VirtualMachine) []string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VMNames func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	vmNames := make([]string, 0, len(vmsList))
 	for i := range vmsList {

@@ -250,6 +250,15 @@ func NewHardwareVersionsIndex(vms []mo.VirtualMachine) (HardwareVersionsIndex, e
 // Versions returns a collection of all HardwareVersion entries from the index.
 func (hvi HardwareVersionsIndex) Versions() HardwareVersions {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute Versions func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	newest := hvi.Newest().value
 	versions := make([]HardwareVersion, 0, len(hvi))
 	for hwv, count := range hvi {
@@ -274,6 +283,15 @@ func (hvi HardwareVersionsIndex) Versions() HardwareVersions {
 // Outdated returns a collection of all older HardwareVersion.
 func (hvi HardwareVersionsIndex) Outdated() HardwareVersions {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute Outdated func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	newest := hvi.Newest().value
 	var outliers []HardwareVersion
 	for hwv, count := range hvi {
@@ -297,6 +315,15 @@ func (hvi HardwareVersionsIndex) Outdated() HardwareVersions {
 // formatted string in addition to the actual version number.
 func (hvi HardwareVersionsIndex) Newest() HardwareVersion {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute Newest func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	keys := make([]string, 0, len(hvi))
 	for k := range hvi {
 		keys = append(keys, k)
@@ -319,6 +346,15 @@ func (hvi HardwareVersionsIndex) Newest() HardwareVersion {
 // is returned as a HardwareVersion type, providing both the original vmx-123
 // formatted string in addition to the actual version number.
 func (hvi HardwareVersionsIndex) Oldest() HardwareVersion {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute Oldest func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	keys := make([]string, 0, len(hvi))
 	for k := range hvi {
@@ -390,6 +426,15 @@ func (hvs HardwareVersions) Sum() int {
 // string format.
 func (hvs HardwareVersions) VersionNames() []string {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VersionNames func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	names := make([]string, 0, len(hvs))
 	for _, hwv := range hvs {
 		names = append(names, hwv.value)
@@ -406,6 +451,15 @@ func (hvs HardwareVersions) VersionNames() []string {
 // -1 is returned for each hardware version if there was an issue converting
 // the prefixed string value to a usable number.
 func (hvs HardwareVersions) VersionNumbers() []int {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VersionNumbers func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	versionNums := make([]int, 0, len(hvs))
 	for _, hwv := range hvs {
@@ -438,6 +492,15 @@ func (hvs HardwareVersions) MeetsMinVersion(minVer int) bool {
 // to just those with older hardware versions. The collection is returned
 // along with the number of VirtualMachines that were excluded.
 func FilterVMsWithOldHardware(vms []mo.VirtualMachine, hwIndex HardwareVersionsIndex) ([]mo.VirtualMachine, int) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterVMsWithOldHardware func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	var vmsWithOldHardware []mo.VirtualMachine
 	for _, vm := range vms {

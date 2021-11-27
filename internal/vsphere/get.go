@@ -454,8 +454,20 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 // subset of all properties are returned for discovered ResourcePools.
 func getResourcePools(ctx context.Context, c *govmomi.Client, moRef types.ManagedObjectReference, propsSubset bool) ([]mo.ResourcePool, error) {
 
-	// Up to 2 can be returned, so set the initial size to match
+	funcTimeStart := time.Now()
+
+	// Up to 2 can be returned, so set the initial size to match. Declare this
+	// early so that we can grab a pointer to it in order to access the
+	// entries later
 	resourcePools := make([]mo.ResourcePool, 0, 2)
+
+	defer func(rp *[]mo.ResourcePool) {
+		logger.Printf(
+			"It took %v to execute getResourcePools func (and retrieve %d ResourcePools).\n",
+			time.Since(funcTimeStart),
+			len(*rp),
+		)
+	}(&resourcePools)
 
 	switch {
 	case moRef.Type == MgObjRefTypeResourcePool:

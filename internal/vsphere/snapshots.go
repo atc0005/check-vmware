@@ -662,6 +662,15 @@ func (sss SnapshotSummarySets) AgeCriticalSnapshots() (int, int) {
 // total (age) WARNING snapshots across all VirtualMachines.
 func (sss SnapshotSummarySets) AgeWarningSnapshots() (int, int) {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute AgeWarningSnapshots func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	// Skip attempts to process empty collection.
 	if len(sss) == 0 {
 		return 0, 0
@@ -713,6 +722,15 @@ func (sss SnapshotSummarySets) AgeWarningSnapshots() (int, int) {
 // CRITICAL snapshots across all VirtualMachines.
 func (sss SnapshotSummarySets) SizeCriticalSnapshots() (int, int) {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute SizeCriticalSnapshots func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	// Skip attempts to process empty collection.
 	if len(sss) == 0 {
 		return 0, 0
@@ -733,6 +751,15 @@ func (sss SnapshotSummarySets) SizeCriticalSnapshots() (int, int) {
 // snapshots and the total (size) WARNING snapshots across all
 // VirtualMachines.
 func (sss SnapshotSummarySets) SizeWarningSnapshots() (int, int) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute SizeWarningSnapshots func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	// Skip attempts to process empty collection.
 	if len(sss) == 0 {
@@ -855,6 +882,15 @@ func removeFileKey(l *[]int32, key int32) {
 // ListVMSnapshots generates a quick listing of all snapshots for a given VM
 // and emits the results to the provided io.Writer.
 func ListVMSnapshots(vm mo.VirtualMachine, w io.Writer) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute ListVMSnapshots func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	now := time.Now()
 
@@ -1386,6 +1422,15 @@ func writeSnapshotsListEntries(
 	snapshotSummarySets SnapshotSummarySets,
 ) {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute writeSnapshotsListEntries func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	listEntryTemplate := "* %q [Age: %v, Size (item: %v, sum: %v), Name: %q, Datastore: %q]\n"
 
 	printSnapshotHeader := func(forWhat string, exceeding bool) {
@@ -1608,6 +1653,15 @@ func writeSnapshotsReportFooter(
 	excludeRPs []string,
 	rps []mo.ResourcePool,
 ) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute writeSnapshotsReportFooter func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	rpNames := make([]string, len(rps))
 	for i := range rps {

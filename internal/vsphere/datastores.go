@@ -74,6 +74,15 @@ type DatastoreUsageSummary struct {
 // VirtualMachine details.
 func DatastoreVMsSummary(ds mo.Datastore, vms []mo.VirtualMachine) DatastoreVMs {
 
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute DatastoreVMsSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
 	datastoreVMs := make(DatastoreVMs, 0, len(vms))
 
 	for _, vm := range vms {
@@ -112,6 +121,15 @@ func NewDatastoreUsageSummary(
 	criticalThreshold int,
 	warningThreshold int,
 ) (DatastoreUsageSummary, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute NewDatastoreUsageSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	storageRemainingPercentage := float64(ds.Summary.FreeSpace) / float64(ds.Summary.Capacity) * 100
 	storageUsedPercentage := 100 - storageRemainingPercentage
@@ -314,6 +332,15 @@ func FilterDatastoresByID(dss []mo.Datastore, dsID string) (mo.Datastore, int, e
 // DatastoreIDsToNames returns a list of matching Datastore names for the
 // provided list of Managed Object References for Datastores.
 func DatastoreIDsToNames(dsRefs []types.ManagedObjectReference, dss []mo.Datastore) []string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute DatastoreIDsToNames func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
 
 	dsNames := make([]string, 0, len(dsRefs))
 	dsIDs := make([]string, 0, len(dsRefs))
