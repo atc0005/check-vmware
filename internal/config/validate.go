@@ -179,6 +179,112 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+	case pluginType.DatastoresPerformance:
+
+		if c.DatastoreName == "" {
+			return fmt.Errorf("datastore name not provided")
+		}
+
+		switch {
+
+		// Datastore Performance percentile set flags were not provided.
+		// Evaluate individual latency threshold flag values.
+		case len(c.datastorePerformancePercentileSet) == 0:
+
+			latencyPerfThresholds := c.DatastorePerfThresholds()
+
+			tt := []struct {
+				latencyCritical    float64
+				latencyWarning     float64
+				latencyDescription string
+			}{
+				{
+					latencyCritical:    latencyPerfThresholds.ReadLatencyCritical,
+					latencyWarning:     latencyPerfThresholds.ReadLatencyWarning,
+					latencyDescription: "read",
+				},
+				{
+					latencyCritical:    latencyPerfThresholds.WriteLatencyCritical,
+					latencyWarning:     latencyPerfThresholds.WriteLatencyWarning,
+					latencyDescription: "write",
+				},
+				{
+					latencyCritical:    latencyPerfThresholds.VMLatencyCritical,
+					latencyWarning:     latencyPerfThresholds.VMLatencyWarning,
+					latencyDescription: "VM",
+				},
+			}
+
+			for _, threshold := range tt {
+
+				if threshold.latencyCritical < 1 {
+					return fmt.Errorf(
+						"invalid datastore latency (percentage as whole number) CRITICAL threshold number: %f",
+						threshold.latencyCritical,
+					)
+				}
+
+				if threshold.latencyWarning < 1 {
+					return fmt.Errorf(
+						"invalid datastore latency (percentage as whole number) WARNING threshold number: %f",
+						threshold.latencyWarning,
+					)
+				}
+
+				if threshold.latencyCritical <= threshold.latencyWarning {
+					return fmt.Errorf(
+						"datastore latency critical threshold set lower than or equal to warning threshold",
+					)
+				}
+
+			}
+
+		// Datastore performance percentile set was specified. Individual
+		// latency flags are not permitted.
+		case len(c.datastorePerformancePercentileSet) > 0:
+
+			latencyThresholdFlags := []MultiValueDSPerfLatencyMetricFlag{
+				c.datastoreReadLatencyWarning,
+				c.datastoreReadLatencyCritical,
+				c.datastoreWriteLatencyWarning,
+				c.datastoreWriteLatencyCritical,
+				c.datastoreVMLatencyWarning,
+				c.datastoreVMLatencyCritical,
+			}
+
+			for i := range latencyThresholdFlags {
+				if latencyThresholdFlags[i].isSet {
+					return fmt.Errorf(
+						"invalid combination of flags; percentile set flag is incompatible with individual latency threshold flags",
+					)
+				}
+			}
+
+			// If percentile sets were provided, evaluate each percentile from
+			// the set against known supported percentiles.
+			supportedPercentiles := getSupportedDatastorePerfPercentiles()
+			isSupportedPercentile := func(specified int, supported []int) bool {
+				for i := range supported {
+					if specified == supported[i] {
+						return true
+					}
+				}
+
+				return false
+			}
+
+			for specifiedPercentile := range c.datastorePerformancePercentileSet {
+				if !isSupportedPercentile(specifiedPercentile, supportedPercentiles) {
+					return fmt.Errorf(
+						"invalid percentile specified; got percentile %v, expected one of %v",
+						specifiedPercentile,
+						supportedPercentiles,
+					)
+				}
+			}
+
+		}
+
 	case pluginType.HostSystemMemory:
 
 		if c.HostSystemName == "" {

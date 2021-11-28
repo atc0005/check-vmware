@@ -39,6 +39,15 @@ const (
 	datastoreNameFlagHelp                           string = "Datastore name as it is found within the vSphere inventory."
 	datastoreUsageCriticalFlagHelp                  string = "Specifies the percentage of a datastore's storage usage (as a whole number) when a CRITICAL threshold is reached."
 	datastoreUsageWarningFlagHelp                   string = "Specifies the percentage of a datastore's storage usage (as a whole number) when a WARNING threshold is reached."
+	datastoreReadLatencyCriticalFlagHelp            string = "Specifies the read latency of a datastore's storage (in ms) when a CRITICAL threshold is reached. The default percentile is used (90)."
+	datastoreReadLatencyWarningFlagHelp             string = "Specifies the read latency of a datastore's storage (in ms) when a WARNING threshold is reached. The default percentile is used (90)."
+	datastoreWriteLatencyCriticalFlagHelp           string = "Specifies the write latency of a datastore's storage (in ms) when a CRITICAL threshold is reached. The default percentile is used (90)."
+	datastoreWriteLatencyWarningFlagHelp            string = "Specifies the write latency of a datastore's storage (in ms) when a WARNING threshold is reached. The default percentile is used (90)."
+	datastoreVMLatencyCriticalFlagHelp              string = "Specifies the latency (in ms) as observed by VMs using the datastore when a CRITICAL threshold is reached. The default percentile is used (90)."
+	datastoreVMLatencyWarningFlagHelp               string = "Specifies the latency (in ms) as observed by VMs using the datastore when a WARNING threshold is reached. The default percentile is used (90)."
+	datastoreLatencyPercintileSetFlagHelp           string = "Specifies the performance percentile set used for threshold calculations. The format is P,RLW,RLC,WLW,WLC,VMLW,VMLC (e.g., '90,15,30,15,30,15,30'). Incompatible with individual latency threshold flags."
+	ignoreMissingDatastorePerfMetricsFlagHelp       string = "Toggles how missing Datastore Performance metrics will be handled. This is intended to handle cases where sufficient time has not elapsed to collect metrics, not where collection is disabled."
+	hideHistoricalDatastorePerfMetricSetsFlagHelp   string = "Toggles display of historical Datastore Performance metrics at plugin completion. By default historical metrics are listed."
 	datacenterNameFlagHelp                          string = "Specifies the name of a vSphere Datacenter. If not specified, applicable plugins will attempt to use the default datacenter found in the vSphere environment. Not applicable to standalone ESXi hosts."
 	datacenterNamesFlagHelp                         string = "Specifies the name of one or more vSphere Datacenters. If not specified, applicable plugins will attempt to evaluate all visible datacenters found in the vSphere environment. Not applicable to standalone ESXi hosts."
 	clusterNameFlagHelp                             string = "Specifies the name of a vSphere Cluster. If not specified, applicable plugins will attempt to use the default cluster found in the vSphere environment. Not applicable to standalone ESXi hosts."
@@ -80,35 +89,44 @@ const (
 
 // Default flag settings if not overridden by user input
 const (
-	defaultLogLevel                     string = "info"
-	defaultServer                       string = ""
-	defaultTrustCert                    bool   = false
-	defaultUsername                     string = ""
-	defaultPassword                     string = ""
-	defaultUserDomain                   string = ""
-	defaultClusterName                  string = ""
-	defaultPort                         int    = 443
-	defaultBranding                     bool   = false
-	defaultDisplayVersionAndExit        bool   = false
-	defaultPoweredOff                   bool   = false
-	defaultEvaluateAcknowledgedAlarms   bool   = false
-	defaultTriggerReloadStateData       bool   = false
-	defaultVCPUsAllocatedCritical       int    = 100
-	defaultVCPUsAllocatedWarning        int    = 95
-	defaultIgnoreMissingCustomAttribute bool   = false
-	defaultDatastoreName                string = ""
-	defaultDatastoreUsageCritical       int    = 95
-	defaultDatastoreUsageWarning        int    = 90
-	defaultDatacenterName               string = ""
-	defaultSnapshotsAgeCritical         int    = 2
-	defaultSnapshotsAgeWarning          int    = 1
-	defaultSnapshotsCountCritical       int    = 25 // max is 32
-	defaultSnapshotsCountWarning        int    = 4  // recommended cap is 3-4
-	defaultSnapshotsSizeCritical        int    = 40 // size in GB
-	defaultSnapshotsSizeWarning         int    = 20 // size in GB
-	defaultHostSystemName               string = ""
-	defaultVMPowerCycleUptimeCritical   int    = 90
-	defaultVMPowerCycleUptimeWarning    int    = 60
+	defaultLogLevel                              string  = "info"
+	defaultServer                                string  = ""
+	defaultTrustCert                             bool    = false
+	defaultUsername                              string  = ""
+	defaultPassword                              string  = ""
+	defaultUserDomain                            string  = ""
+	defaultClusterName                           string  = ""
+	defaultPort                                  int     = 443
+	defaultBranding                              bool    = false
+	defaultDisplayVersionAndExit                 bool    = false
+	defaultPoweredOff                            bool    = false
+	defaultEvaluateAcknowledgedAlarms            bool    = false
+	defaultTriggerReloadStateData                bool    = false
+	defaultVCPUsAllocatedCritical                int     = 100
+	defaultVCPUsAllocatedWarning                 int     = 95
+	defaultIgnoreMissingCustomAttribute          bool    = false
+	defaultDatastoreName                         string  = ""
+	defaultDatastoreUsageCritical                int     = 95
+	defaultDatastoreUsageWarning                 int     = 90
+	defaultIgnoreMissingDatastoreMetrics         bool    = false
+	defaultHideHistoricalDatastorePerfMetricSets bool    = false
+	defaultDatastoreReadLatencyCritical          float64 = 30 // Credit: @Byolock per GH-316#discussioncomment-1537190
+	defaultDatastoreReadLatencyWarning           float64 = 15 // Credit: @Byolock per GH-316#discussioncomment-1537190
+	defaultDatastoreWriteLatencyCritical         float64 = 30 // Credit: @Byolock per GH-316#discussioncomment-1537190
+	defaultDatastoreWriteLatencyWarning          float64 = 15 // Credit: @Byolock per GH-316#discussioncomment-1537190
+	defaultDatastoreVMLatencyCritical            float64 = 30 // Credit: @Byolock per GH-316#discussioncomment-1537190
+	defaultDatastoreVMLatencyWarning             float64 = 15 // Credit: @Byolock per GH-316#discussioncomment-1537190
+	defaultDatastorePerfSumPercentile            int     = 90
+	defaultDatacenterName                        string  = ""
+	defaultSnapshotsAgeCritical                  int     = 2
+	defaultSnapshotsAgeWarning                   int     = 1
+	defaultSnapshotsCountCritical                int     = 25 // max is 32
+	defaultSnapshotsCountWarning                 int     = 4  // recommended cap is 3-4
+	defaultSnapshotsSizeCritical                 int     = 40 // size in GB
+	defaultSnapshotsSizeWarning                  int     = 20 // size in GB
+	defaultHostSystemName                        string  = ""
+	defaultVMPowerCycleUptimeCritical            int     = 90
+	defaultVMPowerCycleUptimeWarning             int     = 60
 
 	// The default values are intentionally invalid to help determine whether
 	// the user has supplied values for the flags.
@@ -167,6 +185,7 @@ const (
 	PluginTypeSnapshotsCount                 string = "snapshots-count"
 	PluginTypeSnapshotsSize                  string = "snapshots-size"
 	PluginTypeDatastoresSize                 string = "datastore-size"
+	PluginTypeDatastoresPerformance          string = "datastore-performance"
 	PluginTypeResourcePoolsMemory            string = "resource-pools-memory"
 	PluginTypeVirtualCPUsAllocation          string = "virtual-cpus-allocation"
 	PluginTypeVirtualHardwareVersion         string = "virtual-hardware-version"
@@ -231,4 +250,18 @@ const (
 	AlarmStatusWarning  string = "warning"
 	AlarmStatusOk       string = "ok"
 	AlarmStatusUnknown  string = "unknown"
+)
+
+// Nagios plugin/service check state "labels". Duplicates constants provided
+// by the atc0005/go-nagios package in order to not create a dependency
+// between this package and that one.
+//
+// TODO: Is this a valid concern? The individual plugins in this project
+// already have this dependency.
+const (
+	StateOKLabel        string = "OK"
+	StateWARNINGLabel   string = "WARNING"
+	StateCRITICALLabel  string = "CRITICAL"
+	StateUNKNOWNLabel   string = "UNKNOWN"
+	StateDEPENDENTLabel string = "DEPENDENT"
 )

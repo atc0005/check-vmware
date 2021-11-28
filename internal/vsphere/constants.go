@@ -74,3 +74,16 @@ const (
 	alarmExcludeReasonEntityName         = "object name"
 	alarmExcludeReasonEntityResourcePool = "resource pool"
 )
+
+// Datastore Performance metrics
+const (
+	readLatency  string = "ReadLatency"
+	vmLatency    string = "VMLatency"
+	writeLatency string = "WriteLatency"
+
+	// TODO: Potentially implement IOPs thresholds later as an enhancement to
+	// the check_vmware_datastore_performance plugin.
+	//
+	// readIOPS     string = "ReadIOPS"
+	// writeIOPS    string = "WriteIOPS"
+)

@@ -86,6 +86,7 @@ func getDatastorePropsSubset() []string {
 		"summary",
 		"vm",
 		"host",
+		"iormConfiguration", // unreliable if DatastoreSummary.Accessible != true; used to determine whether stats are being collected
 		"name",
 		"customValue",
 		"availableField",

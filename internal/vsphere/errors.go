@@ -18,6 +18,15 @@ import (
 // timeout value.
 var ErrRuntimeTimeoutReached = errors.New("plugin runtime exceeded specified timeout value")
 
+// ErrVMwareAdminAssistanceNeeded indicates that a known/detected problem can
+// only be resolved with the assistance of the administrators of the VMware
+// environment(s) monitored by plugins in this project. While this team may be
+// the same ones to receive the notifications from the monitoring system using
+// this project's plugin, that may not always be the case.
+var ErrVMwareAdminAssistanceNeeded = errors.New(
+	"assistance needed from vmware administrators to resolve issue",
+)
+
 // AnnotateError is a helper function used to add additional human-readable
 // explanation for errors commonly emitted by dependencies. This function
 // receives an error, evaluates whether it contains specific errors in its
@@ -40,6 +49,9 @@ func AnnotateError(err error) error {
 
 	case errors.Is(err, context.DeadlineExceeded):
 		return fmt.Errorf("%w: %s", err, ErrRuntimeTimeoutReached)
+
+	case errors.Is(err, ErrDatastoreIormConfigurationStatisticsCollectionDisabled):
+		return fmt.Errorf("%w: %s", err, ErrVMwareAdminAssistanceNeeded)
 
 	default:
 
