@@ -433,10 +433,10 @@ func (dps DatastorePerformanceSummary) IsCriticalState() bool {
 // a Datastore.
 func (dps DatastorePerformanceSummary) IsZero() bool {
 
-	if dps.ReadLatency > 0 &&
-		dps.WriteLatency > 0 &&
-		dps.VMLatency > 0 &&
-		dps.ReadIops > 0 &&
+	if dps.ReadLatency > 0 ||
+		dps.WriteLatency > 0 ||
+		dps.VMLatency > 0 ||
+		dps.ReadIops > 0 ||
 		dps.WriteIops > 0 {
 
 		logger.Printf(
@@ -783,20 +783,15 @@ func (dps DatastorePerformanceSet) IsCriticalState() bool {
 
 }
 
-// IsUNKNOWNState indicates whether a DatastorePerformanceSet is in an
-// unknowable or UNKNOWN state.
-//
-// TODO: Consider whether this is still useful.
-func (dps DatastorePerformanceSet) IsUNKNOWNState() bool {
-	return dps.UNKNOWNState() != nil
-
+// IsUnknownState indicates whether a DatastorePerformanceSet is in an UNKNOWN
+// state.
+func (dps DatastorePerformanceSet) IsUnknownState() bool {
+	return dps.UnknownState() != nil
 }
 
-// UNKNOWNState provides the associated error for a DatastorePerformanceSet's
-// unknowable or UNKNOWN state.
-//
-// TODO: Consider whether this is still useful.
-func (dps DatastorePerformanceSet) UNKNOWNState() error {
+// UnknownState provides the associated error for a DatastorePerformanceSet's
+// UNKNOWN state.
+func (dps DatastorePerformanceSet) UnknownState() error {
 
 	statsCollectionStatus := ValidateDatastoreStatsCollectionStatus(dps.Datastore)
 
@@ -1263,6 +1258,15 @@ func DatastorePerformanceOneLineCheckSummary(
 
 	switch {
 
+	case dsPerfSet.IsUnknownState():
+
+		return fmt.Sprintf(
+			"%s: Datastore %s (%d VMs) performance metrics are unavailable",
+			stateLabel,
+			dsPerfSet.Datastore.Name,
+			len(dsPerfSet.VMs),
+		)
+
 	case dsPerfSet.IsWarningState() || dsPerfSet.IsCriticalState():
 
 		var metricsExceededThresholds []string
@@ -1285,21 +1289,15 @@ func DatastorePerformanceOneLineCheckSummary(
 
 		}
 
+		metricsExceededThresholds = textutils.DedupeList(metricsExceededThresholds)
+		sort.Strings(metricsExceededThresholds)
+
 		return fmt.Sprintf(
 			"%s: Datastore %s (%d VMs) exceeds specified performance thresholds: [%v]",
 			stateLabel,
 			dsPerfSet.Datastore.Name,
 			len(dsPerfSet.VMs),
 			strings.Join(metricsExceededThresholds, ", "),
-		)
-
-	case dsPerfSet.IsUNKNOWNState():
-
-		return fmt.Sprintf(
-			"%s: Datastore %s (%d VMs) performance metrics (for all intervals) are unavailable",
-			stateLabel,
-			dsPerfSet.Datastore.Name,
-			len(dsPerfSet.VMs),
 		)
 
 	default:

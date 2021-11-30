@@ -447,40 +447,32 @@ func main() {
 	log.Debug().Msg("Evaluating datastore performance state")
 	switch {
 
-	case dsPerfSummarySet.IsZero():
+	case dsPerfSummarySet.IsUnknownState():
 
-		// If the Statistics Collection setting for a datastore is enabled and
-		// we have running VMs on the datastore, we should have Datastore
-		// performance statistics to evaluate. If we instead only have metrics
-		// of value 0, then we have another "unknowable" state not handled by
-		// earlier logic checks.
-		if dsPerfSummarySet.VMs.NumVMsPoweredOn() > 0 {
+		log.Error().Msg("Datastore performance UNKNOWN")
 
-			log.Error().Msg("Datastore performance UNKNOWN")
+		nagiosExitState.LastError = dsPerfSummarySet.UnknownState()
 
-			nagiosExitState.LastError = vsphere.ErrDatastoreLatencyAllMetricSetsZero
+		nagiosExitState.ServiceOutput = vsphere.DatastorePerformanceOneLineCheckSummary(
+			nagios.StateUNKNOWNLabel,
+			dsPerfSummarySet,
+		)
 
-			nagiosExitState.ServiceOutput = vsphere.DatastorePerformanceOneLineCheckSummary(
-				nagios.StateUNKNOWNLabel,
-				dsPerfSummarySet,
-			)
+		nagiosExitState.LongServiceOutput = vsphere.DatastorePerformanceReport(
+			c.Client,
+			dsPerfSummarySet,
+			cfg.HideHistoricalDatastorePerfMetricSets,
+		)
 
-			nagiosExitState.LongServiceOutput = vsphere.DatastorePerformanceReport(
-				c.Client,
-				dsPerfSummarySet,
-				cfg.HideHistoricalDatastorePerfMetricSets,
-			)
-
-			if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
-				log.Error().
-					Err(err).
-					Msg("failed to add performance data")
-			}
-
-			nagiosExitState.ExitStatusCode = nagios.StateUNKNOWNExitCode
-
-			return
+		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
+			log.Error().
+				Err(err).
+				Msg("failed to add performance data")
 		}
+
+		nagiosExitState.ExitStatusCode = nagios.StateUNKNOWNExitCode
+
+		return
 
 	case activePerfSummaryIdx.IsCriticalState():
 
