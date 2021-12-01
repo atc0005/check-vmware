@@ -54,14 +54,14 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
-## [v0.27.0] - 2021-XX-XX
+## [v0.27.0] - 2021-12-01
 
 ### Overview
 
 - New plugin
 - Bugfixes
 - Dependency updates
-- Deprecated plugin name
+- Deprecated `check_vmware_datastore` plugin name
   - will be renamed in the `v0.28.0` release
 - built using Go 1.16.10
   - Statically linked
@@ -69,15 +69,28 @@ The following types of changes will be recorded in this file:
 
 ### Added
 
-- placeholder
+- (GH-505) New plugin: `check_vmware_datastore_performance`
 
 ### Changed
 
-- placeholder
+- Dependencies
+  - `Go`
+    - drop Go version in `go.mod` from `1.15` to `1.14`
+      - attempt to reflect actual base Go version required by dependencies
+  - `github/codeql-action`
+    - `v1.0.21` to `v1.0.22`
+  - `vmware/govmomi`
+    - `v0.27.1` to `v0.27.2`
+  - `actions/setup-node`
+    - `v2.4.1` to `v2.5.0`
+
+- (GH-511) Add `go-mod/go-version` shield to README
+- (GH-517) Replace fully-qualified path to plugins/binaries in command
+  definitions with `$USER1$` macro reference
 
 ### Deprecated
 
-- (GH-510) `check_vmware_datastore` plugin
+- (GH-510, GH-530) `check_vmware_datastore` plugin
   - this plugin will be renamed in the `v0.28.0` release to
     `check_vmware_datastore_space`
   - documentation, `Makefile` and other changes will be applied in the
@@ -85,7 +98,21 @@ The following types of changes will be recorded in this file:
 
 ### Fixed
 
-- placeholder
+- (GH-514) Add missing deferred timing log messages from `internal/vsphere`
+  package functions
+- (GH-515) Log message for `check_vmware_datastore` incorrect for `WARNING`
+  state
+- (GH-516) Boolean state checks for `DatastoreUsageSummary` trigger on
+  threshold matches in addition to exceeding thresholds
+- (GH-521) Boolean state checks for `HostSystemCPUSummary` trigger on
+  threshold matches in addition to exceeding thresholds
+- (GH-522) Boolean state checks for `HostSystemMemorySummary` trigger on
+  threshold matches in addition to exceeding thresholds
+- (GH-526) golangci-lint | WARN [runner] The linter 'golint' is deprecated;
+  replaced by `revive`
+- (GH-527) internal/config/config.go:23:13: var-declaration: should omit type
+  string from declaration of var version; it will be inferred from the
+  right-hand side (revive)
 
 ## [v0.26.0] - 2021-11-10
 
