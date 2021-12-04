@@ -311,13 +311,13 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 	flag.IntVar(&c.Port, "p", defaultPort, portFlagHelp+" (shorthand)")
 	flag.IntVar(&c.Port, "port", defaultPort, portFlagHelp)
 
-	flag.IntVar(&c.timeout, "t", defaultPluginRuntimeTimeout, timeoutPluginRuntimeFlagHelp)
+	flag.IntVar(&c.timeout, "t", defaultPluginRuntimeTimeout, timeoutPluginRuntimeFlagHelp+" (shorthand)")
 	flag.IntVar(&c.timeout, "timeout", defaultPluginRuntimeTimeout, timeoutPluginRuntimeFlagHelp)
 
-	flag.StringVar(&c.LoggingLevel, "ll", defaultLogLevel, logLevelFlagHelp)
+	flag.StringVar(&c.LoggingLevel, "ll", defaultLogLevel, logLevelFlagHelp+" (shorthand)")
 	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
 
-	flag.BoolVar(&c.ShowVersion, "v", defaultDisplayVersionAndExit, versionFlagHelp)
+	flag.BoolVar(&c.ShowVersion, "v", defaultDisplayVersionAndExit, versionFlagHelp+" (shorthand)")
 	flag.BoolVar(&c.ShowVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
 
 	// Allow our function to override the default Help output
