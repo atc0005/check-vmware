@@ -144,15 +144,11 @@ type DSPerformanceSummaryThresholds struct {
 	VMLatencyCritical float64
 }
 
-// MultiValueDSPerfLatencyMetricFlag is a custom type that satisfies the
-// flag.Value interface. This type is used to accept Datastore Performance
-// Summary latency metric values. This flag type is incompatible with the flag
-// type used to specify percentile sets.
-//
-// NOTE: Abandoning this for now. The flag package will call the Set() method
-// for this type regardless of whether the user calls the
-//
-type MultiValueDSPerfLatencyMetricFlag struct {
+// dsPerfLatencyMetricFlag is a custom type that satisfies the flag.Value
+// interface. This type is used to accept Datastore Performance Summary
+// latency metric values. This flag type is incompatible with the flag type
+// used to specify percentile sets.
+type dsPerfLatencyMetricFlag struct {
 
 	// value is the user-specified value
 	value float64
@@ -162,28 +158,28 @@ type MultiValueDSPerfLatencyMetricFlag struct {
 }
 
 // String satisfies the flag.Value interface method set requirements.
-func (mvdspl *MultiValueDSPerfLatencyMetricFlag) String() string {
+func (dspl *dsPerfLatencyMetricFlag) String() string {
 
 	// The String() method is called by the flag.isZeroValue function in order
 	// to determine whether the output string represents the zero value for a
 	// flag. This occurs even if the flag is not specified by the user.
 
-	if mvdspl == nil {
+	if dspl == nil {
 		return ""
 	}
 
 	return fmt.Sprintf(
 		"value: %v, isSet: %v",
-		mvdspl.value,
-		mvdspl.isSet,
+		dspl.value,
+		dspl.isSet,
 	)
 
 }
 
-// Set satisfies (barely) the flag.Value interface method set requirements.
-func (mvdspl *MultiValueDSPerfLatencyMetricFlag) Set(value string) error {
+// Set satisfies the flag.Value interface method set requirements.
+func (dspl *dsPerfLatencyMetricFlag) Set(value string) error {
 
-	// fmt.Println("MultiValueDSPerfLatencyMetricFlag Set() called")
+	// fmt.Println("dsPerfLatencyMetricFlag Set() called")
 
 	var strConvErr error
 
@@ -201,8 +197,8 @@ func (mvdspl *MultiValueDSPerfLatencyMetricFlag) Set(value string) error {
 		)
 	}
 
-	mvdspl.value = parsedVal
-	mvdspl.isSet = true
+	dspl.value = parsedVal
+	dspl.isSet = true
 
 	return nil
 
@@ -680,29 +676,29 @@ type Config struct {
 
 	// datastoreReadLatencyWarning specifies the read latency of a datastore's
 	// storage (in ms) when a WARNING threshold is reached.
-	datastoreReadLatencyWarning MultiValueDSPerfLatencyMetricFlag
+	datastoreReadLatencyWarning dsPerfLatencyMetricFlag
 
 	// datastoreReadLatencyWarning specifies the read latency of a datastore's
 	// storage (in ms) when a CRITICAL threshold is reached.
-	datastoreReadLatencyCritical MultiValueDSPerfLatencyMetricFlag
+	datastoreReadLatencyCritical dsPerfLatencyMetricFlag
 
 	// datastoreWriteLatencyWarning specifies the write latency of a
 	// datastore's storage (in ms) when a WARNING threshold is reached.
-	datastoreWriteLatencyWarning MultiValueDSPerfLatencyMetricFlag
+	datastoreWriteLatencyWarning dsPerfLatencyMetricFlag
 
 	// datastoreWriteLatencyCritical specifies the write latency of a
 	// datastore's storage (in ms) when a CRITICAL threshold is reached.
-	datastoreWriteLatencyCritical MultiValueDSPerfLatencyMetricFlag
+	datastoreWriteLatencyCritical dsPerfLatencyMetricFlag
 
 	// datastoreVMLatencyWarning specifies the latency of a datastore's
 	// storage (in ms) as observed by VMs using the datastore when a WARNING
 	// threshold is reached.
-	datastoreVMLatencyWarning MultiValueDSPerfLatencyMetricFlag
+	datastoreVMLatencyWarning dsPerfLatencyMetricFlag
 
 	// datastoreVMLatencyWarning specifies the latency of a datastore's
 	// storage (in ms) as observed by VMs using the datastore when a CRITICAL
 	// threshold is reached.
-	datastoreVMLatencyCritical MultiValueDSPerfLatencyMetricFlag
+	datastoreVMLatencyCritical dsPerfLatencyMetricFlag
 
 	// datastorePerformancePercentileSet specifies the set of
 	// DatastorePerformanceSummary latency thresholds associated with a
