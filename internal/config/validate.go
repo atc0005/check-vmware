@@ -243,7 +243,7 @@ func (c Config) validate(pluginType PluginType) error {
 		// latency flags are not permitted.
 		case len(c.datastorePerformancePercentileSet) > 0:
 
-			latencyThresholdFlags := []MultiValueDSPerfLatencyMetricFlag{
+			latencyThresholdFlags := []dsPerfLatencyMetricFlag{
 				c.datastoreReadLatencyWarning,
 				c.datastoreReadLatencyCritical,
 				c.datastoreWriteLatencyWarning,
