@@ -159,33 +159,33 @@ func (c Config) UserAgent() string {
 func (c Config) DatastorePerfThresholds() DSPerformanceSummaryThresholds {
 
 	readLatencyWarning := defaultDatastoreReadLatencyWarning
-	if c.datastoreReadLatencyWarning.isSet {
-		readLatencyWarning = c.datastoreReadLatencyWarning.value
+	if c.datastoreReadLatencyWarning != nil {
+		readLatencyWarning = float64(*c.datastoreReadLatencyWarning)
 	}
 
 	readLatencyCritical := defaultDatastoreReadLatencyCritical
-	if c.datastoreReadLatencyCritical.isSet {
-		readLatencyCritical = c.datastoreReadLatencyCritical.value
+	if c.datastoreReadLatencyCritical != nil {
+		readLatencyCritical = float64(*c.datastoreReadLatencyCritical)
 	}
 
 	writeLatencyWarning := defaultDatastoreWriteLatencyWarning
-	if c.datastoreWriteLatencyWarning.isSet {
-		writeLatencyWarning = c.datastoreWriteLatencyWarning.value
+	if c.datastoreWriteLatencyWarning != nil {
+		writeLatencyWarning = float64(*c.datastoreWriteLatencyWarning)
 	}
 
 	writeLatencyCritical := defaultDatastoreWriteLatencyCritical
-	if c.datastoreWriteLatencyCritical.isSet {
-		writeLatencyCritical = c.datastoreWriteLatencyCritical.value
+	if c.datastoreWriteLatencyCritical != nil {
+		writeLatencyCritical = float64(*c.datastoreWriteLatencyCritical)
 	}
 
 	vmLatencyWarning := defaultDatastoreVMLatencyWarning
-	if c.datastoreVMLatencyWarning.isSet {
-		vmLatencyWarning = c.datastoreVMLatencyWarning.value
+	if c.datastoreVMLatencyWarning != nil {
+		vmLatencyWarning = float64(*c.datastoreVMLatencyWarning)
 	}
 
 	vmLatencyCritical := defaultDatastoreVMLatencyCritical
-	if c.datastoreVMLatencyCritical.isSet {
-		vmLatencyCritical = c.datastoreVMLatencyCritical.value
+	if c.datastoreVMLatencyCritical != nil {
+		vmLatencyCritical = float64(*c.datastoreVMLatencyCritical)
 	}
 
 	return DSPerformanceSummaryThresholds{

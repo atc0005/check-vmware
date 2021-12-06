@@ -243,7 +243,7 @@ func (c Config) validate(pluginType PluginType) error {
 		// latency flags are not permitted.
 		case len(c.datastorePerformancePercentileSet) > 0:
 
-			latencyThresholdFlags := []MultiValueDSPerfLatencyMetricFlag{
+			latencyThresholdFlags := []*dsPerfLatencyMetricFlag{
 				c.datastoreReadLatencyWarning,
 				c.datastoreReadLatencyCritical,
 				c.datastoreWriteLatencyWarning,
@@ -253,7 +253,7 @@ func (c Config) validate(pluginType PluginType) error {
 			}
 
 			for i := range latencyThresholdFlags {
-				if latencyThresholdFlags[i].isSet {
+				if latencyThresholdFlags[i] != nil {
 					return fmt.Errorf(
 						"invalid combination of flags; percentile set flag is incompatible with individual latency threshold flags",
 					)
