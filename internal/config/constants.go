@@ -20,7 +20,7 @@ const (
 	brandingFlagHelp                                string = "Toggles emission of branding details with plugin status details. This output is disabled by default."
 	usernameFlagHelp                                string = "Username with permission to access specified ESXi host or vCenter instance."
 	passwordFlagHelp                                string = "Password used to login to ESXi host or vCenter instance."
-	userDomainFlagHelp                              string = "(Optional) domain for user account used to login to ESXi host or vCenter instance."
+	userDomainFlagHelp                              string = "(Optional) domain for user account used to login to ESXi host or vCenter instance. This is needed for user accounts residing in a non-default domain (e.g., SSO specific domain)."
 	vmIncludedResourcePoolsFlagHelp                 string = "Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation."
 	vmExcludedResourcePoolsFlagHelp                 string = "Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation."
 	ignoreVMsFlagHelp                               string = "Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation."

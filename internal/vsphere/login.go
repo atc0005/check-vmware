@@ -31,8 +31,6 @@ func Login(
 	userAgent string,
 ) (*govmomi.Client, error) {
 
-	// TODO: Do we really need to support user domains?
-
 	funcTimeStart := time.Now()
 
 	defer func() {
