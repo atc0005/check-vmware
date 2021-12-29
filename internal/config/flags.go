@@ -298,7 +298,6 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 	flag.StringVar(&c.Password, "password", defaultPassword, passwordFlagHelp)
 	flag.StringVar(&c.Password, "pw", defaultPassword, passwordFlagHelp+" (shorthand)")
 
-	// TODO: Is this actually needed?
 	flag.StringVar(&c.Domain, "domain", defaultUserDomain, userDomainFlagHelp)
 
 	flag.BoolVar(&c.TrustCert, "trust-cert", defaultTrustCert, trustCertFlagHelp)
