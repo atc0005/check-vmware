@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/atc0005/go-nagios"
@@ -182,6 +183,27 @@ func main() {
 	}
 
 	log.Debug().Msg("Successfully retrieved datastore by name")
+
+	log.Debug().Msg("Asserting that datastore is accessible; metadata from an inaccessible datastore is unreliable")
+	dsInaccessibleReasons, dsAccessibilityErr := vsphere.ValidateDatastoreAccessibility(datastore)
+	if dsAccessibilityErr != nil {
+		log.Error().Err(dsAccessibilityErr).
+			Str("reasons", strings.Join(dsInaccessibleReasons, ", ")).
+			Msg("datastore is inaccessible")
+
+		nagiosExitState.LastError = dsAccessibilityErr
+		nagiosExitState.ServiceOutput = fmt.Sprintf(
+			"%s: Datastore %q is inaccessible due to: [%s]",
+			nagios.StateCRITICALLabel,
+			cfg.DatastoreName,
+			strings.Join(dsInaccessibleReasons, ", "),
+		)
+		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
+
+		return
+	}
+
+	log.Debug().Msg("Successfully asserted that datastore is accessible")
 
 	log.Debug().Msg("Generating datastore usage summary")
 	dsUsage, dsUsageErr := vsphere.NewDatastoreUsageSummary(
