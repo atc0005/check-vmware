@@ -728,8 +728,9 @@ been tested.
 
 ### Building source code
 
-- Go 1.14+
-  - dependent on current upstream `vmware/govmomi` library
+- Go
+  - see this project's `go.mod` file for *preferred* version
+  - see upstream `vmware/govmomi` library for required version
 - GCC
   - if building with custom options (as the provided `Makefile` does)
 - `make`
