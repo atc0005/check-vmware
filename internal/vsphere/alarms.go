@@ -793,6 +793,7 @@ func GetTriggeredAlarms(ctx context.Context, c *govmomi.Client, datacenters []mo
 			resourcePoolNames := make([]string, 0, 2)
 			switch {
 			case entity.Self.Type == MgObjRefTypeResourcePool ||
+				entity.Self.Type == MgObjRefTypeVirtualApp ||
 				entity.Self.Type == MgObjRefTypeVirtualMachine:
 
 				rps, err := getResourcePools(ctx, c, entity.Self, propsSubset)
