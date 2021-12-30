@@ -61,7 +61,7 @@ file. See the [plugin index](#plugin-index) for a quick reference.
 | [`check_vmware_vcpus`](docs/plugins/check_vmware_vcpus.md)                                 | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
 | [`check_vmware_vhw`](docs/plugins/check_vmware_vhw.md)                                     | Nagios plugin used to monitor virtual hardware versions.                            |
 | [`check_vmware_hs2ds2vms`](docs/plugins/check_vmware_hs2ds2vms.md)                         | Nagios plugin used to monitor host/datastore/vm pairings.                           |
-| [`check_vmware_datastore`](docs/plugins/check_vmware_datastore.md)                         | Nagios plugin used to monitor datastore usage.                                      |
+| [`check_vmware_datastore_space`](docs/plugins/check_vmware_datastore_space.md)             | Nagios plugin used to monitor datastore usage.                                      |
 | [`check_vmware_datastore_performance`](docs/plugins/check_vmware_datastore_performance.md) | Nagios plugin used to monitor datastore performance.                                |
 | [`check_vmware_snapshots_age`](docs/plugins/check_vmware_snapshots_age.md)                 | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
 | [`check_vmware_snapshots_count`](docs/plugins/check_vmware_snapshots_count.md)             | Nagios plugin used to monitor the count of Virtual Machine snapshots.               |
@@ -216,7 +216,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_vcpus/`
      - `go build -mod=vendor ./cmd/check_vmware_vhw/`
      - `go build -mod=vendor ./cmd/check_vmware_hs2ds2vms/`
-     - `go build -mod=vendor ./cmd/check_vmware_datastore/`
+     - `go build -mod=vendor ./cmd/check_vmware_datastore_space/`
      - `go build -mod=vendor ./cmd/check_vmware_datastore_performance/`
      - `go build -mod=vendor ./cmd/check_vmware_snapshots_age/`
      - `go build -mod=vendor ./cmd/check_vmware_snapshots_count/`
@@ -242,7 +242,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_vcpus/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_vhw/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_hs2ds2vms/`
-     - look in `/tmp/check-vmware/release_assets/check_vmware_datastore/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_datastore_space/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_datastore_performance/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_age/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_snapshots_count/`

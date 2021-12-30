@@ -153,27 +153,27 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-	case pluginType.DatastoresSize:
+	case pluginType.DatastoresSpace:
 
 		if c.DatastoreName == "" {
 			return fmt.Errorf("datastore name not provided")
 		}
 
-		if c.DatastoreUsageCritical < 1 {
+		if c.DatastoreSpaceUsageCritical < 1 {
 			return fmt.Errorf(
 				"invalid datastore usage (percentage as whole number) CRITICAL threshold number: %d",
-				c.DatastoreUsageCritical,
+				c.DatastoreSpaceUsageCritical,
 			)
 		}
 
-		if c.DatastoreUsageWarning < 1 {
+		if c.DatastoreSpaceUsageWarning < 1 {
 			return fmt.Errorf(
 				"invalid datastore usage (percentage as whole number) WARNING threshold number: %d",
-				c.DatastoreUsageWarning,
+				c.DatastoreSpaceUsageWarning,
 			)
 		}
 
-		if c.DatastoreUsageCritical <= c.DatastoreUsageWarning {
+		if c.DatastoreSpaceUsageCritical <= c.DatastoreSpaceUsageWarning {
 			return fmt.Errorf(
 				"datastore critical threshold set lower than or equal to warning threshold",
 			)

@@ -40,7 +40,12 @@ The following types of changes will be recorded in this file:
 ### Breaking
 
 - (GH-510) `check_vmware_datastore` plugin
-  - this plugin has been renamed to `check_vmware_datastore_space`
+  - this plugin has been renamed from `check_vmware_datastore` to
+    `check_vmware_datastore_space`
+  - performance data metrics have been renamed
+    - `datastore_usage` renamed to `datastore_space_usage`
+    - `datastore_storage_used` renamed to `datastore_space_used`
+    - `datastore_storage_remaining` to `datastore_space_remaining`
 
 ### Added
 

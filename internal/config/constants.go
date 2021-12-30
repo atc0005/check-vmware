@@ -37,8 +37,8 @@ const (
 	ignoreMissingCustomAttributeFlagHelp            string = "Toggles how missing specified Custom Attributes will be handled. By default, ESXi hosts and datastores missing the Custom Attribute are treated as an error condition."
 	ignoreDatastoreFlagHelp                         string = "Specifies a comma-separated list of Datastore names that should be ignored or excluded from evaluation."
 	datastoreNameFlagHelp                           string = "Datastore name as it is found within the vSphere inventory."
-	datastoreUsageCriticalFlagHelp                  string = "Specifies the percentage of a datastore's storage usage (as a whole number) when a CRITICAL threshold is reached."
-	datastoreUsageWarningFlagHelp                   string = "Specifies the percentage of a datastore's storage usage (as a whole number) when a WARNING threshold is reached."
+	datastoreSpaceUsageCriticalFlagHelp             string = "Specifies the percentage of a datastore's space usage (as a whole number) when a CRITICAL threshold is reached."
+	datastoreSpaceUsageWarningFlagHelp              string = "Specifies the percentage of a datastore's space usage (as a whole number) when a WARNING threshold is reached."
 	datastoreReadLatencyCriticalFlagHelp            string = "Specifies the read latency of a datastore's storage (in ms) when a CRITICAL threshold is reached. The default percentile is used (90)."
 	datastoreReadLatencyWarningFlagHelp             string = "Specifies the read latency of a datastore's storage (in ms) when a WARNING threshold is reached. The default percentile is used (90)."
 	datastoreWriteLatencyCriticalFlagHelp           string = "Specifies the write latency of a datastore's storage (in ms) when a CRITICAL threshold is reached. The default percentile is used (90)."
@@ -106,8 +106,8 @@ const (
 	defaultVCPUsAllocatedWarning                 int     = 95
 	defaultIgnoreMissingCustomAttribute          bool    = false
 	defaultDatastoreName                         string  = ""
-	defaultDatastoreUsageCritical                int     = 95
-	defaultDatastoreUsageWarning                 int     = 90
+	defaultDatastoreSpaceUsageCritical           int     = 95
+	defaultDatastoreSpaceUsageWarning            int     = 90
 	defaultIgnoreMissingDatastoreMetrics         bool    = false
 	defaultHideHistoricalDatastorePerfMetricSets bool    = false
 	defaultDatastoreReadLatencyCritical          float64 = 30 // Credit: @Byolock per GH-316#discussioncomment-1537190
@@ -184,7 +184,7 @@ const (
 	PluginTypeSnapshotsAge                   string = "snapshots-age"
 	PluginTypeSnapshotsCount                 string = "snapshots-count"
 	PluginTypeSnapshotsSize                  string = "snapshots-size"
-	PluginTypeDatastoresSize                 string = "datastore-size"
+	PluginTypeDatastoresSpace                string = "datastores-space"
 	PluginTypeDatastoresPerformance          string = "datastore-performance"
 	PluginTypeResourcePoolsMemory            string = "resource-pools-memory"
 	PluginTypeVirtualCPUsAllocation          string = "virtual-cpus-allocation"

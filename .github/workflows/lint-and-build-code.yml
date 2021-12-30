@@ -86,7 +86,7 @@ jobs:
           go build -v -mod=vendor ./cmd/check_vmware_vcpus
           go build -v -mod=vendor ./cmd/check_vmware_vhw
           go build -v -mod=vendor ./cmd/check_vmware_hs2ds2vms
-          go build -v -mod=vendor ./cmd/check_vmware_datastore
+          go build -v -mod=vendor ./cmd/check_vmware_datastore_space
           go build -v -mod=vendor ./cmd/check_vmware_datastore_performance
           go build -v -mod=vendor ./cmd/check_vmware_snapshots_age
           go build -v -mod=vendor ./cmd/check_vmware_snapshots_count

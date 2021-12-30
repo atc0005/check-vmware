@@ -27,7 +27,7 @@ WHAT 					= check_vmware_tools \
 							check_vmware_vcpus \
 							check_vmware_vhw \
 							check_vmware_hs2ds2vms \
-							check_vmware_datastore \
+							check_vmware_datastore_space \
 							check_vmware_datastore_performance \
 							check_vmware_snapshots_age \
 							check_vmware_snapshots_count \

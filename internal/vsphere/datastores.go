@@ -29,9 +29,9 @@ import (
 // inaccessible.
 var ErrDatastoreInaccessible = errors.New("datastore is inaccessible")
 
-// ErrDatastoreUsageThresholdCrossed indicates that a specified
+// ErrDatastoreSpaceUsageThresholdCrossed indicates that a specified
 // datastore has exceeded a given threshold.
-var ErrDatastoreUsageThresholdCrossed = errors.New("datastore usage exceeds specified threshold")
+var ErrDatastoreSpaceUsageThresholdCrossed = errors.New("datastore usage exceeds specified threshold")
 
 // ErrDatastoreLatencyThresholdCrossed indicates that a specified datastore
 // has exceeded a given latency threshold.
@@ -103,9 +103,9 @@ type DatastoreVM struct {
 	// VMSize is the human readable or formatted size of the VirtualMachine.
 	VMSize string
 
-	// DatastoreUsage is the human readable or formatted percentage of the
+	// DatastoreSpaceUsage is the human readable or formatted percentage of the
 	// Datastore space consumed by this VirtualMachine.
-	DatastoreUsage string
+	DatastoreSpaceUsage string
 
 	// PowerState tracks the current power state for a VirtualMachine.
 	PowerState types.VirtualMachinePowerState
@@ -115,8 +115,8 @@ type DatastoreVM struct {
 	DatastoreMOID types.ManagedObjectReference
 }
 
-// DatastoreUsageSummary tracks usage details for a specific Datastore.
-type DatastoreUsageSummary struct {
+// DatastoreSpaceUsageSummary tracks usage details for a specific Datastore.
+type DatastoreSpaceUsageSummary struct {
 	Datastore               mo.Datastore
 	StorageRemainingPercent float64
 	StorageUsedPercent      float64
@@ -304,7 +304,7 @@ func printVMSummary(w io.Writer, vms DatastoreVMs, powerState types.VirtualMachi
 				"* %s [Size: %s, Datastore Usage: %s]%s",
 				vm.Name,
 				vm.VMSize,
-				vm.DatastoreUsage,
+				vm.DatastoreSpaceUsage,
 				nagios.CheckOutputEOL,
 			)
 		}
@@ -520,10 +520,10 @@ func DatastoreVMsSummary(ds mo.Datastore, vms []mo.VirtualMachine) DatastoreVMs 
 
 		vmPercentOfDSUsed := float64(vmStorageUsed) / float64(ds.Summary.Capacity) * 100
 		dsVM := DatastoreVM{
-			Name:           vm.Name,
-			VMSize:         units.ByteSize(vmStorageUsed).String(),
-			DatastoreUsage: fmt.Sprintf("%2.2f%%", vmPercentOfDSUsed),
-			PowerState:     vm.Runtime.PowerState,
+			Name:                vm.Name,
+			VMSize:              units.ByteSize(vmStorageUsed).String(),
+			DatastoreSpaceUsage: fmt.Sprintf("%2.2f%%", vmPercentOfDSUsed),
+			PowerState:          vm.Runtime.PowerState,
 		}
 
 		datastoreVMs = append(datastoreVMs, dsVM)
@@ -887,23 +887,24 @@ func (dps DatastorePerformanceSet) ActiveIntervalMetrics(percentile int) (Datast
 
 }
 
-// NewDatastoreUsageSummary receives a Datastore and generates summary
+// NewDatastoreSpaceUsageSummary receives a Datastore and generates summary
 // information used to determine if usage levels have crossed user-specified
-// thresholds.
-// func NewDatastoreUsageSummary(ds mo.Datastore, dsVMs []mo.VirtualMachine, criticalThreshold int, warningThreshold int) DatastoreUsageSummary {
-func NewDatastoreUsageSummary(
+// thresholds. func NewDatastoreSpaceUsageSummary(ds mo.Datastore, dsVMs
+// []mo.VirtualMachine, criticalThreshold int, warningThreshold int)
+// DatastoreSpaceUsageSummary {
+func NewDatastoreSpaceUsageSummary(
 	ctx context.Context,
 	c *vim25.Client,
 	ds mo.Datastore,
 	criticalThreshold int,
 	warningThreshold int,
-) (DatastoreUsageSummary, error) {
+) (DatastoreSpaceUsageSummary, error) {
 
 	funcTimeStart := time.Now()
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute NewDatastoreUsageSummary func.\n",
+			"It took %v to execute NewDatastoreSpaceUsageSummary func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()
@@ -916,10 +917,10 @@ func NewDatastoreUsageSummary(
 
 	dsVMs, err := GetVMsFromDatastore(ctx, c, ds, true)
 	if err != nil {
-		return DatastoreUsageSummary{}, err
+		return DatastoreSpaceUsageSummary{}, err
 	}
 
-	dsUsage := DatastoreUsageSummary{
+	dsUsage := DatastoreSpaceUsageSummary{
 		Datastore:               ds,
 		VMs:                     DatastoreVMsSummary(ds, dsVMs),
 		StorageRemainingPercent: storageRemainingPercentage,
@@ -937,14 +938,14 @@ func NewDatastoreUsageSummary(
 
 // IsWarningState indicates whether Datastore usage has crossed the WARNING
 // level threshold.
-func (dus DatastoreUsageSummary) IsWarningState() bool {
+func (dus DatastoreSpaceUsageSummary) IsWarningState() bool {
 	return dus.StorageUsedPercent < float64(dus.CriticalThreshold) &&
 		dus.StorageUsedPercent > float64(dus.WarningThreshold)
 }
 
 // IsCriticalState indicates whether Datastore usage has crossed the CRITICAL
 // level threshold.
-func (dus DatastoreUsageSummary) IsCriticalState() bool {
+func (dus DatastoreSpaceUsageSummary) IsCriticalState() bool {
 	return dus.StorageUsedPercent > float64(dus.CriticalThreshold)
 }
 
@@ -1136,25 +1137,25 @@ func DatastoreIDsToNames(dsRefs []types.ManagedObjectReference, dss []mo.Datasto
 
 }
 
-// DatastoreUsageOneLineCheckSummary is used to generate a one-line Nagios
-// service check results summary. This is the line most prominent in
+// DatastoreSpaceUsageOneLineCheckSummary is used to generate a one-line
+// Nagios service check results summary. This is the line most prominent in
 // notifications.
-func DatastoreUsageOneLineCheckSummary(
+func DatastoreSpaceUsageOneLineCheckSummary(
 	stateLabel string,
-	dsUsageSummary DatastoreUsageSummary,
+	dsUsageSummary DatastoreSpaceUsageSummary,
 ) string {
 
 	funcTimeStart := time.Now()
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute DatastoreUsageOneLineCheckSummary func.\n",
+			"It took %v to execute DatastoreSpaceUsageOneLineCheckSummary func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()
 
 	return fmt.Sprintf(
-		"%s: Datastore %s usage (%d VMs) is %.2f%% of %s with %s remaining [WARNING: %d%% , CRITICAL: %d%%]",
+		"%s: Datastore %s space usage (%d VMs) is %.2f%% of %s with %s remaining [WARNING: %d%% , CRITICAL: %d%%]",
 		stateLabel,
 		dsUsageSummary.Datastore.Name,
 		len(dsUsageSummary.VMs),
@@ -1167,21 +1168,21 @@ func DatastoreUsageOneLineCheckSummary(
 
 }
 
-// DatastoreUsageReport generates a summary of Datastore usage along with
+// DatastoreSpaceUsageReport generates a summary of Datastore usage along with
 // various verbose details intended to aid in troubleshooting check results at
 // a glance. This information is provided for use with the Long Service Output
 // field commonly displayed on the detailed service check results display in
 // the web UI or in the body of many notifications.
-func DatastoreUsageReport(
+func DatastoreSpaceUsageReport(
 	c *vim25.Client,
-	dsUsageSummary DatastoreUsageSummary,
+	dsUsageSummary DatastoreSpaceUsageSummary,
 ) string {
 
 	funcTimeStart := time.Now()
 
 	defer func() {
 		logger.Printf(
-			"It took %v to execute DatastoreUsageReport func.\n",
+			"It took %v to execute DatastoreSpaceUsageReport func.\n",
 			time.Since(funcTimeStart),
 		)
 	}()
@@ -1190,10 +1191,10 @@ func DatastoreUsageReport(
 
 	fmt.Fprintf(
 		&report,
-		"Datastore Summary:%s%s"+
+		"Datastore Space Summary:%s%s"+
 			"* Name: %s%s"+
-			"* Used: %v (%.2f%%)%s"+
-			"* Remaining: %v (%.2f%%)%s"+
+			"* Space Used: %v (%.2f%%)%s"+
+			"* Space Remaining: %v (%.2f%%)%s"+
 			"* VMs: %v %s%s",
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
