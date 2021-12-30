@@ -26,46 +26,51 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
-## [v0.28.0] - 2021-XX-XX
+## [v0.28.0] - 2021-12-30
 
 ### Overview
 
-- placeholder
+- Dependency updates
 - Breaking changes
   - the `check_vmware_datastore` plugin has been renamed
-- built using Go 1.16.10
+  - performance data metrics have been renamed
+- built using Go 1.17.5
   - Statically linked
   - Linux (x86, x64)
 
-### Breaking
-
-- (GH-510) `check_vmware_datastore` plugin
-  - this plugin has been renamed from `check_vmware_datastore` to
-    `check_vmware_datastore_space`
-  - performance data metrics have been renamed
-    - `datastore_usage` renamed to `datastore_space_usage`
-    - `datastore_storage_used` renamed to `datastore_space_used`
-    - `datastore_storage_remaining` to `datastore_space_remaining`
-
-- (GH-480) `*_used` and `*_remaining` metrics changed to no longer emit `Max`
-  and `Min` thresholds (current values only)
-  - `check_vmware_datastore_space`
-  - `check_vmware_host_cpu`
-  - `check_vmware_host_memory`
-  - `check_vmware_rps_memory`
-  - `check_vmware_vcpus`
-
-### Added
-
-- placeholder
-
 ### Changed
 
-- placeholder
+- Dependencies
+  - `Go`
+    - (GH-563) Update go.mod file, canary Dockerfile to reflect current
+      dependencies
+    - `1.16.12` to `1.17.5`
+
+- **Breaking**
+  - (GH-510) `check_vmware_datastore` plugin
+    - renamed from `check_vmware_datastore` to `check_vmware_datastore_space`
+  - (GH-480) `*_used` and `*_remaining` metrics
+    - renamed metrics
+      - `datastore_usage` to `datastore_space_usage`
+      - `datastore_storage_used` to `datastore_space_used`
+      - `datastore_storage_remaining` to `datastore_space_remaining`
+    - updated plugins
+      - `check_vmware_datastore_space`
+      - `check_vmware_host_cpu`
+      - `check_vmware_host_memory`
+      - `check_vmware_rps_memory`
+      - `check_vmware_vcpus`
+
+- (GH-533) Update datastore usage/space plugin to evaluate whether datastore
+  is accessible
+
+- (GH-539) Split README into separate files
 
 ### Fixed
 
-- placeholder
+- (GH-549) Affirm purpose of user domain flag
+- (GH-558) The `vphere.GetTriggeredAlarms()` method fails to consider a
+  `VirtualApp` entity as a `ResourcePool`
 
 ## [v0.27.1] - 2021-12-28
 
