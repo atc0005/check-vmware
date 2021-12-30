@@ -270,15 +270,11 @@ func main() {
 			Label:             "cpu_used",
 			Value:             fmt.Sprintf("%.2f", hsUsage.CPUUsed),
 			UnitOfMeasurement: "Hz",
-			Max:               fmt.Sprintf("%.2f", hsUsage.CPUTotal),
-			Min:               "0",
 		},
 		{
 			Label:             "cpu_remaining",
 			Value:             fmt.Sprintf("%.2f", hsUsage.CPURemaining),
 			UnitOfMeasurement: "Hz",
-			Max:               fmt.Sprintf("%.2f", hsUsage.CPUTotal),
-			Min:               "0",
 		},
 		{
 			Label: "vms",

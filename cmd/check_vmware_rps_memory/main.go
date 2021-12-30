@@ -335,15 +335,11 @@ func main() {
 			Label:             "memory_used",
 			Value:             fmt.Sprintf("%d", aggregateMemoryUsageInBytes),
 			UnitOfMeasurement: "B",
-			Max:               fmt.Sprintf("%d", cfg.ResourcePoolsMemoryMaxAllowed),
-			Min:               fmt.Sprintf("%d", 0),
 		},
 		{
 			Label:             "memory_remaining",
 			Value:             fmt.Sprintf("%d", memoryRemainingInBytes),
 			UnitOfMeasurement: "B",
-			Max:               fmt.Sprintf("%d", cfg.ResourcePoolsMemoryMaxAllowed),
-			Min:               fmt.Sprintf("%d", 0),
 		},
 		{
 			Label: "resource_pools_excluded",

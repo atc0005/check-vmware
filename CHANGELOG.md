@@ -47,6 +47,14 @@ The following types of changes will be recorded in this file:
     - `datastore_storage_used` renamed to `datastore_space_used`
     - `datastore_storage_remaining` to `datastore_space_remaining`
 
+- (GH-480) `*_used` and `*_remaining` metrics changed to no longer emit `Max`
+  and `Min` thresholds (current values only)
+  - `check_vmware_datastore_space`
+  - `check_vmware_host_cpu`
+  - `check_vmware_host_memory`
+  - `check_vmware_rps_memory`
+  - `check_vmware_vcpus`
+
 ### Added
 
 - placeholder
