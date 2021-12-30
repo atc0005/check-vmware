@@ -271,15 +271,11 @@ func main() {
 			Label:             "memory_used",
 			Value:             fmt.Sprintf("%d", hsUsage.MemoryUsed),
 			UnitOfMeasurement: "B",
-			Max:               fmt.Sprintf("%d", hsUsage.MemoryTotal),
-			Min:               "0",
 		},
 		{
 			Label:             "memory_remaining",
 			Value:             fmt.Sprintf("%d", hsUsage.MemoryRemaining),
 			UnitOfMeasurement: "B",
-			Max:               fmt.Sprintf("%d", hsUsage.MemoryTotal),
-			Min:               "0",
 		},
 		{
 			Label: "vms",

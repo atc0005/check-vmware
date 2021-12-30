@@ -261,15 +261,11 @@ func main() {
 			Label:             "datastore_space_used",
 			Value:             fmt.Sprintf("%d", dsSpaceUsage.StorageUsed),
 			UnitOfMeasurement: "B",
-			Max:               fmt.Sprintf("%d", dsSpaceUsage.StorageTotal),
-			Min:               "0",
 		},
 		{
 			Label:             "datastore_space_remaining",
 			Value:             fmt.Sprintf("%d", dsSpaceUsage.StorageRemaining),
 			UnitOfMeasurement: "B",
-			Max:               fmt.Sprintf("%d", dsSpaceUsage.StorageTotal),
-			Min:               "0",
 		},
 		{
 			Label: "vms",

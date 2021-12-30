@@ -306,14 +306,10 @@ func main() {
 		{
 			Label: "vcpus_used",
 			Value: fmt.Sprintf("%d", vCPUsAllocated),
-			Max:   fmt.Sprintf("%d", cfg.VCPUsMaxAllowed),
-			Min:   fmt.Sprintf("%d", 0),
 		},
 		{
 			Label: "vcpus_remaining",
 			Value: fmt.Sprintf("%d", vCPUsRemaining),
-			Max:   fmt.Sprintf("%d", cfg.VCPUsMaxAllowed),
-			Min:   fmt.Sprintf("%d", 0),
 		},
 		{
 			Label: "resource_pools_excluded",
