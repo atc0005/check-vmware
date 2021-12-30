@@ -1,9 +1,21 @@
 <!-- omit in toc -->
-# check-vmware | Docs
+# [check-vmware][repo-url] | Docs
 
 [HOME: Main project README](../README.md)
 
-## About
+At present, documentation is split between several sources:
+
+- the [main project README](../README.md)
+- plugin specific documentation in the `docs/plugins/` subdirectory path
+- misc scratch notes (created early in this project's development) in the
+  `docs/scratch/` subdirectory path
+
+## Plugins
+
+Documentation specific to each plugin resides here. See the [main project
+README](../README.md) for general information not specific to any one plugin.
+
+## Scratch
 
 This a collection of random notes that I would normally keep on a private
 branch, ticketing system, wiki, etc.
@@ -13,6 +25,8 @@ remind myself why a particular design choice was made. The intended audience
 is mostly myself, though someone looking for more of the design backstory
 might be interested in the content also.
 
-At some point in the future I will likely purge this content and instead use
-this path to hold project documentation, such as example content currently
-located in the main README file.
+<!-- Footnotes here  -->
+
+[repo-url]: <https://github.com/atc0005/check-vmware>  "This project's GitHub repo"
+
+<!-- []: PLACEHOLDER "DESCRIPTION_HERE" -->
