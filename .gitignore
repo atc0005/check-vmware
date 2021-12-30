@@ -10,7 +10,7 @@
 /.vscode
 
 # Ignore local "scratch" directory of temporary files
-scratch/
+/scratch
 
 # Ignore local builds
 /release_assets

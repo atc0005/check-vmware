@@ -1,5 +1,5 @@
 <!-- omit in toc -->
-# check-vmware | Contrib
+# [check-vmware][repo-url] | Contrib
 
 [HOME: Main project README](../README.md)
 
@@ -132,3 +132,7 @@ here for quick/easy access.
 - <http://kaotickreation.com/2011/01/30/nagios-check_http/>
 - <http://www.jonwitts.co.uk/archives/196>
 - <http://linux.101hacks.com/unix/check-http/>
+
+<!-- Footnotes here  -->
+
+[repo-url]: <https://github.com/atc0005/check-vmware>  "This project's GitHub repo"
