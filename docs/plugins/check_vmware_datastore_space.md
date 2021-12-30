@@ -1,5 +1,5 @@
 <!-- omit in toc -->
-# [check-vmware][repo-url] | `check_vmware_datastore` plugin
+# [check-vmware][repo-url] | `check_vmware_datastore_space` plugin
 
 - [Main project README](../../README.md)
 - [Documentation index](../README.md)
@@ -26,11 +26,11 @@
 
 ## Overview
 
-Nagios plugin used to monitor datastore usage.
+Nagios plugin used to monitor datastore space usage.
 
-In addition to reporting current datastore usage, this plugin also reports
-which VMs reside on the datastore along with their percentage of the total
-datastore space used.
+In addition to reporting current datastore space usage, this plugin also
+reports which VMs reside on the datastore along with their percentage of the
+total datastore space used.
 
 ## Performance Data
 
@@ -53,9 +53,9 @@ any feedback that you may have. Thanks in advance!
 ### Supported metrics
 
 - `time`
-- `datastore_usage`
-- `datastore_storage_used`
-- `datastore_storage_remaining`
+- `datastore_space_usage`
+- `datastore_space_used`
+- `datastore_space_remaining`
 - `vms`
 - `vms_powered_off`
 - `vms_powered_on`
@@ -77,11 +77,11 @@ See the [main project README](../../README.md) for details.
 
 ### Threshold calculations
 
-| Nagios State | Description                                                      |
-| ------------ | ---------------------------------------------------------------- |
-| `OK`         | Ideal state, Datastore usage within bounds.                      |
-| `WARNING`    | Datastore usage crossed user-specified threshold for this state. |
-| `CRITICAL`   | Datastore usage crossed user-specified threshold for this state. |
+| Nagios State | Description                                                            |
+| ------------ | ---------------------------------------------------------------------- |
+| `OK`         | Ideal state, datastore space usage within bounds.                      |
+| `WARNING`    | datastore space usage crossed user-specified threshold for this state. |
+| `CRITICAL`   | datastore space usage crossed user-specified threshold for this state. |
 
 ### Command-line arguments
 
@@ -105,8 +105,8 @@ See the [main project README](../../README.md) for details.
 | `trust-cert`                | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                  |
 | `dc-name`                   | No       |         | No     | *valid vSphere datacenter name*                                         | Specifies the name of a vSphere Datacenter. If not specified, applicable plugins will attempt to use the default datacenter found in the vSphere environment. Not applicable to standalone ESXi hosts. |
 | `ds-name`                   | **Yes**  |         | No     | *valid datastore name*                                                  | Datastore name as it is found within the vSphere inventory.                                                                                                                                            |
-| `dsuc`, `ds-usage-critical` | No       | `95`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of a datastore's storage usage (as a whole number) when a `CRITICAL` threshold is reached.                                                                                    |
-| `dsuw`, `ds-usage-warning`  | No       | `90`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of a datastore's storage usage (as a whole number) when a `WARNING` threshold is reached.                                                                                     |
+| `dsuc`, `ds-usage-critical` | No       | `95`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of a datastore's space usage (as a whole number) when a `CRITICAL` threshold is reached.                                                                                      |
+| `dsuw`, `ds-usage-warning`  | No       | `90`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of a datastore's space usage (as a whole number) when a `WARNING` threshold is reached.                                                                                       |
 
 ### Configuration file
 
@@ -122,7 +122,7 @@ See the [main project README](../../README.md) for details.
 ### CLI invocation
 
 ```ShellSession
-/usr/lib/nagios/plugins/check_vmware_datastore --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --ds-name "HUSVM-DC1-vol6" --ds-usage-warning 95 --ds-usage-critical 97 --trust-cert --log-level info
+/usr/lib/nagios/plugins/check_vmware_datastore_space --username SERVICE_ACCOUNT_NAME --password "SERVICE_ACCOUNT_PASSWORD" --server vc1.example.com --ds-name "HUSVM-DC1-vol6" --ds-usage-warning 95 --ds-usage-critical 97 --trust-cert --log-level info
 ```
 
 See the [configuration options](#configuration-options) section for all
@@ -151,8 +151,8 @@ Of note:
 # Look at specific datastore and explicitly provide custom WARNING and
 # CRITICAL threshold values.
 define command{
-    command_name    check_vmware_datastore
-    command_line    $USER1$/check_vmware_tools --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ds-usage-warning '$ARG4$' --ds-usage-critical '$ARG5$' --ds-name '$ARG6$' --trust-cert  --log-level info
+    command_name    check_vmware_datastore_space
+    command_line    $USER1$/check_vmware_datastore_space --server '$HOSTNAME$' --domain '$ARG1$' --username '$ARG2$' --password '$ARG3$' --ds-usage-warning '$ARG4$' --ds-usage-critical '$ARG5$' --ds-name '$ARG6$' --trust-cert  --log-level info
     }
 ```
 

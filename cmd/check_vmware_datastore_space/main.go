@@ -65,7 +65,7 @@ func main() {
 	// Setup configuration by parsing user-provided flags. Note plugin type so
 	// that only applicable CLI flags are exposed and any plugin-specific
 	// settings are applied.
-	cfg, cfgErr := config.New(config.PluginType{DatastoresSize: true})
+	cfg, cfgErr := config.New(config.PluginType{DatastoresSpace: true})
 	switch {
 	case errors.Is(cfgErr, config.ErrVersionRequested):
 		fmt.Println(config.Version())
@@ -101,12 +101,12 @@ func main() {
 	// by Nagios.
 	nagiosExitState.CriticalThreshold = fmt.Sprintf(
 		"%d%% datastore usage",
-		cfg.DatastoreUsageCritical,
+		cfg.DatastoreSpaceUsageCritical,
 	)
 
 	nagiosExitState.WarningThreshold = fmt.Sprintf(
 		"%d%% datastore usage",
-		cfg.DatastoreUsageWarning,
+		cfg.DatastoreSpaceUsageWarning,
 	)
 
 	if cfg.EmitBranding {
@@ -122,8 +122,8 @@ func main() {
 	log := cfg.Log.With().
 		Str("datastore_name", cfg.DatastoreName).
 		Str("datacenter_name", dcName).
-		Int("datastore_critical_usage", cfg.DatastoreUsageCritical).
-		Int("datastore_warning_usage", cfg.DatastoreUsageWarning).
+		Int("datastore_critical_usage", cfg.DatastoreSpaceUsageCritical).
+		Int("datastore_warning_usage", cfg.DatastoreSpaceUsageWarning).
 		Logger()
 
 	log.Debug().Msg("Logging into vSphere environment")
@@ -206,19 +206,19 @@ func main() {
 	log.Debug().Msg("Successfully asserted that datastore is accessible")
 
 	log.Debug().Msg("Generating datastore usage summary")
-	dsUsage, dsUsageErr := vsphere.NewDatastoreUsageSummary(
+	dsSpaceUsage, dsSpaceUsageErr := vsphere.NewDatastoreSpaceUsageSummary(
 		ctx,
 		c.Client,
 		datastore,
-		cfg.DatastoreUsageCritical,
-		cfg.DatastoreUsageWarning,
+		cfg.DatastoreSpaceUsageCritical,
+		cfg.DatastoreSpaceUsageWarning,
 	)
-	if dsUsageErr != nil {
-		log.Error().Err(dsUsageErr).Msg(
+	if dsSpaceUsageErr != nil {
+		log.Error().Err(dsSpaceUsageErr).Msg(
 			"error generating datastore usage summary",
 		)
 
-		nagiosExitState.LastError = dsUsageErr
+		nagiosExitState.LastError = dsSpaceUsageErr
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error generating summary for datastore %q",
 			nagios.StateCRITICALLabel,
@@ -233,16 +233,16 @@ func main() {
 
 	log.Debug().
 		Str("datastore_name", datastore.Name).
-		Float64("datastore_usage_used_percentage", dsUsage.StorageUsedPercent).
-		Float64("datastore_usage_remaining_percentage", dsUsage.StorageRemainingPercent).
-		Str("datastore_storage_total", units.ByteSize(dsUsage.StorageTotal).String()).
-		Str("datastore_storage_used", units.ByteSize(dsUsage.StorageUsed).String()).
-		Str("datastore_storage_remaining", units.ByteSize(dsUsage.StorageRemaining).String()).
-		Int("datastore_critical_threshold", dsUsage.CriticalThreshold).
-		Int("datastore_warning_threshold", dsUsage.WarningThreshold).
-		Int("vms", len(dsUsage.VMs)).
-		Int("vms_powered_off", dsUsage.VMs.NumVMsPoweredOff()).
-		Int("vms_powered_on", dsUsage.VMs.NumVMsPoweredOn()).
+		Float64("datastore_usage_used_percentage", dsSpaceUsage.StorageUsedPercent).
+		Float64("datastore_usage_remaining_percentage", dsSpaceUsage.StorageRemainingPercent).
+		Str("datastore_space_total", units.ByteSize(dsSpaceUsage.StorageTotal).String()).
+		Str("datastore_space_used", units.ByteSize(dsSpaceUsage.StorageUsed).String()).
+		Str("datastore_space_remaining", units.ByteSize(dsSpaceUsage.StorageRemaining).String()).
+		Int("datastore_critical_threshold", dsSpaceUsage.CriticalThreshold).
+		Int("datastore_warning_threshold", dsSpaceUsage.WarningThreshold).
+		Int("vms", len(dsSpaceUsage.VMs)).
+		Int("vms_powered_off", dsSpaceUsage.VMs.NumVMsPoweredOff()).
+		Int("vms_powered_on", dsSpaceUsage.VMs.NumVMsPoweredOn()).
 		Msg("Datastore usage summary")
 
 	log.Debug().Msg("Compiling Performance Data details")
@@ -251,71 +251,71 @@ func main() {
 		// The `time` (runtime) metric is appended at plugin exit, so do not
 		// duplicate it here.
 		{
-			Label:             "datastore_usage",
-			Value:             fmt.Sprintf("%.2f", dsUsage.StorageUsedPercent),
+			Label:             "datastore_space_usage",
+			Value:             fmt.Sprintf("%.2f", dsSpaceUsage.StorageUsedPercent),
 			UnitOfMeasurement: "%",
-			Warn:              fmt.Sprintf("%d", dsUsage.WarningThreshold),
-			Crit:              fmt.Sprintf("%d", dsUsage.CriticalThreshold),
+			Warn:              fmt.Sprintf("%d", dsSpaceUsage.WarningThreshold),
+			Crit:              fmt.Sprintf("%d", dsSpaceUsage.CriticalThreshold),
 		},
 		{
-			Label:             "datastore_storage_used",
-			Value:             fmt.Sprintf("%d", dsUsage.StorageUsed),
+			Label:             "datastore_space_used",
+			Value:             fmt.Sprintf("%d", dsSpaceUsage.StorageUsed),
 			UnitOfMeasurement: "B",
-			Max:               fmt.Sprintf("%d", dsUsage.StorageTotal),
+			Max:               fmt.Sprintf("%d", dsSpaceUsage.StorageTotal),
 			Min:               "0",
 		},
 		{
-			Label:             "datastore_storage_remaining",
-			Value:             fmt.Sprintf("%d", dsUsage.StorageRemaining),
+			Label:             "datastore_space_remaining",
+			Value:             fmt.Sprintf("%d", dsSpaceUsage.StorageRemaining),
 			UnitOfMeasurement: "B",
-			Max:               fmt.Sprintf("%d", dsUsage.StorageTotal),
+			Max:               fmt.Sprintf("%d", dsSpaceUsage.StorageTotal),
 			Min:               "0",
 		},
 		{
 			Label: "vms",
-			Value: fmt.Sprintf("%d", len(dsUsage.VMs)),
+			Value: fmt.Sprintf("%d", len(dsSpaceUsage.VMs)),
 		},
 		{
 			Label: "vms_powered_off",
-			Value: fmt.Sprintf("%d", dsUsage.VMs.NumVMsPoweredOff()),
+			Value: fmt.Sprintf("%d", dsSpaceUsage.VMs.NumVMsPoweredOff()),
 		},
 		{
 			Label: "vms_powered_on",
-			Value: fmt.Sprintf("%d", dsUsage.VMs.NumVMsPoweredOn()),
+			Value: fmt.Sprintf("%d", dsSpaceUsage.VMs.NumVMsPoweredOn()),
 		},
 	}
 
 	// Update logger with new performance data related fields
 	log = log.With().
 		Str("datastore_name", datastore.Name).
-		Float64("datastore_usage_used_percentage", dsUsage.StorageUsedPercent).
-		Float64("datastore_usage_remaining_percentage", dsUsage.StorageRemainingPercent).
-		Str("datastore_storage_total", units.ByteSize(dsUsage.StorageTotal).String()).
-		Str("datastore_storage_used", units.ByteSize(dsUsage.StorageUsed).String()).
-		Str("datastore_storage_remaining", units.ByteSize(dsUsage.StorageRemaining).String()).
-		Int("datastore_critical_threshold", dsUsage.CriticalThreshold).
-		Int("datastore_warning_threshold", dsUsage.WarningThreshold).
-		Int("vms", len(dsUsage.VMs)).
-		Int("vms_powered_off", dsUsage.VMs.NumVMsPoweredOff()).
-		Int("vms_powered_on", dsUsage.VMs.NumVMsPoweredOn()).
+		Float64("datastore_usage_used_percentage", dsSpaceUsage.StorageUsedPercent).
+		Float64("datastore_usage_remaining_percentage", dsSpaceUsage.StorageRemainingPercent).
+		Str("datastore_space_total", units.ByteSize(dsSpaceUsage.StorageTotal).String()).
+		Str("datastore_space_used", units.ByteSize(dsSpaceUsage.StorageUsed).String()).
+		Str("datastore_space_remaining", units.ByteSize(dsSpaceUsage.StorageRemaining).String()).
+		Int("datastore_critical_threshold", dsSpaceUsage.CriticalThreshold).
+		Int("datastore_warning_threshold", dsSpaceUsage.WarningThreshold).
+		Int("vms", len(dsSpaceUsage.VMs)).
+		Int("vms_powered_off", dsSpaceUsage.VMs.NumVMsPoweredOff()).
+		Int("vms_powered_on", dsSpaceUsage.VMs.NumVMsPoweredOn()).
 		Logger()
 
 	log.Debug().Msg("Evaluating datastore usage state")
 	switch {
-	case dsUsage.IsCriticalState():
+	case dsSpaceUsage.IsCriticalState():
 
 		log.Error().Msg("Datastore usage CRITICAL")
 
-		nagiosExitState.LastError = vsphere.ErrDatastoreUsageThresholdCrossed
+		nagiosExitState.LastError = vsphere.ErrDatastoreSpaceUsageThresholdCrossed
 
-		nagiosExitState.ServiceOutput = vsphere.DatastoreUsageOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.DatastoreSpaceUsageOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
-			dsUsage,
+			dsSpaceUsage,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
+		nagiosExitState.LongServiceOutput = vsphere.DatastoreSpaceUsageReport(
 			c.Client,
-			dsUsage,
+			dsSpaceUsage,
 		)
 
 		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
@@ -328,20 +328,20 @@ func main() {
 
 		return
 
-	case dsUsage.IsWarningState():
+	case dsSpaceUsage.IsWarningState():
 
 		log.Error().Msg("Datastore usage WARNING")
 
-		nagiosExitState.LastError = vsphere.ErrDatastoreUsageThresholdCrossed
+		nagiosExitState.LastError = vsphere.ErrDatastoreSpaceUsageThresholdCrossed
 
-		nagiosExitState.ServiceOutput = vsphere.DatastoreUsageOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.DatastoreSpaceUsageOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
-			dsUsage,
+			dsSpaceUsage,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
+		nagiosExitState.LongServiceOutput = vsphere.DatastoreSpaceUsageReport(
 			c.Client,
-			dsUsage,
+			dsSpaceUsage,
 		)
 
 		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {
@@ -360,14 +360,14 @@ func main() {
 
 		nagiosExitState.LastError = nil
 
-		nagiosExitState.ServiceOutput = vsphere.DatastoreUsageOneLineCheckSummary(
+		nagiosExitState.ServiceOutput = vsphere.DatastoreSpaceUsageOneLineCheckSummary(
 			nagios.StateOKLabel,
-			dsUsage,
+			dsSpaceUsage,
 		)
 
-		nagiosExitState.LongServiceOutput = vsphere.DatastoreUsageReport(
+		nagiosExitState.LongServiceOutput = vsphere.DatastoreSpaceUsageReport(
 			c.Client,
-			dsUsage,
+			dsSpaceUsage,
 		)
 
 		if err := nagiosExitState.AddPerfData(false, pd...); err != nil {

@@ -147,17 +147,17 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.Var(&c.IncludedAlarmEntityResourcePools, "include-entity-rp", includedAlarmEntityResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedAlarmEntityResourcePools, "exclude-entity-rp", excludedAlarmEntityResourcePoolsFlagHelp)
 
-	case pluginType.DatastoresSize:
+	case pluginType.DatastoresSpace:
 
 		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
 
 		flag.StringVar(&c.DatastoreName, "ds-name", defaultDatastoreName, datastoreNameFlagHelp)
 
-		flag.IntVar(&c.DatastoreUsageWarning, "ds-usage-warning", defaultDatastoreUsageWarning, datastoreUsageWarningFlagHelp)
-		flag.IntVar(&c.DatastoreUsageWarning, "dsuw", defaultDatastoreUsageWarning, datastoreUsageWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.DatastoreSpaceUsageWarning, "ds-usage-warning", defaultDatastoreSpaceUsageWarning, datastoreSpaceUsageWarningFlagHelp)
+		flag.IntVar(&c.DatastoreSpaceUsageWarning, "dsuw", defaultDatastoreSpaceUsageWarning, datastoreSpaceUsageWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.DatastoreUsageCritical, "ds-usage-critical", defaultDatastoreUsageCritical, datastoreUsageCriticalFlagHelp)
-		flag.IntVar(&c.DatastoreUsageCritical, "dsuc", defaultDatastoreUsageCritical, datastoreUsageCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.DatastoreSpaceUsageCritical, "ds-usage-critical", defaultDatastoreSpaceUsageCritical, datastoreSpaceUsageCriticalFlagHelp)
+		flag.IntVar(&c.DatastoreSpaceUsageCritical, "dsuc", defaultDatastoreSpaceUsageCritical, datastoreSpaceUsageCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.DatastoresPerformance:
 

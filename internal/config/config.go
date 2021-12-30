@@ -38,7 +38,7 @@ type PluginType struct {
 	SnapshotsAge                   bool
 	SnapshotsCount                 bool
 	SnapshotsSize                  bool
-	DatastoresSize                 bool
+	DatastoresSpace                bool
 	DatastoresPerformance          bool
 	ResourcePoolsMemory            bool
 	VirtualCPUsAllocation          bool
@@ -666,13 +666,13 @@ type Config struct {
 	// calculations.
 	ResourcePoolsMemoryMaxAllowed int
 
-	// DatastoreUsageWarning specifies the percentage of a datastore's storage
-	// usage (as a whole number) when a WARNING threshold is reached.
-	DatastoreUsageWarning int
+	// DatastoreSpaceUsageWarning specifies the percentage of a datastore's
+	// storage usage (as a whole number) when a WARNING threshold is reached.
+	DatastoreSpaceUsageWarning int
 
-	// DatastoreUsageCritical specifies the percentage of a datastore's storage
-	// usage (as a whole number) when a CRITICAL threshold is reached.
-	DatastoreUsageCritical int
+	// DatastoreSpaceUsageCritical specifies the percentage of a datastore's
+	// storage usage (as a whole number) when a CRITICAL threshold is reached.
+	DatastoreSpaceUsageCritical int
 
 	// datastoreReadLatencyWarning specifies the read latency of a datastore's
 	// storage (in ms) when a WARNING threshold is reached.
@@ -848,8 +848,8 @@ func pluginTypeLabel(pluginType PluginType) string {
 	case pluginType.SnapshotsSize:
 		label = PluginTypeSnapshotsSize
 
-	case pluginType.DatastoresSize:
-		label = PluginTypeDatastoresSize
+	case pluginType.DatastoresSpace:
+		label = PluginTypeDatastoresSpace
 
 	case pluginType.DatastoresPerformance:
 		label = PluginTypeDatastoresPerformance
