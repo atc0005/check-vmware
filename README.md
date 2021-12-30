@@ -336,8 +336,11 @@ SOFTWARE.
 - Related projects
   - <https://github.com/atc0005/send2teams>
   - <https://github.com/atc0005/check-cert>
+  - <https://github.com/atc0005/check-illiad>
   - <https://github.com/atc0005/check-mail>
   - <https://github.com/atc0005/check-path>
+  - <https://github.com/atc0005/check-statuspage>
+  - <https://github.com/atc0005/check-whois>
   - <https://github.com/atc0005/nagios-debug>
   - <https://github.com/atc0005/go-nagios>
 
