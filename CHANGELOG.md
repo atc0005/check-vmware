@@ -36,7 +36,7 @@ The following types of changes will be recorded in this file:
   - performance data metrics have been renamed
 - built using Go 1.17.5
   - Statically linked
-  - Linux (x86, x64)
+  - Linux x64
 
 ### Changed
 
@@ -82,7 +82,7 @@ The following types of changes will be recorded in this file:
   - will be renamed in the `v0.28.0` release
 - built using Go 1.16.12
   - Statically linked
-  - Linux (x86, x64)
+  - Linux x64
 
 ### Changed
 
@@ -123,7 +123,7 @@ The following types of changes will be recorded in this file:
   - will be renamed in the `v0.28.0` release
 - built using Go 1.16.10
   - Statically linked
-  - Linux (x86, x64)
+  - Linux x64
 
 ### Added
 
@@ -181,7 +181,7 @@ The following types of changes will be recorded in this file:
 - Dependency updates
 - built using Go 1.16.10
   - Statically linked
-  - Linux (x86, x64)
+  - Linux x64
 
 ### Added
 
@@ -281,7 +281,7 @@ The following types of changes will be recorded in this file:
 - Bugfixes
 - built using Go 1.16.9
   - Statically linked
-  - Linux (x86, x64)
+  - Linux x64
 
 ### Changed
 
@@ -304,7 +304,7 @@ The following types of changes will be recorded in this file:
 - Dependency updates
 - built using Go 1.16.9
   - Statically linked
-  - Linux (x86, x64)
+  - Linux x64
 
 ### Added
 
@@ -375,7 +375,7 @@ The following types of changes will be recorded in this file:
 - Bugfixes
 - built using Go 1.16.9
   - Statically linked
-  - Linux (x86, x64)
+  - Linux x64
 
 ### Added
 
@@ -411,7 +411,7 @@ The following types of changes will be recorded in this file:
 - Dependency updates
 - built using Go 1.16.9
   - Statically linked
-  - Linux (x86, x64)
+  - Linux x64
 
 ### Added
 
@@ -482,7 +482,7 @@ The following types of changes will be recorded in this file:
 - Dependency updates
 - built using Go 1.16.9
   - Statically linked
-  - Linux (x86, x64)
+  - Linux x64
 
 ### Added
 
@@ -512,7 +512,7 @@ The following types of changes will be recorded in this file:
 - Dependency updates
 - built using Go 1.16.9
   - Statically linked
-  - Linux (x86, x64)
+  - Linux x64
 
 ### Added
 
