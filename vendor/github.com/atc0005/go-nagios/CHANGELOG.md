@@ -26,6 +26,22 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.8.2] - 2022-01-01
+
+### Changed
+
+- Dependencies
+  - `actions/checkout`
+    - `v2.3.5` to `v2.4.0`
+  - `actions/setup-node`
+    - `v2.4.1` to `v2.5.1`
+
+### Fixed
+
+- (GH-104) Swap nil PerformanceData check for length check
+- (GH-109) Nagios XI interprets current `nagios.CheckOutputEOL` value as two
+  newlines
+
 ## [v0.8.1] - 2021-11-02
 
 ### Changed
@@ -301,7 +317,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.8.1...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.8.2...HEAD
+[v0.8.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.2
 [v0.8.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.1
 [v0.8.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.0
 [v0.7.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.7.0

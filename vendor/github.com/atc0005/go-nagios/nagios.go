@@ -40,13 +40,17 @@ const (
 	StateDEPENDENTLabel string = "DEPENDENT"
 )
 
-// CheckOutputEOL is the newline used with formatted service and host check
-// output. Based on previous testing, Nagios treats LF newlines within the
-// `$LONGSERVICEOUTPUT$` macro as literal values instead of parsing them for
-// display purposes. Using DOS EOL values with `fmt.Printf()` gives the
-// results that we're looking for with that output and (presumably) host check
-// output as well.
-const CheckOutputEOL string = "\r\n"
+// CheckOutputEOL is the newline character(s) used with formatted service and
+// host check output. Based on previous testing, Nagios treats LF newlines
+// (without a leading space) within the `$LONGSERVICEOUTPUT$` macro as literal
+// values instead of parsing them for display purposes.
+//
+// Using DOS EOL values with `fmt.Printf()` gave expected formatting results
+// in the Nagios Core web UI, but resulted in double newlines in Nagios XI
+// output (see GH-109). Switching back to a UNIX EOL with a single leading
+// space appears to give the intended results for both Nagios Core and Nagios
+// XI.
+const CheckOutputEOL string = " \n"
 
 // ServiceState represents the status label and exit code for a service check.
 type ServiceState struct {
@@ -384,7 +388,7 @@ func (es *ExitState) ReturnCheckResults() {
 // directly.
 func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error {
 
-	if pd == nil {
+	if len(pd) == 0 {
 		return fmt.Errorf("no performance data provided")
 	}
 
