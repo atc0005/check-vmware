@@ -33,34 +33,6 @@ func ExceedsSize(snapshotSize int64, thresholdSize int64) bool {
 	return snapshotSize > (thresholdSize * units.GB)
 }
 
-// ExceedsAge indicates whether a given snapshot creation date is older than
-// the specified number of days.
-func ExceedsAge(snapshotCreated time.Time, days int) bool {
-
-	now := time.Now()
-
-	// Flip user specified number of days negative so that we can wind
-	// back that many days from the file modification time. This gives
-	// us our threshold to compare file modification times against.
-	daysBack := -(days)
-	ageThreshold := now.AddDate(0, 0, daysBack)
-
-	switch {
-	case snapshotCreated.Before(ageThreshold):
-		return true
-	case snapshotCreated.Equal(ageThreshold):
-		return false
-	case snapshotCreated.After(ageThreshold):
-		return false
-
-	// TODO: Is there any other state than Before, Equal and After?
-	// TODO: Perhaps remove 'After' and use this instead?
-	default:
-		return false
-	}
-
-}
-
 // FilterVMsWithSnapshots filters the provided collection of VirtualMachines
 // to just those with snapshots. Later steps are responsible for validating
 // whether those snapshots place the VMs into non-OK states. The collection is

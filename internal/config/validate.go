@@ -10,6 +10,7 @@ package config
 import (
 	"fmt"
 	"strings"
+	"time"
 )
 
 // validate verifies all Config struct fields have been provided acceptable
@@ -706,6 +707,67 @@ func (c Config) validate(pluginType PluginType) error {
 			}
 
 		}
+
+	case pluginType.VirtualMachineLastBackupViaCA:
+
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
+
+		// assert that specified time zone is recognized
+		if _, err := time.LoadLocation(c.VMBackupDateTimezone); err != nil {
+			return fmt.Errorf(
+				"unable to load location data for specified time zone %q: %w",
+				c.VMBackupDateTimezone,
+				err,
+			)
+		}
+
+		// Require that the last backup data ca field is present, but permit
+		// the metdata ca field to be optional. The default value is valid,
+		// but the user could potentially override with an empty string
+		// (unlikely, but possible).
+		if c.VMBackupDateCustomAttribute == "" {
+			return fmt.Errorf("custom attribute name for last backup date not provided")
+		}
+
+		// The default value is valid, but the user could potentially override
+		// with an empty string (unlikely, but possible).
+		if c.VMBackupDateFormat == "" {
+			return fmt.Errorf("last backup date format not provided")
+		}
+
+		// The default value is valid, but the user could potentially override
+		// with an empty string (unlikely, but possible).
+		if c.VMBackupDateTimezone == "" {
+			return fmt.Errorf("last backup date time zone not provided")
+		}
+
+		if c.VMBackupDateCritical < 1 {
+			return fmt.Errorf(
+				"invalid backup date age CRITICAL threshold number: %d",
+				c.VMBackupDateCritical,
+			)
+		}
+
+		if c.VMBackupDateWarning < 1 {
+			return fmt.Errorf(
+				"invalid backup date age WARNING threshold number: %d",
+				c.VMBackupDateWarning,
+			)
+		}
+
+		if c.VMBackupDateCritical <= c.VMBackupDateWarning {
+			return fmt.Errorf(
+				"critical threshold set lower than or equal to warning threshold",
+			)
+		}
+
 	}
 
 	// shared validation checks

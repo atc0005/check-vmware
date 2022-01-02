@@ -289,6 +289,34 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 		flag.BoolVar(&c.IgnoreMissingCustomAttribute, "ignore-missing-ca", defaultIgnoreMissingCustomAttribute, ignoreMissingCustomAttributeFlagHelp)
 
+	case pluginType.VirtualMachineLastBackupViaCA:
+
+		// NOTE: This plugin is hard-coded to evaluate powered off and powered
+		// on VMs equally. I'm not sure whether ignoring powered off VMs by
+		// default makes sense for this particular plugin.
+		//
+		// Please share your feedback here if you feel differently:
+		// https://github.com/atc0005/check-vmware/discussions/176
+		//
+		// Please expand on some use cases for ignoring powered off VMs by default.
+		//
+		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+
+		flag.StringVar(&c.VMBackupDateCustomAttribute, "backup-date-ca", defaultVMBackupDateCustomAttribute, vmBackupDateCustomAttributeFlagHelp)
+		flag.StringVar(&c.VMBackupMetadataCustomAttribute, "backup-metadata-ca", defaultVMBackupMetadataCustomAttribute, vmBackupMetadataCustomAttributeFlagHelp)
+		flag.StringVar(&c.VMBackupDateFormat, "backup-date-format", defaultVMBackupDateFormat, vmBackupDateFormatFlagHelp)
+		flag.StringVar(&c.VMBackupDateTimezone, "backup-date-timezone", defaultVMBackupDateTimezone, vmBackupDateTimezoneFlagHelp)
+
+		flag.IntVar(&c.VMBackupDateWarning, "backup-date-warning", defaultVMBackupDateWarning, vmBackupDateWarningFlagHelp)
+		flag.IntVar(&c.VMBackupDateWarning, "bdw", defaultVMBackupDateWarning, vmBackupDateWarningFlagHelp+" (shorthand)")
+
+		flag.IntVar(&c.VMBackupDateCritical, "backup-date-critical", defaultVMBackupDateCritical, vmBackupDateCriticalFlagHelp)
+		flag.IntVar(&c.VMBackupDateCritical, "bdc", defaultVMBackupDateCritical, vmBackupDateCriticalFlagHelp+" (shorthand)")
+
 	}
 
 	// Shared flags for all plugin types

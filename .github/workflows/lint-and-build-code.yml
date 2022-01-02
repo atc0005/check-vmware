@@ -98,3 +98,4 @@ jobs:
           go build -v -mod=vendor ./cmd/check_vmware_disk_consolidation
           go build -v -mod=vendor ./cmd/check_vmware_question
           go build -v -mod=vendor ./cmd/check_vmware_alarms
+          go build -v -mod=vendor ./cmd/check_vmware_vm_backup_via_ca
