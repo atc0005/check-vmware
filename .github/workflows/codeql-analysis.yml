@@ -20,6 +20,8 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    # Default: 360 minutes
+    timeout-minutes: 10
     permissions:
       actions: read
       contents: read

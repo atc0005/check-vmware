@@ -78,7 +78,7 @@ jobs:
     name: Build codebase using Makefile quick recipe
     runs-on: ubuntu-latest
     # Default: 360 minutes
-    timeout-minutes: 40
+    timeout-minutes: 10
     container:
       image: "index.docker.io/golang:latest"
 
