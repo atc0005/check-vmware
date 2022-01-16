@@ -2059,16 +2059,6 @@ func VMBackupViaCAOneLineCheckSummary(
 	}
 
 	switch {
-	case numMissingBackups > 0:
-		return fmt.Sprintf(
-			"%s: %d VMs missing backups detected (%d present & %d current, evaluated %d VMs & %d Resource Pools)",
-			stateLabel,
-			numMissingBackups,
-			numWithBackups,
-			numCurrentBackups,
-			len(evaluatedVMs),
-			len(rps),
-		)
 	case numWithOldBackups > 0:
 		numCurrentBackups := numWithBackups - numWithOldBackups
 		if numCurrentBackups < 0 {
@@ -2078,6 +2068,17 @@ func VMBackupViaCAOneLineCheckSummary(
 			"%s: %d VMs with old backups detected (%d current, evaluated %d VMs & %d Resource Pools)",
 			stateLabel,
 			numWithOldBackups,
+			numCurrentBackups,
+			len(evaluatedVMs),
+			len(rps),
+		)
+
+	case numMissingBackups > 0:
+		return fmt.Sprintf(
+			"%s: %d VMs missing backups detected (%d present & %d current, evaluated %d VMs & %d Resource Pools)",
+			stateLabel,
+			numMissingBackups,
+			numWithBackups,
 			numCurrentBackups,
 			len(evaluatedVMs),
 			len(rps),
