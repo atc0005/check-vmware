@@ -1,7 +1,7 @@
 /*
 
-Nagios plugin used to monitor last backup date for VMs via specified Custom
-Attribute.
+Nagios plugin used to monitor last backup date for VMs (via specified custom
+attribute).
 
 PURPOSE
 
