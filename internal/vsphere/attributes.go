@@ -9,6 +9,7 @@ package vsphere
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -42,8 +43,31 @@ var ErrAvailableFieldValueNotFound = errors.New("failed to find a matching avail
 // defined within an inventory for an associated managed object type.
 var ErrAvailableFieldValueNotDefined = errors.New("no custom attributes defined within vSphere environment for this type")
 
+// CustomAttribute represents a name/value Custom Attribute pair. This pair is
+// created by resolving a specific Custom Attribute Key associated with a
+// Managed Object to its matching Custom Attribute Name, which is used to
+// retrieve its Custom Attribute Value.
+type CustomAttribute struct {
+	Name  string
+	Value string
+}
+
+// CustomAttributes represents the collection of Custom Attributes defined for
+// a managed object.
+type CustomAttributes map[string]string
+
+// String implements the Stringer interface to provide for a basic formatted
+// list of Custom Attribute index entries.
+func (cas CustomAttributes) String() string {
+	list := make([]string, 0, len(cas))
+	for name, value := range cas {
+		list = append(list, fmt.Sprintf("%q:%q", name, value))
+	}
+	return strings.Join(list, ", ")
+}
+
 // CustomAttrKeyToValue receives the key of a Custom Attribute key/value pair
-// a slice of BaseCustomFieldValue which represents the Custom Attribute
+// as a slice of BaseCustomFieldValue which represents the Custom Attribute
 // values for vSphere objects (e.g., HostSystem, Datastore). An error is
 // returned if conversion fails or if the specified Custom Attribute key is
 // not found.
@@ -130,9 +154,9 @@ func CustomAttrNameToKey(caName string, availableField []types.CustomFieldDef) (
 
 }
 
-// GetObjectCAVal receives the name of a Custom Attribute and a ManagedEntity,
-// an abstract base type for all managed objects present in the inventory tree
-// and returns the value for the specified Custom Attribute. An error is
+// GetObjectCAVal receives the name of a Custom Attribute and a ManagedEntity
+// (an abstract base type for all managed objects present in the inventory
+// tree) and returns the value for the specified Custom Attribute. An error is
 // returned if the value could not be retrieved indicating the cause of the
 // failure.
 func GetObjectCAVal(caName string, obj mo.ManagedEntity) (string, error) {
@@ -158,5 +182,109 @@ func GetObjectCAVal(caName string, obj mo.ManagedEntity) (string, error) {
 	}
 
 	return caValue, nil
+
+}
+
+// GetObjectCustomAttributes receives a ManagedEntity (an abstract base type
+// for all managed objects present in the inventory tree) and returns an index
+// of all Custom Attributes for the managed object. An error is returned if no
+// Custom Attributes could be retrieved, indicating the cause of the failure.
+func GetObjectCustomAttributes(obj mo.ManagedEntity) (CustomAttributes, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute GetObjectCustomAttributes func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	customAttributes := make(CustomAttributes)
+
+	if len(obj.AvailableField) == 0 || len(obj.CustomValue) == 0 {
+		// This vSphere object has no custom attributes set for it.
+		return nil, ErrCustomAttributeNotSet
+	}
+
+	// obj.AvailableField entries map to obj.CustomValue via a shared Key
+	// value allowing us to retrieve the Custom Attribute value associated
+	// with a Custom Attribute name.
+	for _, af := range obj.AvailableField {
+		caName := af.Name
+		caKey := af.Key
+
+		for _, bcfv := range obj.CustomValue {
+			cfsv, ok := bcfv.(*types.CustomFieldStringValue)
+			if !ok {
+				return nil, ErrConvertBaseCustomFieldValue
+			}
+			if caKey == cfsv.Key {
+				customAttributes[caName] = cfsv.Value
+
+				// Found & recorded our match, proceed to the next item.
+				break
+			}
+		}
+
+	}
+
+	return customAttributes, nil
+
+}
+
+// GetObjectCustomAttribute receives a ManagedEntity (an abstract base type
+// for all managed objects present in the inventory tree), a Custom Attribute
+// name to retrieve a value for and a boolean flag indicating whether a
+// ManagedEntity missing the Custom Attribute should be treated as an error.
+// The specified Custom Attribute is returned if found. An error is returned
+// if the specified Custom Attribute could be retrieved and the boolean flag
+// did not indicate that this should be ignored.
+func GetObjectCustomAttribute(obj mo.ManagedEntity, customAttributeName string, ignoreMissingCA bool) (CustomAttribute, error) {
+
+	caVal, caValErr := GetObjectCAVal(customAttributeName, obj)
+	if caValErr != nil {
+		switch {
+
+		case errors.Is(caValErr, ErrCustomAttributeNotSet):
+
+			logger.Printf(
+				"specified Custom Attribute %q not set on virtual machine %q",
+				customAttributeName,
+				obj.Name,
+			)
+
+			if !ignoreMissingCA {
+				return CustomAttribute{}, fmt.Errorf(
+					"specified Custom Attribute %s not set on virtual machine %s: %w",
+					customAttributeName,
+					obj.Name,
+					ErrCustomAttributeNotSet,
+				)
+			}
+
+			caVal = CustomAttributeValNotSet
+
+		// custom attributes are set, but some other error occurred
+		case caValErr != nil:
+			logger.Printf(
+				"error retrieving value for provided Custom Attribute %q: %v",
+				customAttributeName,
+				caValErr,
+			)
+
+			return CustomAttribute{}, fmt.Errorf(
+				"error retrieving value for provided Custom Attribute %s: %w",
+				customAttributeName,
+				caValErr,
+			)
+
+		}
+	}
+
+	return CustomAttribute{
+		Name:  customAttributeName,
+		Value: caVal,
+	}, nil
 
 }

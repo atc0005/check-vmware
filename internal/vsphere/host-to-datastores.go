@@ -63,35 +63,36 @@ func (dsIDFail ErrHostDatastoreIdxIDToNameLookupFailed) Error() string {
 // VirtualMachine's current host.
 var ErrVMDatastoreNotInVMHostPairedList = errors.New("host/datastore/vm mismatch")
 
-// PairingCustomAttribute represents the key/value Custom Attribute pair used
-// to relate specific hosts with specific datastores. Most often this takes
-// the form of a "Location" or "Datacenter" field to indicate which Datastore
-// a VirtualMachine should reside on when running on a specific HostSystem.
-type PairingCustomAttribute struct {
-	Name  string
-	Value string
-}
-
 // DatastoreWithCA wraps the vSphere Datastore managed object type with a
-// Custom Attribute key/value pair. This Custom Attribute is intended to link
-// this datastore to a specific ESXi host.
+// specific Custom Attribute name/value pair. This Custom Attribute is
+// intended to link this datastore to a specific ESXi host.
 type DatastoreWithCA struct {
 	mo.Datastore
-	CustomAttribute PairingCustomAttribute
+
+	// CustomAttribute represents the name/value pair used to relate specific
+	// hosts with specific datastores. Most often this takes the form of a
+	// "Location" or "Datacenter" field to indicate which Datastore a
+	// VirtualMachine should reside on when running on a specific HostSystem.
+	CustomAttribute CustomAttribute
 }
 
-// HostWithCA wraps the vSphere HostSystem managed object type with a Custom
-// Attribute key/value pair. This Custom Attribute is intended to link this
-// host to one or more datastores.
+// HostWithCA wraps the vSphere HostSystem managed object type with a specific
+// Custom Attribute name/value pair. This Custom Attribute is intended to link
+// this host to one or more datastores.
 type HostWithCA struct {
 	mo.HostSystem
-	CustomAttribute PairingCustomAttribute
+
+	// CustomAttribute represents the name/value pair used to relate specific
+	// hosts with specific datastores. Most often this takes the form of a
+	// "Location" or "Datacenter" field to indicate which Datastore a
+	// VirtualMachine should reside on when running on a specific HostSystem.
+	CustomAttribute CustomAttribute
 }
 
 // HostDatastoresPairing collects Host and Datastores pairings based on shared
 // Custom Attribute name and value (literal) or prefix (if user-specified).
-// This is intended to "pair" hosts and datastores within an environment that
-// are known to work well together.
+// This is intended to "pair" hosts and datastores (using a specific Custom
+// Attribute) within an environment that are known to work well together.
 type HostDatastoresPairing struct {
 	Host       HostWithCA
 	Datastores []DatastoreWithCA
@@ -255,10 +256,10 @@ func GetVMDatastorePairingIssues(vms []mo.VirtualMachine, h2dIdx HostToDatastore
 
 }
 
-// GetHostsWithCA receives a collection of Hosts, a Custom Attribute to filter
-// Hosts by and a boolean flag indicating whether Hosts missing a Custom
-// Attribute should be ignored. A collection of HostWithCA is returned along
-// with an error (if applicable).
+// GetHostsWithCA receives a collection of Hosts, a Custom Attribute name to
+// filter Hosts by and a boolean flag indicating whether Hosts missing a
+// Custom Attribute should be ignored. A collection of HostWithCA is returned
+// along with an error (if applicable).
 func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ignoreMissingCA bool) ([]HostWithCA, error) {
 
 	funcTimeStart := time.Now()
@@ -274,51 +275,17 @@ func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ig
 	}(&hostsWithCAs)
 
 	for _, host := range allHosts {
-		caVal, caValErr := GetObjectCAVal(hostCustomAttributeName, host.ManagedEntity)
-		if caValErr != nil {
-			switch {
-
-			case errors.Is(caValErr, ErrCustomAttributeNotSet):
-
-				logger.Printf(
-					"specified Custom Attribute %q not set on host %q",
-					hostCustomAttributeName,
-					host.Name,
-				)
-
-				if !ignoreMissingCA {
-
-					return nil, fmt.Errorf(
-						"specified Custom Attribute %s not set on datastore %s: %w",
-						hostCustomAttributeName,
-						host.Name,
-						ErrCustomAttributeNotSet,
-					)
-				}
-
-				caVal = CustomAttributeValNotSet
-
-			case caValErr != nil:
-				logger.Printf(
-					"error retrieving value for provided Custom Attribute %q: %v",
-					hostCustomAttributeName,
-					caValErr,
-				)
-
-				return nil, fmt.Errorf(
-					"error retrieving value for provided Custom Attribute %s: %w",
-					hostCustomAttributeName,
-					caValErr,
-				)
-			}
+		ca, err := GetObjectCustomAttribute(host.ManagedEntity, hostCustomAttributeName, ignoreMissingCA)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to retrieve custom attribute for VM %s: %w",
+				host.Name,
+				err,
+			)
 		}
-
 		hostsWithCAs = append(hostsWithCAs, HostWithCA{
-			HostSystem: host,
-			CustomAttribute: PairingCustomAttribute{
-				Name:  hostCustomAttributeName,
-				Value: caVal,
-			},
+			HostSystem:      host,
+			CustomAttribute: ca,
 		})
 
 	}
@@ -328,7 +295,7 @@ func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ig
 
 // GetDatastoresWithCA receives a collection of Datastores, a list of
 // datastore names that should be ignored or excluded from evaluation, a
-// Custom Attribute to filter Datastores by and a boolean flag indicating
+// Custom Attribute name to filter Datastores by and a boolean flag indicating
 // whether datastores missing a Custom Attribute should be ignored. A
 // collection of DatastoreWithCA is returned along with an error (if
 // applicable).
@@ -389,54 +356,17 @@ func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, d
 			continue
 		}
 
-		caVal, caValErr := GetObjectCAVal(dsCustomAttributeName, ds.ManagedEntity)
-		if caValErr != nil {
-			switch {
-
-			case errors.Is(caValErr, ErrCustomAttributeNotSet):
-
-				logger.Printf(
-					"specified Custom Attribute %q not set on datastore %q",
-					dsCustomAttributeName,
-					ds.Name,
-				)
-
-				if !ignoreMissingCA {
-
-					return nil, fmt.Errorf(
-						"specified Custom Attribute %s not set on datastore %s: %w",
-						dsCustomAttributeName,
-						ds.Name,
-						ErrCustomAttributeNotSet,
-					)
-				}
-
-				caVal = CustomAttributeValNotSet
-
-			// custom attributes are set, but some other error occurred
-			case caValErr != nil:
-
-				logger.Printf(
-					"error retrieving value for provided Custom Attribute %q: %v",
-					dsCustomAttributeName,
-					caValErr,
-				)
-
-				return nil, fmt.Errorf(
-					"error retrieving value for provided Custom Attribute %s: %w",
-					dsCustomAttributeName,
-					caValErr,
-				)
-
-			}
+		ca, err := GetObjectCustomAttribute(ds.ManagedEntity, dsCustomAttributeName, ignoreMissingCA)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"failed to retrieve custom attribute for VM %s: %w",
+				ds.Name,
+				err,
+			)
 		}
-
 		datastoresWithCA = append(datastoresWithCA, DatastoreWithCA{
-			Datastore: ds,
-			CustomAttribute: PairingCustomAttribute{
-				Name:  dsCustomAttributeName,
-				Value: caVal,
-			},
+			Datastore:       ds,
+			CustomAttribute: ca,
 		})
 	}
 

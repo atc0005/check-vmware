@@ -34,7 +34,7 @@ const (
 	datastoreCustomAttributePrefixSeparatorFlagHelp string = "Custom Attribute prefix separator specific to datastores. Skip if using Custom Attribute values as-is for comparison, otherwise optional if specifying shared custom attribute prefix separator, or using the default separator."
 	sharedCustomAttributeNameFlagHelp               string = "Custom Attribute name for host ESXi systems and datastores. Optional if specifying resource-specific custom attribute names."
 	sharedCustomAttributePrefixSeparatorFlagHelp    string = "Custom Attribute prefix separator for host ESXi systems and datastores. Skip if using Custom Attribute values as-is for comparison, otherwise optional if specifying resource-specific custom attribute prefix separator, or using the default separator."
-	ignoreMissingCustomAttributeFlagHelp            string = "Toggles how missing specified Custom Attributes will be handled. By default, ESXi hosts and datastores missing the Custom Attribute are treated as an error condition."
+	ignoreMissingCustomAttributeFlagHelp            string = "Toggles how missing Custom Attributes will be handled. By default, applicable vSphere objects missing specified Custom Attribute(s) are treated as an error condition."
 	ignoreDatastoreFlagHelp                         string = "Specifies a comma-separated list of Datastore names that should be ignored or excluded from evaluation."
 	datastoreNameFlagHelp                           string = "Datastore name as it is found within the vSphere inventory."
 	datastoreSpaceUsageCriticalFlagHelp             string = "Specifies the percentage of a datastore's space usage (as a whole number) when a CRITICAL threshold is reached."
@@ -65,6 +65,12 @@ const (
 	hostSystemNameFlagHelp                          string = "ESXi host/server name as it is found within the vSphere inventory."
 	hostSystemCPUUseCriticalFlagHelp                string = "Specifies the percentage of CPU use (as a whole number) when a CRITICAL threshold is reached."
 	hostSystemCPUUseWarningFlagHelp                 string = "Specifies the percentage of CPU use (as a whole number) when a WARNING threshold is reached."
+	vmBackupDateCriticalFlagHelp                    string = "Specifies the number of days since the last backup for a VM when a CRITICAL threshold is reached."
+	vmBackupDateWarningFlagHelp                     string = "Specifies the number of days since the last backup for a VM when a WARNING threshold is reached."
+	vmBackupDateCustomAttributeFlagHelp             string = "Specifies the Custom Attribute used by Virtual Machine backup software to record when the Last Backup occurred."
+	vmBackupMetadataCustomAttributeFlagHelp         string = "Specifies the (optional) Custom Attribute used by Virtual Machine backup software to record metadata / details for the last backup. If provided, this value is used in log messages and the final report."
+	vmBackupDateFormatFlagHelp                      string = "Specifies the format of the date recorded when the Last Backup occurred. Defaults to the '2006-01-02 3:04:05 PM' layout if not overridden."
+	vmBackupDateTimezoneFlagHelp                    string = "Specifies the time zone for the specified Custom Attribute used by Virtual Machine backup software to record when the last backup occurred. Requires tz database format (e.g., Europe/Amsterdam, America/New_York, Europe/Paris). See also https://en.wikipedia.org/wiki/Tz_database."
 	vmPowerCycleUptimeCriticalFlagHelp              string = "Specifies the power cycle (off/on) uptime in days per VM when a CRITICAL threshold is reached."
 	vmPowerCycleUptimeWarningFlagHelp               string = "Specifies the power cycle (off/on) uptime in days per VM when a WARNING threshold is reached."
 	virtualHardwareOutdatedByCriticalFlagHelp       string = "If provided, this value is the CRITICAL threshold for outdated virtual hardware versions. If the current virtual hardware version for a VM is found to be more than this many versions older than the latest version a CRITICAL state is triggered. Required if specifying the WARNING threshold for outdated virtual hardware versions."
@@ -127,6 +133,12 @@ const (
 	defaultHostSystemName                        string  = ""
 	defaultVMPowerCycleUptimeCritical            int     = 90
 	defaultVMPowerCycleUptimeWarning             int     = 60
+	defaultVMBackupDateCritical                  int     = 2
+	defaultVMBackupDateWarning                   int     = 1
+	defaultVMBackupDateCustomAttribute           string  = "Last Backup"
+	defaultVMBackupMetadataCustomAttribute       string  = "" // e.g., "Backup Status"
+	defaultVMBackupDateFormat                    string  = "2006-01-02 3:04:05 PM"
+	defaultVMBackupDateTimezone                  string  = "Local"
 
 	// The default values are intentionally invalid to help determine whether
 	// the user has supplied values for the flags.
@@ -196,6 +208,7 @@ const (
 	PluginTypeDiskConsolidation              string = "disk-consolidation"
 	PluginTypeInteractiveQuestion            string = "interactive-question"
 	PluginTypeAlarms                         string = "alarms"
+	PluginTypeVirtualMachineLastBackupViaCA  string = "vm-last-backup-via-ca"
 )
 
 // Known limits

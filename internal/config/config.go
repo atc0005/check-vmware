@@ -50,6 +50,7 @@ type PluginType struct {
 	DiskConsolidation              bool
 	InteractiveQuestion            bool
 	Alarms                         bool
+	VirtualMachineLastBackupViaCA  bool
 
 	// TODO:
 	// - vCenter/server time (NTP)
@@ -487,6 +488,25 @@ type Config struct {
 	// vSphere inventory.
 	HostSystemName string
 
+	// VMBackupDate specifies the Custom Attribute used by Virtual Machine
+	// backup software to record when the last backup occurred.
+	VMBackupDateCustomAttribute string
+
+	// VMBackupMetadataCustomAttribute specifies the Custom Attribute used by
+	// Virtual Machine backup software to record metadata / details for the
+	// last backup. This field is optional. If provided, this field is used in
+	// log messages and the final plugin report.
+	VMBackupMetadataCustomAttribute string
+
+	// VMBackupDateFormat specifies the format of the date recorded when the
+	// last backup occurred.
+	VMBackupDateFormat string
+
+	// VMBackupDateTimezone specifies the time zone for the specified Custom
+	// Attribute used by Virtual Machine backup software to record when the
+	// last backup occurred.
+	VMBackupDateTimezone string
+
 	// IncludedResourcePools lists resource pools that are explicitly
 	// monitored. Specifying list values automatically excludes VirtualMachine
 	// objects outside a Resource Pool.
@@ -737,6 +757,14 @@ type Config struct {
 	// days per VM when a CRITICAL threshold is reached.
 	VMPowerCycleUptimeCritical int
 
+	// VMBackupAgeWarning specifies the number of days since the last backup
+	// for a VM when a WARNING threshold is reached.
+	VMBackupDateWarning int
+
+	// VMBackupDateCritical specifies the number of days since the last backup
+	// for a VM when a CRITICAL threshold is reached.
+	VMBackupDateCritical int
+
 	// VirtualHardwareMinimumVersion is the minimum virtual hardware version
 	// accepted for each Virtual Machine. Any Virtual Machine not meeting this
 	// minimum value is considered to be in a CRITICAL state. Per KB 1003746,
@@ -759,8 +787,8 @@ type Config struct {
 	// cluster default hardware version is the minimum allowed.
 	VirtualHardwareDefaultVersionIsMinimum bool
 
-	// IgnoreMissingCustomAttribute indicates whether a host or datastore
-	// missing the specified Custom Attribute should be ignored.
+	// IgnoreMissingCustomAttribute indicates whether an applicable vSphere
+	// object missing a specified Custom Attribute should be ignored.
 	IgnoreMissingCustomAttribute bool
 
 	// IgnoreMissingDatastorePerfMetrics indicates whether the lack of
@@ -886,6 +914,9 @@ func pluginTypeLabel(pluginType PluginType) string {
 
 	case pluginType.Tools:
 		label = PluginTypeTools
+
+	case pluginType.VirtualMachineLastBackupViaCA:
+		label = PluginTypeVirtualMachineLastBackupViaCA
 
 	default:
 		label = "ERROR: Please report this; I evidently forgot to expand the PluginType collection"

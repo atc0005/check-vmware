@@ -39,7 +39,7 @@ WHAT 					= check_vmware_tools \
 							check_vmware_disk_consolidation \
 							check_vmware_question \
 							check_vmware_alarms \
-
+							check_vmware_vm_backup_via_ca \
 
 PROJECT_NAME			= check-vmware
 
