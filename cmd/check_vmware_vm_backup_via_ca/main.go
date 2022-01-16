@@ -351,7 +351,10 @@ func main() {
 			switch {
 
 			// Something prevented a regularly scheduled backup from
-			// running/completing
+			// running/completing.
+			//
+			// We consider this error to be of a higher priority, so we check
+			// for it first before we look for missing backups.
 			case vmsWithBackup.HasOldBackup():
 				return vsphere.ErrVirtualMachineBackupDateOld
 
