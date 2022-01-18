@@ -34,7 +34,7 @@ const (
 	datastoreCustomAttributePrefixSeparatorFlagHelp string = "Custom Attribute prefix separator specific to datastores. Skip if using Custom Attribute values as-is for comparison, otherwise optional if specifying shared custom attribute prefix separator, or using the default separator."
 	sharedCustomAttributeNameFlagHelp               string = "Custom Attribute name for host ESXi systems and datastores. Optional if specifying resource-specific custom attribute names."
 	sharedCustomAttributePrefixSeparatorFlagHelp    string = "Custom Attribute prefix separator for host ESXi systems and datastores. Skip if using Custom Attribute values as-is for comparison, otherwise optional if specifying resource-specific custom attribute prefix separator, or using the default separator."
-	ignoreMissingCustomAttributeFlagHelp            string = "Toggles how missing Custom Attributes will be handled. By default, applicable vSphere objects missing specified Custom Attribute(s) are treated as an error condition."
+	ignoreMissingCustomAttributeFlagHelp            string = "Toggles how missing custom attributes will be handled. By default, applicable vSphere objects missing specified Custom Attribute(s) are treated as an error condition."
 	ignoreDatastoreFlagHelp                         string = "Specifies a comma-separated list of Datastore names that should be ignored or excluded from evaluation."
 	datastoreNameFlagHelp                           string = "Datastore name as it is found within the vSphere inventory."
 	datastoreSpaceUsageCriticalFlagHelp             string = "Specifies the percentage of a datastore's space usage (as a whole number) when a CRITICAL threshold is reached."
