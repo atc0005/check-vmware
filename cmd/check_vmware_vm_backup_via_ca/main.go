@@ -132,7 +132,6 @@ func main() {
 		Int("backup_age_critical", cfg.VMBackupDateCritical).
 		Int("backup_age_warning", cfg.VMBackupDateWarning).
 		Bool("eval_powered_off", cfg.PoweredOff).
-		Bool("ignore_missing_ca_on_objects", cfg.IgnoreMissingCustomAttribute).
 		Logger()
 
 	log.Debug().Msg("Logging into vSphere environment")
@@ -277,7 +276,6 @@ func main() {
 		cfg.VMBackupDateFormat,
 		cfg.VMBackupDateCritical,
 		cfg.VMBackupDateWarning,
-		cfg.IgnoreMissingCustomAttribute,
 	)
 	if vmsLookupErr != nil {
 

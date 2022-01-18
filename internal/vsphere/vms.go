@@ -836,7 +836,6 @@ func GetVMsWithBackup(
 	backupDateFormat string,
 	criticalAgeThreshold int,
 	warningAgeThreshold int,
-	ignoreMissingCAs bool,
 ) (VMsWithBackup, error) {
 
 	funcTimeStart := time.Now()
