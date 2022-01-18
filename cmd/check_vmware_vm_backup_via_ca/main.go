@@ -280,11 +280,11 @@ func main() {
 	if vmsLookupErr != nil {
 
 		log.Error().Err(vmsLookupErr).
-			Msg("error retrieving virtual machines with requested backup Custom Attributes")
+			Msg("error retrieving virtual machines with requested backup custom attributes")
 
 		nagiosExitState.LastError = vmsLookupErr
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
-			"%s: Error retrieving virtual machines with requested backup Custom Attributes",
+			"%s: Error retrieving virtual machines with requested backup custom attributes",
 			nagios.StateCRITICALLabel,
 		)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode

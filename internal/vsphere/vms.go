@@ -781,12 +781,12 @@ func GetVMsWithCAs(vms []mo.VirtualMachine) ([]VMWithCAs, error) {
 		// vsphere admin wishes to do so.
 		case errors.Is(err, ErrCustomAttributeNotSet):
 
-			logger.Printf("Custom Attributes for virtual machine %q missing",
+			logger.Printf("Custom attributes for virtual machine %q missing",
 				vm.Name,
 			)
 
 			logger.Printf(
-				"Adding VM %s to collection with empty Custom Attributes map",
+				"Adding VM %s to collection with empty custom attributes map",
 				vm.Name,
 			)
 			vmsWithAllCAs = append(vmsWithAllCAs, VMWithCAs{
