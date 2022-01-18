@@ -137,7 +137,7 @@ const (
 	defaultVMBackupDateWarning                   int     = 1
 	defaultVMBackupDateCustomAttribute           string  = "Last Backup"
 	defaultVMBackupMetadataCustomAttribute       string  = "" // e.g., "Backup Status"
-	defaultVMBackupDateFormat                    string  = "2006-01-02 3:04:05 PM"
+	defaultVMBackupDateFormat                    string  = "01/02/2006 15:04:05"
 	defaultVMBackupDateTimezone                  string  = "Local"
 
 	// The default values are intentionally invalid to help determine whether
