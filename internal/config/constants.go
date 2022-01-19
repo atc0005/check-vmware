@@ -65,8 +65,8 @@ const (
 	hostSystemNameFlagHelp                          string = "ESXi host/server name as it is found within the vSphere inventory."
 	hostSystemCPUUseCriticalFlagHelp                string = "Specifies the percentage of CPU use (as a whole number) when a CRITICAL threshold is reached."
 	hostSystemCPUUseWarningFlagHelp                 string = "Specifies the percentage of CPU use (as a whole number) when a WARNING threshold is reached."
-	vmBackupDateCriticalFlagHelp                    string = "Specifies the number of days since the last backup for a VM when a CRITICAL threshold is reached."
-	vmBackupDateWarningFlagHelp                     string = "Specifies the number of days since the last backup for a VM when a WARNING threshold is reached."
+	vmBackupAgeCriticalFlagHelp                     string = "Specifies the number of days since the last backup for a VM when a CRITICAL threshold is reached."
+	vmBackupAgeWarningFlagHelp                      string = "Specifies the number of days since the last backup for a VM when a WARNING threshold is reached."
 	vmBackupDateCustomAttributeFlagHelp             string = "Specifies the Custom Attribute used by Virtual Machine backup software to record when the Last Backup occurred."
 	vmBackupMetadataCustomAttributeFlagHelp         string = "Specifies the (optional) Custom Attribute used by Virtual Machine backup software to record metadata / details for the last backup. If provided, this value is used in log messages and the final report."
 	vmBackupDateFormatFlagHelp                      string = "Specifies the format of the date recorded when the Last Backup occurred. Defaults to the '2006-01-02 3:04:05 PM' layout if not overridden."
@@ -133,8 +133,8 @@ const (
 	defaultHostSystemName                        string  = ""
 	defaultVMPowerCycleUptimeCritical            int     = 90
 	defaultVMPowerCycleUptimeWarning             int     = 60
-	defaultVMBackupDateCritical                  int     = 2
-	defaultVMBackupDateWarning                   int     = 1
+	defaultVMBackupAgeCritical                   int     = 2
+	defaultVMBackupAgeWarning                    int     = 1
 	defaultVMBackupDateCustomAttribute           string  = "Last Backup"
 	defaultVMBackupMetadataCustomAttribute       string  = "" // e.g., "Backup Status"
 	defaultVMBackupDateFormat                    string  = "01/02/2006 15:04:05"

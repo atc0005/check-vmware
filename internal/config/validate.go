@@ -748,21 +748,21 @@ func (c Config) validate(pluginType PluginType) error {
 			return fmt.Errorf("last backup date time zone not provided")
 		}
 
-		if c.VMBackupDateCritical < 1 {
+		if c.VMBackupAgeCritical < 1 {
 			return fmt.Errorf(
 				"invalid backup date age CRITICAL threshold number: %d",
-				c.VMBackupDateCritical,
+				c.VMBackupAgeCritical,
 			)
 		}
 
-		if c.VMBackupDateWarning < 1 {
+		if c.VMBackupAgeWarning < 1 {
 			return fmt.Errorf(
 				"invalid backup date age WARNING threshold number: %d",
-				c.VMBackupDateWarning,
+				c.VMBackupAgeWarning,
 			)
 		}
 
-		if c.VMBackupDateCritical <= c.VMBackupDateWarning {
+		if c.VMBackupAgeCritical <= c.VMBackupAgeWarning {
 			return fmt.Errorf(
 				"critical threshold set lower than or equal to warning threshold",
 			)

@@ -759,11 +759,11 @@ type Config struct {
 
 	// VMBackupAgeWarning specifies the number of days since the last backup
 	// for a VM when a WARNING threshold is reached.
-	VMBackupDateWarning int
+	VMBackupAgeWarning int
 
-	// VMBackupDateCritical specifies the number of days since the last backup
+	// VMBackupAgeCritical specifies the number of days since the last backup
 	// for a VM when a CRITICAL threshold is reached.
-	VMBackupDateCritical int
+	VMBackupAgeCritical int
 
 	// VirtualHardwareMinimumVersion is the minimum virtual hardware version
 	// accepted for each Virtual Machine. Any Virtual Machine not meeting this
