@@ -129,8 +129,8 @@ func main() {
 		Str("included_resource_pools", cfg.IncludedResourcePools.String()).
 		Str("excluded_resource_pools", cfg.ExcludedResourcePools.String()).
 		Str("ignored_vms", cfg.IgnoredVMs.String()).
-		Int("backup_age_critical", cfg.VMBackupDateCritical).
-		Int("backup_age_warning", cfg.VMBackupDateWarning).
+		Int("backup_age_critical", cfg.VMBackupAgeCritical).
+		Int("backup_age_warning", cfg.VMBackupAgeWarning).
 		Bool("eval_powered_off", cfg.PoweredOff).
 		Logger()
 
@@ -274,8 +274,8 @@ func main() {
 		cfg.VMBackupDateCustomAttribute,
 		cfg.VMBackupMetadataCustomAttribute,
 		cfg.VMBackupDateFormat,
-		cfg.VMBackupDateCritical,
-		cfg.VMBackupDateWarning,
+		cfg.VMBackupAgeCritical,
+		cfg.VMBackupAgeWarning,
 	)
 	if vmsLookupErr != nil {
 

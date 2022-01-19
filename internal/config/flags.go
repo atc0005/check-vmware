@@ -311,11 +311,11 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.StringVar(&c.VMBackupDateFormat, "backup-date-format", defaultVMBackupDateFormat, vmBackupDateFormatFlagHelp)
 		flag.StringVar(&c.VMBackupDateTimezone, "backup-date-timezone", defaultVMBackupDateTimezone, vmBackupDateTimezoneFlagHelp)
 
-		flag.IntVar(&c.VMBackupDateWarning, "backup-date-warning", defaultVMBackupDateWarning, vmBackupDateWarningFlagHelp)
-		flag.IntVar(&c.VMBackupDateWarning, "bdw", defaultVMBackupDateWarning, vmBackupDateWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VMBackupAgeWarning, "backup-age-warning", defaultVMBackupAgeWarning, vmBackupAgeWarningFlagHelp)
+		flag.IntVar(&c.VMBackupAgeWarning, "baw", defaultVMBackupAgeWarning, vmBackupAgeWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.VMBackupDateCritical, "backup-date-critical", defaultVMBackupDateCritical, vmBackupDateCriticalFlagHelp)
-		flag.IntVar(&c.VMBackupDateCritical, "bdc", defaultVMBackupDateCritical, vmBackupDateCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VMBackupAgeCritical, "backup-age-critical", defaultVMBackupAgeCritical, vmBackupAgeCriticalFlagHelp)
+		flag.IntVar(&c.VMBackupAgeCritical, "bac", defaultVMBackupAgeCritical, vmBackupAgeCriticalFlagHelp+" (shorthand)")
 
 	}
 
