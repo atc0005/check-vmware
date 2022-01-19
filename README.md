@@ -55,24 +55,25 @@ file. See the [plugin index](#plugin-index) for a quick reference.
 
 ### Plugin index
 
-| Plugin or Tool Name                                                                        | Description                                                                         |
-| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| [`check_vmware_tools`](docs/plugins/check_vmware_tools.md)                                 | Nagios plugin used to monitor VMware Tools installations.                           |
-| [`check_vmware_vcpus`](docs/plugins/check_vmware_vcpus.md)                                 | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                   |
-| [`check_vmware_vhw`](docs/plugins/check_vmware_vhw.md)                                     | Nagios plugin used to monitor virtual hardware versions.                            |
-| [`check_vmware_hs2ds2vms`](docs/plugins/check_vmware_hs2ds2vms.md)                         | Nagios plugin used to monitor host/datastore/vm pairings.                           |
-| [`check_vmware_datastore_space`](docs/plugins/check_vmware_datastore_space.md)             | Nagios plugin used to monitor datastore usage.                                      |
-| [`check_vmware_datastore_performance`](docs/plugins/check_vmware_datastore_performance.md) | Nagios plugin used to monitor datastore performance.                                |
-| [`check_vmware_snapshots_age`](docs/plugins/check_vmware_snapshots_age.md)                 | Nagios plugin used to monitor the age of Virtual Machine snapshots.                 |
-| [`check_vmware_snapshots_count`](docs/plugins/check_vmware_snapshots_count.md)             | Nagios plugin used to monitor the count of Virtual Machine snapshots.               |
-| [`check_vmware_snapshots_size`](docs/plugins/check_vmware_snapshots_size.md)               | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots. |
-| [`check_vmware_rps_memory`](docs/plugins/check_vmware_rps_memory.md)                       | Nagios plugin used to monitor memory usage across Resource Pools.                   |
-| [`check_vmware_host_memory`](docs/plugins/check_vmware_host_memory.md)                     | Nagios plugin used to monitor memory usage for a specific ESXi host system.         |
-| [`check_vmware_host_cpu`](docs/plugins/check_vmware_host_cpu.md)                           | Nagios plugin used to monitor CPU usage for a specific ESXi host system.            |
-| [`check_vmware_vm_power_uptime`](docs/plugins/check_vmware_vm_power_uptime.md)             | Nagios plugin used to monitor VM power cycle uptime.                                |
-| [`check_vmware_disk_consolidation`](docs/plugins/check_vmware_disk_consolidation.md)       | Nagios plugin used to monitor VM disk consolidation status.                         |
-| [`check_vmware_question`](docs/plugins/check_vmware_question.md)                           | Nagios plugin used to monitor VM interactive question status.                       |
-| [`check_vmware_alarms`](docs/plugins/check_vmware_alarms.md)                               | Nagios plugin used to monitor for Triggered Alarms in one or more datacenters.      |
+| Plugin or Tool Name                                                                        | Description                                                                              |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| [`check_vmware_tools`](docs/plugins/check_vmware_tools.md)                                 | Nagios plugin used to monitor VMware Tools installations.                                |
+| [`check_vmware_vcpus`](docs/plugins/check_vmware_vcpus.md)                                 | Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).                        |
+| [`check_vmware_vhw`](docs/plugins/check_vmware_vhw.md)                                     | Nagios plugin used to monitor virtual hardware versions.                                 |
+| [`check_vmware_hs2ds2vms`](docs/plugins/check_vmware_hs2ds2vms.md)                         | Nagios plugin used to monitor host/datastore/vm pairings.                                |
+| [`check_vmware_datastore_space`](docs/plugins/check_vmware_datastore_space.md)             | Nagios plugin used to monitor datastore usage.                                           |
+| [`check_vmware_datastore_performance`](docs/plugins/check_vmware_datastore_performance.md) | Nagios plugin used to monitor datastore performance.                                     |
+| [`check_vmware_snapshots_age`](docs/plugins/check_vmware_snapshots_age.md)                 | Nagios plugin used to monitor the age of Virtual Machine snapshots.                      |
+| [`check_vmware_snapshots_count`](docs/plugins/check_vmware_snapshots_count.md)             | Nagios plugin used to monitor the count of Virtual Machine snapshots.                    |
+| [`check_vmware_snapshots_size`](docs/plugins/check_vmware_snapshots_size.md)               | Nagios plugin used to monitor the **cumulative** size of Virtual Machine snapshots.      |
+| [`check_vmware_rps_memory`](docs/plugins/check_vmware_rps_memory.md)                       | Nagios plugin used to monitor memory usage across Resource Pools.                        |
+| [`check_vmware_host_memory`](docs/plugins/check_vmware_host_memory.md)                     | Nagios plugin used to monitor memory usage for a specific ESXi host system.              |
+| [`check_vmware_host_cpu`](docs/plugins/check_vmware_host_cpu.md)                           | Nagios plugin used to monitor CPU usage for a specific ESXi host system.                 |
+| [`check_vmware_vm_power_uptime`](docs/plugins/check_vmware_vm_power_uptime.md)             | Nagios plugin used to monitor VM power cycle uptime.                                     |
+| [`check_vmware_disk_consolidation`](docs/plugins/check_vmware_disk_consolidation.md)       | Nagios plugin used to monitor VM disk consolidation status.                              |
+| [`check_vmware_question`](docs/plugins/check_vmware_question.md)                           | Nagios plugin used to monitor VM interactive question status.                            |
+| [`check_vmware_alarms`](docs/plugins/check_vmware_alarms.md)                               | Nagios plugin used to monitor for Triggered Alarms in one or more datacenters.           |
+| [`check_vmware_vm_backup_via_ca`](docs/plugins/check_vmware_vm_backup_via_ca.md)           | Nagios plugin used to monitor last backup date for VMs (via specified custom attribute). |
 
 ### Output
 
@@ -139,6 +140,7 @@ options](#configuration-options), [examples](#examples) and
     - with optional forced refresh of Virtual Machine state data
   - Virtual Machine interactive question status
   - Triggered Alarms in one or more datacenters
+  - Last Backup date for VMs (via specified custom attribute)
 
 - Optional, leveled logging using `rs/zerolog` package
   - JSON-format output (to `stderr`)

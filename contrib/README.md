@@ -67,6 +67,7 @@ contrib
         │       ├── vmware-tools.cfg
         │       ├── vmware-vcpus.cfg
         │       ├── vmware-virtual-hardware.cfg
+        │       └── vmware-vm-backup-via-ca.cfg
         │       └── vmware-vm-power-uptime.cfg
         └── nagios3
             ├── commands.cfg
@@ -94,7 +95,7 @@ contrib
             ├── nagios.cfg
             └── resource.cfg
 
-13 directories, 34 files
+13 directories, 35 files
 ```
 
 ### Overview

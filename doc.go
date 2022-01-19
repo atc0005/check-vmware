@@ -50,6 +50,8 @@ hosts or vCenter instances).
 
 • Triggered Alarms in one or more datacenters
 
+• Last Backup date for VMs (via specified custom attribute)
+
 USAGE
 
 See our main README for supported settings and examples.
