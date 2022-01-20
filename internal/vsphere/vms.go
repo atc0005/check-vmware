@@ -92,21 +92,9 @@ type VMWithBackup struct {
 	// Attributes for the VM.
 	VMWithCAs
 
-	// BackupDateCA is the Custom Attribute value indicating when the last
-	// backup occurred for this VirtualMachine.
-	// TODO: Perhaps implement as a method?
-	// TODO: Perhaps have this as a string field, use a method to retrieve the value from the included map?
-	// BackupDateCA CustomAttribute
-
 	// BackupDateCAName is the name (not the value) of the Custom Attribute
 	// which indicates when the last backup occurred for this VirtualMachine.
 	BackupDateCAName string
-
-	// BackupMetadataCA is the Custom Attribute value providing additional
-	// context for the last backup for this VirtualMachine.
-	// TODO: Perhaps implement as a method?
-	// TODO: Perhaps have this as a string field, use a method to retrieve the value from the included map?
-	// BackupMetadataCA CustomAttribute
 
 	// BackupMetadataCAName is the name (not the value) of the Custom
 	// Attribute which provides additional context for the last backup for
@@ -114,11 +102,11 @@ type VMWithBackup struct {
 	BackupMetadataCAName string
 
 	// BackupDate is the date/time of the last backup for this VirtualMachine.
-	// This value is set to the user-specified time zone or location (or the
-	// default location if not specified).
-	//
-	// TODO: Perhaps implement as a method, record the Location instead?
-	BackupDate time.Time
+	// If a backup date is recorded for a VM, then the time zone (aka,
+	// "location") for the parsed date/time value is set to the user-specified
+	// time zone. If a time zone is not specified, the default location is
+	// used for a recorded backup date.
+	BackupDate *time.Time
 
 	// WarningAgeInDaysThreshold is the age in days when a recorded backup
 	// date is considered stale and a WARNING threshold reached (but not yet
@@ -136,78 +124,35 @@ type VMWithBackup struct {
 type VMsWithBackup []VMWithBackup
 
 // IsWarningState indicates whether the WARNING threshold has been crossed or
-// if the Virtual Machine is missing the expected Custom Attribute for
-// tracking last backup date or if the Custom Attribute has an empty value.
+// if the Virtual Machine is missing a backup.
 func (vmwb VMWithBackup) IsWarningState() bool {
-
-	// Look for the requested Custom Attributes
-	backupDateCA, hasBackupDateCA := vmwb.CustomAttributes[vmwb.BackupDateCAName]
-
-	// NOTE: This is an optional Custom Attribute, so we don't require it here.
-	// _, hasBackupMetadataCA := vmwb.CustomAttributes[vmwb.BackupMetadataCAName]
-
-	if !hasBackupDateCA {
-		logger.Printf(
-			"Custom Attribute %q missing from %s",
-			vmwb.BackupDateCAName,
-			vmwb.Name,
-		)
-
+	if !vmwb.HasBackup() {
 		return true
 	}
 
-	if strings.TrimSpace(backupDateCA) == "" {
-		logger.Printf(
-			"Custom Attribute %q is blank for %s",
-			vmwb.BackupDateCAName,
-			vmwb.Name,
-		)
+	if ExceedsAge(*vmwb.BackupDate, vmwb.WarningAgeInDaysThreshold) &&
+		!ExceedsAge(*vmwb.BackupDate, vmwb.CriticalAgeInDaysThreshold) {
 		return true
 	}
-
-	// TODO: Should we apply any special behavior for zero value backup date?
-	// Should we treat this differently than if the VM is missing Custom
-	// Attributes?
-	// if vmwb.BackupDate.IsZero() {
-	// 	return true
-	// }
-
-	if ExceedsAge(vmwb.BackupDate, vmwb.WarningAgeInDaysThreshold) &&
-		!ExceedsAge(vmwb.BackupDate, vmwb.CriticalAgeInDaysThreshold) {
-		return true
-	}
-
-	// TODO: What other criteria would indicate WARNING state?
 
 	return false
-
 }
 
 // IsCriticalState indicates whether the CRITICAL threshold has been crossed.
 //
-// A CRITICAL state is NOT returned if a Virtual Machine is missing the
-// expected Custom Attribute for tracking last backup date. Instead, the
-// caller is expected to also validate the WARNING state which IS expected to
-// handle that scenario.
+// A CRITICAL state is NOT if a Virtual Machine is missing a backup. Instead,
+// the caller is expected to also validate the WARNING state which IS expected
+// to handle that scenario.
 func (vmwb VMWithBackup) IsCriticalState() bool {
+	switch {
+	case !vmwb.HasBackup():
+		// Reminder: The IsWarningState() method is responsible for handling
+		// this scenario.
+		return false
 
-	// TODO: Should we apply any special behavior for zero value backup date?
-	// Should we treat this differently than if the VM is missing Custom
-	// Attributes?
-	// if vmwb.BackupDate.IsZero() {
-	// 	return true
-	// }
-
-	// if ExceedsAge(vmwb.BackupDate, vmwb.CriticalAgeInDaysThreshold) {
-	// 	return true
-	// }
-
-	return ExceedsAge(vmwb.BackupDate, vmwb.CriticalAgeInDaysThreshold)
-
-	// TODO: What other criteria would indicate CRITICAL state?
-
-	// return false
-
+	default:
+		return ExceedsAge(*vmwb.BackupDate, vmwb.CriticalAgeInDaysThreshold)
+	}
 }
 
 // IsOKState indicates whether the WARNING or CRITICAL thresholds have been
@@ -218,21 +163,55 @@ func (vmwb VMWithBackup) IsOKState() bool {
 	}
 
 	return true
-
 }
 
 // HasBackup indicates whether a Virtual Machine has a user-specified Custom
-// Attribute used to track last backup date with a non-empty value. This
-// method does not validate the format of the Custom Attribute value, only
-// that the requested value exists. This method does not consider whether the
-// optional metadata Custom Attribute is present.
+// Attribute used to track last backup date with a non-empty value and that
+// the BackupDate field is non-nil (assumed to be set when retrieving the last
+// backup date for a VM).
+//
+// This method does not validate the format of the Custom Attribute value,
+// only that the requested value exists. This method does not consider whether
+// the optional metadata Custom Attribute is present.
 func (vmwb VMWithBackup) HasBackup() bool {
-	backupDateVal, exists := vmwb.CustomAttributes[vmwb.BackupDateCAName]
-	if exists && strings.TrimSpace(backupDateVal) != "" {
+	backupDateVal, backupDateValExists := vmwb.CustomAttributes[vmwb.BackupDateCAName]
+
+	// NOTE: This is an optional Custom Attribute, so we don't require it here.
+	// _, hasBackupMetadataCA := vmwb.CustomAttributes[vmwb.BackupMetadataCAName]
+
+	switch {
+	case !backupDateValExists:
+		logger.Printf(
+			"Custom Attribute %q missing from %s",
+			vmwb.BackupDateCAName,
+			vmwb.Name,
+		)
+		return false
+
+	case strings.TrimSpace(backupDateVal) == "":
+
+		logger.Printf(
+			"Custom Attribute %q is blank for %s",
+			vmwb.BackupDateCAName,
+			vmwb.Name,
+		)
+		return false
+
+	case vmwb.BackupDate == nil:
+		logger.Printf(
+			"No backup date is recorded for %s",
+			vmwb.Name,
+		)
+		return false
+
+	default:
+		logger.Printf(
+			"No problems with recorded backup date detected for %s; "+
+				"assuming valid backup date",
+			vmwb.Name,
+		)
 		return true
 	}
-
-	return false
 }
 
 // HasOldBackup indicates whether a Virtual Machine (with a recorded backup)
@@ -240,22 +219,36 @@ func (vmwb VMWithBackup) HasBackup() bool {
 // is not present false is returned. For best results, the caller should first
 // filter by the HasBackup() method for the most reliable result.
 func (vmwb VMWithBackup) HasOldBackup() bool {
-	if !vmwb.HasBackup() {
+	switch {
+	case !vmwb.HasBackup():
 		return false
-	}
 
-	return ExceedsAge(vmwb.BackupDate, vmwb.WarningAgeInDaysThreshold)
+	default:
+		return ExceedsAge(*vmwb.BackupDate, vmwb.WarningAgeInDaysThreshold)
+	}
 }
 
 // FormattedBackupAge returns the formatted age of a Virtual Machine's backup
-// date.
+// date. If a backup is not recorded, this is indicated instead of a formatted
+// age.
 func (vmwb VMWithBackup) FormattedBackupAge() string {
-	return FormattedTimeSinceEvent(vmwb.BackupDate)
+	switch {
+	case vmwb.BackupDate == nil:
+		return "Backup unavailable"
+	default:
+		return FormattedTimeSinceEvent(*vmwb.BackupDate)
+	}
 }
 
 // BackupDaysAgo returns the age of a Virtual Machine's backup date in days.
+// If a backup date is not available, 0 is returned.
 func (vmwb VMWithBackup) BackupDaysAgo() int {
-	return DaysAgo(vmwb.BackupDate)
+	switch {
+	case vmwb.BackupDate == nil:
+		return 0
+	default:
+		return DaysAgo(*vmwb.BackupDate)
+	}
 }
 
 // IsWarningState indicates whether any Virtual Machines in the collection
@@ -370,9 +363,6 @@ func (vmswb VMsWithBackup) NumWithoutBackups() int {
 // collection with the oldest backup date. Any Virtual Machine without a
 // recorded backup date is ignored. Nil is returned if the collection is empty
 // or if there are no backups to evaluate.
-//
-// TODO: Is there a better approach to this? Just let the caller range over
-// the collection to determine this?
 func (vmswb VMsWithBackup) VMWithOldestBackup() *VMWithBackup {
 
 	// Explicitly handle potential empty collection
@@ -392,7 +382,7 @@ func (vmswb VMsWithBackup) VMWithOldestBackup() *VMWithBackup {
 				vmWithOldestBackup = &vmswb[i]
 			}
 
-			if vmswb[i].BackupDate.Before(vmWithOldestBackup.BackupDate) {
+			if vmswb[i].BackupDate.Before(*vmWithOldestBackup.BackupDate) {
 				vmWithOldestBackup = &vmswb[i]
 			}
 		}
@@ -405,9 +395,6 @@ func (vmswb VMsWithBackup) VMWithOldestBackup() *VMWithBackup {
 // collection with the most recent backup date. Any Virtual Machine without a
 // recorded backup date is ignored. Nil is returned if the collection is empty
 // or if there are no backups to evaluate.
-//
-// TODO: Is there a better approach to this? Just let the caller range over
-// the collection to determine this?
 func (vmswb VMsWithBackup) VMWithYoungestBackup() *VMWithBackup {
 
 	// Explicitly handle potential empty collection
@@ -427,7 +414,7 @@ func (vmswb VMsWithBackup) VMWithYoungestBackup() *VMWithBackup {
 				vmWithYoungestBackup = &vmswb[i]
 			}
 
-			if vmWithYoungestBackup.BackupDate.Before(vmswb[i].BackupDate) {
+			if vmWithYoungestBackup.BackupDate.Before(*vmswb[i].BackupDate) {
 				vmWithYoungestBackup = &vmswb[i]
 			}
 		}
@@ -900,17 +887,23 @@ func GetVMsWithBackup(
 			}
 		}
 
-		vmsWithBackup = append(
-			vmsWithBackup,
-			VMWithBackup{
-				VMWithCAs:                  vm,
-				BackupDateCAName:           lastBackupCA,
-				BackupMetadataCAName:       backupMetadataCA,
-				BackupDate:                 backupDateParsed,
-				WarningAgeInDaysThreshold:  warningAgeThreshold,
-				CriticalAgeInDaysThreshold: criticalAgeThreshold,
-			},
-		)
+		vmWithBackup := VMWithBackup{
+			VMWithCAs:                  vm,
+			BackupDateCAName:           lastBackupCA,
+			BackupMetadataCAName:       backupMetadataCA,
+			WarningAgeInDaysThreshold:  warningAgeThreshold,
+			CriticalAgeInDaysThreshold: criticalAgeThreshold,
+		}
+
+		// If we managed to parse the backup date, record it for the VM,
+		// otherwise leave the pointer field nil as a signal that no backup
+		// date is available for the VM.
+		if !backupDateParsed.IsZero() {
+			vmWithBackup.BackupDate = &backupDateParsed
+		}
+
+		vmsWithBackup = append(vmsWithBackup, vmWithBackup)
+
 	}
 
 	return vmsWithBackup, nil
@@ -2135,6 +2128,7 @@ func VMBackupViaCAReport(
 	printVM := func(w io.Writer, vm VMWithBackup) {
 
 		backupDateCAVal := vm.CustomAttributes[vm.BackupDateCAName]
+		backupDateMetadataVal := vm.CustomAttributes[vm.BackupMetadataCAName]
 
 		fmt.Fprintf(
 			w,
@@ -2143,38 +2137,43 @@ func VMBackupViaCAReport(
 			nagios.CheckOutputEOL,
 		)
 
-		fmt.Fprintf(
-			w,
-			"\t** %s: %t%s",
-			"Old Backup",
-			vm.HasOldBackup(),
-			nagios.CheckOutputEOL,
-		)
+		if vm.HasBackup() {
+			fmt.Fprintf(
+				w,
+				"\t** %s: %t%s",
+				"Old Backup",
+				vm.HasOldBackup(),
+				nagios.CheckOutputEOL,
+			)
 
-		fmt.Fprintf(
-			w,
-			"\t** %s: %s%s",
-			"Backup age (formatted)",
-			vm.FormattedBackupAge(),
-			nagios.CheckOutputEOL,
-		)
+			fmt.Fprintf(
+				w,
+				"\t** %s: %s%s",
+				"Backup age (formatted)",
+				vm.FormattedBackupAge(),
+				nagios.CheckOutputEOL,
+			)
 
-		fmt.Fprintf(
-			w,
-			"\t** %s: %d%s",
-			"Backup age (in days)",
-			vm.BackupDaysAgo(),
-			nagios.CheckOutputEOL,
-		)
+			fmt.Fprintf(
+				w,
+				"\t** %s: %d%s",
+				"Backup age (in days)",
+				vm.BackupDaysAgo(),
+				nagios.CheckOutputEOL,
+			)
+		}
 
-		fmt.Fprintf(
-			w,
-			"\t** %s (raw value): %q%s",
-			vm.BackupDateCAName,
-			backupDateCAVal,
-			nagios.CheckOutputEOL,
-		)
-		if vm.BackupMetadataCAName != "" {
+		if backupDateCAVal != "" {
+			fmt.Fprintf(
+				w,
+				"\t** %s (raw value): %q%s",
+				vm.BackupDateCAName,
+				backupDateCAVal,
+				nagios.CheckOutputEOL,
+			)
+		}
+
+		if backupDateMetadataVal != "" {
 			fmt.Fprintf(
 				w,
 				"\t** %s: %q%s",
@@ -2183,7 +2182,6 @@ func VMBackupViaCAReport(
 				nagios.CheckOutputEOL,
 			)
 		}
-
 	}
 
 	fmt.Fprintf(
