@@ -550,7 +550,7 @@ func GetVMs(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.Virtua
 		)
 	}(&vms)
 
-	err := getObjects(ctx, c, &vms, c.ServiceContent.RootFolder, propsSubset)
+	err := getObjects(ctx, c, &vms, c.ServiceContent.RootFolder, propsSubset, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve VirtualMachines: %w", err)
 	}
@@ -564,7 +564,9 @@ func GetVMs(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.Virtua
 
 // GetVMsFromContainer receives one or many ManagedEntity values for Folder,
 // Datacenter, ComputeResource, ResourcePool, VirtualApp or HostSystem types
-// and returns a list of VirtualMachine object references.
+// and returns a list of VirtualMachine object references. Deduplication of
+// VirtualMachines is applied in order to properly handle nested resource
+// pools.
 //
 // The propsSubset boolean value indicates whether a subset of properties per
 // VirtualMachine are retrieved. If requested, a subset of all available
@@ -589,15 +591,28 @@ func GetVMsFromContainer(ctx context.Context, c *vim25.Client, propsSubset bool,
 
 	for _, obj := range objs {
 
+		var vmsFromContainer []mo.VirtualMachine
+
+		// Perform a recursive retrieval by default.
+		recursiveRetrieval := true
+		if obj.Name == ParentResourcePool &&
+			obj.Self.Type == MgObjRefTypeResourcePool {
+
+			// If we're retrieving Virtual Machines from the parent Resource
+			// Pool perform a shallow retrieval instead so that we do not pull
+			// in any Virtual Machines that should be ignored due to a
+			// Resource Pool exclusion.
+			recursiveRetrieval = false
+		}
+
 		logger.Printf(
-			"Retrieving VirtualMachines from object %q of type %q",
+			"Retrieving VirtualMachines (recursively: %t) from object %q of type %q ",
+			recursiveRetrieval,
 			obj.Name,
 			obj.Self.Type,
 		)
 
-		var vmsFromContainer []mo.VirtualMachine
-
-		err := getObjects(ctx, c, &vmsFromContainer, obj.Reference(), propsSubset)
+		err := getObjects(ctx, c, &vmsFromContainer, obj.Reference(), propsSubset, recursiveRetrieval)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to retrieve VirtualMachines from object: %s: %w",
@@ -610,8 +625,8 @@ func GetVMsFromContainer(ctx context.Context, c *vim25.Client, propsSubset bool,
 
 	}
 
-	// remove any potential duplicate entries which could occur if we are
-	// evaluating the (default, hidden) 'Resources' Resource Pool
+	// Remove any duplicate entries which could occur if we process nested
+	// resource pools.
 	allVMs = dedupeVMs(allVMs)
 
 	sort.Slice(allVMs, func(i, j int) bool {
@@ -646,7 +661,7 @@ func GetVMsFromDatastore(ctx context.Context, c *vim25.Client, ds mo.Datastore, 
 	}(&dsVMs)
 
 	var allVMs []mo.VirtualMachine
-	err := getObjects(ctx, c, &allVMs, c.ServiceContent.RootFolder, propsSubset)
+	err := getObjects(ctx, c, &allVMs, c.ServiceContent.RootFolder, propsSubset, true)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to retrieve VirtualMachines from Datastore %s: %w",

@@ -990,7 +990,7 @@ func GetDatastores(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo
 		)
 	}(&dss)
 
-	err := getObjects(ctx, c, &dss, c.ServiceContent.RootFolder, propsSubset)
+	err := getObjects(ctx, c, &dss, c.ServiceContent.RootFolder, propsSubset, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve Datastores: %w", err)
 	}

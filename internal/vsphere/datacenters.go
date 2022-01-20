@@ -146,7 +146,7 @@ func GetDatacenters(ctx context.Context, c *vim25.Client, dcNames []string, prop
 	// Fetch all visible datacenters.
 	var allDCs []mo.Datacenter
 
-	err := getObjects(ctx, c, &allDCs, c.ServiceContent.RootFolder, propsSubset)
+	err := getObjects(ctx, c, &allDCs, c.ServiceContent.RootFolder, propsSubset, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve all Datacenters: %w", err)
 	}

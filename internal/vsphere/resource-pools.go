@@ -147,8 +147,9 @@ func GetEligibleRPs(ctx context.Context, c *vim25.Client, includeRPs []string, e
 
 	funcTimeStart := time.Now()
 
-	// declare this early so that we can grab a pointer to it in order to
-	// access the entries later
+	// Declare slice early so that we can grab a pointer to it in order to
+	// access the entries later. This holds the filtered list of resource
+	// pools that will be returned to the caller.
 	var rps []mo.ResourcePool
 
 	defer func(rps *[]mo.ResourcePool) {
@@ -159,42 +160,17 @@ func GetEligibleRPs(ctx context.Context, c *vim25.Client, includeRPs []string, e
 		)
 	}(&rps)
 
-	// By default, all resource pools will be retrieved. We will filter and
-	// return a trimmed list.
+	// All available/accessible resource pools will be retrieved and stored
+	// here. We will filter the results before returning a trimmed list to the
+	// caller.
 	var rpsSearchResults []mo.ResourcePool
 
-	err := getObjects(ctx, c, &rpsSearchResults, c.ServiceContent.RootFolder, propsSubset)
+	err := getObjects(ctx, c, &rpsSearchResults, c.ServiceContent.RootFolder, propsSubset, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve ResourcePools: %w", err)
 	}
 
 	for _, rp := range rpsSearchResults {
-
-		// Virtual machine hosts have a hidden resource pool named Resources,
-		// which is a parent of all resource pools of the host. Including this
-		// pool can throw off our calculations, so we ignore it *unless* the
-		// list of provided Resource Pools to explicitly include is empty.
-		// Because this is a hidden pool and non-obvious, we try to avoid
-		// requiring the sysadmin to specify it explicitly.
-		if strings.EqualFold(rp.Name, ParentResourcePool) {
-
-			// Someone has explicitly requested that only ParentResourcePool
-			// be included for evaluation. Record it, ignore any previously
-			// recorded, skip all others.
-			if len(includeRPs) == 1 &&
-				strings.EqualFold(includeRPs[0], ParentResourcePool) {
-				rps = []mo.ResourcePool{rp}
-				break
-			}
-
-			// No inclusion or exclusion lists have been specified. Record
-			// ParentResourcePool, ignore any previously recorded, skip all
-			// others.
-			if len(includeRPs) == 0 && len(excludeRPs) == 0 {
-				rps = []mo.ResourcePool{rp}
-				break
-			}
-		}
 
 		// config validation asserts that only one of include/exclude resource
 		// pools flags are specified
