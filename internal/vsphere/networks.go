@@ -40,7 +40,7 @@ func GetNetworks(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.N
 		)
 	}(&nets)
 
-	err := getObjects(ctx, c, &nets, c.ServiceContent.RootFolder, propsSubset)
+	err := getObjects(ctx, c, &nets, c.ServiceContent.RootFolder, propsSubset, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve host systems: %w", err)
 	}

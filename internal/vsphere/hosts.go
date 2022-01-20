@@ -219,7 +219,7 @@ func GetHostSystems(ctx context.Context, c *vim25.Client, propsSubset bool) ([]m
 		)
 	}(&hss)
 
-	err := getObjects(ctx, c, &hss, c.ServiceContent.RootFolder, propsSubset)
+	err := getObjects(ctx, c, &hss, c.ServiceContent.RootFolder, propsSubset, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve HostSystems: %w", err)
 	}
