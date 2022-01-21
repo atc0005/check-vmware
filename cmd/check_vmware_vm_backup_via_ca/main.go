@@ -131,7 +131,6 @@ func main() {
 		Str("ignored_vms", cfg.IgnoredVMs.String()).
 		Int("backup_age_critical", cfg.VMBackupAgeCritical).
 		Int("backup_age_warning", cfg.VMBackupAgeWarning).
-		Bool("eval_powered_off", cfg.PoweredOff).
 		Logger()
 
 	log.Debug().Msg("Logging into vSphere environment")
