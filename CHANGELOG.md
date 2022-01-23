@@ -26,6 +26,41 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.29.0] - 2022-01-23
+
+### Overview
+
+- New plugin
+- Bugfixes
+- Dependency updates
+- built using Go 1.17.6
+  - Statically linked
+  - Linux x64
+
+### Added
+
+- (GH-506) New plugin: `check_vmware_vm_backup_via_ca`
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.5` to `1.17.6`
+  - `github/codeql-action`
+    - `v1.0.26` to `v1.0.27`
+  - `google/go-cmp`
+    - `v0.5.6` to `v0.5.7`
+
+- (GH-580) Add project name to generated download links file
+
+### Fixed
+
+- (GH-581) Review & update timeout-minutes setting (if needed) for all GitHub
+  Actions Workflows
+- (GH-600) Bug in resource pool exclusion logic
+- (GH-603) Incorrect power state evaluation noted in logger field for
+  `check_vmware_vm_power_uptime` plugin
+
 ## [v0.28.1] - 2022-01-01
 
 ### Overview
@@ -1593,7 +1628,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.28.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.29.0...HEAD
+[v0.29.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.29.0
 [v0.28.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.28.1
 [v0.28.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.28.0
 [v0.27.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.27.1
