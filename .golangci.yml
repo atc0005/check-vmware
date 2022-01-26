@@ -37,18 +37,17 @@ linters:
     - stylecheck
     - unconvert
 
-#
-# Disable fieldalignment settings until the Go team offers more control over
-# the types of checks provided by the fieldalignment linter or golangci-lint
-# does so.
-#
-# See https://github.com/atc0005/go-ci/issues/302 for more information.
-#
+  # disable:
+  # - maligned
 
-# disable:
-# - maligned
-
-# linters-settings:
-# govet:
-#   enable:
-#     - fieldalignment
+linters-settings:
+  govet:
+    #
+    # Disable fieldalignment settings until the Go team offers more control over
+    # the types of checks provided by the fieldalignment linter or golangci-lint
+    # does so.
+    #
+    # See https://github.com/atc0005/go-ci/issues/302 for more information.
+    #
+    disable:
+      - fieldalignment
