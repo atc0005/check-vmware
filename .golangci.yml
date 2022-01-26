@@ -42,6 +42,8 @@ linters:
 
 linters-settings:
   govet:
+    enable-all: true
+
     #
     # Disable fieldalignment settings until the Go team offers more control over
     # the types of checks provided by the fieldalignment linter or golangci-lint
