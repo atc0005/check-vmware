@@ -1073,7 +1073,7 @@ func NewSnapshotSummarySet(
 					removeFileKey(&snapshotDiskFileKeys, key)
 				}
 
-			case parent != nil:
+			default:
 
 				// Parent snapshot is present. Remove all parent snapshot file
 				// keys from the list of snapshot file keys. This leaves only
