@@ -274,6 +274,8 @@ func getObjects(
 		// A best practice when using views is to call the DestroyView()
 		// method when a view is no longer needed. This practice frees memory
 		// on the server.
+		//
+		// nolint:govet // err intentionally scoped; shadowing not a concern.
 		if err := v.Destroy(ctx); err != nil {
 			logger.Printf("Error occurred while destroying view: %s", err)
 		}

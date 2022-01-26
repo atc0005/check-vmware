@@ -266,7 +266,7 @@ func GetObjectCustomAttribute(obj mo.ManagedEntity, customAttributeName string, 
 			caVal = CustomAttributeValNotSet
 
 		// custom attributes are set, but some other error occurred
-		case caValErr != nil:
+		default:
 			logger.Printf(
 				"error retrieving value for provided Custom Attribute %q: %v",
 				customAttributeName,
