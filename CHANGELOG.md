@@ -26,6 +26,39 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.29.1] - 2022-02-11
+
+### Overview
+
+- Bugfixes
+- Dependency updates
+- built using Go 1.17.7
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.6` to `1.17.7`
+  - `github/codeql-action`
+    - `v1.0.28` to `v1.0.32`
+  - `vmware/govmomi`
+    - `v0.27.2` to `v0.27.4`
+
+- (GH-611) Enable additional govet linter analyzers
+- (GH-613) Various linting issues detected by nilness, shadow `govet`
+  analyzers
+- (GH-617) Expand linting GitHub Actions Workflow to include `oldstable`,
+  `unstable` container images
+- (GH-618) Switch Docker image source from Docker Hub to GitHub Container
+  Registry (GHCR)
+
+### Fixed
+
+- CHANGELOG
+  - v0.29.0 release incorrectly noted latest codeql-action release
+
 ## [v0.29.0] - 2022-01-23
 
 ### Overview
@@ -47,7 +80,7 @@ The following types of changes will be recorded in this file:
   - `Go`
     - `1.17.5` to `1.17.6`
   - `github/codeql-action`
-    - `v1.0.26` to `v1.0.27`
+    - `v1.0.26` to `v1.0.28`
   - `google/go-cmp`
     - `v0.5.6` to `v0.5.7`
 
@@ -1628,7 +1661,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.29.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.29.1...HEAD
+[v0.29.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.29.1
 [v0.29.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.29.0
 [v0.28.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.28.1
 [v0.28.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.28.0
