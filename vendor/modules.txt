@@ -14,7 +14,7 @@ github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
 github.com/rs/zerolog/log
-# github.com/vmware/govmomi v0.27.3
+# github.com/vmware/govmomi v0.27.4
 ## explicit; go 1.14
 github.com/vmware/govmomi
 github.com/vmware/govmomi/find
