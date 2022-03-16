@@ -278,7 +278,8 @@ func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ig
 		ca, err := GetObjectCustomAttribute(host.ManagedEntity, hostCustomAttributeName, ignoreMissingCA)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to retrieve custom attribute for VM %s: %w",
+				"failed to retrieve custom attribute for %s %s: %w",
+				host.ManagedEntity.Self.Type,
 				host.Name,
 				err,
 			)
@@ -359,7 +360,8 @@ func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, d
 		ca, err := GetObjectCustomAttribute(ds.ManagedEntity, dsCustomAttributeName, ignoreMissingCA)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to retrieve custom attribute for VM %s: %w",
+				"failed to retrieve custom attribute for %s %s: %w",
+				ds.ManagedEntity.Self.Type,
 				ds.Name,
 				err,
 			)
