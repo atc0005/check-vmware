@@ -26,6 +26,39 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.29.2] - 2022-03-16
+
+### Overview
+
+- Report output tweaks
+- Bugfixes
+- Dependency updates
+- built using Go 1.17.8
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.7` to `1.17.8`
+  - `github/codeql-action`
+    - `v1.0.32` to `v1.1.5`
+  - `actions/checkout`
+    - `v2.4.0` to `v3`
+  - `actions/setup-node`
+    - `v2.5.1` to `v3`
+
+- (GH-635) Expose custom attribute used as key for mismatched
+  host/datastore/vm pairings in report output for `check_vmware_hs2ds2vms`
+  plugin
+
+- (GH-640) Add `FilterDatastoresByIDs()` func
+
+### Fixed
+
+- (GH-636) Incorrect vSphere object type mentioned in error message
+
 ## [v0.29.1] - 2022-02-11
 
 ### Overview
@@ -1661,7 +1694,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.29.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.29.2...HEAD
+[v0.29.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.29.2
 [v0.29.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.29.1
 [v0.29.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.29.0
 [v0.28.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.28.1
