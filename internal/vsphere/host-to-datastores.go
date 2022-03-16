@@ -18,7 +18,6 @@ import (
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
-	"github.com/vmware/govmomi/vim25/types"
 )
 
 // ErrHostDatastorePairingFailed is returned when compiling host and datastore
@@ -63,6 +62,14 @@ func (dsIDFail ErrHostDatastoreIdxIDToNameLookupFailed) Error() string {
 // VirtualMachine's current host.
 var ErrVMDatastoreNotInVMHostPairedList = errors.New("host/datastore/vm mismatch")
 
+// ErrManagedObjectIDIsNil indicates that a managed object ID is unset, which
+// may occur if the property is not requested from the vSphere API or if the
+// service account executing the plugin has insufficient privileges.
+var ErrManagedObjectIDIsNil = errors.New("managed object ID is nil")
+
+// ErrManagedObjectIDIsEmpty indicates that a managed object ID is empty.
+var ErrManagedObjectIDIsEmpty = errors.New("managed object ID is empty")
+
 // DatastoreWithCA wraps the vSphere Datastore managed object type with a
 // specific Custom Attribute name/value pair. This Custom Attribute is
 // intended to link this datastore to a specific ESXi host.
@@ -98,114 +105,70 @@ type HostDatastoresPairing struct {
 	Datastores []DatastoreWithCA
 }
 
-// VMHostDatastoresPairing collects HostSystem, VirtualMachine and Datastore
-// name pairings.
-type VMHostDatastoresPairing struct {
-	HostName       string
-	DatastoreNames []string
-	// VMName         string
-}
-
 // HostToDatastoreIndex indexes HostDatastorePairings based on host id values.
 type HostToDatastoreIndex map[string]HostDatastoresPairing
 
-// VMToMismatchedDatastoreNames indexes VirtualMachine name to
-// VMHostDatastoresPairing type. This index reflects mismatched Datastore
-// names based on the current host for the VirtualMachine.
-type VMToMismatchedDatastoreNames map[string]VMHostDatastoresPairing
+// VMToMismatchedPairing indexes VirtualMachine name to a pairing of host and
+// datastores. This index reflects mismatched Datastores based on the current
+// host for the VirtualMachine.
+type VMToMismatchedPairing map[string]HostDatastoresPairing
 
-// GetVMDatastorePairingIssues receives a list of VirtualMachines and a
-// HostToDatastoreIndex to evaluate each VirtualMachine by. A
+// GetVMDatastorePairingIssues receives a list of VirtualMachines, a
+// HostToDatastoreIndex to evaluate each VirtualMachine by, a list of all
+// datastores and a list of datastore names which should be ignored. A
 // VMHostDatastoresPairing index is returned noting improperly paired
 // VirtualMachines (if any) and an error (if applicable).
-func GetVMDatastorePairingIssues(vms []mo.VirtualMachine, h2dIdx HostToDatastoreIndex, dss []mo.Datastore, ignoredDatastoreNames []string) (VMToMismatchedDatastoreNames, error) {
+//
+// NOTE: The full list of datastores is used instead of the list of datastores
+// with specified pairing custom attribute. This is because some datastores
+// may not have the specified custom attribute and the user may have opted to
+// ignore any datastores or hosts which do not have it.
+func GetVMDatastorePairingIssues(vms []mo.VirtualMachine, h2dIdx HostToDatastoreIndex, dss []mo.Datastore, ignoredDatastoreNames []string) (VMToMismatchedPairing, error) {
 
 	funcTimeStart := time.Now()
 
-	vmDatastoresPairingIssues := make(VMToMismatchedDatastoreNames)
+	vmDatastoresPairingIssues := make(VMToMismatchedPairing)
 
-	defer func(issues *VMToMismatchedDatastoreNames) {
+	defer func(issues *VMToMismatchedPairing) {
 		logger.Printf(
-			"It took %v to execute GetVMDatastorePairingIssues func (and retrieve %d VMToMismatchedDatastoreNames).\n",
+			"It took %v to execute GetVMDatastorePairingIssues func (and retrieve VMToMismatchedPairing idx [hosts: %d, datastores: %d]).\n",
 			time.Since(funcTimeStart),
-			len(*issues),
+			issues.NumHosts(),
+			issues.NumDatastores(),
 		)
 	}(&vmDatastoresPairingIssues)
 
 	for _, vm := range vms {
 
-		// Assert that VM host MOID value is available for each VM or abort.
-		// This field may be unavailable if sufficient permissions are not
-		// provided to the service account executing this plugin.
-		var hostMOID string
-		switch {
-
-		case vm.Runtime.Host == nil || vm.Runtime.Host.Value == "":
-			var lookupReason string
-
-			switch {
-			case vm.Runtime.Host == nil:
-				lookupReason = "MOID is nil"
-
-			case vm.Runtime.Host.Value == "":
-				lookupReason = "MOID is empty"
-			}
-
-			errMsg := fmt.Sprintf(
-				"error retrieving associated Host MOID for VM %s: %s",
-				vm.Name,
-				lookupReason,
-			)
-
-			return nil, errors.New(errMsg)
-
-		default:
-
-			// Safe to reference now that we have guarded against potential
-			// nil Host field pointer and empty MOID.
-			hostMOID = vm.Runtime.Host.Value
-
-			logger.Printf(
-				"VM name and host MOID: %q, %q",
-				vm.Name,
-				hostMOID,
-			)
-
+		// Assert that we can retrieve the required hostMOID for the VM.
+		hostMOID, lookupErr := getVMHostID(vm)
+		if lookupErr != nil {
+			return nil, lookupErr
 		}
 
-		// After asserting that the host MOID value is set for the VM we are
-		// evaluating, use that ID to get the host/datastores pairing (valid
-		// datastores for VMs running on the host).
 		vmHostDatastoresPairing, ok := h2dIdx[hostMOID]
 		if !ok {
-			// FAILURE due to host id lookup; this should not occur since we
-			// now (as of GH-393) create stub entries for hosts without
-			// matching datastores (via specified custom attribute).
+			// FAILURE due to host id lookup; this should not occur since we (as
+			// of GH-393) create stub entries for hosts without matching
+			// datastores (via specified custom attribute).
 			errMsg := "error retrieving host/datastores pairing using Host MOID " + hostMOID
 
-			logger.Printf(
-				"error retrieving host/datastores pairing using Host MOID %s",
-				hostMOID,
-			)
+			logger.Print(errMsg)
 
 			return nil, errors.New(errMsg)
 		}
 
-		hostName := vmHostDatastoresPairing.Host.Name
-
 		mismatchedDatastores, lookupErr := h2dIdx.ValidateVirtualMachinePairings(
-			hostMOID,
+			vm,
 			dss,
-			vm.Datastore,
 			ignoredDatastoreNames,
 		)
 
 		if lookupErr != nil {
-
 			errMsg := fmt.Sprintf(
 				"error occurred while validating VM/Host/Datastore match for vm %s and host %s",
 				vm.Name,
-				hostName,
+				vmHostDatastoresPairing.Host.Name,
 			)
 
 			logger.Print(errMsg)
@@ -213,32 +176,39 @@ func GetVMDatastorePairingIssues(vms []mo.VirtualMachine, h2dIdx HostToDatastore
 			return nil, errors.New(errMsg)
 		}
 
-		vmDatastoreNames := DatastoreIDsToNames(vm.Datastore, dss)
-
 		switch {
 		case len(mismatchedDatastores) > 0:
 
 			logger.Printf(
-				"VM/Host/Datastore validation failed for VM %s on host %s",
+				"VM/Host/Datastore validation failed for VM %q on host %q",
 				vm.Name,
-				hostName,
+				vmHostDatastoresPairing.Host.Name,
 			)
 
+			// Retrieve the complete list of datastore names for the VM,
+			// regardless of any potential mismatches between host/datastore.
+			vmDatastoreNames := DatastoreIDsToNames(vm.Datastore, dss)
 			logger.Printf(
-				"All datastores: %v",
+				"All datastores for VM %q: %q",
+				vm.Name,
 				strings.Join(vmDatastoreNames, ", "),
 			)
 
+			mismatchedDatastoreNames := make([]string, 0, len(mismatchedDatastores))
+			for _, ds := range mismatchedDatastores {
+				mismatchedDatastoreNames = append(mismatchedDatastoreNames, ds.Name)
+			}
+
 			logger.Printf(
-				"VM/Datastores mismatched: %v",
-				strings.Join(mismatchedDatastores, ", "),
+				"VM/Datastores mismatched: %q",
+				strings.Join(mismatchedDatastoreNames, ", "),
 			)
 
 			// index mismatched datastore names by VirtualMachine name, also
 			// for later review
-			vmDatastoresPairingIssues[vm.Name] = VMHostDatastoresPairing{
-				HostName:       hostName,
-				DatastoreNames: mismatchedDatastores,
+			vmDatastoresPairingIssues[vm.Name] = HostDatastoresPairing{
+				Host:       vmHostDatastoresPairing.Host,
+				Datastores: mismatchedDatastores,
 			}
 
 		default:
@@ -246,7 +216,7 @@ func GetVMDatastorePairingIssues(vms []mo.VirtualMachine, h2dIdx HostToDatastore
 			logger.Printf(
 				"All datastores for VM %q matched to host %q",
 				vm.Name,
-				hostName,
+				vmHostDatastoresPairing.Host.Name,
 			)
 
 		}
@@ -643,16 +613,44 @@ func (hdi HostToDatastoreIndex) DatastoreIDToName(dsID string) (string, error) {
 	}
 }
 
-// ValidateVirtualMachinePairings receives a VirtualMachine ID, a collection
-// of all Datastores to evaluate, the Datastore IDs associated with the VM and
-// an optional list of Datastore names to ignore. A list of mismatched
-// datastores is returned along with any errors that may occur.
+// DatastoreWithCAByID returns the DatastoreWithCA value associated with a
+// Datastore ID. An error is returned if the DatastoreWithCA value was not
+// found in the index.
+func (hdi HostToDatastoreIndex) DatastoreWithCAByID(dsID string) (DatastoreWithCA, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute DatastoreWithCAByID func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	for hostID := range hdi {
+		for _, ds := range hdi[hostID].Datastores {
+			if ds.Self.Value == dsID {
+				return ds, nil
+			}
+		}
+	}
+
+	return DatastoreWithCA{}, &ErrHostDatastoreIdxIDToNameLookupFailed{
+		DatastoreID: dsID,
+		Err:         errors.New("datastore ID not found"),
+	}
+}
+
+// ValidateVirtualMachinePairings receives a VirtualMachine host ID, a
+// collection of all Datastores, the VirtualMachine, and an optional list of
+// Datastore names to ignore. An index of mismatched virtual machine to host
+// and datastore pairings (if applicable) is returned or an error if one
+// occurs.
 func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
-	vmHostID string,
+	vm mo.VirtualMachine,
 	allDatastores []mo.Datastore,
-	vmDatastoreRefs []types.ManagedObjectReference,
 	dsNamesToIgnore []string,
-) ([]string, error) {
+) ([]DatastoreWithCA, error) {
 
 	funcTimeStart := time.Now()
 
@@ -663,100 +661,101 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 		)
 	}()
 
-	// fmt.Println("All datastores length:", len(allDatastores))
-	// fmt.Println("vmDatastoreRefs length:", len(vmDatastoreRefs))
-	// fmt.Println("dsNamesToIgnore length:", len(dsNamesToIgnore))
-	// fmt.Println("vmHostID:", vmHostID)
+	// Assert that we can retrieve the required host ID for the VM.
+	vmHostID, lookupErr := getVMHostID(vm)
+	if lookupErr != nil {
+		return nil, lookupErr
+	}
 
-	// defer func() {
-	// 	if err := recover(); err != nil {
-	// 		fmt.Println(err)
-	// 		panic(err)
-	// 	}
-	// }()
-
-	// assert that every datastore for the VM is in the list of datastores for
-	// the host
-
-	vmDatastoreIDs := make([]string, 0, len(vmDatastoreRefs))
-	hostDatastoreIDs := make([]string, 0, len(hdi[vmHostID].Datastores))
-
-	for _, vmDSRef := range vmDatastoreRefs {
+	vmDatastoreIDs := make([]string, 0, len(vm.Datastore))
+	for _, vmDSRef := range vm.Datastore {
 		vmDatastoreIDs = append(vmDatastoreIDs, vmDSRef.Value)
 	}
 
+	hostDatastoreIDs := make([]string, 0, len(hdi[vmHostID].Datastores))
 	for _, hostPairedDS := range hdi[vmHostID].Datastores {
 		hostDatastoreIDs = append(hostDatastoreIDs, hostPairedDS.Self.Value)
 	}
 
-	var datastoreMismatches []string
-
-	// assert that every datastore ID associated with the VM is within the
+	// Assert that every datastore ID associated with the VM is within the
 	// list of datastores associated with the current host for the VM.
+	vmDatastoreIDMismatches := make([]string, 0, 10)
 	for _, vmDatastoreID := range vmDatastoreIDs {
-
 		if !textutils.InList(vmDatastoreID, hostDatastoreIDs, true) {
+			vmDatastoreIDMismatches = append(vmDatastoreIDMismatches, vmDatastoreID)
+		}
+	}
 
-			// lookup errors abort the validation process, unless ...
-			dsName, lookupErr := hdi.DatastoreIDToName(vmDatastoreID)
-			if lookupErr != nil {
+	// There are no mismatches; all VMs are running on a host properly paired
+	// with the VM's datastores. No further evaluation is necessary.
+	if len(vmDatastoreIDMismatches) == 0 {
+		return nil, nil
+	}
 
-				// lookup could have failed if the sole datastore for the
-				// VM is in the ignored list; double-check that
-				// possibility before reporting the lookup failure.
-				var dsIDLookupErr *ErrHostDatastoreIdxIDToNameLookupFailed
-				if errors.As(lookupErr, &dsIDLookupErr) {
-					logger.Printf(
-						"Initial lookup failed for %s\n",
+	// For every datastore associated with the VM which isn't paired against
+	// the currently running host, add it to the mismatch index.
+	datastoreMismatches := make([]DatastoreWithCA, 0, 5)
+	for _, vmDatastoreID := range vmDatastoreIDMismatches {
+
+		// Lookup VM datastore in the index via ID.
+		ds, lookupErr := hdi.DatastoreWithCAByID(vmDatastoreID)
+		if lookupErr != nil {
+
+			// The first lookup attempt could have failed if the sole
+			// datastore for the VM is in the ignored list; double-check
+			// that possibility before reporting the lookup failure.
+			var dsIDLookupErr *ErrHostDatastoreIdxIDToNameLookupFailed
+			if errors.As(lookupErr, &dsIDLookupErr) {
+				logger.Printf(
+					"Initial lookup failed for datastore ID %s\n",
+					vmDatastoreID,
+				)
+
+				datastore, _, filterErr := FilterDatastoresByID(allDatastores, vmDatastoreID)
+				if filterErr != nil {
+					// This is our second lookup attempt using the
+					// datastore id. The first failure is because the
+					// datastore isn't in our host-to-datastore index,
+					// this second because it could not be located in the
+					// full datastores list from the vSphere inventory.
+					return nil, fmt.Errorf(
+						"second lookup attempt unsuccessful for datastore"+
+							" ID %q for VM %q; failed to locate datastore ID in "+
+							"index or full datastores list: %w",
 						vmDatastoreID,
+						vm.Name,
+						filterErr,
 					)
-
-					dsID := dsIDLookupErr.DatastoreID
-					datastore, _, filterErr := FilterDatastoresByID(allDatastores, dsID)
-					if filterErr != nil {
-
-						// This is our second attempt to lookup the
-						// datastore using the datastore id. The first
-						// failure is because the datastore isn't in our
-						// host-to-datastore index, this second because it
-						// could not be located in the full datastores
-						// list from the vSphere inventory.
-						return datastoreMismatches, fmt.Errorf(
-							"second lookup attempt unsuccessful; "+
-								"failed to locate datastore ID in "+
-								"index or full datastores list: %w",
-							filterErr,
-						)
-					}
-
-					if textutils.InList(datastore.Name, dsNamesToIgnore, true) {
-						logger.Printf(
-							"Second lookup successful; name: %s id: %s\n",
-							vmDatastoreID,
-							datastore.Name,
-						)
-						continue
-					}
-
 				}
 
-				// Lookup failure occurred for some other reason.
-				return datastoreMismatches, lookupErr
+				logger.Printf(
+					"Second lookup successful; name: %q id: %q",
+					datastore.Name,
+					vmDatastoreID,
+				)
 
+				// Resolved datastore name is in the ignore list, skip it.
+				if textutils.InList(datastore.Name, dsNamesToIgnore, true) {
+					continue
+				}
 			}
 
-			switch {
-			case textutils.InList(dsName, dsNamesToIgnore, true):
-				// if datastore name is in the ignore list, don't report
-				// the mismatch, move on and check the next datastore
-				continue
-			default:
-				// mismatched pairing; a VM datastore is not in the list
-				// of valid datastores for its current host and is not in
-				// the ignore list
-				datastoreMismatches = append(datastoreMismatches, dsName)
-			}
+			// Lookup failure occurred for some other reason.
+			return nil, lookupErr
 		}
+
+		switch {
+		case textutils.InList(ds.Name, dsNamesToIgnore, true):
+			// if datastore name is in the ignore list, don't report
+			// the mismatch, move on and check the next datastore
+			continue
+		default:
+			// mismatched pairing; a VM datastore is not in the list
+			// of valid datastores for its current host and is not in
+			// the ignore list
+			datastoreMismatches = append(datastoreMismatches, ds)
+		}
+
 	}
 
 	// return any mismatches found, note that no lookup errors occurred
@@ -764,12 +763,27 @@ func (hdi HostToDatastoreIndex) ValidateVirtualMachinePairings(
 
 }
 
+// NumDatastores returns the total number of datastores in the index for all
+// recorded hosts.
+func (vmtmp VMToMismatchedPairing) NumDatastores() int {
+	var numDatastores int
+	for k := range vmtmp {
+		numDatastores += len(vmtmp[k].Datastores)
+	}
+	return numDatastores
+}
+
+// NumHosts returns the total number of records hosts in the index.
+func (vmtmp VMToMismatchedPairing) NumHosts() int {
+	return len(vmtmp)
+}
+
 // H2D2VMsOneLineCheckSummary is used to generate a one-line Nagios service
 // check results summary. This is the line most prominent in notifications.
 func H2D2VMsOneLineCheckSummary(
 	stateLabel string,
 	evaluatedVMs []mo.VirtualMachine,
-	vmDatastoresPairingIssues VMToMismatchedDatastoreNames,
+	vmDatastoresPairingIssues VMToMismatchedPairing,
 	rps []mo.ResourcePool,
 ) string {
 
@@ -814,7 +828,7 @@ func H2D2VMsReport(
 	h2dIdx HostToDatastoreIndex,
 	allVMs []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
-	vmDatastoresPairingIssues VMToMismatchedDatastoreNames,
+	vmDatastoresPairingIssues VMToMismatchedPairing,
 	vmsToExclude []string,
 	evalPoweredOffVMs bool,
 	includeRPs []string,
@@ -886,30 +900,35 @@ func H2D2VMsReport(
 		})
 
 		// sort datastore names also (for the associated VM)
-		// for key := range vmDatastoresPairingIssues {
-		// 	// prevent "using the variable on range scope in function literal"
-		// 	// linting error
-		// 	key := key
-		// 	sort.Slice(vmDatastoresPairingIssues[key], func(i, j int) bool {
-		// 		return strings.ToLower(
-		// 			vmDatastoresPairingIssues[key][i],
-		// 		) < strings.ToLower(
-		// 			vmDatastoresPairingIssues[key][j],
-		// 		)
-		// 	})
-		// }
-		// TODO: Is the sorted order acceptable?
 		for key := range vmDatastoresPairingIssues {
-			sort.Strings(vmDatastoresPairingIssues[key].DatastoreNames)
+			// prevent "using the variable on range scope in function literal"
+			// linting error
+			vmName := key
+			sort.Slice(vmDatastoresPairingIssues[key].Datastores, func(i, j int) bool {
+				return strings.ToLower(
+					vmDatastoresPairingIssues[vmName].Datastores[i].Name,
+				) < strings.ToLower(
+					vmDatastoresPairingIssues[vmName].Datastores[j].Name,
+				)
+			})
 		}
 
 		for _, vmName := range vmNames {
+			var dsNamesWithCA strings.Builder
+			for i, ds := range vmDatastoresPairingIssues[vmName].Datastores {
+				fmt.Fprintf(&dsNamesWithCA, "%q (%s)", ds.Name, ds.CustomAttribute.Value)
+				if i != len(vmDatastoresPairingIssues[vmName].Datastores)-1 {
+					dsNamesWithCA.WriteString(", ")
+				}
+			}
+
 			fmt.Fprintf(
 				&report,
-				"* %s: [%s, %s]%s",
+				"* %s: [Host: %q (%s), Datastores: %s]%s",
 				vmName,
-				vmDatastoresPairingIssues[vmName].HostName,
-				strings.Join(vmDatastoresPairingIssues[vmName].DatastoreNames, ", "),
+				vmDatastoresPairingIssues[vmName].Host.Name,
+				vmDatastoresPairingIssues[vmName].Host.CustomAttribute.Value,
+				dsNamesWithCA.String(),
 				nagios.CheckOutputEOL,
 			)
 		}
