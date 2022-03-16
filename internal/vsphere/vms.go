@@ -1343,6 +1343,37 @@ func VMNames(vmsList []mo.VirtualMachine) []string {
 
 }
 
+// getVMHostID retrieves the VM host MOID value for a specified VM. If the
+// host MOID value is not available an error is returned. The host MOID value
+// may be unavailable if the service account executing the plugin does not
+// have sufficient permissions.
+func getVMHostID(vm mo.VirtualMachine) (string, error) {
+	switch {
+
+	case vm.Runtime.Host == nil:
+		return "", fmt.Errorf(
+			"error retrieving associated Host MOID for VM %s: %w",
+			vm.Name,
+			ErrManagedObjectIDIsNil,
+		)
+
+	case vm.Runtime.Host.Value == "":
+		return "", fmt.Errorf(
+			"error retrieving associated Host MOID for VM %s: %w",
+			vm.Name,
+			ErrManagedObjectIDIsEmpty,
+		)
+
+	default:
+
+		// Safe to reference now that we have guarded against potential
+		// nil Host field pointer and empty MOID.
+
+		return vm.Runtime.Host.Value, nil
+
+	}
+}
+
 // GetVMPowerCycleUptimeStatusSummary accepts a list of VirtualMachines and
 // threshold values and generates a collection of VirtualMachines that exceeds
 // given thresholds along with those given thresholds.
