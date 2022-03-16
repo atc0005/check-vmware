@@ -1107,6 +1107,54 @@ func FilterDatastoresByID(dss []mo.Datastore, dsID string) (mo.Datastore, int, e
 
 }
 
+// FilterDatastoresByIDs receives a collection of Datastores and Datastore IDs
+// to filter against. An error is returned if either list is empty or if a
+// match was not found for one of the provided IDs. The matching Datastores
+// are returned along with the number of Datastores that were excluded.
+func FilterDatastoresByIDs(dss []mo.Datastore, dsIDs ...string) ([]mo.Datastore, int, error) {
+
+	funcTimeStart := time.Now()
+
+	// If error condition, no exclusions are made
+	numExcluded := 0
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterDatastoresByIDs func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	if len(dss) == 0 {
+		return nil, numExcluded, fmt.Errorf("received empty list of datastores to filter by ID")
+	}
+
+	if len(dsIDs) == 0 {
+		return nil, numExcluded, fmt.Errorf("received empty list of datastore IDs to filter by")
+	}
+
+	matchedDatastores := make([]mo.Datastore, 0, len(dss))
+
+	for _, ds := range dss {
+		dsID := ds.GetManagedEntity().Reference().Value
+		if textutils.InList(dsID, dsIDs, false) {
+			matchedDatastores = append(matchedDatastores, ds)
+		}
+	}
+
+	if len(matchedDatastores) == 0 {
+		return nil, numExcluded, fmt.Errorf(
+			"error: failed to retrieve matching Datastores using provided IDs: %q",
+			strings.Join(dsIDs, ", "),
+		)
+	}
+
+	numExcluded = len(dss) - len(matchedDatastores)
+
+	return matchedDatastores, numExcluded, nil
+
+}
+
 // DatastoreIDsToNames returns a list of matching Datastore names for the
 // provided list of Managed Object References for Datastores.
 func DatastoreIDsToNames(dsRefs []types.ManagedObjectReference, dss []mo.Datastore) []string {
