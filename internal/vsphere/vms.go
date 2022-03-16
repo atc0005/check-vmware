@@ -741,7 +741,8 @@ func GetVMsWithCA(vms []mo.VirtualMachine, vmCustomAttributeName string, ignoreM
 		ca, err := GetObjectCustomAttribute(vm.ManagedEntity, vmCustomAttributeName, ignoreMissingCA)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to retrieve custom attribute for VM %s: %w",
+				"failed to retrieve custom attribute for %s %s: %w",
+				vm.ManagedEntity.Self.Type,
 				vm.Name,
 				err,
 			)
@@ -799,7 +800,8 @@ func GetVMsWithCAs(vms []mo.VirtualMachine) ([]VMWithCAs, error) {
 		// Custom attributes are set, but some other error occurred
 		case err != nil:
 			return nil, fmt.Errorf(
-				"failed to retrieve custom attributes for %s: %w",
+				"failed to retrieve custom attribute for %s %s: %w",
+				vm.ManagedEntity.Self.Type,
 				vm.Name,
 				err,
 			)
