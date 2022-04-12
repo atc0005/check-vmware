@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/atc0005/check-vmware/internal/textutils"
+
 	"github.com/atc0005/go-nagios"
 
 	"github.com/vmware/govmomi/units"
@@ -24,9 +25,54 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 )
 
+// ResourcePoolsAggregateStats is a collection of aggregated statistics for
+// one or more Resource Pools.
+type ResourcePoolsAggregateStats struct {
+	// MemoryUsageInBytes is the consumed host memory in bytes for one or more
+	// specified Resource Pools.
+	MemoryUsageInBytes int64
+
+	// BalloonedMemoryInBytes is the size of the balloon driver in bytes
+	// across all virtual machines in one or more specified Resource Pools.
+	// The host will inflate the balloon driver to reclaim physical memory
+	// from a virtual machine. This is a sign that there is memory pressure on
+	// the host.
+	BalloonedMemoryInBytes int64
+
+	// SwappedMemoryInBytes is the the portion of memory in bytes that is granted
+	// to virtual machines from the host's swap space. This is a sign that
+	// there is memory pressure on the host.
+	SwappedMemoryInBytes int64
+}
+
 // ErrResourcePoolMemoryUsageThresholdCrossed indicates that specified
 // resource pools have exceeded a given threshold
 var ErrResourcePoolMemoryUsageThresholdCrossed = errors.New("memory usage exceeds specified threshold")
+
+// ErrResourcePoolStatisticUnavailable indicates that one or more statistics
+// are missing from specified Resource Pools. This is usually due to
+// retrieving an insufficient subset of properties from a vSphere View.
+var ErrResourcePoolStatisticUnavailable = errors.New("resource pool missing expected statistic")
+
+// BalloonedMemoryHR returns the size of the balloon driver across all virtual
+// machines in one or more specified Resource Pools as a human readable
+// string.
+func (rps ResourcePoolsAggregateStats) BalloonedMemoryHR() string {
+	return units.ByteSize(rps.BalloonedMemoryInBytes).String()
+}
+
+// SwappedMemoryHR returns the portion of memory granted to all virtual
+// machines from the host's swap space across all virtual machines in one or
+// more specified Resource Pools as a human readable string.
+func (rps ResourcePoolsAggregateStats) SwappedMemoryHR() string {
+	return units.ByteSize(rps.SwappedMemoryInBytes).String()
+}
+
+// MemoryUsageHR returns the consumed host memory for one or more specified
+// Resource Pools as a human readable string.
+func (rps ResourcePoolsAggregateStats) MemoryUsageHR() string {
+	return units.ByteSize(rps.MemoryUsageInBytes).String()
+}
 
 // ValidateRPs is responsible for receiving two lists of resource pools,
 // explicitly "included" (aka, "whitelisted") and explicitly "excluded" (aka,
@@ -234,6 +280,68 @@ func GetRPByName(ctx context.Context, c *vim25.Client, rpName string, datacenter
 
 }
 
+// ResourcePoolStats receives a collection of ResourcePool values and returns
+// a collection of aggregate statistics (e.g., memory usage, ballooned memory,
+// swapped memory, etc.). An error is returned if required properties are
+// missing for one or more of the ResourcePool values.
+func ResourcePoolStats(resourcePools []mo.ResourcePool) (ResourcePoolsAggregateStats, error) {
+	var aggregateBalloonedMemoryInBytes int64
+	var aggregateSwappedMemoryInBytes int64
+	var aggregateMemoryUsageInBytes int64
+
+	for _, rp := range resourcePools {
+		// Per vSphere API docs, `rp.Runtime.Memory.OverallUsage` was
+		// deprecated in v6.5, so we use `hostMemoryUsage` instead.
+		//
+		// The `hostMemoryUsage` property tracks consummed host memory in MB.
+		// This includes the overhead memory of a virtual machine. We multiply
+		// by units.MB in order to get the number of bytes in order to match
+		// the same unit of measurement used by the `host.Hardware.MemorySize`
+		// property.
+
+		// It is unclear whether the returned pointer will ever be nill, so
+		// guard against it by returning an error if it isn't set.
+		if rp.Summary.GetResourcePoolSummary().QuickStats == nil {
+			return ResourcePoolsAggregateStats{}, fmt.Errorf(
+				"failed to retrieve stats for resource pool %q: %w",
+				rp.Name,
+				ErrResourcePoolStatisticUnavailable,
+			)
+		}
+
+		rpMemoryUsage := rp.Summary.GetResourcePoolSummary().QuickStats.HostMemoryUsage * units.MB
+		aggregateMemoryUsageInBytes += rpMemoryUsage
+
+		// The size of the balloon driver in a virtual machine, in MB. The
+		// host will inflate the balloon driver to reclaim physical memory
+		// from a virtual machine. This is a sign that there is memory
+		// pressure on the host. We multiply by units.MB in order to get the
+		// number of bytes.
+		rpBalloonedMemory := rp.Summary.GetResourcePoolSummary().QuickStats.BalloonedMemory * units.MB
+		aggregateMemoryUsageInBytes += rpMemoryUsage
+
+		rpSwappedMemory := rp.Summary.GetResourcePoolSummary().QuickStats.SwappedMemory * units.MB
+		aggregateSwappedMemoryInBytes += rpSwappedMemory
+
+		logger.Printf(
+			"resource pool %q (memory usage: %s, ballooned memory: %s, swapped memory: %s)",
+			rp.Name,
+			units.ByteSize(rpMemoryUsage).String(),
+			units.ByteSize(rpBalloonedMemory).String(),
+			units.ByteSize(rpSwappedMemory).String(),
+		)
+	}
+
+	stats := ResourcePoolsAggregateStats{
+		MemoryUsageInBytes:     aggregateMemoryUsageInBytes,
+		BalloonedMemoryInBytes: aggregateBalloonedMemoryInBytes,
+		SwappedMemoryInBytes:   aggregateSwappedMemoryInBytes,
+	}
+
+	return stats, nil
+
+}
+
 // MemoryUsedPercentage is a helper function used to calculate the current
 // memory usage as a percentage of the specified maximum memory allowed to be
 // used.
@@ -315,7 +423,6 @@ func RPMemoryUsageOneLineCheckSummary(
 // many notifications.
 func ResourcePoolsMemoryReport(
 	c *vim25.Client,
-	aggregateMemoryUsageInBytes int64,
 	maxMemoryUsageInBytes int64,
 	clusterMemoryInBytes int64,
 	includeRPs []string,

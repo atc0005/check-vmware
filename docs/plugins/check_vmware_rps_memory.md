@@ -61,6 +61,8 @@ any feedback that you may have. Thanks in advance!
 - `memory_usage`
 - `memory_used`
 - `memory_remaining`
+- `memory_ballooned`
+- `memory_swapped`
 - `resource_pools_excluded`
 - `resource_pools_included`
 - `resource_pools_evaluated`
