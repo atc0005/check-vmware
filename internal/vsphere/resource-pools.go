@@ -238,10 +238,10 @@ func GetRPByName(ctx context.Context, c *vim25.Client, rpName string, datacenter
 // memory usage as a percentage of the specified maximum memory allowed to be
 // used.
 func MemoryUsedPercentage(
-	aggregateMemoryUsageInBytesInBytes int64,
+	aggregateMemoryUsageInBytes int64,
 	maxMemoryUsageInBytes int64,
 ) float64 {
-	memoryPercentageUsedOfAllowed := (float64(aggregateMemoryUsageInBytesInBytes) / float64(maxMemoryUsageInBytes)) * 100
+	memoryPercentageUsedOfAllowed := (float64(aggregateMemoryUsageInBytes) / float64(maxMemoryUsageInBytes)) * 100
 
 	return memoryPercentageUsedOfAllowed
 }
