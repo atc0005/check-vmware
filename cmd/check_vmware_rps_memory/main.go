@@ -223,7 +223,7 @@ func main() {
 		Str("resource_pools", strings.Join(rpNames, ", ")).
 		Msg("")
 
-	aggregateRPStats, rpStatsErr := vsphere.ResourcePoolStats(resourcePools)
+	aggregateRPStats, rpStatsErr := vsphere.ResourcePoolStats(ctx, c.Client, resourcePools)
 	if rpStatsErr != nil {
 		log.Error().Err(rpStatsErr).Msg(
 			"error retrieving stats for resource pools",

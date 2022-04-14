@@ -283,13 +283,69 @@ func GetRPByName(ctx context.Context, c *vim25.Client, rpName string, datacenter
 // ResourcePoolStats receives a collection of ResourcePool values and returns
 // a collection of aggregate statistics (e.g., memory usage, ballooned memory,
 // swapped memory, etc.). An error is returned if required properties are
-// missing for one or more of the ResourcePool values.
-func ResourcePoolStats(resourcePools []mo.ResourcePool) (ResourcePoolsAggregateStats, error) {
+// missing for one or more of the ResourcePool values and an initial attempt
+// to populate the properties fails.
+func ResourcePoolStats(ctx context.Context, client *vim25.Client, resourcePools []mo.ResourcePool) (ResourcePoolsAggregateStats, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute ResourcePoolStats func (and process %d resource pools).\n",
+			time.Since(funcTimeStart),
+			len(resourcePools),
+		)
+	}()
+
 	var aggregateBalloonedMemoryInBytes int64
 	var aggregateSwappedMemoryInBytes int64
 	var aggregateMemoryUsageInBytes int64
 
 	for _, rp := range resourcePools {
+
+		rpSummary := rp.Summary.GetResourcePoolSummary()
+
+		// If required ResourcePool summary and quickStats properties are not
+		// populated, trigger a state reload in an attempt to populate them.
+		// Return an error if the attempt fails.
+		if rpSummary == nil || rpSummary.QuickStats == nil {
+
+			logger.Printf(
+				"Required statistics unavailable for ResourcePool %q; "+
+					"triggering state reload",
+				rp.Name,
+			)
+
+			if err := TriggerEntityStateReload(ctx, client, rp.ManagedEntity); err != nil {
+				return ResourcePoolsAggregateStats{}, fmt.Errorf(
+					"failed to reload state for resource pool %q: %w",
+					rp.Name,
+					ErrEntityStateReloadUnsuccessful,
+				)
+			}
+		}
+
+		// If summary and quickStats properties are *still* unpopulated,
+		// return an error.
+		//
+		// TODO: Annotate error with additional details to help sysadmin
+		// enable required settings in vSphere to ensure that the needed
+		// properties are populated.
+		switch {
+		case rpSummary == nil:
+			return ResourcePoolsAggregateStats{}, fmt.Errorf(
+				"failed to retrieve summary property for resource pool %q: %w",
+				rp.Name,
+				ErrResourcePoolStatisticUnavailable,
+			)
+		case rpSummary.QuickStats == nil:
+			return ResourcePoolsAggregateStats{}, fmt.Errorf(
+				"failed to retrieve quickstats property for resource pool %q: %w",
+				rp.Name,
+				ErrResourcePoolStatisticUnavailable,
+			)
+		}
+
 		// Per vSphere API docs, `rp.Runtime.Memory.OverallUsage` was
 		// deprecated in v6.5, so we use `hostMemoryUsage` instead.
 		//
@@ -298,18 +354,7 @@ func ResourcePoolStats(resourcePools []mo.ResourcePool) (ResourcePoolsAggregateS
 		// by units.MB in order to get the number of bytes in order to match
 		// the same unit of measurement used by the `host.Hardware.MemorySize`
 		// property.
-
-		// It is unclear whether the returned pointer will ever be nill, so
-		// guard against it by returning an error if it isn't set.
-		if rp.Summary.GetResourcePoolSummary().QuickStats == nil {
-			return ResourcePoolsAggregateStats{}, fmt.Errorf(
-				"failed to retrieve stats for resource pool %q: %w",
-				rp.Name,
-				ErrResourcePoolStatisticUnavailable,
-			)
-		}
-
-		rpMemoryUsage := rp.Summary.GetResourcePoolSummary().QuickStats.HostMemoryUsage * units.MB
+		rpMemoryUsage := rpSummary.QuickStats.HostMemoryUsage * units.MB
 		aggregateMemoryUsageInBytes += rpMemoryUsage
 
 		// The size of the balloon driver in a virtual machine, in MB. The
@@ -317,10 +362,10 @@ func ResourcePoolStats(resourcePools []mo.ResourcePool) (ResourcePoolsAggregateS
 		// from a virtual machine. This is a sign that there is memory
 		// pressure on the host. We multiply by units.MB in order to get the
 		// number of bytes.
-		rpBalloonedMemory := rp.Summary.GetResourcePoolSummary().QuickStats.BalloonedMemory * units.MB
+		rpBalloonedMemory := rpSummary.QuickStats.BalloonedMemory * units.MB
 		aggregateMemoryUsageInBytes += rpMemoryUsage
 
-		rpSwappedMemory := rp.Summary.GetResourcePoolSummary().QuickStats.SwappedMemory * units.MB
+		rpSwappedMemory := rpSummary.QuickStats.SwappedMemory * units.MB
 		aggregateSwappedMemoryInBytes += rpSwappedMemory
 
 		logger.Printf(
