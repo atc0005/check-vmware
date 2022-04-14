@@ -216,6 +216,17 @@ func GetEligibleRPs(ctx context.Context, c *vim25.Client, includeRPs []string, e
 		return nil, fmt.Errorf("failed to retrieve ResourcePools: %w", err)
 	}
 
+	rpNames := make([]string, 0, len(rpsSearchResults))
+	for _, rp := range rpsSearchResults {
+		rpNames = append(rpNames, rp.Name)
+	}
+
+	logger.Printf(
+		"Retrieved %d ResourcePool objects: %v",
+		len(rpsSearchResults),
+		strings.Join(rpNames, ", "),
+	)
+
 	for _, rp := range rpsSearchResults {
 
 		// config validation asserts that only one of include/exclude resource
@@ -323,6 +334,13 @@ func ResourcePoolStats(ctx context.Context, client *vim25.Client, resourcePools 
 					ErrEntityStateReloadUnsuccessful,
 				)
 			}
+
+			logger.Printf(
+				"State reload successfully triggered for ResourcePool %q",
+				rp.Name,
+			)
+
+			logger.Print("Rechecking statistics availability")
 		}
 
 		// If summary and quickStats properties are *still* unpopulated,
@@ -344,6 +362,8 @@ func ResourcePoolStats(ctx context.Context, client *vim25.Client, resourcePools 
 				rp.Name,
 				ErrResourcePoolStatisticUnavailable,
 			)
+		default:
+			logger.Printf("Statistics available for ResourcePool %q", rp.Name)
 		}
 
 		// Per vSphere API docs, `rp.Runtime.Memory.OverallUsage` was
