@@ -259,7 +259,7 @@ func main() {
 		for i := range filteredVMs {
 			vmEntityVals = append(vmEntityVals, filteredVMs[i].ManagedEntity)
 		}
-		if err := vsphere.TriggerEntityStateReload(ctx, c.Client, vmEntityVals); err != nil {
+		if err := vsphere.TriggerEntityStateReload(ctx, c.Client, vmEntityVals...); err != nil {
 			log.Error().Err(err).Msg(
 				"error triggering state reload for VMs",
 			)

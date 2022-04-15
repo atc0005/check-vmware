@@ -9,6 +9,7 @@ package vsphere
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/vmware/govmomi/vim25"
@@ -17,11 +18,15 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 )
 
+// ErrEntityStateReloadUnsuccessful indicates that an attempt to trigger a
+// state reload for one or more entity values was unsuccessful.
+var ErrEntityStateReloadUnsuccessful = errors.New("entity state reload unsuccessful")
+
 // TriggerEntityStateReload accepts a context, a client and a collection of
 // ManagedEntity values whose state should be reloaded. This function is used
 // when we need to ensure that we are working with the very latest state data
 // for a vSphere object.
-func TriggerEntityStateReload(ctx context.Context, c *vim25.Client, entities []mo.ManagedEntity) error {
+func TriggerEntityStateReload(ctx context.Context, c *vim25.Client, entities ...mo.ManagedEntity) error {
 
 	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.ManagedEntity.html#reload
 	// https://pkg.go.dev/github.com/vmware/govmomi@v0.27.0/vim25/methods#Reload
