@@ -8,6 +8,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [`Resources` Resource Pool](#resources-resource-pool)
 - [Performance Data](#performance-data)
   - [Background](#background)
   - [Supported metrics](#supported-metrics)
@@ -28,6 +29,9 @@
 
 Nagios plugin used to monitor memory usage across Resource Pools.
 
+If specific Resource Pools are not specified by the sysadmin for inclusion or
+exclusion all visible Resource Pools will be evaluated.
+
 In addition to reporting memory usage for each Resource Pool, this plugin also
 reports the ten most recently booted VMs along with their memory usage. This
 is intended to help spot which VM is responsible for a state change alert.
@@ -35,6 +39,15 @@ is intended to help spot which VM is responsible for a state change alert.
 Thresholds for `CRITICAL` and `WARNING` memory usage have usable defaults, but
 max memory usage is required before this plugin can be used. See the
 [configuration options](#configuration-options) section for details.
+
+## `Resources` Resource Pool
+
+**NOTE**: There is a parent or root Resource Pool named `Resources`. This
+plugin is hard-coded to exclude this Resource Pool from evaluation. Since
+other Resource Pools are descended from the `Resources` Resource Pool,
+evaluating this resource pool directly would throw off calculations. The
+`Resources` Resource Pool is listed in the plugin output as excluded,
+regardless of whether the sysadmin opts to exclude any Resource Pools.
 
 ## Performance Data
 
@@ -112,7 +125,7 @@ See the [main project README](../../README.md) for details.
 | `trust-cert`                | No       | `false` | No     | `true`, `false`                                                         | Whether the certificate should be trusted as-is without validation. WARNING: TLS is susceptible to man-in-the-middle attacks if enabling this option.                                                                                                                                                                      |
 | `include-rp`                | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pools to ignore or exclude from evaluation. |
 | `exclude-rp`                | No       |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pools that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pools to include for evaluation.                                                                                                                             |
-| `mma`, `memory-max-allowed` | **Yes**  | `0`     | No     | *positive whole number of vCPUs*                                        | Specifies the maximum amount of memory that we are allowed to consume in GB (as a whole number) in the target VMware environment across all specified Resource Pools. VMs that are running outside of resource pools are not considered in these calculations.                                                             |
+| `mma`, `memory-max-allowed` | **Yes**  | `0`     | No     | *positive whole number in GB*                                           | Specifies the maximum amount of memory that we are allowed to consume in GB (as a whole number) in the target VMware environment across all specified Resource Pools. VMs that are running outside of resource pools are not considered in these calculations.                                                             |
 | `mc`, `memory-use-critical` | No       | `95`    | No     | *percentage as positive whole number*                                   | Specifies the percentage of memory use (as a whole number) across all specified Resource Pools when a CRITICAL threshold is reached.                                                                                                                                                                                       |
 | `mw`, `memory-use-warning`  | No       | `100`   | No     | *percentage as positive whole number*                                   | Specifies the percentage of memory use (as a whole number) across all specified Resource Pools when a WARNING threshold is reached.                                                                                                                                                                                        |
 
@@ -140,7 +153,13 @@ command definitions and Nagios configuration files.
 
 Of note:
 
-- The resource pool named `Desktops` is excluded from evaluation.
+- The default/parent/root resource pool named `Resources` is excluded from
+  evaluation
+  - this behavior is hard-coded into the plugin
+  - since other resource pools are descended from this one, evaluating this
+    resource pool directly would skew memory usage calculations
+- The resource pool named `Desktops` was specified by the sysadmin to be
+  excluded from evaluation
   - this results in *all other* resource pools visible to the specified user
     account being used for evaluation
   - VMs *outside* of a Resource Pool (visible to the specified user account or
