@@ -209,6 +209,7 @@ func main() {
 
 		return
 	}
+	log.Debug().Msg("Successfully validated resource pools")
 
 	log.Debug().Msg("Retrieving eligible resource pools")
 	resourcePools, getRPsErr := vsphere.GetEligibleRPs(
@@ -241,8 +242,9 @@ func main() {
 
 	log.Debug().
 		Str("resource_pools", strings.Join(rpNames, ", ")).
-		Msg("")
+		Msg("Successfully retrieved resource pools")
 
+	log.Debug().Msg("Retrieving stats for resource pools")
 	aggregateRPStats, rpStatsErr := vsphere.ResourcePoolStats(ctx, c.Client, resourcePools)
 	if rpStatsErr != nil {
 		log.Error().Err(rpStatsErr).Msg(
@@ -259,7 +261,9 @@ func main() {
 
 		return
 	}
+	log.Debug().Msg("Successfully retrieved stats for resource pools")
 
+	log.Debug().Msg("Retrieving hosts memory capacity")
 	clusterMemoryInBytes, getMemErr := vsphere.GetHostSystemsTotalMemory(ctx, c.Client, false)
 	if getMemErr != nil {
 		log.Error().Err(getMemErr).Msg(
@@ -276,6 +280,7 @@ func main() {
 
 		return
 	}
+	log.Debug().Msg("Successfully retrieved hosts memory capacity")
 
 	memoryPercentageUsedOfClusterCapacity := vsphere.MemoryUsedPercentage(
 		aggregateRPStats.MemoryUsageInBytes,
@@ -333,6 +338,7 @@ func main() {
 
 		return
 	}
+	log.Debug().Msg("Successfully retrieved vms from eligible resource pools")
 
 	log.Debug().Msg("Compiling Performance Data details")
 
