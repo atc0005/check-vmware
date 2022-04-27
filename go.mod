@@ -11,7 +11,7 @@ go 1.17
 
 require (
 	github.com/atc0005/go-nagios v0.8.2
-	github.com/google/go-cmp v0.5.7
+	github.com/google/go-cmp v0.5.8
 	github.com/rs/zerolog v1.26.1
 	github.com/vmware/govmomi v0.27.4
 )
