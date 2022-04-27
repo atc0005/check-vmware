@@ -26,6 +26,46 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.30.0] - 2022-04-27
+
+### Overview
+
+- Expand support for Nagios Performance Data
+- Bugfixes
+- Dependency updates
+- built using Go 1.17.9
+  - Statically linked
+  - Linux x64
+
+### Added
+
+- (GH-652) Extend `check_vmware_rps_memory` plugin to emit swapped memory
+  perfdata
+- (GH-644) Extend `check_vmware_rps_memory` plugin to emit ballooned memory
+  perfdata
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.8` to `1.17.9`
+  - `google/go-cmp`
+    - `v0.5.7` to `v0.5.8`
+  - `github/codeql-action`
+    - `v1.1.5` to `v2.1.8`
+
+- (GH-648) Update send2teams command definition to reflect changes from
+  send2teams v0.9.0 release
+- (GH-650) Update send2teams command definition to use condensed overview
+  format
+
+### Fixed
+
+- (GH-653) Fix duplication in variable name
+- (GH-659) Update doc for check_vmware_rps_memory plugin
+- (GH-660) Expand logging, attempt state reload for Resource Pool stats
+- (GH-663) Document that RPS plugin requires vCenter instance
+
 ## [v0.29.2] - 2022-03-16
 
 ### Overview
@@ -1694,7 +1734,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.29.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.0...HEAD
+[v0.30.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.0
 [v0.29.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.29.2
 [v0.29.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.29.1
 [v0.29.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.29.0
