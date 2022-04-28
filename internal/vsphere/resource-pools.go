@@ -383,7 +383,7 @@ func ResourcePoolStats(ctx context.Context, client *vim25.Client, resourcePools 
 		// pressure on the host. We multiply by units.MB in order to get the
 		// number of bytes.
 		rpBalloonedMemory := rpSummary.QuickStats.BalloonedMemory * units.MB
-		aggregateMemoryUsageInBytes += rpMemoryUsage
+		aggregateBalloonedMemoryInBytes += rpBalloonedMemory
 
 		rpSwappedMemory := rpSummary.QuickStats.SwappedMemory * units.MB
 		aggregateSwappedMemoryInBytes += rpSwappedMemory
