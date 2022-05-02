@@ -46,7 +46,8 @@ The following types of changes will be recorded in this file:
 
 ### Fixed
 
-- (GH-668) Total memory calculation error in the check_vmware_rps_memory
+- (GH-668) Total memory calculation error in the `check_vmware_rps_memory`
+  plugin
 
 ## [v0.30.0] - 2022-04-27
 
