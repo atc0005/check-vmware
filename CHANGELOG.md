@@ -26,6 +26,23 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.30.2] - 2022-05-11
+
+### Overview
+
+- Dependency updates
+- built using Go 1.17.10
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.9` to `1.17.10`
+  - `github/codeql-action`
+    - `v2.1.9` to `v2.1.10`
+
 ## [v0.30.1] - 2022-04-29
 
 ### Overview
@@ -1757,7 +1774,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.2...HEAD
+[v0.30.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.2
 [v0.30.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.1
 [v0.30.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.0
 [v0.29.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.29.2
