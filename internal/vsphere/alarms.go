@@ -361,6 +361,9 @@ func (tas TriggeredAlarms) HasCriticalState(evalExcluded bool) bool {
 
 	for i := range tas {
 		if hasCriticalState {
+			// NOTE: We are interested in whether *any* alarm is in CRITICAL
+			// state. If we found a single match that is sufficient for our
+			// purposes; we do not need to look any further.
 			break
 		}
 		switch {
@@ -442,6 +445,9 @@ func (tas TriggeredAlarms) HasWarningState(evalExcluded bool) bool {
 
 	for i := range tas {
 		if hasWarningState {
+			// NOTE: We are interested in whether *any* alarm is in WARNING
+			// state. If we found a single match that is sufficient for our
+			// purposes; we do not need to look any further.
 			break
 		}
 		switch {
@@ -524,6 +530,9 @@ func (tas TriggeredAlarms) HasUnknownState(evalExcluded bool) bool {
 
 	for i := range tas {
 		if hasUnknownState {
+			// NOTE: We are interested in whether *any* alarm is in UNKNOWN
+			// state. If we found a single match that is sufficient for our
+			// purposes; we do not need to look any further.
 			break
 		}
 		switch {
