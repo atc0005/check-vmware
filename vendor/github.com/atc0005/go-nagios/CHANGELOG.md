@@ -26,6 +26,47 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.9.1] - 2022-06-20
+
+### Fixed
+
+- (GH-132) `LongServiceOutput` header is emitted when
+  `ExitState.LongServiceOutput` field is empty
+- (GH-134) Update lintinstall Makefile recipe
+- (GH-135) Fix Go 1.19beta1 gofmt linter warning
+
+## [v0.9.0] - 2022-06-16
+
+### Added
+
+- (GH-107) Add support for overriding section headers/labels
+- (GH-117) Add options to explicitly "hide" or omit Thresholds and Errors
+  section, automatically hide Detailed Info section if those sections are
+  unused
+- (GH-120) Allow collecting multiple errors
+
+### Changed
+
+- Dependencies
+  - `actions/checkout`
+    - `v2.4.0` to `v3`
+  - `actions/setup-node`
+    - `v2.5.1` to `v3`
+
+- (GH-118) Automatically omit Thresholds and Errors sections if unused
+- (GH-112) Expand linting GitHub Actions Workflow to include `oldstable`,
+  `unstable` container images
+- (GH-113) Switch Docker image source from Docker Hub to GitHub Container
+  Registry (GHCR)
+- (GH-130) Refresh README, go.doc files for v0.9.0 release
+
+### Fixed
+
+- (GH-121) `err113` linting issues: `do not define dynamic errors, use wrapped
+  static errors instead`
+- (GH-127) cognitive complexity 32 of func `(*ExitState).ReturnCheckResults`
+  is high (> 10) (gocognit)
+
 ## [v0.8.2] - 2022-01-01
 
 ### Changed
@@ -317,7 +358,9 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.8.2...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.9.1...HEAD
+[v0.9.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.1
+[v0.9.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.0
 [v0.8.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.2
 [v0.8.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.1
 [v0.8.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.0

@@ -8,17 +8,19 @@
 package nagios
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
+	"strings"
 )
 
 // Nagios plugin/service check states. These constants replicate the values
 // from utils.sh which is normally found at one of these two locations,
 // depending on which Linux distribution you're using:
 //
-//     /usr/lib/nagios/plugins/utils.sh
-//     /usr/local/nagios/libexec/utils.sh
+// - /usr/lib/nagios/plugins/utils.sh
+// - /usr/local/nagios/libexec/utils.sh
 //
 // See also http://nagios-plugins.org/doc/guidelines.html
 const (
@@ -45,12 +47,43 @@ const (
 // (without a leading space) within the `$LONGSERVICEOUTPUT$` macro as literal
 // values instead of parsing them for display purposes.
 //
-// Using DOS EOL values with `fmt.Printf()` gave expected formatting results
-// in the Nagios Core web UI, but resulted in double newlines in Nagios XI
-// output (see GH-109). Switching back to a UNIX EOL with a single leading
-// space appears to give the intended results for both Nagios Core and Nagios
-// XI.
+// Using DOS EOL values with fmt.Fprintf() (or fmt.Fprintln()) gives expected
+// formatting results in the Nagios Core web UI, but results in double
+// newlines in Nagios XI output (see GH-109). Using a UNIX EOL with a single
+// leading space appears to give the intended results for both Nagios Core and
+// Nagios XI.
 const CheckOutputEOL string = " \n"
+
+// Default header text for various sections of the output if not overridden.
+const (
+	defaultThresholdsLabel   string = "THRESHOLDS"
+	defaultErrorsLabel       string = "ERRORS"
+	defaultDetailedInfoLabel string = "DETAILED INFO"
+)
+
+// Sentinel error collection. Exported for potential use by client code to
+// detect & handle specific error scenarios.
+var (
+	// ErrPanicDetected indicates that client code has an unhandled panic and
+	// that this library detected it before it could cause the plugin to
+	// abort. This error is included in the LongServiceOutput emitted by the
+	// plugin.
+	ErrPanicDetected = errors.New("plugin crash/panic detected")
+
+	// ErrPerformanceDataMissingLabel indicates that client code did not
+	// provide a PerformanceData value in the expected format; the label for
+	// the label/value pair is missing.
+	ErrPerformanceDataMissingLabel = errors.New("provided performance data missing required label")
+
+	// ErrPerformanceDataMissingValue indicates that client code did not
+	// provide a PerformanceData value in the expected format; the value for
+	// the label/value pair is missing.
+	ErrPerformanceDataMissingValue = errors.New("provided performance data missing required value")
+
+	// ErrNoPerformanceDataProvided indicates that client code did not provide
+	// the expected PerformanceData value(s).
+	ErrNoPerformanceDataProvided = errors.New("no performance data provided")
+)
 
 // ServiceState represents the status label and exit code for a service check.
 type ServiceState struct {
@@ -133,9 +166,9 @@ func (pd PerformanceData) Validate() error {
 	// Validate fields
 	switch {
 	case pd.Label == "":
-		return fmt.Errorf("provided performance data missing required label")
+		return ErrPerformanceDataMissingLabel
 	case pd.Value == "":
-		return fmt.Errorf("provided performance data missing required value")
+		return ErrPerformanceDataMissingValue
 
 	// TODO: Expand validation
 	// https://nagios-plugins.org/doc/guidelines.html
@@ -159,7 +192,13 @@ type ExitState struct {
 	// LastError is the last error encountered which should be reported as
 	// part of ending the service check (e.g., "Failed to connect to XYZ to
 	// check contents of Inbox").
+	//
+	// Deprecated: Use Errors field or AddError method instead.
 	LastError error
+
+	// Errors is a collection of one or more recorded errors to be displayed
+	// in LongServiceOutput as a list when ending the service check.
+	Errors []error
 
 	// ExitStatusCode is the exit or exit status code provided to the Nagios
 	// instance that calls this service check. These status codes indicate to
@@ -188,6 +227,28 @@ type ExitState struct {
 	// has crossed between an existing state into a CRITICAL state. This value
 	// is used for display purposes.
 	CriticalThreshold string
+
+	// thresholdLabel is an optional custom label used in place of the
+	// standard text prior to a list of threshold values.
+	thresholdsLabel string
+
+	// errorsLabel is an optional custom label used in place of the standard
+	// text prior to a list of recorded error values.
+	errorsLabel string
+
+	// detailedInfoLabel is an optional custom label used in place of the
+	// standard text prior to emitting LongServiceOutput.
+	detailedInfoLabel string
+
+	// hideThresholdsSection indicates whether client code has opted to hide
+	// the thresholds section, regardless of whether client code previously
+	// specified values for display.
+	hideThresholdsSection bool
+
+	// hideErrorsSection indicates whether client code has opted to hide the
+	// errors section, regardless of whether client code previously specified
+	// values for display.
+	hideErrorsSection bool
 
 	// BrandingCallback is a function that is called before application
 	// termination to emit branding details at the end of the notification.
@@ -229,11 +290,13 @@ type ExitState struct {
 // details from the panic instead as a CRITICAL state.
 func (es *ExitState) ReturnCheckResults() {
 
+	var output strings.Builder
+
 	// Check for unhandled panic in client code. If present, override
 	// ExitState and make clear that the client code/plugin crashed.
 	if err := recover(); err != nil {
 
-		es.LastError = fmt.Errorf("plugin crash/panic detected: %s", err)
+		es.AddError(fmt.Errorf("%w: %s", ErrPanicDetected, err))
 
 		es.ServiceOutput = fmt.Sprintf(
 			"%s: plugin crash detected. See details via web UI or run plugin manually via CLI.",
@@ -263,10 +326,10 @@ func (es *ExitState) ReturnCheckResults() {
 	}
 
 	// ##################################################################
-	// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
-	// interpret them literally instead of emitting an actual newline.
-	// We work around that by using fmt.Printf() and fmt.Print() for
-	// output that is intended for display within the Nagios web UI.
+	// Note: fmt.Println() (and fmt.Fprintln()) has the same issue as `\n`:
+	// Nagios seems to interpret them literally instead of emitting an actual
+	// newline. We work around that by using fmt.Fprintf() and fmt.Fprint()
+	// for output that is intended for display within the Nagios web UI.
 	// ##################################################################
 
 	// One-line output used as the summary or short explanation for the
@@ -274,108 +337,24 @@ func (es *ExitState) ReturnCheckResults() {
 	// changes to this content, simply emit it as-is. This helps avoid
 	// potential issues with literal characters being interpreted as
 	// formatting verbs.
-	fmt.Print(es.ServiceOutput)
+	fmt.Fprintf(&output, es.ServiceOutput)
 
-	if es.LongServiceOutput != "" || es.LastError != nil {
+	es.handleErrorsSection(&output)
 
-		fmt.Printf("%s%s**ERRORS**%s", CheckOutputEOL, CheckOutputEOL, CheckOutputEOL)
+	es.handleThresholdsSection(&output)
 
-		// If an error occurred or if there are additional details to share ...
-
-		if es.LastError != nil {
-			fmt.Printf("%s* %v%s", CheckOutputEOL, es.LastError, CheckOutputEOL)
-		} else {
-			fmt.Printf("%s* None%s", CheckOutputEOL, CheckOutputEOL)
-		}
-
-		if es.LongServiceOutput != "" {
-
-			fmt.Printf("%s**THRESHOLDS**%s", CheckOutputEOL, CheckOutputEOL)
-
-			if es.CriticalThreshold != "" || es.WarningThreshold != "" {
-
-				fmt.Print(CheckOutputEOL)
-
-				if es.CriticalThreshold != "" {
-					fmt.Printf(
-						"* %s: %v%s",
-						StateCRITICALLabel,
-						es.CriticalThreshold,
-						CheckOutputEOL,
-					)
-				}
-
-				if es.WarningThreshold != "" {
-					fmt.Printf(
-						"* %s: %v%s",
-						StateWARNINGLabel,
-						es.WarningThreshold,
-						CheckOutputEOL,
-					)
-				}
-			} else {
-				fmt.Printf("%s* Not specified%s", CheckOutputEOL, CheckOutputEOL)
-			}
-
-			fmt.Printf("%s**DETAILED INFO**%s", CheckOutputEOL, CheckOutputEOL)
-
-			// Note: fmt.Println() has the same issue as `\n`: Nagios seems to
-			// interpret them literally instead of emitting an actual newline.
-			// We work around that by using fmt.Printf() for output that is
-			// intended for display within the Nagios web UI.
-			fmt.Printf(
-				"%s%v%s",
-				CheckOutputEOL,
-				es.LongServiceOutput,
-				CheckOutputEOL,
-			)
-		}
-
-	}
+	es.handleLongServiceOutput(&output)
 
 	// If set, call user-provided branding function before emitting
 	// performance data and exiting application.
 	if es.BrandingCallback != nil {
-		fmt.Printf("%s%s%s", CheckOutputEOL, es.BrandingCallback(), CheckOutputEOL)
+		fmt.Fprintf(&output, "%s%s%s", CheckOutputEOL, es.BrandingCallback(), CheckOutputEOL)
 	}
 
-	// Generate formatted performance data if provided. Only emit if a
-	// one-line summary is set by client code.
-	if len(es.perfData) != 0 && es.ServiceOutput != "" {
+	es.handlePerformanceData(&output)
 
-		// Performance data metrics are appended to plugin output. These
-		// metrics are provided as a single line, leading with a pipe
-		// character, a space and one or more metrics each separated from
-		// another by a single space.
-		fmt.Print(" |")
-
-		for _, pd := range es.perfData {
-			fmt.Printf(
-				// The expected format of a performance data metric:
-				//
-				// 'label'=value[UOM];[warn];[crit];[min];[max]
-				//
-				// References:
-				//
-				// https://nagios-plugins.org/doc/guidelines.html
-				// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/perfdata.html
-				// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/pluginapi.html
-				// https://www.monitoring-plugins.org/doc/guidelines.html
-				// https://icinga.com/docs/icinga-2/latest/doc/05-service-monitoring/#performance-data-metrics
-				" '%s'=%s%s;%s;%s;%s;%s",
-				pd.Label,
-				pd.Value,
-				pd.UnitOfMeasurement,
-				pd.Warn,
-				pd.Crit,
-				pd.Min,
-				pd.Max,
-			)
-		}
-
-		// Add final trailing newline to satisfy Nagios plugin output format.
-		fmt.Print(CheckOutputEOL)
-	}
+	// Emit all collected output.
+	fmt.Print(output.String())
 
 	os.Exit(es.ExitStatusCode)
 }
@@ -389,7 +368,7 @@ func (es *ExitState) ReturnCheckResults() {
 func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error {
 
 	if len(pd) == 0 {
-		return fmt.Errorf("no performance data provided")
+		return ErrNoPerformanceDataProvided
 	}
 
 	if !skipValidate {
@@ -404,4 +383,9 @@ func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error
 
 	return nil
 
+}
+
+// AddError appends provided errors to the collection.
+func (es *ExitState) AddError(err ...error) {
+	es.Errors = append(es.Errors, err...)
 }
