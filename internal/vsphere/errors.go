@@ -34,30 +34,68 @@ var ErrVMwareAdminAssistanceNeeded = errors.New(
 // updated error chain is returned to the caller, preserving the original
 // wrapped error. The original error is returned unmodified if no annotations
 // were deemed necessary.
-func AnnotateError(err error) error {
+func AnnotateError(errs ...error) []error {
 
 	funcTimeStart := time.Now()
 
-	defer func() {
+	var errsAnnotated int
+	defer func(counter *int) {
 		logger.Printf(
-			"It took %v to execute AnnotateError func.\n",
+			"It took %v to execute AnnotateError func(errors evaluated: %d, annotated: %d)",
 			time.Since(funcTimeStart),
+			len(errs),
+			*counter,
 		)
-	}()
+	}(&errsAnnotated)
+
+	isNilErrCollection := func(collection []error) bool {
+		if len(collection) != 0 {
+			for _, err := range errs {
+				if err != nil {
+					return false
+				}
+			}
+		}
+		return true
+	}
 
 	switch {
 
-	case errors.Is(err, context.DeadlineExceeded):
-		return fmt.Errorf("%w: %s", err, ErrRuntimeTimeoutReached)
+	// Process errors as long as the collection is not empty or not composed
+	// entirely of nil values.
+	case !isNilErrCollection(errs):
+		annotatedErrors := make([]error, 0, len(errs))
 
-	case errors.Is(err, ErrDatastoreIormConfigurationStatisticsCollectionDisabled):
-		return fmt.Errorf("%w: %s", err, ErrVMwareAdminAssistanceNeeded)
+		for _, err := range errs {
+			if err != nil {
 
+				switch {
+				case errors.Is(err, context.DeadlineExceeded):
+					annotatedErrors = append(annotatedErrors, fmt.Errorf(
+						"%w: %s", err, ErrRuntimeTimeoutReached),
+					)
+
+				case errors.Is(err, ErrDatastoreIormConfigurationStatisticsCollectionDisabled):
+					annotatedErrors = append(annotatedErrors, fmt.Errorf(
+						"%w: %s", err, ErrVMwareAdminAssistanceNeeded),
+					)
+
+				default:
+					// Return error unmodified if additional decoration isn't
+					// defined for the error type.
+					annotatedErrors = append(annotatedErrors, err)
+
+				}
+
+			}
+
+		}
+
+		return annotatedErrors
+
+	// No errors were provided for evaluation.
 	default:
-
-		// Return error unmodified if additional decoration isn't defined for the
-		// error type.
-		return err
+		return nil
 
 	}
 

@@ -56,7 +56,7 @@ func main() {
 
 		// Annotate errors (if applicable) with additional context to aid in
 		// troubleshooting.
-		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+		nagiosExitState.Errors = vsphere.AnnotateError(nagiosExitState.Errors...)
 	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
@@ -81,7 +81,7 @@ func main() {
 			"%s: Error initializing application",
 			nagios.StateCRITICALLabel,
 		)
-		nagiosExitState.LastError = cfgErr
+		nagiosExitState.AddError(cfgErr)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
@@ -129,7 +129,7 @@ func main() {
 	if loginErr != nil {
 		log.Error().Err(loginErr).Msgf("error logging into %s", cfg.Server)
 
-		nagiosExitState.LastError = loginErr
+		nagiosExitState.AddError(loginErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error logging into %q",
 			nagios.StateCRITICALLabel,
@@ -159,7 +159,7 @@ func main() {
 	if validateErr != nil {
 		log.Error().Err(validateErr).Msg("error validating include/exclude lists")
 
-		nagiosExitState.LastError = validateErr
+		nagiosExitState.AddError(validateErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error validating include/exclude lists",
 			nagios.StateCRITICALLabel,
@@ -182,7 +182,7 @@ func main() {
 			"error retrieving list of resource pools",
 		)
 
-		nagiosExitState.LastError = getRPsErr
+		nagiosExitState.AddError(getRPsErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving list of resource pools from %q",
 			nagios.StateCRITICALLabel,
@@ -213,7 +213,7 @@ func main() {
 			"error retrieving list of VMs from resource pools list",
 		)
 
-		nagiosExitState.LastError = getVMsErr
+		nagiosExitState.AddError(getVMsErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving list of VMs from resource pools list",
 			nagios.StateCRITICALLabel,
@@ -251,7 +251,7 @@ func main() {
 			"error retrieving list of datastores",
 		)
 
-		nagiosExitState.LastError = dssErr
+		nagiosExitState.AddError(dssErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving list of datastores",
 			nagios.StateCRITICALLabel,
@@ -274,7 +274,7 @@ func main() {
 			Str("custom_attribute_name", dsCustomAttributeName).
 			Msg("error retrieving datastores with specified Custom Attribute")
 
-		nagiosExitState.LastError = dsLookupErr
+		nagiosExitState.AddError(dsLookupErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving datastores with Custom Attribute %q",
 			nagios.StateCRITICALLabel,
@@ -301,7 +301,7 @@ func main() {
 			"error retrieving list of hosts",
 		)
 
-		nagiosExitState.LastError = hsErr
+		nagiosExitState.AddError(hsErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving list of hosts",
 			nagios.StateCRITICALLabel,
@@ -323,7 +323,7 @@ func main() {
 			Str("custom_attribute_name", hostCustomAttributeName).
 			Msg("error retrieving hosts with specified Custom Attribute")
 
-		nagiosExitState.LastError = hostsLookupErr
+		nagiosExitState.AddError(hostsLookupErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving hosts with Custom Attribute %q",
 			nagios.StateCRITICALLabel,
@@ -346,7 +346,7 @@ func main() {
 	}
 
 	// Create host-to-datastore index for *all* hosts and datastores, even
-	// where a host has no matching datastores (via specificied literal or
+	// where a host has no matching datastores (via specified literal or
 	// prefix custom attribute values).
 	h2dIdx, h2dIdxErr := vsphere.NewHostToDatastoreIndex(
 		hostsWithCAs,
@@ -378,7 +378,7 @@ func main() {
 			dsCustomAttributeName,
 		)
 
-		nagiosExitState.LastError = h2dIdxErr
+		nagiosExitState.AddError(h2dIdxErr)
 
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
@@ -416,7 +416,7 @@ func main() {
 
 		log.Error().Err(lookupErr).Msg(errMsg)
 
-		nagiosExitState.LastError = lookupErr
+		nagiosExitState.AddError(lookupErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: %s",
 			nagios.StateCRITICALLabel,
@@ -499,7 +499,7 @@ func main() {
 			Str("mismatched_vms_list", strings.Join(vmNames, ", ")).
 			Msg("VM/Host/Datastore validation failed")
 
-		nagiosExitState.LastError = vsphere.ErrVMDatastoreNotInVMHostPairedList
+		nagiosExitState.AddError(vsphere.ErrVMDatastoreNotInVMHostPairedList)
 
 		nagiosExitState.ServiceOutput = vsphere.H2D2VMsOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
@@ -541,8 +541,6 @@ func main() {
 		// success if we made it here
 
 		log.Debug().Msg("No mismatched Host/Datastore/VM pairings detected")
-
-		nagiosExitState.LastError = nil
 
 		nagiosExitState.ServiceOutput = vsphere.H2D2VMsOneLineCheckSummary(
 			nagios.StateOKLabel,

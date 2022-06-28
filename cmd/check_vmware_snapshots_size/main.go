@@ -55,7 +55,7 @@ func main() {
 
 		// Annotate errors (if applicable) with additional context to aid in
 		// troubleshooting.
-		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+		nagiosExitState.Errors = vsphere.AnnotateError(nagiosExitState.Errors...)
 	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
@@ -80,7 +80,7 @@ func main() {
 			"%s: Error initializing application",
 			nagios.StateCRITICALLabel,
 		)
-		nagiosExitState.LastError = cfgErr
+		nagiosExitState.AddError(cfgErr)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
@@ -131,7 +131,7 @@ func main() {
 	if loginErr != nil {
 		log.Error().Err(loginErr).Msgf("error logging into %s", cfg.Server)
 
-		nagiosExitState.LastError = loginErr
+		nagiosExitState.AddError(loginErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error logging into %q",
 			nagios.StateCRITICALLabel,
@@ -161,7 +161,7 @@ func main() {
 	if validateErr != nil {
 		log.Error().Err(validateErr).Msg("error validating include/exclude lists")
 
-		nagiosExitState.LastError = validateErr
+		nagiosExitState.AddError(validateErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error validating include/exclude lists",
 			nagios.StateCRITICALLabel,
@@ -184,7 +184,7 @@ func main() {
 			"error retrieving list of resource pools",
 		)
 
-		nagiosExitState.LastError = getRPsErr
+		nagiosExitState.AddError(getRPsErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving list of resource pools from %q",
 			nagios.StateCRITICALLabel,
@@ -215,7 +215,7 @@ func main() {
 			"error retrieving list of VMs from resource pools list",
 		)
 
-		nagiosExitState.LastError = getVMsErr
+		nagiosExitState.AddError(getVMsErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving list of VMs from resource pools list",
 			nagios.StateCRITICALLabel,
@@ -354,7 +354,7 @@ func main() {
 			Int("num_snapshots_size_critical", largeSnapshots).
 			Msg("Snapshot sets contain a snapshot which exceeds specified size in GB")
 
-		nagiosExitState.LastError = vsphere.ErrSnapshotSizeThresholdCrossed
+		nagiosExitState.AddError(vsphere.ErrSnapshotSizeThresholdCrossed)
 
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsSizeOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
@@ -397,7 +397,7 @@ func main() {
 			Int("num_snapshots_size_warning", largeSnapshots).
 			Msg("Snapshot sets contain a snapshot which exceeds specified size in GB")
 
-		nagiosExitState.LastError = vsphere.ErrSnapshotSizeThresholdCrossed
+		nagiosExitState.AddError(vsphere.ErrSnapshotSizeThresholdCrossed)
 
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsSizeOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
@@ -432,8 +432,6 @@ func main() {
 		return
 
 	default:
-
-		nagiosExitState.LastError = nil
 
 		nagiosExitState.ServiceOutput = vsphere.SnapshotsSizeOneLineCheckSummary(
 			nagios.StateOKLabel,

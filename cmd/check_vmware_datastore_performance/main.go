@@ -56,7 +56,7 @@ func main() {
 
 		// Annotate errors (if applicable) with additional context to aid in
 		// troubleshooting.
-		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+		nagiosExitState.Errors = vsphere.AnnotateError(nagiosExitState.Errors...)
 	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
@@ -81,7 +81,7 @@ func main() {
 			"%s: Error initializing application",
 			nagios.StateCRITICALLabel,
 		)
-		nagiosExitState.LastError = cfgErr
+		nagiosExitState.AddError(cfgErr)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
@@ -127,7 +127,7 @@ func main() {
 	if loginErr != nil {
 		log.Error().Err(loginErr).Msgf("error logging into %s", cfg.Server)
 
-		nagiosExitState.LastError = loginErr
+		nagiosExitState.AddError(loginErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error logging into %q",
 			nagios.StateCRITICALLabel,
@@ -163,7 +163,7 @@ func main() {
 			"error retrieving requested datastore",
 		)
 
-		nagiosExitState.LastError = dsFetchErr
+		nagiosExitState.AddError(dsFetchErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving datastore %q",
 			nagios.StateCRITICALLabel,
@@ -183,7 +183,7 @@ func main() {
 			Str("reasons", strings.Join(dsInaccessibleReasons, ", ")).
 			Msg("datastore is inaccessible")
 
-		nagiosExitState.LastError = dsAccessibilityErr
+		nagiosExitState.AddError(dsAccessibilityErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Datastore %q is inaccessible due to: [%s]",
 			nagios.StateCRITICALLabel,
@@ -232,7 +232,7 @@ func main() {
 				"unable to retrieve performance summary for datastore",
 			)
 
-			nagiosExitState.LastError = err
+			nagiosExitState.AddError(err)
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
 				"%s: Unable to retrieve performance summary for datastore %q: %s",
 				serviceState.Label,
@@ -254,7 +254,6 @@ func main() {
 				Err(dsPerfErr).
 				Msg("Ignoring missing Datastore performance metrics as requested")
 
-			nagiosExitState.LastError = nil
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
 				"%s: Datastore Performance metrics unavailable for datastore %q; ignoring as requested",
 				nagios.StateOKLabel,
@@ -342,7 +341,7 @@ func main() {
 			"error retrieving datastore performance summary details for active interval",
 		)
 
-		nagiosExitState.LastError = activePerfSummaryErr
+		nagiosExitState.AddError(activePerfSummaryErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving datastore %q",
 			nagios.StateCRITICALLabel,
@@ -451,7 +450,7 @@ func main() {
 
 		log.Error().Msg("Datastore performance UNKNOWN")
 
-		nagiosExitState.LastError = dsPerfSummarySet.UnknownState()
+		nagiosExitState.AddError(dsPerfSummarySet.UnknownState())
 
 		nagiosExitState.ServiceOutput = vsphere.DatastorePerformanceOneLineCheckSummary(
 			nagios.StateUNKNOWNLabel,
@@ -478,7 +477,7 @@ func main() {
 
 		log.Error().Msg("Datastore performance CRITICAL")
 
-		nagiosExitState.LastError = vsphere.ErrDatastoreLatencyThresholdCrossed
+		nagiosExitState.AddError(vsphere.ErrDatastoreLatencyThresholdCrossed)
 
 		nagiosExitState.ServiceOutput = vsphere.DatastorePerformanceOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
@@ -505,7 +504,7 @@ func main() {
 
 		log.Error().Msg("Datastore performance WARNING")
 
-		nagiosExitState.LastError = vsphere.ErrDatastoreLatencyThresholdCrossed
+		nagiosExitState.AddError(vsphere.ErrDatastoreLatencyThresholdCrossed)
 
 		nagiosExitState.ServiceOutput = vsphere.DatastorePerformanceOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
@@ -531,8 +530,6 @@ func main() {
 	default:
 
 		log.Debug().Msg("Datastore performance within specified thresholds")
-
-		nagiosExitState.LastError = nil
 
 		nagiosExitState.ServiceOutput = vsphere.DatastorePerformanceOneLineCheckSummary(
 			nagios.StateOKLabel,

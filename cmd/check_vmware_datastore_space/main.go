@@ -55,7 +55,7 @@ func main() {
 
 		// Annotate errors (if applicable) with additional context to aid in
 		// troubleshooting.
-		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+		nagiosExitState.Errors = vsphere.AnnotateError(nagiosExitState.Errors...)
 	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
@@ -80,7 +80,7 @@ func main() {
 			"%s: Error initializing application",
 			nagios.StateCRITICALLabel,
 		)
-		nagiosExitState.LastError = cfgErr
+		nagiosExitState.AddError(cfgErr)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
@@ -135,7 +135,7 @@ func main() {
 	if loginErr != nil {
 		log.Error().Err(loginErr).Msgf("error logging into %s", cfg.Server)
 
-		nagiosExitState.LastError = loginErr
+		nagiosExitState.AddError(loginErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error logging into %q",
 			nagios.StateCRITICALLabel,
@@ -171,7 +171,7 @@ func main() {
 			"error retrieving requested datastore",
 		)
 
-		nagiosExitState.LastError = dsFetchErr
+		nagiosExitState.AddError(dsFetchErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving datastore %q",
 			nagios.StateCRITICALLabel,
@@ -191,7 +191,7 @@ func main() {
 			Str("reasons", strings.Join(dsInaccessibleReasons, ", ")).
 			Msg("datastore is inaccessible")
 
-		nagiosExitState.LastError = dsAccessibilityErr
+		nagiosExitState.AddError(dsAccessibilityErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Datastore %q is inaccessible due to: [%s]",
 			nagios.StateCRITICALLabel,
@@ -218,7 +218,7 @@ func main() {
 			"error generating datastore usage summary",
 		)
 
-		nagiosExitState.LastError = dsSpaceUsageErr
+		nagiosExitState.AddError(dsSpaceUsageErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error generating summary for datastore %q",
 			nagios.StateCRITICALLabel,
@@ -302,7 +302,7 @@ func main() {
 
 		log.Error().Msg("Datastore usage CRITICAL")
 
-		nagiosExitState.LastError = vsphere.ErrDatastoreSpaceUsageThresholdCrossed
+		nagiosExitState.AddError(vsphere.ErrDatastoreSpaceUsageThresholdCrossed)
 
 		nagiosExitState.ServiceOutput = vsphere.DatastoreSpaceUsageOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
@@ -328,7 +328,7 @@ func main() {
 
 		log.Error().Msg("Datastore usage WARNING")
 
-		nagiosExitState.LastError = vsphere.ErrDatastoreSpaceUsageThresholdCrossed
+		nagiosExitState.AddError(vsphere.ErrDatastoreSpaceUsageThresholdCrossed)
 
 		nagiosExitState.ServiceOutput = vsphere.DatastoreSpaceUsageOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
@@ -353,8 +353,6 @@ func main() {
 	default:
 
 		log.Debug().Msg("Datastore usage within specified thresholds")
-
-		nagiosExitState.LastError = nil
 
 		nagiosExitState.ServiceOutput = vsphere.DatastoreSpaceUsageOneLineCheckSummary(
 			nagios.StateOKLabel,

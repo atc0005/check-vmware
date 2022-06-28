@@ -55,7 +55,7 @@ func main() {
 
 		// Annotate errors (if applicable) with additional context to aid in
 		// troubleshooting.
-		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+		nagiosExitState.Errors = vsphere.AnnotateError(nagiosExitState.Errors...)
 	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
@@ -80,7 +80,7 @@ func main() {
 			"%s: Error initializing application",
 			nagios.StateCRITICALLabel,
 		)
-		nagiosExitState.LastError = cfgErr
+		nagiosExitState.AddError(cfgErr)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
@@ -117,7 +117,7 @@ func main() {
 	if loginErr != nil {
 		log.Error().Err(loginErr).Msgf("error logging into %s", cfg.Server)
 
-		nagiosExitState.LastError = loginErr
+		nagiosExitState.AddError(loginErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error logging into %q",
 			nagios.StateCRITICALLabel,
@@ -147,7 +147,7 @@ func main() {
 	if validateErr != nil {
 		log.Error().Err(validateErr).Msg("error validating include/exclude lists")
 
-		nagiosExitState.LastError = validateErr
+		nagiosExitState.AddError(validateErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error validating include/exclude lists",
 			nagios.StateCRITICALLabel,
@@ -170,7 +170,7 @@ func main() {
 			"error retrieving list of resource pools",
 		)
 
-		nagiosExitState.LastError = getRPsErr
+		nagiosExitState.AddError(getRPsErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving list of resource pools from %q",
 			nagios.StateCRITICALLabel,
@@ -201,7 +201,7 @@ func main() {
 			"error retrieving list of VMs from resource pools list",
 		)
 
-		nagiosExitState.LastError = getVMsErr
+		nagiosExitState.AddError(getVMsErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving list of VMs from resource pools list",
 			nagios.StateCRITICALLabel,
@@ -237,7 +237,7 @@ func main() {
 	if hwIdxErr != nil {
 		log.Error().Err(hwIdxErr).Msg("error creating virtual hardware index")
 
-		nagiosExitState.LastError = hwIdxErr
+		nagiosExitState.AddError(hwIdxErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error creating index of virtual hardware versions",
 			nagios.StateCRITICALLabel,
@@ -260,7 +260,7 @@ func main() {
 			"error retrieving default hardware version",
 		)
 
-		nagiosExitState.LastError = getDefVerErr
+		nagiosExitState.AddError(getDefVerErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving default hardware version",
 			nagios.StateCRITICALLabel,
@@ -355,7 +355,7 @@ func main() {
 
 			log.Error().Msg("Virtual Hardware versions inconsistency detected")
 
-			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
+			nagiosExitState.AddError(vsphere.ErrVirtualHardwareOutdatedVersionsFound)
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateWARNINGLabel,
@@ -394,8 +394,6 @@ func main() {
 			// same hardware version
 
 			log.Debug().Msg("Homogenous hardware versions found")
-
-			nagiosExitState.LastError = nil
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateOKLabel,
@@ -452,7 +450,7 @@ func main() {
 			log.Error().
 				Msg("Virtual Hardware versions older than the specified minimum version detected")
 
-			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
+			nagiosExitState.AddError(vsphere.ErrVirtualHardwareOutdatedVersionsFound)
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateCRITICALLabel,
@@ -489,8 +487,6 @@ func main() {
 		default:
 
 			log.Debug().Msg("Minimum hardware version met")
-
-			nagiosExitState.LastError = nil
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateOKLabel,
@@ -547,7 +543,7 @@ func main() {
 			log.Error().
 				Msg("Virtual Hardware versions older than the host or cluster default version detected")
 
-			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
+			nagiosExitState.AddError(vsphere.ErrVirtualHardwareOutdatedVersionsFound)
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateWARNINGLabel,
@@ -584,8 +580,6 @@ func main() {
 		default:
 
 			log.Debug().Msg("Default hardware version met")
-
-			nagiosExitState.LastError = nil
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateOKLabel,
@@ -647,7 +641,7 @@ func main() {
 			log.Error().
 				Msg("Virtual Hardware versions older than the specified minimum version detected")
 
-			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
+			nagiosExitState.AddError(vsphere.ErrVirtualHardwareOutdatedVersionsFound)
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateCRITICALLabel,
@@ -686,7 +680,7 @@ func main() {
 			log.Error().
 				Msg("Virtual Hardware versions older than the specified minimum version detected")
 
-			nagiosExitState.LastError = vsphere.ErrVirtualHardwareOutdatedVersionsFound
+			nagiosExitState.AddError(vsphere.ErrVirtualHardwareOutdatedVersionsFound)
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateWARNINGLabel,
@@ -724,8 +718,6 @@ func main() {
 
 			log.Debug().
 				Msg("Virtual Hardware versions meet the specified minimum version")
-
-			nagiosExitState.LastError = nil
 
 			nagiosExitState.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateOKLabel,
