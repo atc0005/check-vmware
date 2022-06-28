@@ -369,7 +369,7 @@ func ResourcePoolStats(ctx context.Context, client *vim25.Client, resourcePools 
 		// Per vSphere API docs, `rp.Runtime.Memory.OverallUsage` was
 		// deprecated in v6.5, so we use `hostMemoryUsage` instead.
 		//
-		// The `hostMemoryUsage` property tracks consummed host memory in MB.
+		// The `hostMemoryUsage` property tracks consumed host memory in MB.
 		// This includes the overhead memory of a virtual machine. We multiply
 		// by units.MB in order to get the number of bytes in order to match
 		// the same unit of measurement used by the `host.Hardware.MemorySize`
