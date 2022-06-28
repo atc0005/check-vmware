@@ -960,7 +960,7 @@ func H2D2VMsReport(
 	case ignoreMissingCA:
 		fmt.Fprintf(
 			&report,
-			"* As requested, Hosts & Datastores with missing Custom Attribute are ignored [Host: %q, Datastore: %q]%s",
+			"* As requested, Hosts and Datastores with missing Custom Attribute are ignored [Host: %q, Datastore: %q]%s",
 			hostCAName,
 			datastoreCAName,
 			nagios.CheckOutputEOL,
@@ -969,7 +969,7 @@ func H2D2VMsReport(
 	default:
 		fmt.Fprintf(
 			&report,
-			"* As requested, Hosts & Datastores with missing Custom Attribute is a fatal condition [Host: %q, Datastore: %q]%s",
+			"* As requested, Hosts and Datastores with missing Custom Attribute is a fatal condition [Host: %q, Datastore: %q]%s",
 			hostCAName,
 			datastoreCAName,
 			nagios.CheckOutputEOL,
