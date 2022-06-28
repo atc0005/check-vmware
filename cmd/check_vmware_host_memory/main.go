@@ -56,7 +56,7 @@ func main() {
 
 		// Annotate errors (if applicable) with additional context to aid in
 		// troubleshooting.
-		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+		nagiosExitState.Errors = vsphere.AnnotateError(nagiosExitState.Errors...)
 	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
@@ -81,7 +81,7 @@ func main() {
 			"%s: Error initializing application",
 			nagios.StateCRITICALLabel,
 		)
-		nagiosExitState.LastError = cfgErr
+		nagiosExitState.AddError(cfgErr)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
@@ -136,7 +136,7 @@ func main() {
 	if loginErr != nil {
 		log.Error().Err(loginErr).Msgf("error logging into %s", cfg.Server)
 
-		nagiosExitState.LastError = loginErr
+		nagiosExitState.AddError(loginErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error logging into %q",
 			nagios.StateCRITICALLabel,
@@ -172,7 +172,7 @@ func main() {
 			"error retrieving requested host",
 		)
 
-		nagiosExitState.LastError = hsFetchErr
+		nagiosExitState.AddError(hsFetchErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving host %q",
 			nagios.StateCRITICALLabel,
@@ -193,7 +193,7 @@ func main() {
 	if hsUsageErr != nil {
 		log.Error().Err(hsUsageErr).Msg("error creating host memory usage summary")
 
-		nagiosExitState.LastError = hsUsageErr
+		nagiosExitState.AddError(hsUsageErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error creating host memory usage summary",
 			nagios.StateCRITICALLabel,
@@ -221,7 +221,7 @@ func main() {
 			"error retrieving VirtualMachines on host",
 		)
 
-		nagiosExitState.LastError = hsVMsFetchErr
+		nagiosExitState.AddError(hsVMsFetchErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving VirtualMachines on host %q",
 			nagios.StateCRITICALLabel,
@@ -308,7 +308,7 @@ func main() {
 
 		log.Error().Msg("host memory usage threshold crossed")
 
-		nagiosExitState.LastError = vsphere.ErrHostSystemMemoryUsageThresholdCrossed
+		nagiosExitState.AddError(vsphere.ErrHostSystemMemoryUsageThresholdCrossed)
 
 		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
@@ -336,7 +336,7 @@ func main() {
 
 		log.Error().Msg("host memory usage threshold crossed")
 
-		nagiosExitState.LastError = vsphere.ErrHostSystemMemoryUsageThresholdCrossed
+		nagiosExitState.AddError(vsphere.ErrHostSystemMemoryUsageThresholdCrossed)
 
 		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
@@ -363,8 +363,6 @@ func main() {
 	default:
 
 		log.Debug().Msg("Host memory usage thresholds not exceeded")
-
-		nagiosExitState.LastError = nil
 
 		nagiosExitState.ServiceOutput = vsphere.HostSystemMemoryUsageOneLineCheckSummary(
 			nagios.StateOKLabel,

@@ -55,7 +55,7 @@ func main() {
 
 		// Annotate errors (if applicable) with additional context to aid in
 		// troubleshooting.
-		nagiosExitState.LastError = vsphere.AnnotateError(nagiosExitState.LastError)
+		nagiosExitState.Errors = vsphere.AnnotateError(nagiosExitState.Errors...)
 	}(&nagiosExitState, pluginStart)
 
 	// Disable library debug logging output by default
@@ -80,7 +80,7 @@ func main() {
 			"%s: Error initializing application",
 			nagios.StateCRITICALLabel,
 		)
-		nagiosExitState.LastError = cfgErr
+		nagiosExitState.AddError(cfgErr)
 		nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
@@ -122,7 +122,7 @@ func main() {
 	if loginErr != nil {
 		log.Error().Err(loginErr).Msgf("error logging into %s", cfg.Server)
 
-		nagiosExitState.LastError = loginErr
+		nagiosExitState.AddError(loginErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error logging into %q",
 			nagios.StateCRITICALLabel,
@@ -151,7 +151,7 @@ func main() {
 	if validateDCsErr != nil {
 		log.Error().Err(validateDCsErr).Msg("error validating datacenter names")
 
-		nagiosExitState.LastError = validateDCsErr
+		nagiosExitState.AddError(validateDCsErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error validating requested datacenter names",
 			nagios.StateCRITICALLabel,
@@ -166,7 +166,7 @@ func main() {
 	if dcsFetchErr != nil {
 		log.Error().Err(dcsFetchErr).Msg("error retrieving datacenters")
 
-		nagiosExitState.LastError = dcsFetchErr
+		nagiosExitState.AddError(dcsFetchErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving datacenters",
 			nagios.StateCRITICALLabel,
@@ -202,7 +202,7 @@ func main() {
 		if validateRPsErr != nil {
 			log.Error().Err(validateRPsErr).Msg("error validating include/exclude lists")
 
-			nagiosExitState.LastError = validateRPsErr
+			nagiosExitState.AddError(validateRPsErr)
 			nagiosExitState.ServiceOutput = fmt.Sprintf(
 				"%s: Error validating include/exclude lists",
 				nagios.StateCRITICALLabel,
@@ -223,7 +223,7 @@ func main() {
 	if fetchAlarmsErr != nil {
 		log.Error().Err(fetchAlarmsErr).Msg("error retrieving alarms")
 
-		nagiosExitState.LastError = fetchAlarmsErr
+		nagiosExitState.AddError(fetchAlarmsErr)
 		nagiosExitState.ServiceOutput = fmt.Sprintf(
 			"%s: Error retrieving alarms",
 			nagios.StateCRITICALLabel,
@@ -340,17 +340,17 @@ func main() {
 		case triggeredAlarms.HasCriticalState(false):
 			stateLabel = nagios.StateCRITICALLabel
 			nagiosExitState.ExitStatusCode = nagios.StateCRITICALExitCode
-			nagiosExitState.LastError = vsphere.ErrAlarmNotExcludedFromEvaluation
+			nagiosExitState.AddError(vsphere.ErrAlarmNotExcludedFromEvaluation)
 
 		case triggeredAlarms.HasWarningState(false):
 			stateLabel = nagios.StateWARNINGLabel
 			nagiosExitState.ExitStatusCode = nagios.StateWARNINGExitCode
-			nagiosExitState.LastError = vsphere.ErrAlarmNotExcludedFromEvaluation
+			nagiosExitState.AddError(vsphere.ErrAlarmNotExcludedFromEvaluation)
 
 		case triggeredAlarms.HasUnknownState(false):
 			stateLabel = nagios.StateUNKNOWNLabel
 			nagiosExitState.ExitStatusCode = nagios.StateUNKNOWNExitCode
-			nagiosExitState.LastError = vsphere.ErrAlarmNotExcludedFromEvaluation
+			nagiosExitState.AddError(vsphere.ErrAlarmNotExcludedFromEvaluation)
 
 		// though we started off with triggered alarms, it's possible that we
 		// filtered all of them out by this point
@@ -360,7 +360,6 @@ func main() {
 
 			stateLabel = nagios.StateOKLabel
 			nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
-			nagiosExitState.LastError = nil
 
 		}
 
@@ -392,7 +391,6 @@ func main() {
 
 		log.Debug().Msg("No non-excluded alarms detected")
 
-		nagiosExitState.LastError = nil
 		nagiosExitState.ExitStatusCode = nagios.StateOKExitCode
 
 		nagiosExitState.ServiceOutput = vsphere.AlarmsOneLineCheckSummary(
