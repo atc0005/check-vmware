@@ -26,6 +26,35 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.30.3] - 2022-07-13
+
+### Overview
+
+- Dependency updates
+- built using Go 1.17.12
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.10` to `1.17.12`
+  - `vmware/govmomi`
+    - `v0.28.0` to `v0.29.0`
+  - `rs/zerolog`
+    - `v1.26.1` to `v1.27.0`
+  - `atc0005/go-nagios`
+    - `v0.8.2` to `v0.9.1`
+  - `github/codeql-action`
+    - `v2.1.10` to `v2.1.15`
+
+### Fixed
+
+- (GH-677) Tweak doc comments for check_vmware_alarms plugin
+- (GH-679) Ampersands replaced by Nagios in plugin output
+- (GH-689) Fix misc typo in doc comment
+
 ## [v0.30.2] - 2022-05-11
 
 ### Overview
@@ -1774,7 +1803,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.3...HEAD
+[v0.30.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.3
 [v0.30.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.2
 [v0.30.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.1
 [v0.30.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.0
