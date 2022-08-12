@@ -28,10 +28,32 @@ jobs:
         with:
           node-version: "lts/*"
 
+      # If installing locally in an Ubuntu image for testing, perform these
+      # steps first.
+      #
+      # Ubuntu 20.04+
+      #
+      # curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+      # sudo apt-get install -y nodejs
+      #
+      # Ubuntu 18.04
+      #
+      # curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+      # sudo apt-get install -y nodejs
+      #
+      # ALL (after installing nodejs)
+      #
+      # npm install markdownlint --save-dev
+      # sudo npm install -g markdownlint-cli
+      # markdownlint --version
+      #
+      # refs https://github.com/nodesource/distributions/blob/master/README.md#debinstall
+
       - name: Install Markdown linting tools
         run: |
           npm install markdownlint --save-dev
           npm install -g markdownlint-cli
+          markdownlint --version
 
       - name: Check out code
         uses: actions/checkout@v3
