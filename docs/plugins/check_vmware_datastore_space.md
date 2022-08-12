@@ -8,6 +8,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Output](#output)
 - [Performance Data](#performance-data)
   - [Background](#background)
   - [Supported metrics](#supported-metrics)
@@ -31,6 +32,16 @@ Nagios plugin used to monitor datastore space usage.
 In addition to reporting current datastore space usage, this plugin also
 reports which VMs reside on the datastore along with their percentage of the
 total datastore space used.
+
+## Output
+
+The output for these plugins is designed to provide the one-line summary
+needed by Nagios for quick identification of a problem while providing longer,
+more detailed information for display within the web UI, use in email and
+Teams notifications
+([atc0005/send2teams](https://github.com/atc0005/send2teams)).
+
+See the [main project README](../../README.md) for details.
 
 ## Performance Data
 

@@ -8,6 +8,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Output](#output)
 - [Performance Data](#performance-data)
   - [Background](#background)
   - [Supported metrics](#supported-metrics)
@@ -35,6 +36,16 @@ as a fixed value and as a percentage of the host's total memory.
 Thresholds for `CRITICAL` and `WARNING` memory usage have usable defaults, but
 max memory usage is required before this plugin can be used. See the
 [configuration options](#configuration-options) section for details.
+
+## Output
+
+The output for these plugins is designed to provide the one-line summary
+needed by Nagios for quick identification of a problem while providing longer,
+more detailed information for display within the web UI, use in email and
+Teams notifications
+([atc0005/send2teams](https://github.com/atc0005/send2teams)).
+
+See the [main project README](../../README.md) for details.
 
 ## Performance Data
 

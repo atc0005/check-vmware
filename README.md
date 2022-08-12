@@ -370,20 +370,4 @@ SOFTWARE.
 
 [go-docs-install]: <https://golang.org/doc/install>  "Install Go"
 
-[vsphere-managed-object-reference]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vmodl.ManagedObjectReference.html> "Data Object - ManagedObjectReference(vmodl.ManagedObjectReference)"
-
-[vsphere-manged-entity-status]: <https://vdc-repo.vmware.com/vmwb-repository/dcr-public/91f5f971-bf1d-4904-9942-37c6109da8a3/b79fa83f-dc4e-491d-9785-dc9d91aa0c67/doc/vim.ManagedEntity.Status.html>
-
-[vsphere-default-alarms]: <https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.monitoring.doc/GUID-82933270-1D72-4CF3-A1AF-E5A1343F62DE.html>
-
-[nagios-state-types]: <https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/statetypes.html>
-
-[vsphere-guestinfo-data-object]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.vm.GuestInfo.html>
-
-[vsphere-query-datastore-performance-summary-method]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/bf660c0a-f060-46e8-a94d-4b5e6ffc77ad/208bc706-e281-49b6-a0ce-b402ec19ef82/SDK/vsphere-ws/docs/ReferenceGuide/vim.StorageResourceManager.html#queryDatastorePerformanceSummary>
-
-[vsphere-storage-performance-summary-data-object]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.StorageResourceManager.StoragePerformanceSummary.html>
-
-[vsphere-storage-io-resource-management-data-object]: <https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.StorageResourceManager.IORMConfigInfo.html>
-
 <!-- []: PLACEHOLDER "DESCRIPTION_HERE" -->

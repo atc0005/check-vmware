@@ -12,6 +12,7 @@
   - [Outdated-by or threshold range check](#outdated-by-or-threshold-range-check)
   - [Minimum required version check](#minimum-required-version-check)
   - [Default is minimum required version check](#default-is-minimum-required-version-check)
+- [Output](#output)
 - [Performance Data](#performance-data)
   - [Background](#background)
   - [Supported metrics](#supported-metrics)
@@ -85,6 +86,16 @@ considered a `CRITICAL` state.
 This mode requires that all hardware versions match or exceed the host or
 cluster default hardware version. This monitoring mode assumes that any
 deviation is considered a `WARNING` state.
+
+## Output
+
+The output for these plugins is designed to provide the one-line summary
+needed by Nagios for quick identification of a problem while providing longer,
+more detailed information for display within the web UI, use in email and
+Teams notifications
+([atc0005/send2teams](https://github.com/atc0005/send2teams)).
+
+See the [main project README](../../README.md) for details.
 
 ## Performance Data
 
@@ -179,8 +190,7 @@ the others.
 
 As of this writing, these monitoring modes are *not* implemented as
 subcommands, though this may change in the future based on feedback. See the
-[examples](#check_vmware_vhw-nagios-plugin) for this plugin for more
-information.
+[examples](#examples) for this plugin for more information.
 
 - Use the `-h` or `--help` flag to display current usage information.
 - Flags marked as **`required`** must be set via CLI flag.

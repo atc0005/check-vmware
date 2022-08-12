@@ -8,6 +8,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Output](#output)
 - [Performance Data](#performance-data)
   - [Background](#background)
   - [Supported metrics](#supported-metrics)
@@ -60,6 +61,16 @@ also used by both hosts and datastores.
 
 If specifying a shared Custom Attribute or prefix, per-resource Custom
 Attribute flags are rejected (error condition).
+
+## Output
+
+The output for these plugins is designed to provide the one-line summary
+needed by Nagios for quick identification of a problem while providing longer,
+more detailed information for display within the web UI, use in email and
+Teams notifications
+([atc0005/send2teams](https://github.com/atc0005/send2teams)).
+
+See the [main project README](../../README.md) for details.
 
 ## Performance Data
 
