@@ -8,6 +8,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Output](#output)
 - [Performance Data](#performance-data)
   - [Background](#background)
   - [Supported metrics](#supported-metrics)
@@ -34,6 +35,16 @@ This plugin monitors the `question` property of evaluated Virtual Machines.
 The status of this property indicates whether an interactive question is
 blocking the virtual machine's execution. While a Virtual Machine is in this
 state it is not available for normal use.
+
+## Output
+
+The output for these plugins is designed to provide the one-line summary
+needed by Nagios for quick identification of a problem while providing longer,
+more detailed information for display within the web UI, use in email and
+Teams notifications
+([atc0005/send2teams](https://github.com/atc0005/send2teams)).
+
+See the [main project README](../../README.md) for details.
 
 ## Performance Data
 

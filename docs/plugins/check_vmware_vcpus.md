@@ -8,6 +8,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Output](#output)
 - [Performance Data](#performance-data)
   - [Background](#background)
   - [Supported metrics](#supported-metrics)
@@ -31,6 +32,16 @@ Nagios plugin used to monitor allocation of virtual CPUs (vCPUs).
 Thresholds for `CRITICAL` and `WARNING` vCPUs allocation have usable defaults,
 but Max vCPUs allocation is required before this plugin can be used. See the
 [configuration options](#configuration-options) section for details.
+
+## Output
+
+The output for these plugins is designed to provide the one-line summary
+needed by Nagios for quick identification of a problem while providing longer,
+more detailed information for display within the web UI, use in email and
+Teams notifications
+([atc0005/send2teams](https://github.com/atc0005/send2teams)).
+
+See the [main project README](../../README.md) for details.
 
 ## Performance Data
 
