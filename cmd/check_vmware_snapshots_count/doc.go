@@ -1,8 +1,7 @@
 /*
-
 Nagios plugin used to monitor the number of snapshots per Virtual Machine.
 
-PURPOSE
+# PURPOSE
 
 Monitor the number of snapshots for each Virtual Machine. VMware recommends
 using no more than 3 or 4 snapshots per Virtual Machine and only for a limited
@@ -20,15 +19,14 @@ by Nagios for quick identification of a problem while providing longer, more
 detailed information for use in email and Teams notifications
 (https://github.com/atc0005/send2teams).
 
-PROJECT HOME
+# PROJECT HOME
 
 See our GitHub repo (https://github.com/atc0005/check-vmware) for the latest
 code, to file an issue or submit improvements for review and potential
 inclusion into the project.
 
-USAGE
+# USAGE
 
 See our main README for supported settings and examples.
-
 */
 package main
