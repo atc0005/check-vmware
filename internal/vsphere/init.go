@@ -8,7 +8,7 @@
 package vsphere
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 )
@@ -21,7 +21,7 @@ func init() {
 	// Disable logging output by default unless client code explicitly
 	// requests it
 	logger = log.New(os.Stderr, "[vsphere] ", 0)
-	logger.SetOutput(ioutil.Discard)
+	logger.SetOutput(io.Discard)
 }
 
 // EnableLogging enables logging output from this package. Output is muted by
@@ -35,5 +35,5 @@ func EnableLogging() {
 // all logging output.
 func DisableLogging() {
 	logger.SetFlags(0)
-	logger.SetOutput(ioutil.Discard)
+	logger.SetOutput(io.Discard)
 }
