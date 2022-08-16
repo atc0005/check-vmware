@@ -26,6 +26,31 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.30.4] - 2022-08-16
+
+### Overview
+
+- Dependency updates
+- built using Go 1.17.13
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.12` to `1.17.13`
+  - `github/codeql-action`
+    - `v2.1.15` to `v2.1.18`
+
+- (GH-702) Emit markdownlint CLI version after installation
+
+### Fixed
+
+- (GH-700) Markdown linting failures: invalid link fragments, unused
+  link/image references
+- (GH-703) Apply linting fixes for Go 1.19 release
+
 ## [v0.30.3] - 2022-07-13
 
 ### Overview
@@ -1803,7 +1828,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.4...HEAD
+[v0.30.4]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.4
 [v0.30.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.3
 [v0.30.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.2
 [v0.30.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.1
