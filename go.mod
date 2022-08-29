@@ -12,7 +12,7 @@ go 1.17
 require (
 	github.com/atc0005/go-nagios v0.9.1
 	github.com/google/go-cmp v0.5.8
-	github.com/rs/zerolog v1.27.0
+	github.com/rs/zerolog v1.28.0
 	github.com/vmware/govmomi v0.29.0
 )
 
