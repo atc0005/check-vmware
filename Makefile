@@ -126,6 +126,7 @@ lintinstall:
 
 	@echo "Installing latest staticcheck version ..."
 	go install honnef.co/go/tools/cmd/staticcheck@latest
+	staticcheck --version
 
 	@echo Installing latest stable golangci-lint version per official installation script ...
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin
