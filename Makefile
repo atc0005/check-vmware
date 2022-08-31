@@ -142,9 +142,11 @@ linting:
 	@go vet -mod=vendor $(shell go list -mod=vendor ./... | grep -v /vendor/)
 
 	@echo "Running golangci-lint ..."
+	@golangci-lint --version
 	@golangci-lint run
 
 	@echo "Running staticcheck ..."
+	@staticcheck --version
 	@staticcheck $(shell go list -mod=vendor ./... | grep -v /vendor/)
 
 	@echo "Finished running linting checks"
