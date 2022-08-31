@@ -59,4 +59,4 @@ jobs:
       - name: go mod vendor
         run: |
           go mod vendor
-          git diff --exit-code
+          git diff --exit-code vendor/
