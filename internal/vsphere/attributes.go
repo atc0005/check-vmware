@@ -249,15 +249,17 @@ func GetObjectCustomAttribute(obj mo.ManagedEntity, customAttributeName string, 
 		case errors.Is(caValErr, ErrCustomAttributeNotSet):
 
 			logger.Printf(
-				"specified Custom Attribute %q not set on virtual machine %q",
+				"specified Custom Attribute %q not set on %s %q",
 				customAttributeName,
+				obj.Self.Type,
 				obj.Name,
 			)
 
 			if !ignoreMissingCA {
 				return CustomAttribute{}, fmt.Errorf(
-					"specified Custom Attribute %s not set on virtual machine %s: %w",
+					"specified Custom Attribute %q not set on %s %s: %w",
 					customAttributeName,
+					obj.Self.Type,
 					obj.Name,
 					ErrCustomAttributeNotSet,
 				)
