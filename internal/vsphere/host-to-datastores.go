@@ -244,24 +244,65 @@ func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ig
 		)
 	}(&hostsWithCAs)
 
+	hostsMissingCAs := make([]string, 0, len(allHosts))
 	for _, host := range allHosts {
 		ca, err := GetObjectCustomAttribute(host.ManagedEntity, hostCustomAttributeName, ignoreMissingCA)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to retrieve custom attribute for %s %s: %w",
+		switch {
+		case errors.Is(err, ErrCustomAttributeNotSet):
+			logger.Printf(
+				"custom attributes missing for %s %q",
+				host.ManagedEntity.Self.Type,
+				host.Name,
+			)
+
+			hostsMissingCAs = append(hostsMissingCAs, host.Name)
+
+		case err != nil:
+			logger.Printf(
+				"failed to retrieve custom attribute for %s %q: %s",
 				host.ManagedEntity.Self.Type,
 				host.Name,
 				err,
 			)
+
+			// Unknown error occurred. Don't batch these retrieval errors,
+			// report them immediately.
+			return nil, fmt.Errorf(
+				"failed to retrieve custom attribute for %s %q: %w",
+				host.ManagedEntity.Self.Type,
+				host.Name,
+				err,
+			)
+
+		default:
+			logger.Printf(
+				"successfully retrieved custom attribute for %s %q",
+				host.ManagedEntity.Self.Type,
+				host.Name,
+			)
+
+			hostsWithCAs = append(hostsWithCAs, HostWithCA{
+				HostSystem:      host,
+				CustomAttribute: ca,
+			})
+
 		}
-		hostsWithCAs = append(hostsWithCAs, HostWithCA{
-			HostSystem:      host,
-			CustomAttribute: ca,
-		})
 
 	}
 
-	return hostsWithCAs, nil
+	switch {
+	case len(hostsMissingCAs) > 0:
+		return nil, fmt.Errorf(
+			"failed to retrieve custom attribute %q from hosts: [%v]: %w",
+			hostCustomAttributeName,
+			strings.Join(hostsMissingCAs, ", "),
+			ErrCustomAttributeNotSet,
+		)
+
+	default:
+		return hostsWithCAs, nil
+	}
+
 }
 
 // GetDatastoresWithCA receives a collection of Datastores, a list of
@@ -319,6 +360,7 @@ func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, d
 		}
 	}
 
+	dsMissingCAs := make([]string, 0, len(allDS))
 	for _, ds := range allDS {
 
 		// if user opted to ignore the Datastore, skip attempts to retrieve
@@ -328,21 +370,61 @@ func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, d
 		}
 
 		ca, err := GetObjectCustomAttribute(ds.ManagedEntity, dsCustomAttributeName, ignoreMissingCA)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"failed to retrieve custom attribute for %s %s: %w",
+		switch {
+		case errors.Is(err, ErrCustomAttributeNotSet):
+			logger.Printf(
+				"custom attributes missing for %s %q",
+				ds.ManagedEntity.Self.Type,
+				ds.Name,
+			)
+
+			dsMissingCAs = append(dsMissingCAs, ds.Name)
+
+		case err != nil:
+			logger.Printf(
+				"failed to retrieve custom attribute for %s %q: %s",
 				ds.ManagedEntity.Self.Type,
 				ds.Name,
 				err,
 			)
+
+			// Unknown error occurred. Don't batch these retrieval errors,
+			// report them immediately.
+			return nil, fmt.Errorf(
+				"failed to retrieve custom attribute for %s %q: %w",
+				ds.ManagedEntity.Self.Type,
+				ds.Name,
+				err,
+			)
+
+		default:
+			logger.Printf(
+				"successfully retrieved custom attribute for %s %q",
+				ds.ManagedEntity.Self.Type,
+				ds.Name,
+			)
+
+			datastoresWithCA = append(datastoresWithCA, DatastoreWithCA{
+				Datastore:       ds,
+				CustomAttribute: ca,
+			})
+
 		}
-		datastoresWithCA = append(datastoresWithCA, DatastoreWithCA{
-			Datastore:       ds,
-			CustomAttribute: ca,
-		})
+
 	}
 
-	return datastoresWithCA, nil
+	switch {
+	case len(dsMissingCAs) > 0:
+		return nil, fmt.Errorf(
+			"failed to retrieve custom attribute %q from datastores: [%v]: %w",
+			dsCustomAttributeName,
+			strings.Join(dsMissingCAs, ", "),
+			ErrCustomAttributeNotSet,
+		)
+
+	default:
+		return datastoresWithCA, nil
+	}
 
 }
 
