@@ -26,6 +26,44 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.30.5] - 2022-09-14
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- GitHub Actions Workflows updates
+- built using Go 1.19.1
+  - Statically linked
+  - Linux x64
+
+### Added
+
+- (GH-720) Add Vulnerability Analysis GitHub Actions Workflow
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.17.13` to `1.19.1`
+  - `rs/zerolog`
+    - `v1.27.0` to `v1.28.0`
+  - `google/go-cmp`
+    - `v0.5.8` to `v0.5.9`
+  - `github/codeql-action`
+    - `v2.1.18` to `v2.1.22`
+
+- (GH-710) Update project to Go 1.19
+- (GH-712) Update Makefile and GitHub Actions Workflows
+- (GH-719) Update check_vmware_hs2ds2vms plugin to list all hosts and
+  datastores missing Custom Attributes
+
+### Fixed
+
+- (GH-711) Adjust doc comments formatting for doc.go
+- (GH-714) vsphere.GetObjectCustomAttribute func (incorrectly) uses fixed
+  object type in log/error messages
+
 ## [v0.30.4] - 2022-08-16
 
 ### Overview
@@ -1828,7 +1866,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.4...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.5...HEAD
+[v0.30.5]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.5
 [v0.30.4]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.4
 [v0.30.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.3
 [v0.30.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.2
