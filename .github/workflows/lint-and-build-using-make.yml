@@ -57,7 +57,7 @@ jobs:
     name: Build codebase using Makefile all recipe
     runs-on: ubuntu-latest
     # Default: 360 minutes
-    timeout-minutes: 40
+    timeout-minutes: 55
     container:
       image: "ghcr.io/atc0005/go-ci:go-ci-stable-mirror-build"
 
