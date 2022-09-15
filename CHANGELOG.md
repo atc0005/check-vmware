@@ -26,6 +26,29 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.30.6] - 2022-09-15
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- built using Go 1.19.1
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `atc0005/go-nagios`
+    - `v0.9.1` to `v0.9.2`
+
+### Fixed
+
+- (GH-724) Timeout occurred for `Build codebase using Makefile all recipe`
+  GHAW job
+- (GH-725) check_vmware_datastore_space plugin Service Ouput contains invalid
+  `MISSING` text
+
 ## [v0.30.5] - 2022-09-14
 
 ### Overview
@@ -1866,7 +1889,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.5...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.6...HEAD
+[v0.30.6]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.6
 [v0.30.5]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.5
 [v0.30.4]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.4
 [v0.30.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.3
