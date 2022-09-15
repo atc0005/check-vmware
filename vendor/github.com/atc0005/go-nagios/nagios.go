@@ -337,7 +337,7 @@ func (es *ExitState) ReturnCheckResults() {
 	// changes to this content, simply emit it as-is. This helps avoid
 	// potential issues with literal characters being interpreted as
 	// formatting verbs.
-	fmt.Fprintf(&output, es.ServiceOutput)
+	fmt.Fprint(&output, es.ServiceOutput)
 
 	es.handleErrorsSection(&output)
 

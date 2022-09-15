@@ -26,6 +26,18 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.9.2] - 2022-09-15
+
+### Changed
+
+- (GH-137) Update project to Go 1.19
+- (GH-138) Update Makefile and GitHub Actions Workflows
+
+### Fixed
+
+- (GH-139) `ExitState.ServiceOutput` is (incorrectly) interpreted as
+  containing format specifier
+
 ## [v0.9.1] - 2022-06-20
 
 ### Fixed
@@ -358,7 +370,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.9.2...HEAD
+[v0.9.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.2
 [v0.9.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.1
 [v0.9.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.0
 [v0.8.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.8.2
