@@ -10,6 +10,7 @@ package nagios
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -188,6 +189,9 @@ type ExitCallBackFunc func() string
 // application, including the most recent error and the final intended plugin
 // state.
 type ExitState struct {
+	// outputSink is the user-specified or fallback target for Nagios plugin
+	// output.
+	outputSink io.Writer
 
 	// LastError is the last error encountered which should be reported as
 	// part of ending the service check (e.g., "Failed to connect to XYZ to
@@ -250,6 +254,11 @@ type ExitState struct {
 	// values for display.
 	hideErrorsSection bool
 
+	// shouldSkipOSExit is intended to support tests where actually performing
+	// the final os.Exit(x) call results in a panic (Go 1.16+). If set, this
+	// step is skipped and a message is logged to os.Stderr instead.
+	shouldSkipOSExit bool
+
 	// BrandingCallback is a function that is called before application
 	// termination to emit branding details at the end of the notification.
 	// See also ExitCallBackFunc.
@@ -292,6 +301,13 @@ func (es *ExitState) ReturnCheckResults() {
 
 	var output strings.Builder
 
+	// ##################################################################
+	// Note: fmt.Println() (and fmt.Fprintln()) has the same issue as `\n`:
+	// Nagios seems to interpret them literally instead of emitting an actual
+	// newline. We work around that by using fmt.Fprintf() and fmt.Fprint()
+	// for output that is intended for display within the Nagios web UI.
+	// ##################################################################
+
 	// Check for unhandled panic in client code. If present, override
 	// ExitState and make clear that the client code/plugin crashed.
 	if err := recover(); err != nil {
@@ -325,19 +341,7 @@ func (es *ExitState) ReturnCheckResults() {
 
 	}
 
-	// ##################################################################
-	// Note: fmt.Println() (and fmt.Fprintln()) has the same issue as `\n`:
-	// Nagios seems to interpret them literally instead of emitting an actual
-	// newline. We work around that by using fmt.Fprintf() and fmt.Fprint()
-	// for output that is intended for display within the Nagios web UI.
-	// ##################################################################
-
-	// One-line output used as the summary or short explanation for the
-	// specific Nagios state that we are returning. We apply no formatting
-	// changes to this content, simply emit it as-is. This helps avoid
-	// potential issues with literal characters being interpreted as
-	// formatting verbs.
-	fmt.Fprint(&output, es.ServiceOutput)
+	es.handleServiceOutputSection(&output)
 
 	es.handleErrorsSection(&output)
 
@@ -353,10 +357,20 @@ func (es *ExitState) ReturnCheckResults() {
 
 	es.handlePerformanceData(&output)
 
-	// Emit all collected output.
-	fmt.Print(output.String())
+	// Emit all collected plugin output using user-specified or fallback
+	// output target.
+	es.emitOutput(output.String())
 
-	os.Exit(es.ExitStatusCode)
+	// TODO: Should we offer an option to redirect the log message to stderr
+	// to another error output sink?
+	//
+	// TODO: Perhaps just don't emit anything at all?
+	switch {
+	case es.shouldSkipOSExit:
+		fmt.Fprintln(os.Stderr, "Skipping os.Exit call as requested.")
+	default:
+		os.Exit(es.ExitStatusCode)
+	}
 }
 
 // AddPerfData appends provided performance data. Validation is skipped if
@@ -388,4 +402,39 @@ func (es *ExitState) AddPerfData(skipValidate bool, pd ...PerformanceData) error
 // AddError appends provided errors to the collection.
 func (es *ExitState) AddError(err ...error) {
 	es.Errors = append(es.Errors, err...)
+}
+
+// SetOutputTarget assigns a target for Nagios plugin output. By default
+// output is emitted to os.Stdout.
+func (es *ExitState) SetOutputTarget(w io.Writer) {
+	// Guard against potential nil argument.
+	if w == nil {
+		es.outputSink = os.Stdout
+	}
+
+	es.outputSink = w
+}
+
+// SkipOSExit indicates that the os.Exit(x) step used to signal to Nagios what
+// state plugin execution has completed in (e.g., OK, WARNING, ...) should be
+// skipped. If skipped, a message is logged to os.Stderr in place of the
+// os.Exit(x) call.
+//
+// Disabling the call to os.Exit is needed by tests to prevent panics in Go
+// 1.16 and newer.
+func (es *ExitState) SkipOSExit() {
+	es.shouldSkipOSExit = true
+}
+
+// emitOutput writes final plugin output to the previously set output target.
+// No further modifications to plugin output are performed.
+func (es ExitState) emitOutput(pluginOutput string) {
+
+	// Emit all collected output using user-specified output target. Fall back
+	// to standard output if not set.
+	if es.outputSink == nil {
+		es.outputSink = os.Stdout
+	}
+
+	fmt.Fprint(es.outputSink, pluginOutput)
 }
