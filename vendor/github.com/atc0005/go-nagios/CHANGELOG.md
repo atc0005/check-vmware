@@ -26,6 +26,22 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.10.0] - 2022-09-18
+
+### Added
+
+- (GH-144) Add test to prevent further Service Output interpolation
+  regressions
+- (GH-145) Add support for setting preferred output target
+- (GH-147) Add option to skip os.Exit call at end of plugin execution
+- (GH-149) Add initial plugin output test
+
+### Changed
+
+- Dependencies
+  - `github/codeql-action`
+    - `v2.1.22` to `v2.1.23`
+
 ## [v0.9.2] - 2022-09-15
 
 ### Changed
@@ -370,7 +386,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.9.2...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.10.0...HEAD
+[v0.10.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.0
 [v0.9.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.2
 [v0.9.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.1
 [v0.9.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.0
