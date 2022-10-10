@@ -10,15 +10,27 @@ package nagios
 import (
 	"fmt"
 	"io"
+	"strings"
 )
 
 // handleServiceOutputSection is a wrapper around the logic used to process
 // the Service Output or "one-line summary" content.
 func (es ExitState) handleServiceOutputSection(w io.Writer) {
-	// One-line output used as the summary or short explanation for the
-	// specific Nagios state that we are returning. We apply no formatting
-	// changes to this content, simply emit it as-is. This helps avoid
-	// potential issues with literal characters being interpreted as
+	if es.LongServiceOutput == "" {
+		// If Long Service Output was not specified, explicitly trim any
+		// formatted trailing spacing so that performance data output will be
+		// emitted immediately following the Service Output on the same line.
+
+		// NOTE: We explicitly include a space character in the cut set just
+		// on the off chance that a future update to the CheckOutputEOL
+		// constant removes the explicitly leading whitespace character.
+		cutSet := fmt.Sprintf(" \t%s", CheckOutputEOL)
+		es.ServiceOutput = strings.TrimRight(es.ServiceOutput, cutSet)
+	}
+
+	// Aside from (potentially) trimming trailing whitespace, we apply no
+	// formatting changes to this content, simply emit it as-is. This helps
+	// avoid potential issues with literal characters being interpreted as
 	// formatting verbs.
 	fmt.Fprint(w, es.ServiceOutput)
 }
