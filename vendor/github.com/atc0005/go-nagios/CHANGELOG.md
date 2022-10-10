@@ -26,6 +26,20 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.10.1] - 2022-10-09
+
+### Changed
+
+- Dependencies
+  - `google/go-cmp`
+    - `v0.5.8` to `v0.5.9`
+- (GH-103) Emit Performance Data on same line as `ServiceOutput` if
+  `LongServiceOutput` is empty
+- (GH-146) Move examples from README to Example tests
+- (GH-154) Refactor GitHub Actions workflows to import logic
+- (GH-156) Update README to include go.mod badge
+- (GH-157) Prevent duplication of Performance Data metrics
+
 ## [v0.10.0] - 2022-09-18
 
 ### Added
@@ -386,7 +400,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.10.1...HEAD
+[v0.10.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.1
 [v0.10.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.0
 [v0.9.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.2
 [v0.9.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.1

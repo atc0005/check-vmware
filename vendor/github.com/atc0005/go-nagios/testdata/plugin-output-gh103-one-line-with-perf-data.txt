@@ -1,0 +1,1 @@
+OK: Datastore HUSVM-DC1-vol6 space usage (0 VMs) is 0.01% of 18.0TB with 18.0TB remaining [WARNING: 90% , CRITICAL: 95%] | 'time'=874ms;;;; 

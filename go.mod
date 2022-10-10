@@ -10,7 +10,7 @@ module github.com/atc0005/check-vmware
 go 1.19
 
 require (
-	github.com/atc0005/go-nagios v0.10.0
+	github.com/atc0005/go-nagios v0.10.1
 	github.com/google/go-cmp v0.5.9
 	github.com/rs/zerolog v1.28.0
 	github.com/vmware/govmomi v0.29.0
