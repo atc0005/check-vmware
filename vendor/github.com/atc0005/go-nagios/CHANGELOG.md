@@ -26,6 +26,12 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.10.2] - 2022-10-19
+
+### Fixed
+
+- (GH-164) Sort performance data metrics for consistent output
+
 ## [v0.10.1] - 2022-10-09
 
 ### Changed
@@ -400,7 +406,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.10.1...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.10.2...HEAD
+[v0.10.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.2
 [v0.10.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.1
 [v0.10.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.0
 [v0.9.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.9.2

@@ -10,6 +10,7 @@ package nagios
 import (
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 )
 
@@ -163,7 +164,11 @@ func (es ExitState) handlePerformanceData(w io.Writer) {
 		// another by a single space.
 		fmt.Fprint(w, " |")
 
-		for _, pd := range es.perfData {
+		// Sort performance data values prior to emitting them so that the
+		// output is consistent across plugin execution.
+		perfData := es.getSortedPerfData()
+
+		for _, pd := range perfData {
 			fmt.Fprintf(w,
 				// The expected format of a performance data metric:
 				//
@@ -270,4 +275,22 @@ func (es *ExitState) HideThresholdsSection() {
 // section, regardless of whether values were previously provided for display.
 func (es *ExitState) HideErrorsSection() {
 	es.hideErrorsSection = true
+}
+
+// getSortedPerfData returns a sorted copy of the performance data metrics.
+func (es ExitState) getSortedPerfData() []PerformanceData {
+	keys := make([]string, 0, len(es.perfData))
+	perfData := make([]PerformanceData, 0, len(es.perfData))
+
+	for k := range es.perfData {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
+		pd := es.perfData[key]
+		perfData = append(perfData, pd)
+	}
+
+	return perfData
 }
