@@ -252,8 +252,6 @@ func main() {
 		EvaluateAcknowledgedAlarms:       cfg.EvaluateAcknowledgedAlarms,
 	}
 
-	log.Debug().Msg("Compiling Performance Data details")
-
 	var numTriggeredAlarmsToReport int
 	if len(triggeredAlarms) > 0 {
 		// Filter Triggered Alarms using requested settings, marking alarms as
@@ -270,6 +268,8 @@ func main() {
 			Int("remaining_triggered_alarms", numTriggeredAlarmsToReport).
 			Msg("triggered alarms remaining after filtering")
 	}
+
+	log.Debug().Msg("Compiling Performance Data details")
 
 	pd := []nagios.PerformanceData{
 		// The `time` (runtime) metric is appended at plugin exit, so do not
