@@ -26,6 +26,37 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.30.7] - 2022-12-07
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- GitHub Actions Workflows updates
+- built using Go 1.19.4
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.1` to `1.19.4`
+  - `atc0005/go-nagios`
+    - `v0.9.2` to `v0.10.2`
+  - `github.com/mattn/go-colorable`
+    - `v0.1.12` to `v0.1.13`
+  - `github.com/mattn/go-isatty`
+    - `v0.0.14` to `v0.0.16`
+  - `golang.org/x/sys`
+    - `v0.0.0-20210927094055-39ccf1dd6fa6` to `v0.3.0`
+- (GH-734) Refactor GitHub Actions workflows to import logic
+
+### Fixed
+
+- (GH-739) Move perfdata debug message to correct location
+- (GH-740) Fix Makefile Go module base path detection
+
 ## [v0.30.6] - 2022-09-15
 
 ### Overview
@@ -1889,7 +1920,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.6...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.7...HEAD
+[v0.30.7]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.7
 [v0.30.6]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.6
 [v0.30.5]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.5
 [v0.30.4]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.4
