@@ -26,6 +26,13 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.11.0] - 2022-12-14
+
+### Added
+
+- (GH-102) Add constructor to initialize plugin start time, provide `time`
+  Performance Data metric "automatically"
+
 ## [v0.10.2] - 2022-10-19
 
 ### Fixed
@@ -406,7 +413,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.10.2...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.11.0...HEAD
+[v0.11.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.11.0
 [v0.10.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.2
 [v0.10.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.1
 [v0.10.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.0

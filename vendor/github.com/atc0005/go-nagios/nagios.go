@@ -14,6 +14,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strings"
+	"time"
 )
 
 // Nagios plugin/service check states. These constants replicate the values
@@ -60,6 +61,12 @@ const (
 	defaultThresholdsLabel   string = "THRESHOLDS"
 	defaultErrorsLabel       string = "ERRORS"
 	defaultDetailedInfoLabel string = "DETAILED INFO"
+)
+
+// Default performance data metrics emitted if not specified by client code.
+const (
+	defaultTimeMetricLabel             string = "time"
+	defaultTimeMetricUnitOfMeasurement string = "ms"
 )
 
 // Sentinel error collection. Exported for potential use by client code to
@@ -179,6 +186,32 @@ func (pd PerformanceData) Validate() error {
 	}
 }
 
+// String provides a PerformanceData metric in format ready for use in plugin
+// output.
+func (pd PerformanceData) String() string {
+	return fmt.Sprintf(
+		// The expected format of a performance data metric:
+		//
+		// 'label'=value[UOM];[warn];[crit];[min];[max]
+		//
+		// References:
+		//
+		// https://nagios-plugins.org/doc/guidelines.html
+		// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/perfdata.html
+		// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/pluginapi.html
+		// https://www.monitoring-plugins.org/doc/guidelines.html
+		// https://icinga.com/docs/icinga-2/latest/doc/05-service-monitoring/#performance-data-metrics
+		" '%s'=%s%s;%s;%s;%s;%s",
+		pd.Label,
+		pd.Value,
+		pd.UnitOfMeasurement,
+		pd.Warn,
+		pd.Crit,
+		pd.Min,
+		pd.Max,
+	)
+}
+
 // ExitCallBackFunc represents a function that is called as a final step
 // before application termination so that branding information can be emitted
 // for inclusion in the notification. This helps identify which specific
@@ -192,6 +225,11 @@ type ExitState struct {
 	// outputSink is the user-specified or fallback target for Nagios plugin
 	// output.
 	outputSink io.Writer
+
+	// pluginStart tracks when the associated plugin begins executing. This
+	// value is used to generate a default `time` performance data metric
+	// (which can be overridden by client code).
+	pluginStart time.Time
 
 	// LastError is the last error encountered which should be reported as
 	// part of ending the service check (e.g., "Failed to connect to XYZ to
@@ -263,6 +301,19 @@ type ExitState struct {
 	// termination to emit branding details at the end of the notification.
 	// See also ExitCallBackFunc.
 	BrandingCallback ExitCallBackFunc
+}
+
+// New constructs a new ExitState value in the same way that client code has
+// been using this library. We also record a default time performance data
+// metric. This default metric is ignored if supplied by client code.
+func New() *ExitState {
+	es := ExitState{
+		pluginStart:    time.Now(),
+		LastError:      nil,
+		ExitStatusCode: StateOKExitCode,
+	}
+
+	return &es
 }
 
 // ReturnCheckResults is intended to provide a reliable way to return a
@@ -443,4 +494,38 @@ func (es ExitState) emitOutput(pluginOutput string) {
 	}
 
 	fmt.Fprint(es.outputSink, pluginOutput)
+}
+
+// tryAddDefaultTimeMetric inserts a default `time` performance data metric into
+// the collection IF client code has not already specified such a value AND we
+// have a non-zero pluginStart value to use.
+func (es *ExitState) tryAddDefaultTimeMetric() {
+
+	// We already have an existing time metric, skip replacing it.
+	if _, hasTimeMetric := es.perfData[defaultTimeMetricLabel]; hasTimeMetric {
+		return
+	}
+
+	// Our ExitState value was not generated from the constructor, so we do
+	// not have an internal plugin start time that we can use to generate a
+	// default time metric.
+	if es.pluginStart.IsZero() {
+		return
+	}
+
+	if es.perfData == nil {
+		es.perfData = make(map[string]PerformanceData)
+	}
+
+	es.perfData[defaultTimeMetricLabel] = defaultTimeMetric(es.pluginStart)
+}
+
+// defaultTimeMetric is a helper function that wraps the logic used to provide
+// a default performance data metric that tracks plugin execution time.
+func defaultTimeMetric(start time.Time) PerformanceData {
+	return PerformanceData{
+		Label:             defaultTimeMetricLabel,
+		Value:             fmt.Sprintf("%d", time.Since(start).Milliseconds()),
+		UnitOfMeasurement: defaultTimeMetricUnitOfMeasurement,
+	}
 }
