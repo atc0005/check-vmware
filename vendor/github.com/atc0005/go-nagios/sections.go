@@ -153,49 +153,40 @@ func (es ExitState) handleLongServiceOutput(w io.Writer) {
 
 // handlePerformanceData is a wrapper around the logic used to
 // handle/process plugin Performance Data.
-func (es ExitState) handlePerformanceData(w io.Writer) {
-	// Generate formatted performance data if provided. Only emit if a
-	// one-line summary is set by client code.
-	if len(es.perfData) != 0 && es.ServiceOutput != "" {
+func (es *ExitState) handlePerformanceData(w io.Writer) {
 
-		// Performance data metrics are appended to plugin output. These
-		// metrics are provided as a single line, leading with a pipe
-		// character, a space and one or more metrics each separated from
-		// another by a single space.
-		fmt.Fprint(w, " |")
-
-		// Sort performance data values prior to emitting them so that the
-		// output is consistent across plugin execution.
-		perfData := es.getSortedPerfData()
-
-		for _, pd := range perfData {
-			fmt.Fprintf(w,
-				// The expected format of a performance data metric:
-				//
-				// 'label'=value[UOM];[warn];[crit];[min];[max]
-				//
-				// References:
-				//
-				// https://nagios-plugins.org/doc/guidelines.html
-				// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/perfdata.html
-				// https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/pluginapi.html
-				// https://www.monitoring-plugins.org/doc/guidelines.html
-				// https://icinga.com/docs/icinga-2/latest/doc/05-service-monitoring/#performance-data-metrics
-				" '%s'=%s%s;%s;%s;%s;%s",
-				pd.Label,
-				pd.Value,
-				pd.UnitOfMeasurement,
-				pd.Warn,
-				pd.Crit,
-				pd.Min,
-				pd.Max,
-			)
-		}
-
-		// Add final trailing newline to satisfy Nagios plugin output format.
-		fmt.Fprint(w, CheckOutputEOL)
-
+	// We require that a one-line summary is set by client code before
+	// emitting performance data metrics.
+	if strings.TrimSpace(es.ServiceOutput) == "" {
+		return
 	}
+
+	// If the value is available, use it, otherwise this is a NOOP.
+	es.tryAddDefaultTimeMetric()
+
+	// If no metrics have been collected by this point we have nothing further
+	// to do.
+	if len(es.perfData) == 0 {
+		return
+	}
+
+	// Performance data metrics are appended to plugin output. These
+	// metrics are provided as a single line, leading with a pipe
+	// character, a space and one or more metrics each separated from
+	// another by a single space.
+	fmt.Fprint(w, " |")
+
+	// Sort performance data values prior to emitting them so that the
+	// output is consistent across plugin execution.
+	perfData := es.getSortedPerfData()
+
+	for _, pd := range perfData {
+		fmt.Fprint(w, pd.String())
+	}
+
+	// Add final trailing newline to satisfy Nagios plugin output format.
+	fmt.Fprint(w, CheckOutputEOL)
+
 }
 
 // isThresholdsSectionHidden indicates whether the Thresholds section should
