@@ -26,6 +26,12 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.12.1] - 2022-12-15
+
+### Changed
+
+- (GH-172) Replace further ExitState references
+
 ## [v0.12.0] - 2022-12-15
 
 ### Changed
@@ -420,7 +426,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.12.1...HEAD
+[v0.12.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.12.1
 [v0.12.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.12.0
 [v0.11.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.11.0
 [v0.10.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.2
