@@ -26,6 +26,13 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.12.0] - 2022-12-15
+
+### Changed
+
+- (GH-169) Rename primary `ExitState` type to `Plugin`, `New` constructor to
+  `NewPlugin`
+
 ## [v0.11.0] - 2022-12-14
 
 ### Added
@@ -413,7 +420,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.12.0...HEAD
+[v0.12.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.12.0
 [v0.11.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.11.0
 [v0.10.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.2
 [v0.10.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.10.1
