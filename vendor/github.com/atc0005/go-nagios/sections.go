@@ -16,8 +16,8 @@ import (
 
 // handleServiceOutputSection is a wrapper around the logic used to process
 // the Service Output or "one-line summary" content.
-func (es ExitState) handleServiceOutputSection(w io.Writer) {
-	if es.LongServiceOutput == "" {
+func (p Plugin) handleServiceOutputSection(w io.Writer) {
+	if p.LongServiceOutput == "" {
 		// If Long Service Output was not specified, explicitly trim any
 		// formatted trailing spacing so that performance data output will be
 		// emitted immediately following the Service Output on the same line.
@@ -26,39 +26,39 @@ func (es ExitState) handleServiceOutputSection(w io.Writer) {
 		// on the off chance that a future update to the CheckOutputEOL
 		// constant removes the explicitly leading whitespace character.
 		cutSet := fmt.Sprintf(" \t%s", CheckOutputEOL)
-		es.ServiceOutput = strings.TrimRight(es.ServiceOutput, cutSet)
+		p.ServiceOutput = strings.TrimRight(p.ServiceOutput, cutSet)
 	}
 
 	// Aside from (potentially) trimming trailing whitespace, we apply no
 	// formatting changes to this content, simply emit it as-is. This helps
 	// avoid potential issues with literal characters being interpreted as
 	// formatting verbs.
-	fmt.Fprint(w, es.ServiceOutput)
+	fmt.Fprint(w, p.ServiceOutput)
 }
 
-// handleErrorsSection is a wrapper around the logic used to handle/process the
-// Errors section header and listing.
-func (es ExitState) handleErrorsSection(w io.Writer) {
+// handleErrorsSection is a wrapper around the logic used to handle/process
+// the Errors section header and listing.
+func (p Plugin) handleErrorsSection(w io.Writer) {
 
 	// If one or more errors were recorded and client code has not opted to
 	// hide the section ...
-	if !es.isErrorsHidden() {
+	if !p.isErrorsHidden() {
 
 		fmt.Fprintf(w,
 			"%s%s**%s**%s%s",
 			CheckOutputEOL,
 			CheckOutputEOL,
-			es.getErrorsLabelText(),
+			p.getErrorsLabelText(),
 			CheckOutputEOL,
 			CheckOutputEOL,
 		)
 
-		if es.LastError != nil {
-			fmt.Fprintf(w, "* %v%s", es.LastError, CheckOutputEOL)
+		if p.LastError != nil {
+			fmt.Fprintf(w, "* %v%s", p.LastError, CheckOutputEOL)
 		}
 
 		// Process any non-nil errors in the collection.
-		for _, err := range es.Errors {
+		for _, err := range p.Errors {
 			if err != nil {
 				fmt.Fprintf(w, "* %v%s", err, CheckOutputEOL)
 			}
@@ -68,40 +68,40 @@ func (es ExitState) handleErrorsSection(w io.Writer) {
 
 }
 
-// handleThresholdsSection is a wrapper around the logic used to handle/process the
-// Thresholds section header and listing.
-func (es ExitState) handleThresholdsSection(w io.Writer) {
+// handleThresholdsSection is a wrapper around the logic used to
+// handle/process the Thresholds section header and listing.
+func (p Plugin) handleThresholdsSection(w io.Writer) {
 
 	// We skip emitting the thresholds section if there isn't any
 	// LongServiceOutput to process.
-	if es.LongServiceOutput != "" {
+	if p.LongServiceOutput != "" {
 
 		// If one or more threshold values were recorded and client code has
 		// not opted to hide the section ...
-		if !es.isThresholdsSectionHidden() {
+		if !p.isThresholdsSectionHidden() {
 
 			fmt.Fprintf(w,
 				"%s**%s**%s%s",
 				CheckOutputEOL,
-				es.getThresholdsLabelText(),
+				p.getThresholdsLabelText(),
 				CheckOutputEOL,
 				CheckOutputEOL,
 			)
 
-			if es.CriticalThreshold != "" {
+			if p.CriticalThreshold != "" {
 				fmt.Fprintf(w,
 					"* %s: %v%s",
 					StateCRITICALLabel,
-					es.CriticalThreshold,
+					p.CriticalThreshold,
 					CheckOutputEOL,
 				)
 			}
 
-			if es.WarningThreshold != "" {
+			if p.WarningThreshold != "" {
 				fmt.Fprintf(w,
 					"* %s: %v%s",
 					StateWARNINGLabel,
-					es.WarningThreshold,
+					p.WarningThreshold,
 					CheckOutputEOL,
 				)
 			}
@@ -112,10 +112,10 @@ func (es ExitState) handleThresholdsSection(w io.Writer) {
 
 // handleLongServiceOutput is a wrapper around the logic used to
 // handle/process the LongServiceOutput content.
-func (es ExitState) handleLongServiceOutput(w io.Writer) {
+func (p Plugin) handleLongServiceOutput(w io.Writer) {
 
 	// Early exit if there is no content to emit.
-	if es.LongServiceOutput == "" {
+	if p.LongServiceOutput == "" {
 		return
 	}
 
@@ -128,11 +128,11 @@ func (es ExitState) handleLongServiceOutput(w io.Writer) {
 	// prevent the LongServiceOutput from running up against the
 	// ServiceOutput content.
 	switch {
-	case !es.isThresholdsSectionHidden() || !es.isErrorsHidden():
+	case !p.isThresholdsSectionHidden() || !p.isErrorsHidden():
 		fmt.Fprintf(w,
 			"%s**%s**%s",
 			CheckOutputEOL,
-			es.getDetailedInfoLabelText(),
+			p.getDetailedInfoLabelText(),
 			CheckOutputEOL,
 		)
 	default:
@@ -146,27 +146,27 @@ func (es ExitState) handleLongServiceOutput(w io.Writer) {
 	fmt.Fprintf(w,
 		"%s%v%s",
 		CheckOutputEOL,
-		es.LongServiceOutput,
+		p.LongServiceOutput,
 		CheckOutputEOL,
 	)
 }
 
 // handlePerformanceData is a wrapper around the logic used to
 // handle/process plugin Performance Data.
-func (es *ExitState) handlePerformanceData(w io.Writer) {
+func (p *Plugin) handlePerformanceData(w io.Writer) {
 
 	// We require that a one-line summary is set by client code before
 	// emitting performance data metrics.
-	if strings.TrimSpace(es.ServiceOutput) == "" {
+	if strings.TrimSpace(p.ServiceOutput) == "" {
 		return
 	}
 
 	// If the value is available, use it, otherwise this is a NOOP.
-	es.tryAddDefaultTimeMetric()
+	p.tryAddDefaultTimeMetric()
 
 	// If no metrics have been collected by this point we have nothing further
 	// to do.
-	if len(es.perfData) == 0 {
+	if len(p.perfData) == 0 {
 		return
 	}
 
@@ -178,7 +178,7 @@ func (es *ExitState) handlePerformanceData(w io.Writer) {
 
 	// Sort performance data values prior to emitting them so that the
 	// output is consistent across plugin execution.
-	perfData := es.getSortedPerfData()
+	perfData := p.getSortedPerfData()
 
 	for _, pd := range perfData {
 		fmt.Fprint(w, pd.String())
@@ -191,8 +191,8 @@ func (es *ExitState) handlePerformanceData(w io.Writer) {
 
 // isThresholdsSectionHidden indicates whether the Thresholds section should
 // be omitted from output.
-func (es ExitState) isThresholdsSectionHidden() bool {
-	if es.hideThresholdsSection || (es.WarningThreshold == "" && es.CriticalThreshold == "") {
+func (p Plugin) isThresholdsSectionHidden() bool {
+	if p.hideThresholdsSection || (p.WarningThreshold == "" && p.CriticalThreshold == "") {
 		return true
 	}
 	return false
@@ -200,8 +200,8 @@ func (es ExitState) isThresholdsSectionHidden() bool {
 
 // isErrorsHidden indicates whether the Thresholds section should be omitted
 // from output.
-func (es ExitState) isErrorsHidden() bool {
-	if es.hideErrorsSection || (len(es.Errors) == 0 && es.LastError == nil) {
+func (p Plugin) isErrorsHidden() bool {
+	if p.hideErrorsSection || (len(p.Errors) == 0 && p.LastError == nil) {
 		return true
 	}
 	return false
@@ -209,10 +209,10 @@ func (es ExitState) isErrorsHidden() bool {
 
 // getThresholdsLabelText retrieves the custom thresholds label text if set,
 // otherwise returns the default value.
-func (es ExitState) getThresholdsLabelText() string {
+func (p Plugin) getThresholdsLabelText() string {
 	switch {
-	case es.thresholdsLabel != "":
-		return es.thresholdsLabel
+	case p.thresholdsLabel != "":
+		return p.thresholdsLabel
 	default:
 		return defaultThresholdsLabel
 	}
@@ -220,10 +220,10 @@ func (es ExitState) getThresholdsLabelText() string {
 
 // getErrorsLabelText retrieves the custom errors label text if set, otherwise
 // returns the default value.
-func (es ExitState) getErrorsLabelText() string {
+func (p Plugin) getErrorsLabelText() string {
 	switch {
-	case es.errorsLabel != "":
-		return es.errorsLabel
+	case p.errorsLabel != "":
+		return p.errorsLabel
 	default:
 		return defaultErrorsLabel
 	}
@@ -231,55 +231,55 @@ func (es ExitState) getErrorsLabelText() string {
 
 // getErrorsLabelText retrieves the custom detailed info label text if set,
 // otherwise returns the default value.
-func (es ExitState) getDetailedInfoLabelText() string {
+func (p Plugin) getDetailedInfoLabelText() string {
 	switch {
-	case es.detailedInfoLabel != "":
-		return es.detailedInfoLabel
+	case p.detailedInfoLabel != "":
+		return p.detailedInfoLabel
 	default:
 		return defaultDetailedInfoLabel
 	}
 }
 
 // SetThresholdsLabel overrides the default thresholds label text.
-func (es *ExitState) SetThresholdsLabel(newLabel string) {
-	es.thresholdsLabel = newLabel
+func (p *Plugin) SetThresholdsLabel(newLabel string) {
+	p.thresholdsLabel = newLabel
 }
 
 // SetErrorsLabel overrides the default errors label text.
-func (es *ExitState) SetErrorsLabel(newLabel string) {
-	es.errorsLabel = newLabel
+func (p *Plugin) SetErrorsLabel(newLabel string) {
+	p.errorsLabel = newLabel
 }
 
 // SetDetailedInfoLabel overrides the default detailed info label text.
-func (es *ExitState) SetDetailedInfoLabel(newLabel string) {
-	es.detailedInfoLabel = newLabel
+func (p *Plugin) SetDetailedInfoLabel(newLabel string) {
+	p.detailedInfoLabel = newLabel
 }
 
 // HideThresholdsSection indicates that client code has opted to hide the
 // thresholds section, regardless of whether values were previously provided
 // for display.
-func (es *ExitState) HideThresholdsSection() {
-	es.hideThresholdsSection = true
+func (p *Plugin) HideThresholdsSection() {
+	p.hideThresholdsSection = true
 }
 
 // HideErrorsSection indicates that client code has opted to hide the errors
 // section, regardless of whether values were previously provided for display.
-func (es *ExitState) HideErrorsSection() {
-	es.hideErrorsSection = true
+func (p *Plugin) HideErrorsSection() {
+	p.hideErrorsSection = true
 }
 
 // getSortedPerfData returns a sorted copy of the performance data metrics.
-func (es ExitState) getSortedPerfData() []PerformanceData {
-	keys := make([]string, 0, len(es.perfData))
-	perfData := make([]PerformanceData, 0, len(es.perfData))
+func (p Plugin) getSortedPerfData() []PerformanceData {
+	keys := make([]string, 0, len(p.perfData))
+	perfData := make([]PerformanceData, 0, len(p.perfData))
 
-	for k := range es.perfData {
+	for k := range p.perfData {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 
 	for _, key := range keys {
-		pd := es.perfData[key]
+		pd := p.perfData[key]
 		perfData = append(perfData, pd)
 	}
 
