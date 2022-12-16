@@ -37,10 +37,6 @@ func main() {
 		plugin.Errors = vsphere.AnnotateError(plugin.Errors...)
 	}(plugin)
 
-	// Disable library debug logging output by default
-	// vsphere.EnableLogging()
-	vsphere.DisableLogging()
-
 	// Setup configuration by parsing user-provided flags. Note plugin type so
 	// that only applicable CLI flags are exposed and any plugin-specific
 	// settings are applied.
@@ -65,10 +61,9 @@ func main() {
 		return
 	}
 
-	// Enable library-level logging if debug logging level is enabled app-wide
-	if cfg.LoggingLevel == config.LogLevelDebug {
-		vsphere.EnableLogging()
-	}
+	// Enable library-level logging if debug or greater logging level is
+	// enabled app-wide.
+	handleLibraryLogging()
 
 	// Set context deadline equal to user-specified timeout value for plugin
 	// runtime/execution.
