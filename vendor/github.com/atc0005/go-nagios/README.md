@@ -19,6 +19,7 @@ Shared Golang package for Nagios plugins
 - [Changelog](#changelog)
 - [Examples](#examples)
 - [License](#license)
+- [Used by](#used-by)
 - [References](#references)
 
 ## Status
@@ -47,9 +48,11 @@ various plugins and help reduce typos associated with literal strings.
   - simple label and exit code "wrapper"
   - useful in client code as a way to map internal check results to a Nagios
     service state value
-- Supports "branding" callback function to display application name,
-  version, or other information as a "trailer" for check results provided to
-  Nagios
+- Support for evaluating a given performance data value and setting the final
+  plugin state exit code
+- Support for using a "branding" callback function to display application
+  name, version, or other information as a "trailer" for check results
+  provided to Nagios
   - this could be useful for identifying what version of a plugin determined
     the service or host state to be an issue
 - Panics from client code are captured and reported
@@ -139,6 +142,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## Used by
+
+See the Known importers lists below for a dynamically updated list of projects
+using either this library or the original project.
+
+- [Known importers (pkg.go.dev)](https://pkg.go.dev/github.com/atc0005/go-nagios?tab=importedby)
+- <https://github.com/infraweavers/monitoring-agent-check-nt-replacement>
+
 ## References
 
 - Nagios
@@ -159,3 +170,8 @@ SOFTWARE.
   - <https://github.com/golang/go/wiki/Modules>
 - Panics, stack traces
   - <https://www.golangprograms.com/example-stack-and-caller-from-runtime-package.html>
+
+See also the [Used by](#used-by) section for projects known to be using this
+package. Please
+[report](https://github.com/atc0005/go-nagios/issues/new/choose) any
+additional projects that we've missed!

@@ -26,9 +26,23 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.13.0] - 2023-01-26
+
+### Added
+
+- (GH-176) Warning and Critical Threshold Handling
+  - credit: [@infraweavers](https://github.com/infraweavers)
+- (GH-179) Add Go Module Validation, Dependency Updates jobs
+
+### Fixed
+
+- (GH-174) Fix section header for v0.12.1 release
+- (GH-181) Refactor newly added Range support
+  - primarily small linting related updates
+
 ## [v0.12.1] - 2022-12-15
 
-### Changed
+### Fixed
 
 - (GH-172) Replace further ExitState references
 
@@ -426,7 +440,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.12.1...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.13.0...HEAD
+[v0.13.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.13.0
 [v0.12.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.12.1
 [v0.12.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.12.0
 [v0.11.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.11.0
