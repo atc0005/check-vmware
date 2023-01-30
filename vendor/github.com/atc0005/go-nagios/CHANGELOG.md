@@ -26,6 +26,21 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.14.0] - 2023-01-27
+
+### Added
+
+- (GH-175) Add support for parsing performance data
+
+### Changed
+
+- (GH-186) Expand Performance Data validation
+
+### Fixed
+
+- (GH-184) Fix TestPerformanceDataIsNotDuplicated test
+- (GH-187) Update gitignore vscode exclusions
+
 ## [v0.13.0] - 2023-01-26
 
 ### Added
@@ -440,7 +455,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.14.0...HEAD
+[v0.14.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.14.0
 [v0.13.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.13.0
 [v0.12.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.12.1
 [v0.12.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.12.0

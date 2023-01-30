@@ -50,6 +50,8 @@ various plugins and help reduce typos associated with literal strings.
     service state value
 - Support for evaluating a given performance data value and setting the final
   plugin state exit code
+- Support for parsing a given performance data metric string and generating
+  one or more `PerformanceData` values
 - Support for using a "branding" callback function to display application
   name, version, or other information as a "trailer" for check results
   provided to Nagios
