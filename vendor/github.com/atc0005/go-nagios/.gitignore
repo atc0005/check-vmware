@@ -21,8 +21,8 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# Ignore Visual Studio Code workspace-level settings
-.vscode/settings.json
+# Ignore local Visual Studio Code settings
+.vscode/
 
 # Ignore local "scratch" directory of temporary files
 scratch/
