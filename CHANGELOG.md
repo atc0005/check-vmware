@@ -26,6 +26,43 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.30.8] - 2023-03-02
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- GitHub Actions Workflows updates
+- built using Go 1.19.6
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.4` to `1.19.6`
+  - `atc0005/go-nagios`
+    - `v0.10.2` to `v0.14.0`
+  - `rs/zerolog`
+    - `v1.28.0` to `v1.29.0`
+  - `vmware/govmomi`
+    - `v0.29.0` to `v0.30.2`
+  - `mattn/go-isatty`
+    - `v0.0.16` to `v0.0.17`
+  - `golang.org/x/sys`
+    - `v0.3.0` to `v0.5.0`
+- (GH-750) Drop plugin runtime tracking, update library usage
+  - `time` metric is provided "automatically" via library
+- (GH-755) Add Go Module Validation, Dependency Updates jobs
+- (GH-763) Drop `Push Validation` workflow
+- (GH-764) Rework workflow scheduling
+- (GH-766) Remove `Push Validation` workflow status badge
+
+### Fixed
+
+- (GH-749) library logging is not enabled at Trace level
+
 ## [v0.30.7] - 2022-12-07
 
 ### Overview
@@ -1920,7 +1957,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.7...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.8...HEAD
+[v0.30.8]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.8
 [v0.30.7]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.7
 [v0.30.6]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.6
 [v0.30.5]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.5
