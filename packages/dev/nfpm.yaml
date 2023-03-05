@@ -1,0 +1,248 @@
+# Copyright 2023 Adam Chalkley
+#
+# https://github.com/atc0005/check-vmware
+#
+# Licensed under the MIT License. See LICENSE file in the project root for
+# full license information.
+
+# nfpm config file used for generating RPM and DEB packages.
+#
+# https://nfpm.goreleaser.com/usage/
+# https://nfpm.goreleaser.com/configuration/
+
+name: "check-vmware-dev"
+arch: "amd64"
+platform: "linux"
+
+# The SEMVER environment variable is set via the Makefile. Call `make
+# packages` to generate packages.
+version: ${SEMVER}
+
+section: "default"
+priority: "extra"
+maintainer: "Adam Chalkley <atc0005@users.noreply.github.com>"
+description: Go-based tooling to monitor VMware environments (dev build).
+vendor: "atc0005"
+homepage: "https://github.com/atc0005/check-vmware"
+license: "MIT"
+# changelog: "changelog.yaml"
+contents:
+  - src: ../../release_assets/check_vmware_tools/check_vmware_tools-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_tools_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_tools/check_vmware_tools-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_tools_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_vcpus/check_vmware_vcpus-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_vcpus_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_vcpus/check_vmware_vcpus-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_vcpus_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_vhw/check_vmware_vhw-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_vhw_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_vhw/check_vmware_vhw-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_vhw_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_hs2ds2vms/check_vmware_hs2ds2vms-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_hs2ds2vms_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_hs2ds2vms/check_vmware_hs2ds2vms-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_hs2ds2vms_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_datastore_space/check_vmware_datastore_space-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_datastore_space_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_datastore_space/check_vmware_datastore_space-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_datastore_space_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_datastore_performance/check_vmware_datastore_performance-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_datastore_performance_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_datastore_performance/check_vmware_datastore_performance-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_datastore_performance_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_snapshots_age/check_vmware_snapshots_age-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_snapshots_age_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_snapshots_age/check_vmware_snapshots_age-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_snapshots_age_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_snapshots_count/check_vmware_snapshots_count-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_snapshots_count_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_snapshots_count/check_vmware_snapshots_count-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_snapshots_count_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_snapshots_size/check_vmware_snapshots_size-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_snapshots_size_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_snapshots_size/check_vmware_snapshots_size-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_snapshots_size_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_rps_memory/check_vmware_rps_memory-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_rps_memory_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_rps_memory/check_vmware_rps_memory-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_rps_memory_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_host_memory/check_vmware_host_memory-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_host_memory_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_host_memory/check_vmware_host_memory-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_host_memory_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_host_cpu/check_vmware_host_cpu-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_host_cpu_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_host_cpu/check_vmware_host_cpu-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_host_cpu_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_vm_power_uptime/check_vmware_vm_power_uptime-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_vm_power_uptime_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_vm_power_uptime/check_vmware_vm_power_uptime-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_vm_power_uptime_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_disk_consolidation/check_vmware_disk_consolidation-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_disk_consolidation_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_disk_consolidation/check_vmware_disk_consolidation-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_disk_consolidation_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_question/check_vmware_question-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_question_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_question/check_vmware_question-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_question_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_alarms/check_vmware_alarms-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_alarms_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_alarms/check_vmware_alarms-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_alarms_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+  - src: ../../release_assets/check_vmware_vm_backup_via_ca/check_vmware_vm_backup_via_ca-linux-amd64-dev
+    dst: /usr/lib64/nagios/plugins/check_vmware_vm_backup_via_ca_dev
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_vm_backup_via_ca/check_vmware_vm_backup_via_ca-linux-amd64-dev
+    dst: /usr/lib/nagios/plugins/check_vmware_vm_backup_via_ca_dev
+    file_info:
+      mode: 0755
+    packager: deb
+
+overrides:
+  rpm:
+    depends:
+      # Provides selinuxenabled tool.
+      # Installed by default even via the "minimal" installation option.
+      - libselinux-utils
+    scripts:
+      # preinstall: ./scripts/rpm/preinstall.sh
+      postinstall: ./scripts/rpm/postinstall.sh
+      # postremove: ./scripts/rpm/postremove.sh
+  deb:
+    scripts:
+      # preinstall: ./scripts/deb/preinstall.sh
+      postinstall: ./scripts/deb/postinstall.sh
+      # preremove: ./scripts/deb/preremove.sh
