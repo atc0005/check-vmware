@@ -26,6 +26,39 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.31.0] - 2023-03-05
+
+### Overview
+
+- Add support for generating packages
+- Generated binary changes
+  - filename patterns
+  - compression
+  - executable metadata
+- Build improvements
+- Dependency updates
+- built using Go 1.19.6
+  - Statically linked
+  - Linux x64
+
+### Added
+
+- (GH-771) Generate RPM/DEB packages using nFPM
+
+### Changed
+
+- Dependencies
+  - `golang.org/x/sys`
+    - `v0.5.0` to `v0.6.0`
+- Build process
+  - (GH-770) Switch to semantic versioning (semver) compatible versioning
+    pattern
+  - (GH-772) Add version metadata to Windows executables
+  - (GH-773) Makefile: Compress binaries and use fixed filenames
+  - (GH-774) Makefile: Refresh recipes to add "standard" set, new
+    package-related options
+  - (GH-775) Build dev/stable releases using go-ci Docker image
+
 ## [v0.30.8] - 2023-03-02
 
 ### Overview
@@ -1957,7 +1990,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.30.8...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.31.0...HEAD
+[v0.31.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.31.0
 [v0.30.8]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.8
 [v0.30.7]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.7
 [v0.30.6]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.6
