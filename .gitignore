@@ -34,3 +34,5 @@
 /check_vmware_question
 /check_vmware_alarms
 
+# Ignore go generate produced Windows executable resource files
+*.syso
