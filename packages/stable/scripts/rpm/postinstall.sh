@@ -54,7 +54,7 @@ if [ -x "$(command -v selinuxenabled)" ]; then
             check_vmware_vm_backup_via_ca
         do
 
-            echo -e "\tApplying SELinux contexts on ${plugin_path}/${plugin_name}${plugin_name_suffix}"
+            echo -e "\nApplying SELinux contexts on ${plugin_path}/${plugin_name}${plugin_name_suffix}"
 
             chcon \
                 --verbose \
@@ -64,9 +64,9 @@ if [ -x "$(command -v selinuxenabled)" ]; then
                 "${plugin_path}/${plugin_name}${plugin_name_suffix}"
 
             if [ $? -eq 0 ]; then
-                echo -e "\t[OK] Successfully applied SELinux contexts on ${plugin_path}/${plugin_name}${plugin_name_suffix}"
+                echo -e "[OK] Successfully applied SELinux contexts on ${plugin_path}/${plugin_name}${plugin_name_suffix}"
             else
-                echo -e "\t[!!] Failed to set SELinux contexts on ${plugin_path}/${plugin_name}${plugin_name_suffix}"
+                echo -e "[!!] Failed to set SELinux contexts on ${plugin_path}/${plugin_name}${plugin_name_suffix}"
             fi
 
         done
