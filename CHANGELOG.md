@@ -26,6 +26,40 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.32.0] - 2023-03-31
+
+### Overview
+
+- Build improvements
+- Bug fixes
+- Dependency updates
+- built using Go 1.19.7
+  - Statically linked
+  - Linux x64
+
+### Added
+
+- (GH-793) Add rootless container builds via Docker/Podman
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.6` to `1.19.7`
+  - `vmware/govmomi`
+    - `v0.30.2` to `v0.30.4`
+  - `mattn/go-isatty`
+    - `v0.0.17` to `v0.0.18`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.9.0` to `go-ci-oldstable-build-v0.10.3`
+- (GH-781) Update .gitignore to exclude Windows syso files
+- (GH-787) Update vuln analysis GHAW to use on.push hook
+
+### Fixed
+
+- (GH-780) Fix '*-all-links.txt' generation
+- (GH-782) RPM installation output is "saw-toothed" and "noisy"
+
 ## [v0.31.0] - 2023-03-05
 
 ### Overview
@@ -1990,7 +2024,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.31.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.32.0...HEAD
+[v0.32.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.32.0
 [v0.31.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.31.0
 [v0.30.8]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.8
 [v0.30.7]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.7
