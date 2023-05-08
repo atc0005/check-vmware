@@ -334,7 +334,6 @@ func main() {
 
 			plugin.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateWARNINGLabel,
-				hardwareVersionsIdx,
 				hardwareVersionsIdx.Newest().VersionNumber(),
 				filteredVMs,
 				resourcePools,
@@ -372,7 +371,6 @@ func main() {
 
 			plugin.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateOKLabel,
-				hardwareVersionsIdx,
 				hardwareVersionsIdx.Newest().VersionNumber(),
 				filteredVMs,
 				resourcePools,
@@ -429,7 +427,6 @@ func main() {
 
 			plugin.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateCRITICALLabel,
-				hardwareVersionsIdx,
 				cfg.VirtualHardwareMinimumVersion,
 				filteredVMs,
 				resourcePools,
@@ -465,7 +462,6 @@ func main() {
 
 			plugin.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateOKLabel,
-				hardwareVersionsIdx,
 				cfg.VirtualHardwareMinimumVersion,
 				filteredVMs,
 				resourcePools,
@@ -522,7 +518,6 @@ func main() {
 
 			plugin.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateWARNINGLabel,
-				hardwareVersionsIdx,
 				defaultHardwareVersion.VersionNumber(),
 				filteredVMs,
 				resourcePools,
@@ -558,7 +553,6 @@ func main() {
 
 			plugin.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateOKLabel,
-				hardwareVersionsIdx,
 				defaultHardwareVersion.VersionNumber(),
 				filteredVMs,
 				resourcePools,
@@ -620,7 +614,6 @@ func main() {
 
 			plugin.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateCRITICALLabel,
-				hardwareVersionsIdx,
 				criticalThresholdVerNum,
 				filteredVMs,
 				resourcePools,
@@ -659,7 +652,6 @@ func main() {
 
 			plugin.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateWARNINGLabel,
-				hardwareVersionsIdx,
 				warningThresholdVerNum,
 				filteredVMs,
 				resourcePools,
@@ -696,7 +688,6 @@ func main() {
 
 			plugin.ServiceOutput = vsphere.VirtualHardwareOneLineCheckSummary(
 				nagios.StateOKLabel,
-				hardwareVersionsIdx,
 				warningThresholdVerNum,
 				filteredVMs,
 				resourcePools,
