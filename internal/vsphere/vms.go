@@ -1185,10 +1185,10 @@ func FilterVMsByPowerState(vms []mo.VirtualMachine, includePoweredOff bool) ([]m
 }
 
 // FilterVMsByPowerCycleUptime filters the provided collection of
-// VirtualMachines to just those with WARNING or CRITICAL values based on
-// provided thresholds. The collection is returned along with the number of
-// VirtualMachines that were excluded.
-func FilterVMsByPowerCycleUptime(vms []mo.VirtualMachine, warningThreshold int, criticalThreshold int) ([]mo.VirtualMachine, int) {
+// VirtualMachines to just those with WARNING or CRITICAL values. The
+// collection is returned along with the number of VirtualMachines that were
+// excluded.
+func FilterVMsByPowerCycleUptime(vms []mo.VirtualMachine, warningThreshold int) ([]mo.VirtualMachine, int) {
 
 	// setup early so we can reference it from deferred stats output
 	var vmsWithIssues []mo.VirtualMachine
@@ -1731,7 +1731,6 @@ func VMDiskConsolidationReport(
 	evaluatedVMs []mo.VirtualMachine,
 	vmsNeedingConsolidation []mo.VirtualMachine,
 	vmsToExclude []string,
-	evalPoweredOffVMs bool,
 	includeRPs []string,
 	excludeRPs []string,
 	rps []mo.ResourcePool,
@@ -1915,7 +1914,6 @@ func VMInteractiveQuestionReport(
 	evaluatedVMs []mo.VirtualMachine,
 	vmsNeedingResponse []mo.VirtualMachine,
 	vmsToExclude []string,
-	evalPoweredOffVMs bool,
 	includeRPs []string,
 	excludeRPs []string,
 	rps []mo.ResourcePool,
@@ -2075,7 +2073,6 @@ func VMInteractiveQuestionReport(
 // notifications.
 func VMBackupViaCAOneLineCheckSummary(
 	stateLabel string,
-	allVMs []mo.VirtualMachine,
 	evaluatedVMs []mo.VirtualMachine,
 	vmsWithBackups VMsWithBackup,
 	rps []mo.ResourcePool,

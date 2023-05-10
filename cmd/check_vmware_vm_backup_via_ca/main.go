@@ -350,7 +350,6 @@ func main() {
 
 		plugin.ServiceOutput = vsphere.VMBackupViaCAOneLineCheckSummary(
 			stateLabel,
-			vms,
 			filteredVMs,
 			vmsWithBackup,
 			resourcePools,
@@ -383,7 +382,6 @@ func main() {
 
 		plugin.ServiceOutput = vsphere.VMBackupViaCAOneLineCheckSummary(
 			nagios.StateOKLabel,
-			vms,
 			filteredVMs,
 			vmsWithBackup,
 			resourcePools,

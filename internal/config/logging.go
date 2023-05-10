@@ -87,10 +87,5 @@ func (c *Config) setupLogging(pluginType PluginType) error {
 		Int("port", c.Port).
 		Logger()
 
-	if err := setLoggingLevel(c.LoggingLevel); err != nil {
-		return err
-	}
-
-	return nil
-
+	return setLoggingLevel(c.LoggingLevel)
 }
