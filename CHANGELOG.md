@@ -26,6 +26,33 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.33.0] - 2023-05-12
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- built using Go 1.19.9
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.7` to `1.19.9`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.10.3` to `go-ci-oldstable-build-v0.10.5`
+  - `rs/zerolog`
+    - `v1.29.0` to `v1.29.1`
+  - `golang.org/x/sys`
+    - `v0.6.0` to `v0.8.0`
+- (GH-796) Add .dockerignore file for use during image builds
+
+### Fixed
+
+- (GH-805) Fix revive linter errors
+
 ## [v0.32.0] - 2023-03-31
 
 ### Overview
@@ -2024,7 +2051,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.32.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.33.0...HEAD
+[v0.33.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.0
 [v0.32.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.32.0
 [v0.31.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.31.0
 [v0.30.8]: https://github.com/atc0005/check-vmware/releases/tag/v0.30.8
