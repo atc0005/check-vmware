@@ -438,3 +438,91 @@ func defaultTimeMetric(start time.Time) PerformanceData {
 		UnitOfMeasurement: defaultTimeMetricUnitOfMeasurement,
 	}
 }
+
+// SupportedStateLabels returns a list of valid plugin state labels.
+func SupportedStateLabels() []string {
+	return []string{
+		StateOKLabel,
+		StateWARNINGLabel,
+		StateCRITICALLabel,
+		StateUNKNOWNLabel,
+		StateDEPENDENTLabel,
+	}
+}
+
+// SupportedExitCodes returns a list of valid plugin exit codes.
+func SupportedExitCodes() []int {
+	return []int{
+		StateOKExitCode,
+		StateWARNINGExitCode,
+		StateCRITICALExitCode,
+		StateUNKNOWNExitCode,
+		StateDEPENDENTExitCode,
+	}
+}
+
+// SupportedServiceStates returns a collection of valid plugin service states.
+func SupportedServiceStates() []ServiceState {
+	return []ServiceState{
+		{
+			Label:    StateOKLabel,
+			ExitCode: StateOKExitCode,
+		},
+		{
+			Label:    StateWARNINGLabel,
+			ExitCode: StateWARNINGExitCode,
+		},
+		{
+			Label:    StateCRITICALLabel,
+			ExitCode: StateCRITICALExitCode,
+		},
+		{
+			Label:    StateUNKNOWNLabel,
+			ExitCode: StateUNKNOWNExitCode,
+		},
+		{
+			Label:    StateDEPENDENTLabel,
+			ExitCode: StateDEPENDENTExitCode,
+		},
+	}
+}
+
+// StateLabelToExitCode returns the corresponding plugin exit code for the
+// given plugin state label. If an invalid value is provided the
+// StateUNKNOWNExitCode value is returned.
+func StateLabelToExitCode(label string) int {
+	switch strings.ToUpper(label) {
+	case StateOKLabel:
+		return StateOKExitCode
+	case StateWARNINGLabel:
+		return StateWARNINGExitCode
+	case StateCRITICALLabel:
+		return StateCRITICALExitCode
+	case StateUNKNOWNLabel:
+		return StateUNKNOWNExitCode
+	case StateDEPENDENTLabel:
+		return StateDEPENDENTExitCode
+	default:
+		return StateUNKNOWNExitCode
+	}
+}
+
+// ExitCodeToStateLabel returns the corresponding plugin state label for the
+// given plugin exit code. If an invalid value is provided the
+// StateUNKNOWNLabel value is returned.
+func ExitCodeToStateLabel(exitCode int) string {
+	switch exitCode {
+	case StateOKExitCode:
+		return StateOKLabel
+	case StateWARNINGExitCode:
+		return StateWARNINGLabel
+	case StateCRITICALExitCode:
+		return StateCRITICALLabel
+	case StateUNKNOWNExitCode:
+		return StateUNKNOWNLabel
+	case StateDEPENDENTExitCode:
+		return StateDEPENDENTLabel
+	default:
+		return StateUNKNOWNLabel
+	}
+}
