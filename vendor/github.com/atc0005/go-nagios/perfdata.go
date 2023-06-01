@@ -230,11 +230,7 @@ func (pd PerformanceData) Validate() error {
 		return err
 	}
 
-	if err := validatePerfDataMaxField(pd.Max); err != nil {
-		return err
-	}
-
-	return nil
+	return validatePerfDataMaxField(pd.Max)
 }
 
 // String provides a PerformanceData metric in format ready for use in plugin

@@ -26,6 +26,28 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.15.0] - 2023-05-31
+
+### Added
+
+- (GH-192) Add another perfdata success parsing test case
+- (GH-203) Add state lookup helper functions
+- (GH-204) Add "quick" Makefile recipe
+
+### Changed
+
+- Dependencies
+  - `stretchr/testify`
+    - `v1.8.1` to `v1.8.4`
+- (GH-194) Drop `Push Validation` workflow
+- (GH-195) Rework workflow scheduling
+- (GH-197) Remove `Push Validation` workflow status badge
+
+### Fixed
+
+- (GH-199) Update vuln analysis GHAW to use on.push hook
+- (GH-201) Fix revive linting errors
+
 ## [v0.14.0] - 2023-01-27
 
 ### Added
@@ -455,7 +477,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.15.0...HEAD
+[v0.15.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.15.0
 [v0.14.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.14.0
 [v0.13.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.13.0
 [v0.12.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.12.1
