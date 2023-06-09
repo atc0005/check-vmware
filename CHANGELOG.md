@@ -26,6 +26,33 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.33.1] - 2023-06-09
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- built using Go 1.19.10
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.9` to `1.19.10`
+  - `atc0005/go-nagios`
+    - `v0.14.0` to `v0.15.0`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.10.5` to `go-ci-oldstable-build-v0.10.6`
+  - `mattn/go-isatty`
+    - `v0.0.18` to `v0.0.19`
+- (GH-814) Update vuln analysis GHAW to remove on.push hook
+
+### Fixed
+
+- (GH-811) Disable depguard linter
+
 ## [v0.33.0] - 2023-05-12
 
 ### Overview
@@ -2051,7 +2078,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.33.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.33.1...HEAD
+[v0.33.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.1
 [v0.33.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.0
 [v0.32.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.32.0
 [v0.31.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.31.0
