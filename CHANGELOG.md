@@ -26,6 +26,29 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.33.2] - 2023-06-21
+
+### Overview
+
+- Bug fixes
+- Dependency updates
+- built using Go 1.19.10
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.10.6` to `go-ci-oldstable-build-v0.11.0`
+  - `golang.org/x/sys`
+    - `v0.8.0` to `v0.9.0`
+
+### Fixed
+
+- (GH-818) Restore local CodeQL workflow
+- (GH-820) Fix helper function closure collection evaluation
+
 ## [v0.33.1] - 2023-06-09
 
 ### Overview
@@ -2078,7 +2101,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.33.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.33.2...HEAD
+[v0.33.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.2
 [v0.33.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.1
 [v0.33.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.0
 [v0.32.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.32.0
