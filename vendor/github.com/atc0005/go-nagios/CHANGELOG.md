@@ -26,6 +26,25 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.16.0] - 2023-06-23
+
+### Added
+
+- (GH-209) Add support for error annotations
+- (GH-214) Add method for growing errors collection with deduplication
+  behavior
+
+### Changed
+
+- (GH-210) Update vuln analysis GHAW to remove on.push hook
+
+### Fixed
+
+- (GH-207) Disable depguard linter
+- (GH-211) Restore local CodeQL workflow
+- (GH-212) Explicitly document that `(nagios.Plugin).AddError` does not
+  perform deduplication of errors
+
 ## [v0.15.0] - 2023-05-31
 
 ### Added
@@ -477,7 +496,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.16.0...HEAD
+[v0.16.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.0
 [v0.15.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.15.0
 [v0.14.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.14.0
 [v0.13.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.13.0

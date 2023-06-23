@@ -1,5 +1,5 @@
-github.com/atc0005/go-nagios v0.15.0 h1:CxAR6fLXkSvMFZxsYh/HSErp/oad94vl9j65RcZaOjA=
-github.com/atc0005/go-nagios v0.15.0/go.mod h1:TlE2JBMuI64lM01MqobahTA94hgtVefvEzyKtvIHToo=
+github.com/atc0005/go-nagios v0.16.0 h1:fOcUBcYY6la+lkg4cOGL/ExDNM1HOiHnXG0np8IyJ+Y=
+github.com/atc0005/go-nagios v0.16.0/go.mod h1:TlE2JBMuI64lM01MqobahTA94hgtVefvEzyKtvIHToo=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/godbus/dbus/v5 v5.0.4/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
