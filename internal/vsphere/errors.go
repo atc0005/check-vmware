@@ -8,95 +8,44 @@
 package vsphere
 
 import (
-	"context"
-	"errors"
-	"fmt"
 	"time"
+
+	"github.com/atc0005/go-nagios"
 )
 
-// ErrRuntimeTimeoutReached indicates that plugin runtime exceeded specified
-// timeout value.
-var ErrRuntimeTimeoutReached = errors.New("plugin runtime exceeded specified timeout value")
-
-// ErrVMwareAdminAssistanceNeeded indicates that a known/detected problem can
+// VMwareAdminAssistanceNeeded indicates that a known/detected problem can
 // only be resolved with the assistance of the administrators of the VMware
 // environment(s) monitored by plugins in this project. While this team may be
 // the same ones to receive the notifications from the monitoring system using
 // this project's plugin, that may not always be the case.
-var ErrVMwareAdminAssistanceNeeded = errors.New(
-	"assistance needed from vmware administrators to resolve issue",
-)
+const VMwareAdminAssistanceNeeded = "assistance needed from vmware administrators to resolve issue"
 
 // AnnotateError is a helper function used to add additional human-readable
-// explanation for errors commonly emitted by dependencies. This function
-// receives an error, evaluates whether it contains specific errors in its
-// chain and then (potentially) appends additional details for later use. This
-// updated error chain is returned to the caller, preserving the original
-// wrapped error. The original error is returned unmodified if no annotations
-// were deemed necessary.
-func AnnotateError(errs ...error) []error {
-
+// explanation for errors encountered during plugin execution. We first apply
+// common advice for more general errors then apply advice specific to errors
+// routinely encountered by this specific project.
+func AnnotateError(plugin *nagios.Plugin) {
 	funcTimeStart := time.Now()
 
-	var errsAnnotated int
-	defer func(counter *int) {
+	defer func() {
 		logger.Printf(
-			"It took %v to execute AnnotateError func(errors evaluated: %d, annotated: %d)",
+			"It took %v to execute AnnotateError func(errors evaluated: %d)",
 			time.Since(funcTimeStart),
-			len(errs),
-			*counter,
+			len(plugin.Errors),
 		)
-	}(&errsAnnotated)
+	}()
 
-	isNilErrCollection := func(collection []error) bool {
-		if len(collection) != 0 {
-			for _, err := range collection {
-				if err != nil {
-					return false
-				}
-			}
-		}
-		return true
+	// If nothing to process, skip setup/processing steps.
+	if len(plugin.Errors) == 0 {
+		return
 	}
 
-	switch {
+	// Start off with the default advice collection.
+	errorAdviceMap := nagios.DefaultErrorAnnotationMappings()
 
-	// Process errors as long as the collection is not empty or not composed
-	// entirely of nil values.
-	case !isNilErrCollection(errs):
-		annotatedErrors := make([]error, 0, len(errs))
+	// Add project-specific error feedback.
+	errorAdviceMap[ErrDatastoreIormConfigurationStatisticsCollectionDisabled] = VMwareAdminAssistanceNeeded
 
-		for _, err := range errs {
-			if err != nil {
-
-				switch {
-				case errors.Is(err, context.DeadlineExceeded):
-					annotatedErrors = append(annotatedErrors, fmt.Errorf(
-						"%w: %s", err, ErrRuntimeTimeoutReached),
-					)
-
-				case errors.Is(err, ErrDatastoreIormConfigurationStatisticsCollectionDisabled):
-					annotatedErrors = append(annotatedErrors, fmt.Errorf(
-						"%w: %s", err, ErrVMwareAdminAssistanceNeeded),
-					)
-
-				default:
-					// Return error unmodified if additional decoration isn't
-					// defined for the error type.
-					annotatedErrors = append(annotatedErrors, err)
-
-				}
-
-			}
-
-		}
-
-		return annotatedErrors
-
-	// No errors were provided for evaluation.
-	default:
-		return nil
-
-	}
-
+	// Apply error advice annotations.
+	plugin.AnnotateRecordedErrors(errorAdviceMap)
 }

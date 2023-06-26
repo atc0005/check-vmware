@@ -31,12 +31,9 @@ func main() {
 	// defer this from the start so it is the last deferred function to run
 	defer plugin.ReturnCheckResults()
 
-	// Collect last minute details just before ending plugin execution.
-	defer func(plugin *nagios.Plugin) {
-		// Annotate errors (if applicable) with additional context to aid in
-		// troubleshooting.
-		plugin.Errors = vsphere.AnnotateError(plugin.Errors...)
-	}(plugin)
+	// Annotate all errors (if any) with remediation advice just before ending
+	// plugin execution.
+	defer vsphere.AnnotateError(plugin)
 
 	// Setup configuration by parsing user-provided flags. Note plugin type so
 	// that only applicable CLI flags are exposed and any plugin-specific
