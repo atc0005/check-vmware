@@ -52,10 +52,10 @@ func main() {
 		zlog.Err(cfgErr).Msg("Error initializing application")
 		plugin.ServiceOutput = fmt.Sprintf(
 			"%s: Error initializing application",
-			nagios.StateCRITICALLabel,
+			nagios.StateUNKNOWNLabel,
 		)
 		plugin.AddError(cfgErr)
-		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
+		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
 
 		return
 	}
