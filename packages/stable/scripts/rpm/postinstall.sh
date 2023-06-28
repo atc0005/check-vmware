@@ -55,13 +55,7 @@ if [ -x "$(command -v selinuxenabled)" ]; then
         do
 
             echo -e "\nApplying SELinux contexts on ${plugin_path}/${plugin_name}${plugin_name_suffix}"
-
-            chcon \
-                --verbose \
-                -t nagios_unconfined_plugin_exec_t \
-                -u system_u \
-                -r object_r \
-                "${plugin_path}/${plugin_name}${plugin_name_suffix}"
+            restorecon -v ${plugin_path}/${plugin_name}
 
             if [ $? -eq 0 ]; then
                 echo -e "[OK] Successfully applied SELinux contexts on ${plugin_path}/${plugin_name}${plugin_name_suffix}"
