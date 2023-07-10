@@ -280,6 +280,23 @@ func main() {
 		},
 	}
 
+	if err := plugin.AddPerfData(false, pd...); err != nil {
+		log.Error().
+			Err(err).
+			Msg("failed to add performance data")
+
+		// Surface the error in plugin output.
+		plugin.AddError(err)
+
+		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
+		plugin.ServiceOutput = fmt.Sprintf(
+			"%s: Failed to process performance data metrics",
+			nagios.StateUNKNOWNLabel,
+		)
+
+		return
+	}
+
 	// Update logger with new performance data related fields
 	log = log.With().
 		Int("datacenters", len(dcs)).
@@ -349,12 +366,6 @@ func main() {
 			dcsEvalNames,
 		)
 
-		if err := plugin.AddPerfData(false, pd...); err != nil {
-			log.Error().
-				Err(err).
-				Msg("failed to add performance data")
-		}
-
 		return
 
 	default:
@@ -378,12 +389,6 @@ func main() {
 			cfg.DatacenterNames,
 			dcsEvalNames,
 		)
-
-		if err := plugin.AddPerfData(false, pd...); err != nil {
-			log.Error().
-				Err(err).
-				Msg("failed to add performance data")
-		}
 
 		return
 

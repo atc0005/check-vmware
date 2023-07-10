@@ -297,6 +297,23 @@ func main() {
 		},
 	}
 
+	if err := plugin.AddPerfData(false, pd...); err != nil {
+		log.Error().
+			Err(err).
+			Msg("failed to add performance data")
+
+		// Surface the error in plugin output.
+		plugin.AddError(err)
+
+		plugin.ExitStatusCode = nagios.StateUNKNOWNExitCode
+		plugin.ServiceOutput = fmt.Sprintf(
+			"%s: Failed to process performance data metrics",
+			nagios.StateUNKNOWNLabel,
+		)
+
+		return
+	}
+
 	// Update logger with new performance data related fields
 	log = log.With().
 		Int("vms_total", len(vms)).
@@ -338,12 +355,6 @@ func main() {
 			resourcePools,
 		)
 
-		if err := plugin.AddPerfData(false, pd...); err != nil {
-			log.Error().
-				Err(err).
-				Msg("failed to add performance data")
-		}
-
 		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
@@ -375,12 +386,6 @@ func main() {
 			resourcePools,
 		)
 
-		if err := plugin.AddPerfData(false, pd...); err != nil {
-			log.Error().
-				Err(err).
-				Msg("failed to add performance data")
-		}
-
 		plugin.ExitStatusCode = nagios.StateWARNINGExitCode
 
 		return
@@ -409,12 +414,6 @@ func main() {
 			cfg.ExcludedResourcePools,
 			resourcePools,
 		)
-
-		if err := plugin.AddPerfData(false, pd...); err != nil {
-			log.Error().
-				Err(err).
-				Msg("failed to add performance data")
-		}
 
 		plugin.ExitStatusCode = nagios.StateOKExitCode
 
