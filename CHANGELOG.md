@@ -26,6 +26,39 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.33.3] - 2023-07-13
+
+### Overview
+
+- RPM package improvements
+- Change exit state for several scenarios
+- Bug fixes
+- Dependency updates
+- built using Go 1.19.11
+  - Statically linked
+  - Linux x64
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.10` to `1.19.11`
+  - `vmware/govmomi`
+    - `v0.30.4` to `v0.30.5`
+  - `atc0005/go-nagios`
+    - `v0.15.0` to `v0.16.0`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.11.0` to `go-ci-oldstable-build-v0.11.3`
+  - `golang.org/x/sys`
+    - `v0.9.0` to `v0.10.0`
+- (GH-829) Update RPM postinstall scripts to use restorecon
+- (GH-825) Update error annotation implementation
+
+### Fixed
+
+- (GH-828) Use UNKNOWN state for invalid command-line args
+- (GH-832) Use UNKNOWN state for perfdata add failure
+
 ## [v0.33.2] - 2023-06-21
 
 ### Overview
@@ -2101,7 +2134,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.33.2...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.33.3...HEAD
+[v0.33.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.3
 [v0.33.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.2
 [v0.33.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.1
 [v0.33.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.0
