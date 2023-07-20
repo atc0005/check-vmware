@@ -27,7 +27,7 @@ jobs:
     name: Analyze
     runs-on: ubuntu-latest
     # Default: 360 minutes
-    timeout-minutes: 10
+    timeout-minutes: 20
     container:
       # NOTE: CodeQL requires a Go version equal to or greater than the
       # version specified in the project's go.mod file. We use a container
