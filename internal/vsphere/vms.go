@@ -2402,3 +2402,210 @@ func VMBackupViaCAReport(
 
 	return report.String()
 }
+
+// VMListOneLineCheckSummary is used to generate a one-line Nagios service
+// check results summary. This is the line most prominent in notifications.
+func VMListOneLineCheckSummary(
+	stateLabel string,
+
+	// evaluatedVMs is the collection of VMs before bulk include/exclude
+	// operations. This may not be a collection of *all* VMs, but rather a
+	// subset obtained by initial filtering based on resource pools.
+	evaluatedVMs []mo.VirtualMachine,
+
+	// remainingVMs is the collection of VMs after all include/exclude
+	// filtering is applied.
+	remainingVMs []mo.VirtualMachine,
+	rps []mo.ResourcePool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VMListOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	switch {
+	case len(remainingVMs) > 0:
+		return fmt.Sprintf(
+			"%s: %d VMs remaining after filtering (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			len(remainingVMs),
+			len(evaluatedVMs),
+			len(rps),
+		)
+
+	default:
+		return fmt.Sprintf(
+			"%s: No VMs remaining after filtering (evaluated %d VMs, %d Resource Pools)",
+			stateLabel,
+			len(evaluatedVMs),
+			len(rps),
+		)
+	}
+}
+
+// VMListReport generates a summary of VMs before filtering and after along
+// with various verbose details intended to aid in troubleshooting check
+// results at a glance. This information is provided for use with the Long
+// Service Output field commonly displayed on the detailed service check
+// results display in the web UI or in the body of many notifications.
+func VMListReport(
+	c *vim25.Client,
+
+	// evaluatedVMs is the collection of VMs before bulk include/exclude
+	// operations. This may not be a collection of *all* VMs, but rather a
+	// subset obtained by initial filtering based on resource pools.
+	evaluatedVMs []mo.VirtualMachine,
+
+	// remainingVMs is the collection of VMs after all include/exclude
+	// filtering is applied.
+	remainingVMs []mo.VirtualMachine,
+
+	vmsToExclude []string,
+	includeRPs []string,
+	excludeRPs []string,
+	rps []mo.ResourcePool,
+	evalPoweredOff bool,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute VMListReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	var report strings.Builder
+
+	fmt.Fprintf(
+		&report,
+		"(%d) VMs before all filtering is applied:%s%s",
+		len(evaluatedVMs),
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	for _, vm := range evaluatedVMs {
+		fmt.Fprintf(
+			&report,
+			"* %s%s",
+			vm.Name,
+			nagios.CheckOutputEOL,
+		)
+	}
+
+	fmt.Fprint(&report, nagios.CheckOutputEOL)
+
+	fmt.Fprintf(
+		&report,
+		"(%d) VMs after all filtering is applied:%s%s",
+		len(remainingVMs),
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	switch {
+	case len(evaluatedVMs) == len(remainingVMs):
+		fmt.Fprintf(
+			&report,
+			"Same list as above.%s",
+			nagios.CheckOutputEOL,
+		)
+	default:
+		for _, vm := range remainingVMs {
+			fmt.Fprintf(
+				&report,
+				"* %s%s",
+				vm.Name,
+				nagios.CheckOutputEOL,
+			)
+		}
+	}
+
+	fmt.Fprint(&report, nagios.CheckOutputEOL)
+
+	fmt.Fprintf(
+		&report,
+		"%s---%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* vSphere environment: %s%s",
+		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* VMs (evaluated: %d, remaining: %d)%s",
+		len(evaluatedVMs),
+		len(remainingVMs),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Powered off VMs evaluated: %t%s",
+		evalPoweredOff,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified VMs to exclude (%d): [%v]%s",
+		len(vmsToExclude),
+		strings.Join(vmsToExclude, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
+		len(includeRPs),
+		strings.Join(includeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
+		len(excludeRPs),
+		strings.Join(excludeRPs, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* Resource Pools evaluated (%d): [%v]%s",
+		len(rps),
+		strings.Join(
+			func() []string {
+				rpNames := make([]string, len(rps))
+				for i := range rps {
+					rpNames[i] = rps[i].Name
+				}
+				return rpNames
+			}(), ", ",
+		),
+		nagios.CheckOutputEOL,
+	)
+
+	return report.String()
+}

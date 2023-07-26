@@ -209,6 +209,7 @@ const (
 	PluginTypeInteractiveQuestion            string = "interactive-question"
 	PluginTypeAlarms                         string = "alarms"
 	PluginTypeVirtualMachineLastBackupViaCA  string = "vm-last-backup-via-ca"
+	PluginTypeVirtualMachineList             string = "vm-list"
 )
 
 // Known limits
