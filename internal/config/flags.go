@@ -317,6 +317,16 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.VMBackupAgeCritical, "backup-age-critical", defaultVMBackupAgeCritical, vmBackupAgeCriticalFlagHelp)
 		flag.IntVar(&c.VMBackupAgeCritical, "bac", defaultVMBackupAgeCritical, vmBackupAgeCriticalFlagHelp+" (shorthand)")
 
+	case pluginType.VirtualMachineList:
+
+		// FIXME: Extend with any other filters already supported by other plugins
+
+		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+
+		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+
 	}
 
 	// Shared flags for all plugin types
