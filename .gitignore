@@ -5,34 +5,30 @@
 # Licensed under the MIT License. See LICENSE file in the project root for
 # full license information.
 
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
 
 # Ignore Visual Studio Code workspace-level settings
 /.vscode
 
 # Ignore local "scratch" directory of temporary files
-/scratch
+scratch/
 
 # Ignore local builds
 /release_assets
 
 # Ignore one-off CLI app builds
-/check_vmware_tools
-/check_vmware_vcpus
-/check_vmware_vhw
-/check_vmware_hs2ds2vms
-/check_vmware_datastore
-/check_vmware_datastore_space
-/check_vmware_datastore_performance
-/check_vmware_snapshots_age
-/check_vmware_snapshots_count
-/check_vmware_snapshots_size
-/check_vmware_rps_memory
-/check_vmware_host_memory
-/check_vmware_host_cpu
-/check_vmware_vm_power_uptime
-/check_vmware_disk_consolidation
-/check_vmware_question
-/check_vmware_alarms
+/check_vmware_*
 
 # Ignore go generate produced Windows executable resource files
 *.syso
