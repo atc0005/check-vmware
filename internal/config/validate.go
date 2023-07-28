@@ -41,6 +41,15 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
+			)
+		}
+
 	case pluginType.InteractiveQuestion:
 
 		// only one of these options may be used
@@ -52,6 +61,15 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
+			)
+		}
+
 	case pluginType.SnapshotsAge:
 
 		// only one of these options may be used
@@ -60,6 +78,15 @@ func (c Config) validate(pluginType PluginType) error {
 				"only one of %q or %q flags may be specified",
 				"include-rp",
 				"exclude-rp",
+			)
+		}
+
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
 			)
 		}
 
@@ -94,6 +121,15 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
+			)
+		}
+
 		if c.SnapshotsCountWarning < 0 {
 			return fmt.Errorf(
 				"invalid snapshot count WARNING threshold number: %d",
@@ -125,6 +161,15 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
+			)
+		}
+
 		if c.SnapshotsSizeWarning < 0 {
 			return fmt.Errorf(
 				"invalid snapshot size WARNING threshold number: %d",
@@ -153,6 +198,15 @@ func (c Config) validate(pluginType PluginType) error {
 				"only one of %q or %q flags may be specified",
 				"include-rp",
 				"exclude-rp",
+			)
+		}
+
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
 			)
 		}
 
@@ -409,6 +463,15 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
+			)
+		}
+
 		if c.VCPUsMaxAllowed < 1 {
 			return fmt.Errorf(
 				"invalid value specified for maximum number of vCPUs allowed: %d",
@@ -444,6 +507,15 @@ func (c Config) validate(pluginType PluginType) error {
 				"only one of %q or %q flags may be specified",
 				"include-rp",
 				"exclude-rp",
+			)
+		}
+
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
 			)
 		}
 
@@ -532,6 +604,15 @@ func (c Config) validate(pluginType PluginType) error {
 				"only one of %q or %q flags may be specified",
 				"include-rp",
 				"exclude-rp",
+			)
+		}
+
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
 			)
 		}
 
@@ -741,6 +822,15 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
+			)
+		}
+
 		// assert that specified time zone is recognized
 		if _, err := time.LoadLocation(c.VMBackupDateTimezone); err != nil {
 			return fmt.Errorf(
@@ -801,8 +891,14 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
-		// FIXME: Add other include/exclude option validation steps here.
-
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-folder-id",
+				"exclude-folder-id",
+			)
+		}
 	}
 
 	// shared validation checks

@@ -18,6 +18,7 @@ import (
 
 	"github.com/atc0005/check-vmware/internal/textutils"
 	"github.com/atc0005/go-nagios"
+	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
@@ -47,6 +48,20 @@ var ErrVirtualMachineMissingBackupDate = errors.New(
 var ErrVirtualMachineBackupDateOld = errors.New(
 	"virtual machine backup date exceeds specified threshold",
 )
+
+// ErrValidationOfIncludeExcludeRPLists indicates that a validation attempt of
+// the given ResourcePool include or exclude lists failed.
+var ErrValidationOfIncludeExcludeRPLists = errors.New("validation failed for include/exclude resource pool lists")
+
+// ErrValidationOfIncludeExcludeFolderIDLists indicates that a validation
+// attempt of the given Folder include or exclude lists failed.
+var ErrValidationOfIncludeExcludeFolderIDLists = errors.New("validation failed for include/exclude folder ID lists")
+
+// ErrVirtualMachineConfigurationIsNil indicates that the configuration for a
+// virtual machine is unset, which may occur if the property is not requested
+// from the vSphere API or if the service account executing the plugin has
+// insufficient privileges.
+var ErrVirtualMachineConfigurationIsNil = errors.New("virtual machine configuration is nil")
 
 // VMWithCA wraps the vSphere VirtualMachine managed object type with a
 // specific Custom Attribute name/value pair.
@@ -122,6 +137,97 @@ type VMWithBackup struct {
 // VMsWithBackup is a collection of VirtualMachines which track backup date
 // details.
 type VMsWithBackup []VMWithBackup
+
+// VMsFilterOptions is the set of options used to filter a given collection of
+// VirtualMachines.
+type VMsFilterOptions struct {
+	ResourcePoolsIncluded       []string
+	ResourcePoolsExcluded       []string
+	FoldersIncluded             []string
+	FoldersExcluded             []string
+	VirtualMachineNamesExcluded []string
+	IncludePoweredOff           bool
+}
+
+// vmsRPFilterResults is the results of performing resource pool filtering
+// operations using specified filter settings.
+type vmsRPFilterResults struct {
+	RPs []mo.ResourcePool
+	VMs []mo.VirtualMachine
+}
+
+// vmsFolderFilterResults is the results of performing folder filtering
+// operations on a given VirtualMachines collection.
+type vmsFolderFilterResults struct {
+	VMs                    []mo.VirtualMachine
+	NumVMsExcludedByFolder int
+	NumFoldersEvaluated    int
+}
+
+// VMsFilterResults is the results of performing filtering operations on a
+// given VirtualMachines collection.
+type VMsFilterResults struct {
+	// numVMsAll is the count of all vms in the inventory which are not
+	// templates.
+	numVMsAll int
+
+	// numVMsExcludedByName is the count of vms excluded or "filtered out" via
+	// name filtering.
+	numVMsExcludedByName int
+
+	// numVMsExcludedByResourcePool is the count of vms excluded or "filtered
+	// out" via resource pool filtering.
+	numVMsExcludedByResourcePool int
+
+	// numVMsExcludedByFolder is the count of vms excluded or "filtered out"
+	// via folder filtering.
+	numVMsExcludedByFolder int
+
+	// numVMsExcludedByPowerState is the count of vms excluded or "filtered
+	// out" via power state filtering.
+	numVMsExcludedByPowerState int
+
+	// numFoldersAll is the count of all folders in the inventory.
+	numFoldersAll int
+
+	// NumFoldersEvaluated is the number of folders remaining after they have
+	// been explicitly included or excluded.
+	numFoldersEvaluated int
+
+	// NumFoldersExcluded is the count of folders explicitly specified via CLI
+	// flag for inclusion.
+	numFoldersIncluded int
+
+	// NumFoldersExcluded is the count of folders explicitly specified via CLI
+	// flag for exclusion.
+	numFoldersExcluded int
+
+	// numResourcePoolsAll is the count of all resource pools in the
+	// inventory.
+	numResourcePoolsAll int
+
+	// numResourcePoolsEvaluated is the number of resource pools remaining
+	// after they have been explicitly included or excluded.
+	numResourcePoolsEvaluated int
+
+	// numResourcePoolsIncluded is the count of resource pools explicitly
+	// specified via CLI flag for inclusion.
+	numResourcePoolsIncluded int
+
+	// numResourcePoolsExcluded is the count of resource pools explicitly
+	// specified via CLI flag for exclusion.
+	numResourcePoolsExcluded int
+
+	// rps is the collection of resource pools remaining after they have been
+	// explicitly included or excluded.
+	rpsAfterAllFiltering []mo.ResourcePool
+
+	vmsAfterRPFiltering         []mo.VirtualMachine
+	vmsAfterFolderFiltering     []mo.VirtualMachine
+	vmsAfterVMNameFiltering     []mo.VirtualMachine
+	vmsAfterPowerStateFiltering []mo.VirtualMachine
+	vmsAfterAllFiltering        []mo.VirtualMachine
+}
 
 // IsWarningState indicates whether the WARNING threshold has been crossed or
 // if the Virtual Machine is missing a backup.
@@ -527,6 +633,463 @@ func (vpcs VirtualMachinePowerCycleUptimeStatus) BottomTenOK() []mo.VirtualMachi
 
 }
 
+// CountVMsPowerStateOn returns the count of VMs from the provided collection
+// that are powered on.
+func CountVMsPowerStateOn(vms []mo.VirtualMachine) int {
+	var count int
+	for _, vm := range vms {
+		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
+			count++
+		}
+	}
+
+	return count
+}
+
+// CountVMsPowerStateSuspended returns the count of VMs from the provided
+// collection that are suspended.
+func CountVMsPowerStateSuspended(vms []mo.VirtualMachine) int {
+	var count int
+	for _, vm := range vms {
+		if vm.Runtime.PowerState == types.VirtualMachinePowerStateSuspended {
+			count++
+		}
+	}
+
+	return count
+}
+
+// CountVMsPowerStateOff returns the count of VMs from the provided collection
+// that are fully powered off. This count does not include VMs that are
+// suspended.
+func CountVMsPowerStateOff(vms []mo.VirtualMachine) int {
+	var count int
+	for _, vm := range vms {
+		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff {
+			count++
+		}
+	}
+
+	return count
+}
+
+// CountVMsPoweredOff returns the count of VMs from the provided collection
+// that are fully powered off and those which are suspended.
+func CountVMsPoweredOff(vms []mo.VirtualMachine) int {
+	var count int
+	for _, vm := range vms {
+		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff ||
+			vm.Runtime.PowerState == types.VirtualMachinePowerStateSuspended {
+			count++
+		}
+	}
+
+	return count
+}
+
+// CountVMsPowerStates returns the count of VMs from the provided collection
+// in each power state.
+//
+// The order of returned values:
+//
+//  1. Powered On
+//  2. Suspended
+//  3. Powered Off
+func CountVMsPowerStates(vms []mo.VirtualMachine) (int, int, int) {
+	var countPowerStateOn int
+	var countPowerStateSuspended int
+	var countPowerStateOff int
+
+	for _, vm := range vms {
+		switch {
+		case vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn:
+			countPowerStateOn++
+
+		case vm.Runtime.PowerState != types.VirtualMachinePowerStateSuspended:
+			countPowerStateSuspended++
+
+		case vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff:
+			countPowerStateOff++
+		}
+	}
+
+	return countPowerStateOn, countPowerStateSuspended, countPowerStateOff
+}
+
+// FilterVMs is used as a high-level abstraction to handle the filtering of
+// VirtualMachines in the inventory given a set of filtering options. The
+// results of the filtering steps are returned as an aggregate or an error if
+// one occurs.
+//
+//	Filter order:
+//
+//	1. Resource Pools
+//	2. Folder
+//	3. VirtualMachine Name
+//	4. VirtualMachine Power State
+//
+// Separate filtering functions are provided for a more fine-tuned, manual
+// approach to filtering VirtualMachines.
+func FilterVMs(ctx context.Context, client *vim25.Client, filterOptions VMsFilterOptions) (VMsFilterResults, error) {
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterVMs func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	if err := validateRPs(ctx, client, filterOptions); err != nil {
+		return VMsFilterResults{}, err
+	}
+
+	if err := validateFolders(ctx, client, filterOptions); err != nil {
+		return VMsFilterResults{}, err
+	}
+
+	numAllRPs, rpsCountErr := GetNumTotalRPs(ctx, client)
+	if rpsCountErr != nil {
+		return VMsFilterResults{}, rpsCountErr
+	}
+
+	numFolders, foldersCountErr := GetNumTotalFolders(ctx, client)
+	if foldersCountErr != nil {
+		return VMsFilterResults{}, foldersCountErr
+	}
+
+	numNonTemplateVMs, vmsCountErr := GetNumTotalVMs(ctx, client)
+	if vmsCountErr != nil {
+		return VMsFilterResults{}, vmsCountErr
+	}
+
+	logger.Println("Filtering VMs by resource pool")
+	vmsRPResults, rpsFilterErr := filterVMsByRP(ctx, client, filterOptions)
+	if rpsFilterErr != nil {
+		return VMsFilterResults{}, rpsFilterErr
+	}
+
+	logger.Println("Filtering VMs by folder")
+	vmsFolderResults, folderFilterErr := filterVMsByFolder(
+		ctx, client, vmsRPResults.VMs, filterOptions,
+	)
+	if folderFilterErr != nil {
+		return VMsFilterResults{}, folderFilterErr
+	}
+
+	logger.Println("Filtering VMs by name")
+	vmsAfterNameFiltering, numVMsExcludedByName := ExcludeVMsByName(vmsFolderResults.VMs, filterOptions.VirtualMachineNamesExcluded)
+	logger.Printf(
+		"VMs after name filtering: (filteredByName: %v, excludedByName: %d)",
+		strings.Join(VMNames(vmsAfterNameFiltering), ", "),
+		numVMsExcludedByName,
+	)
+
+	logger.Println("Filtering VMs by specified power state")
+	vmsAfterPowerStateFiltering, numVMsExcludedByPowerState := FilterVMsByPowerState(vmsAfterNameFiltering, filterOptions.IncludePoweredOff)
+	logger.Printf(
+		"VMs after power state filtering: (filteredByPowerState: %v, excludedByPowerState: %d)",
+		strings.Join(VMNames(vmsAfterPowerStateFiltering), ", "),
+		numVMsExcludedByPowerState,
+	)
+
+	return VMsFilterResults{
+		numVMsAll:                    numNonTemplateVMs,
+		numVMsExcludedByResourcePool: numNonTemplateVMs - len(vmsRPResults.VMs),
+		numVMsExcludedByFolder:       vmsFolderResults.NumVMsExcludedByFolder,
+		numVMsExcludedByName:         numVMsExcludedByName,
+		numVMsExcludedByPowerState:   numVMsExcludedByPowerState,
+
+		numFoldersAll:       numFolders,
+		numFoldersEvaluated: vmsFolderResults.NumFoldersEvaluated,
+		numFoldersIncluded:  len(filterOptions.FoldersIncluded),
+		numFoldersExcluded:  len(filterOptions.FoldersExcluded),
+
+		numResourcePoolsAll:       numAllRPs,
+		numResourcePoolsEvaluated: len(vmsRPResults.RPs),
+		numResourcePoolsIncluded:  len(filterOptions.FoldersIncluded),
+		numResourcePoolsExcluded:  len(filterOptions.FoldersExcluded),
+
+		vmsAfterRPFiltering:         vmsRPResults.VMs,
+		vmsAfterFolderFiltering:     vmsFolderResults.VMs,
+		vmsAfterVMNameFiltering:     vmsAfterNameFiltering,
+		vmsAfterPowerStateFiltering: vmsAfterPowerStateFiltering,
+		vmsAfterAllFiltering:        vmsAfterPowerStateFiltering,
+		rpsAfterAllFiltering:        vmsRPResults.RPs,
+	}, nil
+
+}
+
+// GetNumTotalVMs provides the total number of non-template VirtualMachines
+// in the inventory.
+func GetNumTotalVMs(ctx context.Context, client *vim25.Client) (int, error) {
+	funcTimeStart := time.Now()
+
+	var numVMs int
+
+	defer func(allVMs *int) {
+		logger.Printf(
+			"It took %v to execute GetNumTotalVMs func (and count %d VMs).\n",
+			time.Since(funcTimeStart),
+			*allVMs,
+		)
+	}(&numVMs)
+
+	var getVMsErr error
+	numVMs, getVMsErr = getVMsCountUsingParentPoolsAndContainerView(
+		ctx,
+		client,
+		true,
+	)
+
+	if getVMsErr != nil {
+		logger.Printf(
+			"error retrieving count of all virtual machines and templates: %v",
+			getVMsErr,
+		)
+
+		return 0, fmt.Errorf(
+			"error retrieving count of all virtual machines and templates: %w",
+			getVMsErr,
+		)
+	}
+
+	return numVMs, nil
+}
+
+// GetAllVMs provides every VirtualMachine in the inventory using the
+// RootFolder as the starting point. In contrast to retrieving VirtualMachine
+// values from ResourcePools, this function also returns template
+// VirtualMachines.
+func GetAllVMs(ctx context.Context, client *vim25.Client) ([]mo.VirtualMachine, error) {
+	funcTimeStart := time.Now()
+
+	var allVMs []mo.VirtualMachine
+
+	defer func(vms *[]mo.VirtualMachine) {
+		logger.Printf(
+			"It took %v to execute GetAllVMs func (and retrieve %d VMs).\n",
+			time.Since(funcTimeStart),
+			len(*vms),
+		)
+	}(&allVMs)
+
+	err := getObjects(
+		ctx,
+		client,
+		&allVMs,
+		client.ServiceContent.RootFolder,
+		true,
+		true,
+	)
+	if err != nil {
+		logger.Printf(
+			"error retrieving all virtual machines: %v",
+			err,
+		)
+
+		return nil, fmt.Errorf(
+			"error retrieving all virtual machines: %w",
+			err,
+		)
+	}
+
+	return allVMs, nil
+}
+
+// filterVMsByRP uses the given filtering options to obtain VirtualMachines
+// from eligible resource pools.
+func filterVMsByRP(
+	ctx context.Context,
+	client *vim25.Client,
+	filterOptions VMsFilterOptions,
+) (vmsRPFilterResults, error) {
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute filterVMsByRP func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	logger.Println("Retrieving eligible resource pools")
+	filteredResourcePools, getRPsErr := GetEligibleRPs(
+		ctx,
+		client,
+		filterOptions.ResourcePoolsIncluded,
+		filterOptions.ResourcePoolsExcluded,
+		true,
+	)
+	if getRPsErr != nil {
+		logger.Printf(
+			"Error retrieving list of resource pools: %v",
+			getRPsErr,
+		)
+
+		return vmsRPFilterResults{}, fmt.Errorf(
+			"failed to retrieve list of resource pools: %w",
+			getRPsErr,
+		)
+	}
+	logger.Println("Finished retrieving eligible resource pools")
+
+	rpNames := make([]string, 0, len(filteredResourcePools))
+	for _, rp := range filteredResourcePools {
+		rpNames = append(rpNames, rp.Name)
+	}
+
+	logger.Printf("Resource Pools: %v", strings.Join(rpNames, ", "))
+
+	logger.Println("Retrieving VMs from eligible resource pools")
+	rpEntityVals := make([]mo.ManagedEntity, 0, len(filteredResourcePools))
+	for i := range filteredResourcePools {
+		rpEntityVals = append(rpEntityVals, filteredResourcePools[i].ManagedEntity)
+	}
+
+	vmsFromRPs, getVMsErr := GetVMsFromContainer(ctx, client, true, rpEntityVals...)
+	if getVMsErr != nil {
+		logger.Printf(
+			"Error retrieving list of VMs from resource pools list: %v",
+			getVMsErr,
+		)
+
+		return vmsRPFilterResults{}, fmt.Errorf(
+			"failed to retrieve VMs from resource pools: %w",
+			getVMsErr,
+		)
+	}
+	logger.Printf(
+		"Finished retrieving %d vms from %d resource pools",
+		len(vmsFromRPs),
+		len(filteredResourcePools),
+	)
+
+	logger.Printf("VMs to evaluate: %v", strings.Join(VMNames(vmsFromRPs), ", "))
+
+	return vmsRPFilterResults{
+		RPs: filteredResourcePools,
+		VMs: vmsFromRPs,
+	}, nil
+}
+
+func filterVMsByFolder(
+	ctx context.Context,
+	client *vim25.Client,
+	vms []mo.VirtualMachine,
+	filterOptions VMsFilterOptions,
+) (vmsFolderFilterResults, error) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute filterVMsByFolder func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	switch {
+	case len(filterOptions.FoldersIncluded) > 0 || len(filterOptions.FoldersExcluded) > 0:
+		// If the exclude list is specified, only grab VMs from the excluded
+		// folders and use with ExcludeVMsByVMs.
+		//
+		// If the include list is specified, grab VMs from the included
+		// folders and use with FilterVMsByVMs.
+		//
+		// We use these "sift" variables to reflect which of the two
+		// approaches we're using.
+		var (
+			siftList            []string
+			numFoldersEvaluated int
+			siftListDesc        string
+			keepMatchedVMs      bool
+		)
+
+		switch {
+		case len(filterOptions.FoldersIncluded) > 0:
+			siftList = filterOptions.FoldersIncluded
+			siftListDesc = "included folders list"
+			numFoldersEvaluated = len(filterOptions.FoldersIncluded)
+			keepMatchedVMs = true
+		case len(filterOptions.FoldersExcluded) > 0:
+			siftList = filterOptions.FoldersExcluded
+			siftListDesc = "excluded folders list"
+			numFoldersEvaluated = len(filterOptions.FoldersExcluded)
+			keepMatchedVMs = false
+		}
+
+		logger.Println("Resolving folder IDs to folder values")
+		folders, retrieveErr := GetFoldersByIDs(ctx, client, siftList, true)
+		if retrieveErr != nil {
+			logger.Printf(
+				"Error retrieving %s: %v",
+				siftListDesc,
+				retrieveErr,
+			)
+			return vmsFolderFilterResults{}, fmt.Errorf(
+				"failed to retrieve %s: %w",
+				siftListDesc,
+				retrieveErr,
+			)
+		}
+
+		folderEntityVals := FolderManagedEntityVals(folders)
+
+		logger.Printf("Retrieving vms from %d folders", len(folderEntityVals))
+		vmsFromFolders, getVMsErr := GetVMsFromContainer(ctx, client, true, folderEntityVals...)
+		if getVMsErr != nil {
+			logger.Printf(
+				"Error retrieving list of VMs from %s: %v",
+				siftListDesc,
+				getVMsErr,
+			)
+
+			return vmsFolderFilterResults{}, fmt.Errorf(
+				"failed to retrieve list of VMs from %s: %w",
+				siftListDesc,
+				getVMsErr,
+			)
+		}
+		logger.Printf(
+			"Finished retrieving %d vms from %s",
+			len(vmsFromFolders),
+			siftListDesc,
+		)
+
+		logger.Printf(
+			"Filtering %d given VMs against %d VMs retrieved from %d folders",
+			len(vms),
+			len(vmsFromFolders),
+			len(folderEntityVals),
+		)
+		filteredVMs, numVMsExcludedByFolder := SiftVMsByVMs(vms, vmsFromFolders, keepMatchedVMs)
+
+		logger.Printf(
+			"VMs after folder filtering: %v (kept: %d, excluded: %d)",
+			strings.Join(VMNames(filteredVMs), ", "),
+			len(filteredVMs),
+			numVMsExcludedByFolder,
+		)
+
+		return vmsFolderFilterResults{
+			VMs:                    filteredVMs,
+			NumFoldersEvaluated:    numFoldersEvaluated,
+			NumVMsExcludedByFolder: numVMsExcludedByFolder,
+		}, nil
+
+	default:
+		logger.Println("Skipping filter by folder; folder filtering not requested")
+
+		// Return the original collection untouched.
+		return vmsFolderFilterResults{
+			VMs:                    vms,
+			NumFoldersEvaluated:    0,
+			NumVMsExcludedByFolder: 0,
+		}, nil
+	}
+}
+
 // GetVMs accepts a context, a connected client and a boolean value indicating
 // whether a subset of properties per VirtualMachine are retrieved. If
 // requested, a subset of all available properties will be retrieved (faster)
@@ -560,6 +1123,122 @@ func GetVMs(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.Virtua
 	})
 
 	return vms, nil
+}
+
+// getVMsCountUsingParentPoolsAndContainerView returns only VM counts, not VM
+// template counts. This approach retrieves all VirtualMachines using resource
+// pools named 'Resources'; each cluster and standalone host in the Datacenter
+// has a "parent" resource pool named 'Resources'.
+//
+// This approach ignores VM templates as templates are not rooted to a
+// resource pool.
+func getVMsCountUsingParentPoolsAndContainerView(
+	ctx context.Context,
+	c *vim25.Client,
+	recursive bool,
+) (int, error) {
+	funcTimeStart := time.Now()
+
+	var allVMs []mo.VirtualMachine
+
+	defer func(vms *[]mo.VirtualMachine) {
+		logger.Printf(
+			"It took %v to execute getVMsCountUsingParentPoolsAndContainerView func (and count %d VMs).\n",
+			time.Since(funcTimeStart),
+			len(allVMs),
+		)
+	}(&allVMs)
+
+	// Create a view of caller-specified objects
+	m := view.NewManager(c)
+
+	// FIXME: Should this filter to a specific datacenter? See GH-219.
+	rpView, createViewErr := m.CreateContainerView(
+		ctx,
+		c.ServiceContent.RootFolder,
+		[]string{MgObjRefTypeResourcePool},
+		recursive,
+	)
+	if createViewErr != nil {
+		return 0, createViewErr
+	}
+
+	defer func() {
+		// Per vSphere Web Services SDK Programming Guide - VMware vSphere 7.0
+		// Update 1:
+		//
+		// A best practice when using views is to call the DestroyView()
+		// method when a view is no longer needed. This practice frees memory
+		// on the server.
+		if err := rpView.Destroy(ctx); err != nil {
+			logger.Printf("Error occurred while destroying datacenter view: %s", err)
+		}
+	}()
+
+	// Perform as lightweight of a search as possible; we need to retrieve the
+	// name property for easy identification and the config property to
+	// determine whether the VM is a template.
+	// var allVMsIncludingTemplates []mo.VirtualMachine
+	// retrieveErr := v.Retrieve(ctx, []string{MgObjRefTypeVirtualMachine}, []string{"name", "config"}, &allVMsIncludingTemplates)
+	// if retrieveErr != nil {
+	// 	return 0, retrieveErr
+	// }
+	var rps []mo.ResourcePool
+	retrieveErr := rpView.Retrieve(ctx, []string{MgObjRefTypeResourcePool}, []string{"name"}, &rps)
+	if retrieveErr != nil {
+		return 0, retrieveErr
+	}
+
+	// NOTE: It looks like there are multiple resource pools named 'Resources'
+	// (ParentResourcePool) in the inventory (that I am testing against). Not
+	// sure why yet, so we loop over the collection and process VMs within
+	// each as I don't (yet) know a way to identify which is the correct
+	// "root" or parent resource pool.
+	for _, rp := range rps {
+		if rp.Name == ParentResourcePool {
+			parentPoolID := rp.Reference()
+			logger.Printf("Pool ID %s for Pool %s", parentPoolID, rp.Name)
+			vmView, createViewErr := m.CreateContainerView(
+				ctx,
+				parentPoolID,
+				[]string{MgObjRefTypeVirtualMachine},
+				recursive,
+			)
+			if createViewErr != nil {
+				return 0, createViewErr
+			}
+			defer func() {
+				if err := vmView.Destroy(ctx); err != nil {
+					logger.Printf("Error occurred while destroying virtual machine view: %s", err)
+				}
+			}()
+
+			var poolVMs []mo.VirtualMachine
+
+			retrieveErr = vmView.Retrieve(ctx, []string{MgObjRefTypeVirtualMachine}, []string{"name"}, &poolVMs)
+			if retrieveErr != nil {
+				return 0, fmt.Errorf(
+					"failed to retrieve VMs list from parent resource pool %s: %w",
+					ParentResourcePool,
+					retrieveErr,
+				)
+			}
+
+			allVMs = append(allVMs, poolVMs...)
+		}
+	}
+
+	// Remove any duplicate entries which could occur if we process nested
+	// resource pools.
+	logger.Println("Deduplicating VMs")
+	numVMsBeforeDeduping := len(allVMs)
+	allVMs = dedupeVMs(allVMs)
+	numVMsAfterDeduping := len(allVMs)
+
+	logger.Printf("Before deduping VMs: %d", numVMsBeforeDeduping)
+	logger.Printf("After deduping VMs: %d", numVMsAfterDeduping)
+
+	return len(allVMs), nil
 }
 
 // GetVMsFromContainer receives one or many ManagedEntity values for Folder,
@@ -627,7 +1306,13 @@ func GetVMsFromContainer(ctx context.Context, c *vim25.Client, propsSubset bool,
 
 	// Remove any duplicate entries which could occur if we process nested
 	// resource pools.
+	logger.Println("Deduplicating VMs")
+	numVMsBeforeDeduping := len(allVMs)
 	allVMs = dedupeVMs(allVMs)
+	numVMsAfterDeduping := len(allVMs)
+
+	logger.Printf("Before deduping VMs: %d", numVMsBeforeDeduping)
+	logger.Printf("After deduping VMs: %d", numVMsAfterDeduping)
 
 	sort.Slice(allVMs, func(i, j int) bool {
 		return strings.ToLower(allVMs[i].Name) < strings.ToLower(allVMs[j].Name)
@@ -1092,6 +1777,119 @@ func FilterVMsByID(vms []mo.VirtualMachine, vmID string) (mo.VirtualMachine, int
 
 }
 
+// SiftVMsByVMs accepts an original collection of VMs and a collection to
+// match against. If specified, the collection of matches are returned,
+// otherwise VMs not matched are returned. An error is returned if one occurs.
+func SiftVMsByVMs(vmsToExamine []mo.VirtualMachine, vmsToMatch []mo.VirtualMachine, keepMatches bool) ([]mo.VirtualMachine, int) {
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute SiftVMsByVMs func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	if keepMatches {
+		return FilterVMsByVMs(vmsToExamine, vmsToMatch)
+	}
+	return ExcludeVMsByVMs(vmsToExamine, vmsToMatch)
+}
+
+// FilterVMsByVMs receives a collection of VirtualMachines to examine and
+// another collection of VirtualMachines to filter against. VirtualMachines
+// from the first collection present in the second collection are returned. If
+// the collection to review or the collection to filter against is empty then
+// an empty collection is returned. The number of excluded VirtualMachines (if
+// any) is also returned.
+func FilterVMsByVMs(vmsToExamine []mo.VirtualMachine, vmsOkToKeep []mo.VirtualMachine) ([]mo.VirtualMachine, int) {
+	funcTimeStart := time.Now()
+
+	var numExcluded int
+	vmsToKeep := make([]mo.VirtualMachine, 0, len(vmsToExamine))
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute FilterVMsByVMs func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	// We require populated source and filter collections.
+	switch {
+	case len(vmsToExamine) == 0:
+		// if nothing to examine, nothing to exclude
+		return []mo.VirtualMachine{}, 0
+
+	case len(vmsOkToKeep) == 0:
+		// if nothing to keep, then everything to review is to be excluded
+		return []mo.VirtualMachine{}, len(vmsToExamine)
+	}
+
+	vmIDsToKeep := make(map[string]struct{}, len(vmsOkToKeep))
+	for _, vm := range vmsOkToKeep {
+		vmIDsToKeep[vm.Self.Value] = struct{}{}
+	}
+
+	for _, vmToReview := range vmsToExamine {
+		if _, ok := vmIDsToKeep[vmToReview.Self.Value]; ok {
+			vmsToKeep = append(vmsToKeep, vmToReview)
+			continue
+		}
+		numExcluded++
+	}
+
+	return vmsToKeep, numExcluded
+}
+
+// ExcludeVMsByVMs receives a collection of VirtualMachines to examine and
+// another collection of VirtualMachines to match against. VirtualMachines
+// from the first collection NOT present in the second collection are
+// returned. If the collection to review is empty then an empty collection is
+// returned. If the collection to match against is empty then the first
+// collection is returned unmodified.
+//
+// The number of excluded VirtualMachines (if any) is also returned.
+func ExcludeVMsByVMs(vmsToExamine []mo.VirtualMachine, vmsToExclude []mo.VirtualMachine) ([]mo.VirtualMachine, int) {
+	funcTimeStart := time.Now()
+
+	var numExcluded int
+	vmsToKeep := make([]mo.VirtualMachine, 0, len(vmsToExamine))
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute ExcludeVMsByVMs func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	// We require populated source and filter collections.
+	switch {
+	case len(vmsToExamine) == 0:
+		// if nothing to examine, nothing to exclude
+		return []mo.VirtualMachine{}, 0
+
+	case len(vmsToExclude) == 0:
+		// if nothing to exclude, then the original collection is returned
+		return vmsToExamine, 0
+	}
+
+	vmIDsToExclude := make(map[string]struct{}, len(vmsToExclude))
+	for _, vm := range vmsToExclude {
+		vmIDsToExclude[vm.Self.Value] = struct{}{}
+	}
+
+	for _, vmToReview := range vmsToExamine {
+		if _, ok := vmIDsToExclude[vmToReview.Self.Value]; ok {
+			numExcluded++
+			continue
+		}
+		vmsToKeep = append(vmsToKeep, vmToReview)
+	}
+
+	return vmsToKeep, numExcluded
+}
+
 // ExcludeVMsByName receives a collection of VirtualMachines and a list of VMs
 // that should be ignored. A new collection minus ignored VirtualMachines is
 // returned along with the number of VMs that were excluded.
@@ -1374,6 +2172,167 @@ func getVMHostID(vm mo.VirtualMachine) (string, error) {
 	}
 }
 
+// NumVMsAll is the count of all VirtualMachines in the inventory.
+func (vfr VMsFilterResults) NumVMsAll() int {
+	return vfr.numVMsAll
+}
+
+// NumVMsExcluded is the count of all VirtualMachines excluded by filtering
+// operations.
+func (vfr VMsFilterResults) NumVMsExcluded() int {
+	return vfr.numVMsAll - len(vfr.vmsAfterPowerStateFiltering)
+}
+
+// NumVMsAfterFiltering is the count of all VirtualMachines after filtering
+// was applied.
+func (vfr VMsFilterResults) NumVMsAfterFiltering() int {
+	return len(vfr.vmsAfterAllFiltering)
+}
+
+// NumVMsExcludedByName is the count of all VirtualMachines excluded by name
+// filtering.
+func (vfr VMsFilterResults) NumVMsExcludedByName() int {
+	return vfr.numVMsExcludedByName
+}
+
+// NumVMsExcludedByPowerState is the count of all VirtualMachines excluded by
+// power state filtering.
+func (vfr VMsFilterResults) NumVMsExcludedByPowerState() int {
+	return vfr.numVMsExcludedByPowerState
+}
+
+// NumVMsExcludedByResourcePool is the count of all VirtualMachines excluded
+// by resource pool filtering.
+func (vfr VMsFilterResults) NumVMsExcludedByResourcePool() int {
+	return vfr.numVMsExcludedByResourcePool
+}
+
+// NumVMsExcludedByFolder is the count of all VirtualMachines excluded by
+// folder filtering.
+func (vfr VMsFilterResults) NumVMsExcludedByFolder() int {
+	return vfr.numVMsExcludedByFolder
+}
+
+// NumFoldersAll is the count of all Folders in the inventory.
+func (vfr VMsFilterResults) NumFoldersAll() int {
+	return vfr.numFoldersAll
+}
+
+// NumFoldersIncluded is the count of all ResourcePools excluded by filtering
+// operations.
+func (vfr VMsFilterResults) NumFoldersIncluded() int {
+	return vfr.numFoldersIncluded
+}
+
+// NumFoldersExcluded is the count of all ResourcePools excluded by filtering
+// operations.
+func (vfr VMsFilterResults) NumFoldersExcluded() int {
+	return vfr.numFoldersExcluded
+}
+
+// NumFoldersAfterFiltering is the count of all ResourcePools after filtering was
+// applied.
+func (vfr VMsFilterResults) NumFoldersAfterFiltering() int {
+	return vfr.numFoldersEvaluated
+}
+
+// NumRPsAll is the count of all ResourcePools in the inventory.
+func (vfr VMsFilterResults) NumRPsAll() int {
+	return vfr.numResourcePoolsAll
+}
+
+// NumRPsIncluded is the count of all ResourcePools excluded by filtering
+// operations.
+func (vfr VMsFilterResults) NumRPsIncluded() int {
+	return vfr.numResourcePoolsIncluded
+}
+
+// NumRPsExcluded is the count of all ResourcePools excluded by filtering
+// operations.
+func (vfr VMsFilterResults) NumRPsExcluded() int {
+	return vfr.numResourcePoolsExcluded
+}
+
+// NumRPsAfterFiltering is the count of all ResourcePools after filtering was
+// applied.
+func (vfr VMsFilterResults) NumRPsAfterFiltering() int {
+	return vfr.numResourcePoolsEvaluated
+}
+
+// VMsAfterFiltering is the collection of VirtualMachines after all filtering
+// steps were applied.
+func (vfr VMsFilterResults) VMsAfterFiltering() []mo.VirtualMachine {
+	return vfr.vmsAfterAllFiltering
+}
+
+// VMsAfterResourcePoolFiltering is the collection of VirtualMachines after
+// resource pool filtering was applied.
+func (vfr VMsFilterResults) VMsAfterResourcePoolFiltering() []mo.VirtualMachine {
+	return vfr.vmsAfterRPFiltering
+}
+
+// VMsAfterFolderFiltering is the collection of VirtualMachines after
+// folder filtering was applied.
+func (vfr VMsFilterResults) VMsAfterFolderFiltering() []mo.VirtualMachine {
+	return vfr.vmsAfterFolderFiltering
+}
+
+// VMsBeforeFolderFiltering is the collection of VirtualMachines before
+// folder filtering was applied.
+func (vfr VMsFilterResults) VMsBeforeFolderFiltering() []mo.VirtualMachine {
+	return vfr.vmsAfterRPFiltering
+}
+
+// VMsAfterVMNameFiltering is the collection of VirtualMachines after
+// VirtualMachine name filtering was applied.
+func (vfr VMsFilterResults) VMsAfterVMNameFiltering() []mo.VirtualMachine {
+	return vfr.vmsAfterVMNameFiltering
+}
+
+// VMsBeforeVMNameFiltering is the collection of VirtualMachines before
+// VirtualMachine name filtering was applied.
+func (vfr VMsFilterResults) VMsBeforeVMNameFiltering() []mo.VirtualMachine {
+	return vfr.vmsAfterFolderFiltering
+}
+
+// VMsAfterPowerStateFiltering is the collection of VirtualMachines after
+// VirtualMachine power state filtering was applied.
+func (vfr VMsFilterResults) VMsAfterPowerStateFiltering() []mo.VirtualMachine {
+	return vfr.vmsAfterPowerStateFiltering
+}
+
+// VMsBeforePowerStateFiltering is the collection of VirtualMachines before
+// VirtualMachine power state filtering was applied.
+func (vfr VMsFilterResults) VMsBeforePowerStateFiltering() []mo.VirtualMachine {
+	return vfr.vmsAfterVMNameFiltering
+}
+
+// RPsAfterFiltering is the collection of ResourcePools after all filtering
+// steps were applied.
+func (vfr VMsFilterResults) RPsAfterFiltering() []mo.ResourcePool {
+	return vfr.rpsAfterAllFiltering
+}
+
+// VMNamesAfterFiltering is the collection of names for VirtualMachines
+// remaining after all filtering steps were applied.
+func (vfr VMsFilterResults) VMNamesAfterFiltering() []string {
+	vmNames := make([]string, 0, vfr.NumVMsAfterFiltering())
+	for _, vm := range vfr.VMsAfterFiltering() {
+		vmNames = append(vmNames, vm.Name)
+	}
+	return vmNames
+}
+
+// RPNamesAfterFiltering is the collection of names for ResourcePools
+// remaining after all filtering steps were applied.
+func (vfr VMsFilterResults) RPNamesAfterFiltering() []string {
+	rpNames := make([]string, 0, vfr.NumRPsAfterFiltering())
+	for _, rp := range vfr.RPsAfterFiltering() {
+		rpNames = append(rpNames, rp.Name)
+	}
+	return rpNames
+}
+
 // GetVMPowerCycleUptimeStatusSummary accepts a list of VirtualMachines and
 // threshold values and generates a collection of VirtualMachines that exceeds
 // given thresholds along with those given thresholds.
@@ -1430,9 +2389,9 @@ func GetVMPowerCycleUptimeStatusSummary(
 // notifications.
 func VMPowerCycleUptimeOneLineCheckSummary(
 	stateLabel string,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterResults VMsFilterResults,
 	uptimeSummary VirtualMachinePowerCycleUptimeStatus,
-	rps []mo.ResourcePool,
+
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1451,8 +2410,8 @@ func VMPowerCycleUptimeOneLineCheckSummary(
 			stateLabel,
 			len(uptimeSummary.VMsCritical),
 			uptimeSummary.CriticalThreshold,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	case len(uptimeSummary.VMsWarning) > 0:
@@ -1461,8 +2420,8 @@ func VMPowerCycleUptimeOneLineCheckSummary(
 			stateLabel,
 			len(uptimeSummary.VMsWarning),
 			uptimeSummary.WarningThreshold,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -1471,8 +2430,8 @@ func VMPowerCycleUptimeOneLineCheckSummary(
 			"%s: No VMs with power cycle uptime exceeding %d days detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
 			uptimeSummary.WarningThreshold,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 	}
 }
@@ -1485,14 +2444,10 @@ func VMPowerCycleUptimeOneLineCheckSummary(
 // notifications.
 func VMPowerCycleUptimeReport(
 	c *vim25.Client,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 	uptimeSummary VirtualMachinePowerCycleUptimeStatus,
-	vmsToExclude []string,
-	evalPoweredOffVMs bool,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
+
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1503,11 +2458,6 @@ func VMPowerCycleUptimeReport(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
 
 	var report strings.Builder
 
@@ -1607,73 +2557,12 @@ func VMPowerCycleUptimeReport(
 		}
 	}
 
-	fmt.Fprintf(
+	vmFilterResultsReportTrailer(
 		&report,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* VMs (evaluated: %d, total: %d)%s",
-		len(evaluatedVMs),
-		len(allVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Powered off VMs evaluated: %t%s",
-		evalPoweredOffVMs,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
-		nagios.CheckOutputEOL,
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
+		true,
 	)
 
 	return report.String()
@@ -1684,9 +2573,8 @@ func VMPowerCycleUptimeReport(
 // notifications.
 func VMDiskConsolidationOneLineCheckSummary(
 	stateLabel string,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterResults VMsFilterResults,
 	vmsNeedingConsolidation []mo.VirtualMachine,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1704,8 +2592,8 @@ func VMDiskConsolidationOneLineCheckSummary(
 			"%s: %d VMs requiring disk consolidation detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
 			len(vmsNeedingConsolidation),
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -1713,8 +2601,8 @@ func VMDiskConsolidationOneLineCheckSummary(
 		return fmt.Sprintf(
 			"%s: No VMs requiring disk consolidation detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 	}
 }
@@ -1727,13 +2615,9 @@ func VMDiskConsolidationOneLineCheckSummary(
 // notifications.
 func VMDiskConsolidationReport(
 	c *vim25.Client,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 	vmsNeedingConsolidation []mo.VirtualMachine,
-	vmsToExclude []string,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1744,11 +2628,6 @@ func VMDiskConsolidationReport(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
 
 	var report strings.Builder
 
@@ -1781,82 +2660,12 @@ func VMDiskConsolidationReport(
 		fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
 
 	}
-
-	fmt.Fprintf(
+	vmFilterResultsReportTrailer(
 		&report,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* VMs (evaluated: %d, total: %d)%s",
-		len(evaluatedVMs),
-		len(allVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Powered off VMs evaluated: %t%s",
-		// NOTE: This plugin is hard-coded to evaluate powered off and powered
-		// on VMs equally. I'm not sure whether ignoring powered off VMs by
-		// default makes sense for this particular plugin.
-		//
-		// Please share your feedback here if you feel differently:
-		// https://github.com/atc0005/check-vmware/discussions/176
-		//
-		// Please expand on some use cases for ignoring powered off VMs by default.
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
 		true,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
-		nagios.CheckOutputEOL,
 	)
 
 	return report.String()
@@ -1867,9 +2676,8 @@ func VMDiskConsolidationReport(
 // notifications.
 func VMInteractiveQuestionOneLineCheckSummary(
 	stateLabel string,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterResults VMsFilterResults,
 	vmsNeedingResponse []mo.VirtualMachine,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1887,8 +2695,8 @@ func VMInteractiveQuestionOneLineCheckSummary(
 			"%s: %d VMs requiring interactive response detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
 			len(vmsNeedingResponse),
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -1896,8 +2704,8 @@ func VMInteractiveQuestionOneLineCheckSummary(
 		return fmt.Sprintf(
 			"%s: No VMs requiring interactive response detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 	}
 }
@@ -1910,13 +2718,9 @@ func VMInteractiveQuestionOneLineCheckSummary(
 // notifications.
 func VMInteractiveQuestionReport(
 	c *vim25.Client,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 	vmsNeedingResponse []mo.VirtualMachine,
-	vmsToExclude []string,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1927,11 +2731,6 @@ func VMInteractiveQuestionReport(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
 
 	var report strings.Builder
 
@@ -1989,80 +2788,12 @@ func VMInteractiveQuestionReport(
 
 	}
 
-	fmt.Fprintf(
+	vmFilterResultsReportTrailer(
 		&report,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* VMs (evaluated: %d, total: %d)%s",
-		len(evaluatedVMs),
-		len(allVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Powered off VMs evaluated: %t%s",
-		// NOTE: This plugin is used to detect Virtual Machines which are
-		// blocked from execution due to an interactive question. At this
-		// stage you could argue that they are neither "on" nor "off", but
-		// instead are in an in-between state, though it is likely that
-		// vSphere would considered them to be in an "off" state,
-		// transitioning to an "on" state. Either way, we report here that
-		// both powered on and powered off VMs are evaluated for simplicity.
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
 		true,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
-		nagios.CheckOutputEOL,
 	)
 
 	return report.String()
@@ -2073,9 +2804,9 @@ func VMInteractiveQuestionReport(
 // notifications.
 func VMBackupViaCAOneLineCheckSummary(
 	stateLabel string,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterResults VMsFilterResults,
 	vmsWithBackups VMsWithBackup,
-	rps []mo.ResourcePool,
+
 ) string {
 
 	funcTimeStart := time.Now()
@@ -2102,8 +2833,8 @@ func VMBackupViaCAOneLineCheckSummary(
 			stateLabel,
 			numWithOldBackups,
 			numCurrentBackups,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	case numMissingBackups > 0:
@@ -2113,8 +2844,8 @@ func VMBackupViaCAOneLineCheckSummary(
 			numMissingBackups,
 			numWithBackups,
 			numCurrentBackups,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -2123,8 +2854,8 @@ func VMBackupViaCAOneLineCheckSummary(
 			"%s: No VMs with old or missing backups detected (%d present; evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
 			numCurrentBackups,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 	}
 
@@ -2137,13 +2868,9 @@ func VMBackupViaCAOneLineCheckSummary(
 // results display in the web UI or in the body of many notifications.
 func VMBackupViaCAReport(
 	c *vim25.Client,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 	vmsWithBackup VMsWithBackup,
-	vmsToExclude []string,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -2154,11 +2881,6 @@ func VMBackupViaCAReport(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
 
 	var report strings.Builder
 
@@ -2328,76 +3050,12 @@ func VMBackupViaCAReport(
 		)
 	}
 
-	fmt.Fprintf(
+	vmFilterResultsReportTrailer(
 		&report,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* VMs (total: %d, evaluated: %d)%s",
-		len(allVMs),
-		len(evaluatedVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Powered off VMs evaluated: %t%s",
-		// NOTE: This plugin is used to detect the backup status for Virtual
-		// Machines, regardless of power state; we report here that both
-		// powered on and powered off VMs are evaluated for simplicity.
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
 		true,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
-		nagios.CheckOutputEOL,
 	)
 
 	return report.String()
@@ -2405,20 +3063,7 @@ func VMBackupViaCAReport(
 
 // VMListOneLineCheckSummary is used to generate a one-line Nagios service
 // check results summary. This is the line most prominent in notifications.
-func VMListOneLineCheckSummary(
-	stateLabel string,
-
-	// evaluatedVMs is the collection of VMs before bulk include/exclude
-	// operations. This may not be a collection of *all* VMs, but rather a
-	// subset obtained by initial filtering based on resource pools.
-	evaluatedVMs []mo.VirtualMachine,
-
-	// remainingVMs is the collection of VMs after all include/exclude
-	// filtering is applied.
-	remainingVMs []mo.VirtualMachine,
-	rps []mo.ResourcePool,
-) string {
-
+func VMListOneLineCheckSummary(stateLabel string, vmsFilterResults VMsFilterResults) string {
 	funcTimeStart := time.Now()
 
 	defer func() {
@@ -2429,21 +3074,25 @@ func VMListOneLineCheckSummary(
 	}()
 
 	switch {
-	case len(remainingVMs) > 0:
+	case len(vmsFilterResults.VMsAfterFiltering()) > 0:
 		return fmt.Sprintf(
-			"%s: %d VMs remaining after filtering (evaluated %d VMs, %d Resource Pools)",
+			"%s: %d VMs remaining after filtering (evaluated %d of %d VMs, %d of %d Resource Pools)",
 			stateLabel,
-			len(remainingVMs),
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumVMsAll(),
+			vmsFilterResults.NumRPsAfterFiltering(),
+			vmsFilterResults.NumRPsAll(),
 		)
 
 	default:
 		return fmt.Sprintf(
-			"%s: No VMs remaining after filtering (evaluated %d VMs, %d Resource Pools)",
+			"%s: No VMs remaining after filtering (evaluated %d of %d VMs, %d of %d Resource Pools)",
 			stateLabel,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumVMsAll(),
+			vmsFilterResults.NumRPsAfterFiltering(),
+			vmsFilterResults.NumRPsAll(),
 		)
 	}
 }
@@ -2455,21 +3104,8 @@ func VMListOneLineCheckSummary(
 // results display in the web UI or in the body of many notifications.
 func VMListReport(
 	c *vim25.Client,
-
-	// evaluatedVMs is the collection of VMs before bulk include/exclude
-	// operations. This may not be a collection of *all* VMs, but rather a
-	// subset obtained by initial filtering based on resource pools.
-	evaluatedVMs []mo.VirtualMachine,
-
-	// remainingVMs is the collection of VMs after all include/exclude
-	// filtering is applied.
-	remainingVMs []mo.VirtualMachine,
-
-	vmsToExclude []string,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
-	evalPoweredOff bool,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -2485,42 +3121,332 @@ func VMListReport(
 
 	fmt.Fprintf(
 		&report,
-		"(%d) VMs before all filtering is applied:%s%s",
-		len(evaluatedVMs),
+		"Summary of inventory before before any filtering was applied:%s%s",
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 	)
 
-	for _, vm := range evaluatedVMs {
-		fmt.Fprintf(
-			&report,
-			"* %s%s",
-			vm.Name,
-			nagios.CheckOutputEOL,
-		)
-	}
-
-	fmt.Fprint(&report, nagios.CheckOutputEOL)
+	fmt.Fprintf(
+		&report,
+		"* %d Virtual Machines%s",
+		vmsFilterResults.NumVMsAll(),
+		nagios.CheckOutputEOL,
+	)
 
 	fmt.Fprintf(
 		&report,
-		"(%d) VMs after all filtering is applied:%s%s",
-		len(remainingVMs),
+		"* %d Resource Pools%s",
+		vmsFilterResults.NumRPsAll(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		&report,
+		"* %d Folders%s",
+		vmsFilterResults.NumFoldersAll(),
+		nagios.CheckOutputEOL,
+	)
+
+	vmListReportFilteringBeforeAfterResults(
+		&report,
+		vmsFilterResults.NumVMsAll(),
+		"",
+		nil,
+		"resource pool",
+		nil,
+		vmsFilterResults.VMsAfterResourcePoolFiltering,
+	)
+
+	fmt.Fprint(&report, nagios.CheckOutputEOL)
+
+	vmListReportFilteringBeforeAfterResults(
+		&report,
+		vmsFilterResults.NumVMsAll(),
+		"resource pool",
+		vmsFilterResults.VMsAfterResourcePoolFiltering,
+		"folder",
+		vmsFilterResults.VMsBeforeFolderFiltering,
+		vmsFilterResults.VMsAfterFolderFiltering,
+	)
+
+	fmt.Fprint(&report, nagios.CheckOutputEOL)
+
+	vmListReportFilteringBeforeAfterResults(
+		&report,
+		vmsFilterResults.NumVMsAll(),
+		"folder",
+		vmsFilterResults.VMsAfterFolderFiltering,
+		"VM name",
+		vmsFilterResults.VMsBeforeVMNameFiltering,
+		vmsFilterResults.VMsAfterVMNameFiltering,
+	)
+
+	fmt.Fprint(&report, nagios.CheckOutputEOL)
+
+	vmListReportFilteringBeforeAfterResults(
+		&report,
+		vmsFilterResults.NumVMsAll(),
+		"VM name",
+		vmsFilterResults.VMsAfterVMNameFiltering,
+		"VM power state",
+		vmsFilterResults.VMsBeforePowerStateFiltering,
+		vmsFilterResults.VMsAfterPowerStateFiltering,
+	)
+
+	fmt.Fprint(&report, nagios.CheckOutputEOL)
+
+	vmListReportAfterAllFiltering(&report, vmsFilterResults)
+
+	fmt.Fprint(&report, nagios.CheckOutputEOL)
+
+	vmFilterResultsReportTrailer(
+		&report,
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
+		true,
+	)
+
+	return report.String()
+}
+
+func vmListReportAfterAllFiltering(w io.Writer, vmsFilterResults VMsFilterResults) {
+	fmt.Fprintf(
+		w,
+		"%s(%d of %d) VMs after all filtering was applied:%s%s",
+		nagios.CheckOutputEOL,
+		len(vmsFilterResults.VMsAfterFiltering()),
+		vmsFilterResults.NumVMsAll(),
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 	)
 
 	switch {
-	case len(evaluatedVMs) == len(remainingVMs):
+	case len(vmsFilterResults.VMsAfterFiltering()) == vmsFilterResults.NumVMsAll():
 		fmt.Fprintf(
-			&report,
-			"Same list as above.%s",
+			w,
+			"No filtering applied: %d VMs remain.%s",
+			vmsFilterResults.NumVMsAll(),
+			nagios.CheckOutputEOL,
+		)
+
+	case len(vmsFilterResults.VMsAfterFiltering()) == len(vmsFilterResults.VMsAfterResourcePoolFiltering()):
+		fmt.Fprintf(
+			w,
+			"* Same list as after resource pool filtering.%s",
+			nagios.CheckOutputEOL,
+		)
+
+	case len(vmsFilterResults.VMsAfterFiltering()) == len(vmsFilterResults.VMsAfterFolderFiltering()):
+		fmt.Fprintf(
+			w,
+			"* Same list as after folder filtering.%s",
+			nagios.CheckOutputEOL,
+		)
+
+	case len(vmsFilterResults.VMsAfterFiltering()) == len(vmsFilterResults.VMsAfterVMNameFiltering()):
+		fmt.Fprintf(
+			w,
+			"* Same list as after VM name filtering.%s",
+			nagios.CheckOutputEOL,
+		)
+
+	case len(vmsFilterResults.VMsAfterFiltering()) == len(vmsFilterResults.VMsAfterPowerStateFiltering()):
+		fmt.Fprintf(
+			w,
+			"* Same list as after VM power state filtering.%s",
 			nagios.CheckOutputEOL,
 		)
 	default:
-		for _, vm := range remainingVMs {
+		for _, vmName := range vmsFilterResults.VMNamesAfterFiltering() {
 			fmt.Fprintf(
-				&report,
+				w,
+				"* %s%s",
+				vmName,
+				nagios.CheckOutputEOL,
+			)
+		}
+	}
+}
+
+func vmFilterResultsReportTrailer(
+	w io.Writer,
+	c *vim25.Client,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
+	emitSeparator bool,
+) {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute vmFilterResultsReportTrailer func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	if emitSeparator {
+		fmt.Fprintf(
+			w,
+			"%s---%s%s",
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+		)
+	}
+
+	fmt.Fprintf(
+		w,
+		"* vSphere environment: %s%s",
+		c.URL().String(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Plugin User Agent: %s%s",
+		c.Client.UserAgent,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* VMs evaluated: %d of %d%s",
+		len(vmsFilterResults.VMsAfterFiltering()),
+		vmsFilterResults.NumVMsAll(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Powered off VMs evaluated: %t%s",
+		vmsFilterOptions.IncludePoweredOff,
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Specified VMs to exclude (%d): [%v]%s",
+		len(vmsFilterOptions.VirtualMachineNamesExcluded),
+		strings.Join(vmsFilterOptions.VirtualMachineNamesExcluded, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Specified Folders to explicitly include (%d): [%v]%s",
+		len(vmsFilterOptions.FoldersIncluded),
+		strings.Join(vmsFilterOptions.FoldersIncluded, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Specified Folders to explicitly exclude (%d): [%v]%s",
+		len(vmsFilterOptions.FoldersExcluded),
+		strings.Join(vmsFilterOptions.FoldersExcluded, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Folders evaluated: %d of %d%s",
+		vmsFilterResults.NumFoldersAfterFiltering(),
+		vmsFilterResults.NumFoldersAll(),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
+		len(vmsFilterOptions.ResourcePoolsIncluded),
+		strings.Join(vmsFilterOptions.ResourcePoolsIncluded, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
+		len(vmsFilterOptions.ResourcePoolsExcluded),
+		strings.Join(vmsFilterOptions.ResourcePoolsExcluded, ", "),
+		nagios.CheckOutputEOL,
+	)
+
+	fmt.Fprintf(
+		w,
+		"* Resource Pools evaluated (%d of %d): [%v]%s",
+		vmsFilterResults.NumRPsAfterFiltering(),
+		vmsFilterResults.NumRPsAll(),
+		strings.Join(vmsFilterResults.RPNamesAfterFiltering(), ", "),
+		nagios.CheckOutputEOL,
+	)
+}
+
+// vmListReportFilteringBeforeAfterResults is a helper function used by the
+// VMListReport function to generate a summary of filtering results.
+//
+// This summary is generating using provided functions to provide a collection
+// of VirtualMachines before a filtering step against a collection of
+// VirtualMachines after a filtering step has completed.
+//
+// If nil is provided in place of previousAfterFilterFunc the assumption will
+// be made that no VirtualMachine collection is available for the previous
+// filtering step. This covers cases where you are dealing with the first
+// filtering step for VirtualMachines.
+//
+// If nil is provided in place of currentBeforeFilterFunc the assumption will
+// be made that no VirtualMachine collection is available for before the
+// current filtering step began. This covers cases where you are dealing with
+// the first filtering step for VirtualMachines.
+//
+// The currentAfterFilterFunc argument is required.
+func vmListReportFilteringBeforeAfterResults(
+	w io.Writer,
+	numAllVMs int,
+	previousAfterFilterDesc string,
+	previousAfterFilterFunc func() []mo.VirtualMachine,
+	currentFilterDesc string,
+	currentBeforeFilterFunc func() []mo.VirtualMachine,
+	currentAfterFilterFunc func() []mo.VirtualMachine,
+) {
+
+	fmt.Fprintf(
+		w,
+		"%s(%d of %d) VMs before %s filtering was applied:%s%s",
+		nagios.CheckOutputEOL,
+		func() int {
+			if currentBeforeFilterFunc == nil {
+				return numAllVMs
+			}
+			return len(currentBeforeFilterFunc())
+		}(),
+		numAllVMs,
+		currentFilterDesc,
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	switch {
+	case previousAfterFilterFunc == nil:
+		fmt.Fprintf(
+			w,
+			"* No filtering applied yet; skipping listing of all VMs.%s",
+			nagios.CheckOutputEOL,
+		)
+
+	case len(currentBeforeFilterFunc()) == len(previousAfterFilterFunc()):
+		fmt.Fprintf(
+			w,
+			"* Same list as after %s filtering.%s",
+			previousAfterFilterDesc,
+			nagios.CheckOutputEOL,
+		)
+
+	default:
+		for _, vm := range currentBeforeFilterFunc() {
+			fmt.Fprintf(
+				w,
 				"* %s%s",
 				vm.Name,
 				nagios.CheckOutputEOL,
@@ -2528,167 +3454,144 @@ func VMListReport(
 		}
 	}
 
-	fmt.Fprint(&report, nagios.CheckOutputEOL)
+	fmt.Fprint(w, nagios.CheckOutputEOL)
 
 	fmt.Fprintf(
-		&report,
-		"%s---%s%s",
+		w,
+		"%s(%d of %d) VMs after %s filtering was applied:%s%s",
 		nagios.CheckOutputEOL,
+		len(currentAfterFilterFunc()),
+		numAllVMs,
+		currentFilterDesc,
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
-		&report,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
+	switch {
+	case currentAfterFilterFunc != nil && currentBeforeFilterFunc == nil:
+		for _, vm := range currentAfterFilterFunc() {
+			fmt.Fprintf(
+				w,
+				"* %s%s",
+				vm.Name,
+				nagios.CheckOutputEOL,
+			)
+		}
 
-	fmt.Fprintf(
-		&report,
-		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
-		nagios.CheckOutputEOL,
-	)
+	case len(currentAfterFilterFunc()) == len(currentBeforeFilterFunc()):
+		fmt.Fprintf(
+			w,
+			"* Same list as before %s filtering.%s",
+			currentFilterDesc,
+			nagios.CheckOutputEOL,
+		)
 
-	fmt.Fprintf(
-		&report,
-		"* VMs (evaluated: %d, remaining: %d)%s",
-		len(evaluatedVMs),
-		len(remainingVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Powered off VMs evaluated: %t%s",
-		evalPoweredOff,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rps),
-		strings.Join(
-			func() []string {
-				rpNames := make([]string, len(rps))
-				for i := range rps {
-					rpNames[i] = rps[i].Name
-				}
-				return rpNames
-			}(), ", ",
-		),
-		nagios.CheckOutputEOL,
-	)
-
-	return report.String()
-}
-
-// CountVMsPowerStateOn returns the count of VMs from the provided collection
-// that are powered on.
-func CountVMsPowerStateOn(vms []mo.VirtualMachine) int {
-	var count int
-	for _, vm := range vms {
-		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
-			count++
+	default:
+		for _, vm := range currentAfterFilterFunc() {
+			fmt.Fprintf(
+				w,
+				"* %s%s",
+				vm.Name,
+				nagios.CheckOutputEOL,
+			)
 		}
 	}
-
-	return count
 }
 
-// CountVMsPowerStateSuspended returns the count of VMs from the provided
-// collection that are suspended.
-func CountVMsPowerStateSuspended(vms []mo.VirtualMachine) int {
-	var count int
-	for _, vm := range vms {
-		if vm.Runtime.PowerState == types.VirtualMachinePowerStateSuspended {
-			count++
-		}
+// VMFilterResultsPerfData provides performance data metrics for the results
+// of performing filtering operations on a given VirtualMachines collection.
+func VMFilterResultsPerfData(vmsFilterResults VMsFilterResults) []nagios.PerformanceData {
+	return []nagios.PerformanceData{
+		// The `time` (runtime) metric is appended at plugin exit, so do not
+		// duplicate it here.
+		{
+			// This metric represents all non-template VirtualMachines in the
+			// inventory.
+			Label: "vms",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumVMsAll()),
+		},
+		{
+			// Alias to vms metric.
+			Label: "vms_all",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumVMsAll()),
+		},
+		{
+			// Alias to vms_after_filtering performance metric.
+			Label: "vms_evaluated",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumVMsAfterFiltering()),
+		},
+		{
+			// Alias to vms_evaluated performance metric.
+			Label: "vms_after_filtering",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumVMsAfterFiltering()),
+		},
+		{
+			// We pull this metric from the collection remaining after
+			// Resource Pool filtering so that we are looking at VMs which
+			// have yet to be (potentially) filtered out based on power state.
+			Label: "vms_powered_off",
+			Value: fmt.Sprintf(
+				"%d",
+				CountVMsPowerStateOff(vmsFilterResults.VMsAfterResourcePoolFiltering()),
+			),
+		},
+		{
+			// We pull this metric from the collection remaining after
+			// Resource Pool filtering to be consistent with how the
+			// vms_powered_off metric is calculated.
+			Label: "vms_powered_on",
+			Value: fmt.Sprintf(
+				"%d",
+				CountVMsPowerStateOn(vmsFilterResults.VMsAfterResourcePoolFiltering()),
+			),
+		},
+		{
+			Label: "vms_excluded_by_name",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumVMsExcludedByName()),
+		},
+		{
+			Label: "vms_excluded_by_folder",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumVMsExcludedByFolder()),
+		},
+		{
+			Label: "vms_excluded_by_resource_pool",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumVMsExcludedByResourcePool()),
+		},
+		{
+			Label: "vms_excluded_by_power_state",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumVMsExcludedByPowerState()),
+		},
+		{
+			Label: "folders_all",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumFoldersAll()),
+		},
+		{
+			Label: "folders_excluded",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumFoldersExcluded()),
+		},
+		{
+			Label: "folders_included",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumFoldersIncluded()),
+		},
+		{
+			Label: "folders_evaluated",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumFoldersAfterFiltering()),
+		},
+		{
+			Label: "resource_pools_all",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumRPsAll()),
+		},
+		{
+			Label: "resource_pools_excluded",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumRPsExcluded()),
+		},
+		{
+			Label: "resource_pools_included",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumRPsIncluded()),
+		},
+		{
+			Label: "resource_pools_evaluated",
+			Value: fmt.Sprintf("%d", vmsFilterResults.NumRPsAfterFiltering()),
+		},
 	}
-
-	return count
-}
-
-// CountVMsPowerStateOff returns the count of VMs from the provided collection
-// that are fully powered off. This count does not include VMs that are
-// suspended.
-func CountVMsPowerStateOff(vms []mo.VirtualMachine) int {
-	var count int
-	for _, vm := range vms {
-		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff {
-			count++
-		}
-	}
-
-	return count
-}
-
-// CountVMsPoweredOff returns the count of VMs from the provided collection
-// that are fully powered off and those which are suspended.
-func CountVMsPoweredOff(vms []mo.VirtualMachine) int {
-	var count int
-	for _, vm := range vms {
-		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff ||
-			vm.Runtime.PowerState == types.VirtualMachinePowerStateSuspended {
-			count++
-		}
-	}
-
-	return count
-}
-
-// CountVMsPowerStates returns the count of VMs from the provided collection
-// in each power state.
-//
-// The order of returned values:
-//
-//  1. Powered On
-//  2. Suspended
-//  3. Powered Off
-func CountVMsPowerStates(vms []mo.VirtualMachine) (int, int, int) {
-	var countPowerStateOn int
-	var countPowerStateSuspended int
-	var countPowerStateOff int
-
-	for _, vm := range vms {
-		switch {
-		case vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn:
-			countPowerStateOn++
-
-		case vm.Runtime.PowerState != types.VirtualMachinePowerStateSuspended:
-			countPowerStateSuspended++
-
-		case vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff:
-			countPowerStateOff++
-		}
-	}
-
-	return countPowerStateOn, countPowerStateSuspended, countPowerStateOff
 }

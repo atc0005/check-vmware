@@ -524,9 +524,8 @@ func FilterVMsWithOldHardware(vms []mo.VirtualMachine, hwIndex HardwareVersionsI
 // notifications.
 func VirtualHardwareOneLineCheckSummary(
 	stateLabel string,
+	vmsFilterResults VMsFilterResults,
 	minHardwareVersion int,
-	evaluatedVMs []mo.VirtualMachine,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -544,7 +543,7 @@ func VirtualHardwareOneLineCheckSummary(
 		virtualHardwareVersionPrefix,
 		minHardwareVersion,
 	)
-	for _, vm := range evaluatedVMs {
+	for _, vm := range vmsFilterResults.VMsAfterFiltering() {
 		if vm.Config.Version == minHardwareVersionString {
 			continue
 		}
@@ -563,8 +562,8 @@ func VirtualHardwareOneLineCheckSummary(
 			stateLabel,
 			outdatedVMs,
 			minHardwareVersion,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -573,8 +572,8 @@ func VirtualHardwareOneLineCheckSummary(
 			"%s: No hardware versions older than %d detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
 			minHardwareVersion,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	}
@@ -587,16 +586,12 @@ func VirtualHardwareOneLineCheckSummary(
 // the body of many notifications.
 func VirtualHardwareReport(
 	c *vim25.Client,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 	hwvIndex HardwareVersionsIndex,
 	minHardwareVersion int,
 	defaultHardwareVersion HardwareVersion,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
-	vmsToExclude []string,
-	evalPoweredOffVMs bool,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
+
 ) string {
 
 	funcTimeStart := time.Now()
@@ -607,11 +602,6 @@ func VirtualHardwareReport(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
 
 	var report strings.Builder
 
@@ -659,7 +649,6 @@ func VirtualHardwareReport(
 			hwvIndex.Newest().VersionNumber(),
 			nagios.CheckOutputEOL,
 		)
-
 	}
 
 	if !hardwareVersions.MeetsMinVersion(minHardwareVersion) {
@@ -678,6 +667,7 @@ func VirtualHardwareReport(
 			nagios.CheckOutputEOL,
 		)
 
+		evaluatedVMs := vmsFilterResults.VMsAfterFiltering()
 		sort.Slice(evaluatedVMs, func(i, j int) bool {
 			return evaluatedVMs[i].Config.Version < evaluatedVMs[j].Config.Version
 		})
@@ -702,26 +692,12 @@ func VirtualHardwareReport(
 
 	}
 
-	fmt.Fprintf(
+	vmFilterResultsReportTrailer(
 		&report,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
-		nagios.CheckOutputEOL,
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
+		true,
 	)
 
 	fmt.Fprintf(
@@ -745,53 +721,6 @@ func VirtualHardwareReport(
 		"* Oldest Virtual Hardware Version: %d (%s) %s",
 		hwvIndex.Oldest().VersionNumber(),
 		hwvIndex.Oldest().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* VMs (evaluated: %d, total: %d)%s",
-		len(evaluatedVMs),
-		len(allVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Powered off VMs evaluated: %t%s",
-		evalPoweredOffVMs,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
 		nagios.CheckOutputEOL,
 	)
 
