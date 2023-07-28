@@ -54,7 +54,7 @@ contrib
         │       ├── send2teams.cfg
         │       ├── vmware-alarms.cfg
         │       ├── vmware-datastores-performance.cfg
-        │       ├── vmware-datastores.cfg
+        │       ├── vmware-datastores-space.cfg
         │       ├── vmware-disk-consolidation.cfg
         │       ├── vmware-host-cpu.cfg
         │       ├── vmware-host-datastore-vms-pairings.cfg
@@ -67,7 +67,8 @@ contrib
         │       ├── vmware-tools.cfg
         │       ├── vmware-vcpus.cfg
         │       ├── vmware-virtual-hardware.cfg
-        │       └── vmware-vm-backup-via-ca.cfg
+        │       ├── vmware-vm-backup-via-ca.cfg
+        │       ├── vmware-vm-list.cfg
         │       └── vmware-vm-power-uptime.cfg
         └── nagios3
             ├── commands.cfg
@@ -95,7 +96,7 @@ contrib
             ├── nagios.cfg
             └── resource.cfg
 
-13 directories, 35 files
+13 directories, 36 files
 ```
 
 ### Overview

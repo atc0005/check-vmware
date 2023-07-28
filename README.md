@@ -72,6 +72,7 @@ file. See the [plugin index](#plugin-index) for a quick reference.
 | [`check_vmware_question`](docs/plugins/check_vmware_question.md)                           | Nagios plugin used to monitor VM interactive question status.                            |
 | [`check_vmware_alarms`](docs/plugins/check_vmware_alarms.md)                               | Nagios plugin used to monitor for Triggered Alarms in one or more datacenters.           |
 | [`check_vmware_vm_backup_via_ca`](docs/plugins/check_vmware_vm_backup_via_ca.md)           | Nagios plugin used to monitor last backup date for VMs (via specified custom attribute). |
+| [`check_vmware_vm_list`](docs/plugins/check_vmware_vm_list.md)                             | Nagios plugin used to list Virtual Machines in order to test include/exclude options.    |
 
 ### Output
 
@@ -139,6 +140,7 @@ options](#configuration-options), [examples](#examples) and
   - Virtual Machine interactive question status
   - Triggered Alarms in one or more datacenters
   - Last Backup date for VMs (via specified custom attribute)
+  - List Virtual Machines (test include/exclude filtering options)
 
 - Optional, leveled logging using `rs/zerolog` package
   - JSON-format output (to `stderr`)
@@ -228,6 +230,7 @@ been tested.
      - `go build -mod=vendor ./cmd/check_vmware_disk_consolidation/`
      - `go build -mod=vendor ./cmd/check_vmware_question/`
      - `go build -mod=vendor ./cmd/check_vmware_alarms/`
+     - `go build -mod=vendor ./cmd/check_vmware_vm_list/`
    - for all supported platforms (where `make` is installed)
       - `make all`
    - for use on Windows
@@ -254,6 +257,7 @@ been tested.
      - look in `/tmp/check-vmware/release_assets/check_vmware_disk_consolidation/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_question/`
      - look in `/tmp/check-vmware/release_assets/check_vmware_alarms/`
+     - look in `/tmp/check-vmware/release_assets/check_vmware_vm_list/`
    - if using `go build`
      - look in `/tmp/check-vmware/`
 1. Review [configuration options](#configuration-options),

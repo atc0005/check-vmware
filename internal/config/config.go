@@ -51,6 +51,7 @@ type PluginType struct {
 	InteractiveQuestion            bool
 	Alarms                         bool
 	VirtualMachineLastBackupViaCA  bool
+	VirtualMachineList             bool
 
 	// TODO:
 	// - vCenter/server time (NTP)
@@ -917,6 +918,9 @@ func pluginTypeLabel(pluginType PluginType) string {
 
 	case pluginType.VirtualMachineLastBackupViaCA:
 		label = PluginTypeVirtualMachineLastBackupViaCA
+
+	case pluginType.VirtualMachineList:
+		label = PluginTypeVirtualMachineList
 
 	default:
 		label = "ERROR: Please report this; I evidently forgot to expand the PluginType collection"

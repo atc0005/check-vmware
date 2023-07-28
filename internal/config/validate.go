@@ -768,6 +768,19 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+	case pluginType.VirtualMachineList:
+
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
+
+		// FIXME: Add other include/exclude option validation steps here.
+
 	}
 
 	// shared validation checks

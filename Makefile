@@ -41,6 +41,7 @@ WHAT 					= check_vmware_tools \
 							check_vmware_question \
 							check_vmware_alarms \
 							check_vmware_vm_backup_via_ca \
+							check_vmware_vm_list \
 
 PROJECT_NAME			:= check-vmware
 
