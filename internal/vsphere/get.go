@@ -21,7 +21,7 @@ func getVirtualMachinePropsSubset() []string {
 		"summary",
 		"datastore",
 		"resourcePool",
-		"config",
+		"config", // vCPU count, hardware version, memory, template (true/false)
 		"snapshot",
 		// "rootSnapshot", // TODO: need for this?
 		"storage",
@@ -106,6 +106,13 @@ func getAlarmPropsSubset() []string {
 	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.alarm.Alarm.html
 	return []string{
 		"info",
+	}
+}
+func getFolderPropsSubset() []string {
+	// https://code.vmware.com/apis/1067/vsphere
+	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.Folder.html
+	return []string{
+		"name",
 	}
 }
 
@@ -250,6 +257,16 @@ func getObjects(
 			props = getVirtualAppPropsSubset()
 		}
 
+	case *[]mo.Folder:
+		defer func() {
+			objCount = len(*u)
+		}()
+		objKind = MgObjRefTypeFolder
+
+		if propsSubset {
+			props = getFolderPropsSubset()
+		}
+
 	default:
 
 		return fmt.Errorf("func getObjects: unknown type provided as destination")
@@ -257,14 +274,14 @@ func getObjects(
 	}
 
 	// FIXME: Should this filter to a specific datacenter? See GH-219.
-	v, err := m.CreateContainerView(
+	v, createViewErr := m.CreateContainerView(
 		ctx,
 		objRef,
 		[]string{objKind},
 		recursive,
 	)
-	if err != nil {
-		return err
+	if createViewErr != nil {
+		return createViewErr
 	}
 
 	defer func() {
@@ -281,9 +298,9 @@ func getObjects(
 		}
 	}()
 
-	err = v.Retrieve(ctx, []string{objKind}, props, dst)
-	if err != nil {
-		return err
+	retrieveErr := v.Retrieve(ctx, []string{objKind}, props, dst)
+	if retrieveErr != nil {
+		return retrieveErr
 	}
 
 	return nil

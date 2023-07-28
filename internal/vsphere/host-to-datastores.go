@@ -864,9 +864,8 @@ func (vmtmp VMToMismatchedPairing) NumHosts() int {
 // check results summary. This is the line most prominent in notifications.
 func H2D2VMsOneLineCheckSummary(
 	stateLabel string,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterResults VMsFilterResults,
 	vmDatastoresPairingIssues VMToMismatchedPairing,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -884,8 +883,8 @@ func H2D2VMsOneLineCheckSummary(
 			"%s: %d mismatched Host/Datastore/VM pairings detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
 			len(vmDatastoresPairingIssues),
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -893,8 +892,8 @@ func H2D2VMsOneLineCheckSummary(
 		return fmt.Sprintf(
 			"%s: No mismatched Host/Datastore/VM pairings detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	}
@@ -908,14 +907,9 @@ func H2D2VMsOneLineCheckSummary(
 func H2D2VMsReport(
 	c *vim25.Client,
 	h2dIdx HostToDatastoreIndex,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 	vmDatastoresPairingIssues VMToMismatchedPairing,
-	vmsToExclude []string,
-	evalPoweredOffVMs bool,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
 	ignoreMissingCA bool,
 	ignoredDatastores []string,
 	datastoreCAPrefixSeparator string,
@@ -932,11 +926,6 @@ func H2D2VMsReport(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
 
 	// Build lists of the objects that are missing requested Custom Attribute
 	var datastoresMissingCA []string
@@ -1115,41 +1104,12 @@ func H2D2VMsReport(
 		)
 	}
 
-	fmt.Fprintf(
+	vmFilterResultsReportTrailer(
 		&report,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* VMs (evaluated: %d, total: %d)%s",
-		len(evaluatedVMs),
-		len(allVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Powered off VMs evaluated: %t%s",
-		evalPoweredOffVMs,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
+		false,
 	)
 
 	fmt.Fprintf(
@@ -1157,30 +1117,6 @@ func H2D2VMsReport(
 		"* Specified Datastores to exclude (%d): [%v]%s",
 		len(ignoredDatastores),
 		strings.Join(ignoredDatastores, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&report,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
 		nagios.CheckOutputEOL,
 	)
 

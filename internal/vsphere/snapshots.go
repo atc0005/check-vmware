@@ -1189,8 +1189,7 @@ func SnapshotsAgeOneLineCheckSummary(
 	stateLabel string,
 	snapshotSets SnapshotSummarySets,
 	snapshotThresholds SnapshotThresholds,
-	evaluatedVMs []mo.VirtualMachine,
-	rps []mo.ResourcePool,
+	vmsFilterResults VMsFilterResults,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1214,9 +1213,9 @@ func SnapshotsAgeOneLineCheckSummary(
 			vms,
 			snapshots,
 			snapshotThresholds.AgeCritical,
-			len(evaluatedVMs),
+			vmsFilterResults.NumVMsAfterFiltering(),
 			snapshotSets.Snapshots(),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	case snapshotSets.IsAgeWarningState():
@@ -1229,9 +1228,9 @@ func SnapshotsAgeOneLineCheckSummary(
 			vms,
 			snapshots,
 			snapshotThresholds.AgeWarning,
-			len(evaluatedVMs),
+			vmsFilterResults.NumVMsAfterFiltering(),
 			snapshotSets.Snapshots(),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -1240,9 +1239,9 @@ func SnapshotsAgeOneLineCheckSummary(
 			"%s: No snapshots older than %d days detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
 			snapshotThresholds.AgeWarning,
-			len(evaluatedVMs),
+			vmsFilterResults.NumVMsAfterFiltering(),
 			snapshotSets.Snapshots(),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	}
@@ -1255,8 +1254,7 @@ func SnapshotsCountOneLineCheckSummary(
 	stateLabel string,
 	snapshotSets SnapshotSummarySets,
 	snapshotThresholds SnapshotThresholds,
-	evaluatedVMs []mo.VirtualMachine,
-	rps []mo.ResourcePool,
+	vmsFilterResults VMsFilterResults,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1280,9 +1278,9 @@ func SnapshotsCountOneLineCheckSummary(
 			vms,
 			snapshotThresholds.CountCritical,
 			snapsExcess,
-			len(evaluatedVMs),
+			vmsFilterResults.NumVMsAfterFiltering(),
 			snapshotSets.Snapshots(),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	case snapshotSets.IsCountWarningState():
@@ -1295,9 +1293,9 @@ func SnapshotsCountOneLineCheckSummary(
 			vms,
 			snapshotThresholds.CountWarning,
 			snapsExcess,
-			len(evaluatedVMs),
+			vmsFilterResults.NumVMsAfterFiltering(),
 			snapshotSets.Snapshots(),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -1306,9 +1304,9 @@ func SnapshotsCountOneLineCheckSummary(
 			"%s: No VMs with snapshots count greater than %d detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
 			stateLabel,
 			snapshotThresholds.CountWarning,
-			len(evaluatedVMs),
+			vmsFilterResults.NumVMsAfterFiltering(),
 			snapshotSets.Snapshots(),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	}
@@ -1321,8 +1319,7 @@ func SnapshotsSizeOneLineCheckSummary(
 	stateLabel string,
 	snapshotSets SnapshotSummarySets,
 	snapshotThresholds SnapshotThresholds,
-	evaluatedVMs []mo.VirtualMachine,
-	rps []mo.ResourcePool,
+	vmsFilterResults VMsFilterResults,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1346,9 +1343,9 @@ func SnapshotsSizeOneLineCheckSummary(
 			snapshots,
 			snapshotThresholds.SizeCritical,
 			snapshotThresholdTypeSizeSuffix,
-			len(evaluatedVMs),
+			vmsFilterResults.NumVMsAfterFiltering(),
 			snapshotSets.Snapshots(),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	case snapshotSets.IsSizeWarningState():
@@ -1362,9 +1359,9 @@ func SnapshotsSizeOneLineCheckSummary(
 			snapshots,
 			snapshotThresholds.SizeWarning,
 			snapshotThresholdTypeSizeSuffix,
-			len(evaluatedVMs),
+			vmsFilterResults.NumVMsAfterFiltering(),
 			snapshotSets.Snapshots(),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -1374,9 +1371,9 @@ func SnapshotsSizeOneLineCheckSummary(
 			stateLabel,
 			snapshotThresholds.SizeWarning,
 			snapshotThresholdTypeSizeSuffix,
-			len(evaluatedVMs),
+			vmsFilterResults.NumVMsAfterFiltering(),
 			snapshotSets.Snapshots(),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	}
@@ -1609,114 +1606,6 @@ func writeSnapshotsListEntries(
 
 }
 
-// writeSnapshotsReportFooter generates a common "footer" for use with
-// summarizing snapshots age and size plugin check results.
-//
-// TODO: Refactor for shared use by other (all?) plugins
-func writeSnapshotsReportFooter(
-	c *vim25.Client,
-	w io.Writer,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
-	vmsToExclude []string,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
-) {
-
-	funcTimeStart := time.Now()
-
-	defer func() {
-		logger.Printf(
-			"It took %v to execute writeSnapshotsReportFooter func.\n",
-			time.Since(funcTimeStart),
-		)
-	}()
-
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
-
-	fmt.Fprintf(
-		w,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		w,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		w,
-		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		w,
-		"* VMs (evaluated: %d, total: %d)%s",
-		len(evaluatedVMs),
-		len(allVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		w,
-		"* Powered off VMs evaluated: %t%s",
-		// NOTE: This plugin is hard-coded to evaluate powered off and powered
-		// on VMs equally. I'm not sure whether ignoring powered off VMs by
-		// default makes sense for this particular plugin.
-		//
-		// Please share your feedback here if you feel differently:
-		// https://github.com/atc0005/check-vmware/discussions/177
-		//
-		// Please expand on some use cases for ignoring powered off VMs by default.
-		true,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		w,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		w,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		w,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		w,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-}
-
 // SnapshotsAgeReport generates a summary of snapshot details along with
 // various verbose details intended to aid in troubleshooting check results at
 // a glance. This information is provided for use with the Long Service Output
@@ -1726,12 +1615,8 @@ func SnapshotsAgeReport(
 	c *vim25.Client,
 	snapshotSummarySets SnapshotSummarySets,
 	snapshotThresholds SnapshotThresholds,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
-	vmsToExclude []string,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1754,16 +1639,12 @@ func SnapshotsAgeReport(
 		snapshotSummarySets,
 	)
 
-	// Generate common footer information, send to strings Builder
-	writeSnapshotsReportFooter(
-		c,
+	vmFilterResultsReportTrailer(
 		&report,
-		allVMs,
-		evaluatedVMs,
-		vmsToExclude,
-		includeRPs,
-		excludeRPs,
-		rps,
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
+		true,
 	)
 
 	return report.String()
@@ -1778,12 +1659,8 @@ func SnapshotsSizeReport(
 	c *vim25.Client,
 	snapshotSummarySets SnapshotSummarySets,
 	snapshotThresholds SnapshotThresholds,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
-	vmsToExclude []string,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1806,16 +1683,12 @@ func SnapshotsSizeReport(
 		snapshotSummarySets,
 	)
 
-	// Generate common footer information, send to strings Builder
-	writeSnapshotsReportFooter(
-		c,
+	vmFilterResultsReportTrailer(
 		&report,
-		allVMs,
-		evaluatedVMs,
-		vmsToExclude,
-		includeRPs,
-		excludeRPs,
-		rps,
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
+		true,
 	)
 
 	return report.String()
@@ -1830,12 +1703,8 @@ func SnapshotsCountReport(
 	c *vim25.Client,
 	snapshotSummarySets SnapshotSummarySets,
 	snapshotThresholds SnapshotThresholds,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
-	vmsToExclude []string,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -1859,16 +1728,12 @@ func SnapshotsCountReport(
 		snapshotSummarySets,
 	)
 
-	// Generate common footer information, send to strings Builder
-	writeSnapshotsReportFooter(
-		c,
+	vmFilterResultsReportTrailer(
 		&report,
-		allVMs,
-		evaluatedVMs,
-		vmsToExclude,
-		includeRPs,
-		excludeRPs,
-		rps,
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
+		true,
 	)
 
 	return report.String()

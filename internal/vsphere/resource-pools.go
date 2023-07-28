@@ -23,6 +23,7 @@ import (
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
+	"github.com/vmware/govmomi/vim25/types"
 )
 
 // ResourcePoolsAggregateStats is a collection of aggregated statistics for
@@ -53,6 +54,81 @@ var ErrResourcePoolMemoryUsageThresholdCrossed = errors.New("memory usage exceed
 // are missing from specified Resource Pools. This is usually due to
 // retrieving an insufficient subset of properties from a vSphere View.
 var ErrResourcePoolStatisticUnavailable = errors.New("resource pool missing expected statistic")
+
+// GetNumTotalRPs returns the count of all Resource Pools in the inventory.
+func GetNumTotalRPs(ctx context.Context, client *vim25.Client) (int, error) {
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute getNumTotalRPs func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	numAllRPs, err := getRPsCountUsingContainerView(
+		ctx,
+		client,
+		client.ServiceContent.RootFolder,
+		true,
+	)
+	if err != nil {
+		logger.Printf(
+			"error retrieving list of all resource pools: %v",
+			err,
+		)
+
+		return 0, fmt.Errorf(
+			"error retrieving list of all resource pools: %w",
+			err,
+		)
+	}
+	logger.Printf(
+		"Finished retrieving count of all resource pools: %d",
+		numAllRPs,
+	)
+
+	return numAllRPs, nil
+}
+
+// validateRPs verifies that all explicitly specified ResourcePools exist in
+// the inventory.
+func validateRPs(ctx context.Context, client *vim25.Client, filterOptions VMsFilterOptions) error {
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute validateRPs func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	switch {
+	case len(filterOptions.FoldersIncluded) > 0 || len(filterOptions.FoldersExcluded) > 0:
+		logger.Println("Validating resource pools")
+
+		validateErr := ValidateRPs(ctx, client, filterOptions.ResourcePoolsIncluded, filterOptions.ResourcePoolsExcluded)
+		if validateErr != nil {
+			logger.Printf(
+				"%v: %v",
+				ErrValidationOfIncludeExcludeRPLists,
+				validateErr,
+			)
+
+			return fmt.Errorf(
+				"%v: %v",
+				ErrValidationOfIncludeExcludeRPLists,
+				validateErr,
+			)
+		}
+		logger.Println("Successfully validated resource pools")
+
+		return nil
+	default:
+		logger.Println("Skipping resource pool validation; resource pool filtering not requested")
+		return nil
+	}
+}
 
 // BalloonedMemoryHR returns the size of the balloon driver across all virtual
 // machines in one or more specified Resource Pools as a human readable
@@ -178,6 +254,82 @@ func ValidateRPs(ctx context.Context, c *vim25.Client, includeRPs []string, excl
 		return nil
 	}
 
+}
+
+// getRPsCountUsingContainerView accepts a context, a connected client, a
+// container type ManagedObjectReference and a boolean value indicating
+// whether the container type should be recursively searched for
+// ResourcePools. An error is returned if the provided ManagedObjectReference
+// is not for a supported container type.
+func getRPsCountUsingContainerView(
+	ctx context.Context,
+	c *vim25.Client,
+	containerRef types.ManagedObjectReference,
+	recursive bool,
+) (int, error) {
+	funcTimeStart := time.Now()
+
+	// FIXME: What would be a useful preallocation value?
+	// allRPs := make([]mo.VirtualMachine, 0)
+	var allRPs []mo.ResourcePool
+
+	defer func(rps *[]mo.ResourcePool, objRef types.ManagedObjectReference) {
+		logger.Printf(
+			"It took %v to execute getRPsCountUsingContainerView func (and count %d RPs from %s).\n",
+			time.Since(funcTimeStart),
+			len(*rps),
+			objRef.Type,
+		)
+	}(&allRPs, containerRef)
+
+	// Create a view of caller-specified objects
+	m := view.NewManager(c)
+
+	logger.Printf("Container type is %s", containerRef.Type)
+
+	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/a5f4000f-1ea8-48a9-9221-586adff3c557/7ff50256-2cf2-45ea-aacd-87d231ab1ac7/vim.view.ContainerView.html
+	switch containerRef.Type {
+	case MgObjRefTypeResourcePool:
+	case MgObjRefTypeFolder:
+
+	default:
+		return 0, fmt.Errorf(
+			"unsupported container type specified for ContainerView: %s",
+			containerRef.Type,
+		)
+	}
+
+	// FIXME: Should this filter to a specific datacenter? See GH-219.
+	v, createViewErr := m.CreateContainerView(
+		ctx,
+		containerRef,
+		[]string{MgObjRefTypeResourcePool},
+		recursive,
+	)
+	if createViewErr != nil {
+		return 0, createViewErr
+	}
+
+	defer func() {
+		// Per vSphere Web Services SDK Programming Guide - VMware vSphere 7.0
+		// Update 1:
+		//
+		// A best practice when using views is to call the DestroyView()
+		// method when a view is no longer needed. This practice frees memory
+		// on the server.
+		if err := v.Destroy(ctx); err != nil {
+			logger.Printf("Error occurred while destroying view: %s", err)
+		}
+	}()
+
+	// Perform as lightweight of a search as possible as we're only interested
+	// in counting the total resource pools in a specified container.
+	retrieveErr := v.Retrieve(ctx, []string{MgObjRefTypeResourcePool}, []string{"name"}, &allRPs)
+	if retrieveErr != nil {
+		return 0, retrieveErr
+	}
+
+	return len(allRPs), nil
 }
 
 // GetEligibleRPs receives a list of Resource Pool names that should either be
@@ -422,10 +574,10 @@ func MemoryUsedPercentage(
 // notifications.
 func RPMemoryUsageOneLineCheckSummary(
 	stateLabel string,
+	vmsFilterResults VMsFilterResults,
 	aggregateMemoryUsageInBytes int64,
 	maxMemoryUsageInBytes int64,
 	clusterMemoryInBytes int64,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -455,7 +607,7 @@ func RPMemoryUsageOneLineCheckSummary(
 			units.ByteSize(maxMemoryUsageInBytes),
 			memoryPercentageUsedOfClusterCapacity,
 			units.ByteSize(clusterMemoryInBytes),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -472,7 +624,7 @@ func RPMemoryUsageOneLineCheckSummary(
 			units.ByteSize(memoryRemaining),
 			float64(100)-memoryPercentageUsedOfAllowed,
 			units.ByteSize(maxMemoryUsageInBytes),
-			len(rps),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	}
@@ -486,12 +638,10 @@ func RPMemoryUsageOneLineCheckSummary(
 // many notifications.
 func ResourcePoolsMemoryReport(
 	c *vim25.Client,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 	maxMemoryUsageInBytes int64,
 	clusterMemoryInBytes int64,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
-	rpsVMs []mo.VirtualMachine,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -513,7 +663,7 @@ func ResourcePoolsMemoryReport(
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 	)
-	for _, rp := range rps {
+	for _, rp := range vmsFilterResults.RPsAfterFiltering() {
 
 		// gather MOID to Name mappings for later lookup
 		rpIDtoNameIdx[rp.Self.Value] = rp.Name
@@ -547,7 +697,15 @@ func ResourcePoolsMemoryReport(
 		}
 	}
 
-	poweredVMs, numVMsPoweredOff := FilterVMsByPowerState(rpsVMs, false)
+	vms := vmsFilterResults.VMsAfterFiltering()
+
+	// TODO: We already have these values in vmsFilterResults, provided that
+	// we assume that the caller has already filtered out powered off VMs.
+	//
+	// Since it is possible (however unlikely) that this function will be
+	// called by another plugin, it might be worth performing this separate
+	// filtering step just to be sure.
+	poweredVMs, numVMsPoweredOff := FilterVMsByPowerState(vms, false)
 	numVMsPoweredOn := len(poweredVMs)
 
 	fmt.Fprintf(
@@ -668,29 +826,25 @@ func ResourcePoolsMemoryReport(
 	fmt.Fprintf(
 		&report,
 		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
+		len(vmsFilterOptions.ResourcePoolsIncluded),
+		strings.Join(vmsFilterOptions.ResourcePoolsIncluded, ", "),
 		nagios.CheckOutputEOL,
 	)
 
 	fmt.Fprintf(
 		&report,
 		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
+		len(vmsFilterOptions.ResourcePoolsExcluded),
+		strings.Join(vmsFilterOptions.ResourcePoolsExcluded, ", "),
 		nagios.CheckOutputEOL,
 	)
 
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
-
 	fmt.Fprintf(
 		&report,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
+		"* Resource Pools evaluated (%d of %d): [%v]%s",
+		vmsFilterResults.NumRPsAfterFiltering(),
+		vmsFilterResults.NumRPsAll(),
+		strings.Join(vmsFilterResults.RPNamesAfterFiltering(), ", "),
 		nagios.CheckOutputEOL,
 	)
 

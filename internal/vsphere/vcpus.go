@@ -16,7 +16,6 @@ import (
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/vim25"
-	"github.com/vmware/govmomi/vim25/mo"
 )
 
 // ErrVCPUsUsageThresholdCrossed indicates that specified
@@ -28,10 +27,9 @@ var ErrVCPUsUsageThresholdCrossed = errors.New("vCPUS allocation exceeds specifi
 // notifications.
 func VirtualCPUsOneLineCheckSummary(
 	stateLabel string,
+	vmsFilterResults VMsFilterResults,
 	vCPUsAllocated int32,
 	vCPUsMax int,
-	evaluatedVMs []mo.VirtualMachine,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -57,8 +55,8 @@ func VirtualCPUsOneLineCheckSummary(
 			vCPUsPercentageUsed,
 			vCPUsOverage,
 			vCPUsMax,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -71,8 +69,8 @@ func VirtualCPUsOneLineCheckSummary(
 			vCPUsPercentageUsed,
 			vCPUsRemaining,
 			vCPUsMax,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	}
@@ -85,15 +83,10 @@ func VirtualCPUsOneLineCheckSummary(
 // the web UI or in the body of many notifications.
 func VirtualCPUsReport(
 	c *vim25.Client,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 	vCPUsAllocated int32,
 	vCPUsMax int,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
-	vmsToExclude []string,
-	evalPoweredOffVMs bool,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -104,11 +97,6 @@ func VirtualCPUsReport(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
 
 	var vmsReport strings.Builder
 
@@ -133,6 +121,7 @@ func VirtualCPUsReport(
 		nagios.CheckOutputEOL,
 	)
 
+	evaluatedVMs := vmsFilterResults.VMsAfterFiltering()
 	sort.Slice(evaluatedVMs, func(i, j int) bool {
 		return evaluatedVMs[i].Summary.Config.NumCpu > evaluatedVMs[j].Summary.Config.NumCpu
 	})
@@ -205,73 +194,12 @@ func VirtualCPUsReport(
 		}
 	}
 
-	fmt.Fprintf(
+	vmFilterResultsReportTrailer(
 		&vmsReport,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* VMs (evaluated: %d, total: %d)%s",
-		len(evaluatedVMs),
-		len(allVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Powered off VMs evaluated: %t%s",
-		evalPoweredOffVMs,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
-		nagios.CheckOutputEOL,
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
+		true,
 	)
 
 	return vmsReport.String()

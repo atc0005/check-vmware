@@ -117,17 +117,51 @@ any feedback that you may have. Thanks in advance!
 
 ### Supported metrics
 
-- `time`
-- `vms`
-- `vms_excluded_by_name`
-- `vms_excluded_by_power_state`
-- `hardware_versions_unique`
-- `hardware_versions_newest`
-- `hardware_versions_default`
-- `hardware_versions_oldest`
-- `resource_pools_excluded`
-- `resource_pools_included`
-- `resource_pools_evaluated`
+Metrics below are obtained in this order:
+
+1. Obtain count of all resource pools
+1. Obtain count of all folders
+1. Obtain count of all virtual machines
+1. Filter virtual machines
+   1. by resource pools
+   1. by folders
+   1. by name
+   1. by power state
+1. Evaluate virtual machine virtual hardware versions
+
+For example, the count of virtual machines powered on is obtained based on VMs
+remaining after resource pool filtering is complete at the time of applying
+power state filtering.
+
+**NOTE**: These metrics are based on the visibility of the service account
+used to login to the target VMware environment. If the service account cannot
+see a resource, it cannot evaluate the resource.
+
+| Metric                          | Alias of              | Unit of Measurement | Description                                                                              |
+| ------------------------------- | --------------------- | ------------------- | ---------------------------------------------------------------------------------------- |
+| `time`                          |                       | milliseconds        | plugin runtime                                                                           |
+| `vms`                           | `vms_all`             |                     | all (visible) virtual machines in the inventory                                          |
+| `vms_all`                       | `vms`                 |                     | all (visible) virtual machines in the inventory                                          |
+| `vms_evaluated`                 | `vms_after_filtering` |                     | virtual machines after filtering, evaluated for plugin-specific threshold violations     |
+| `vms_after_filtering`           | `vms_evaluated`       |                     | virtual machines after filtering, evaluated for plugin-specific threshold violations     |
+| `vms_powered_on`                |                       |                     | virtual machines powered on                                                              |
+| `vms_powered_off`               |                       |                     | virtual machines powered off                                                             |
+| `vms_excluded_by_name`          |                       |                     | virtual machines excluded based on fixed name values                                     |
+| `vms_excluded_by_folder`        |                       |                     | virtual machines excluded based on folder IDs                                            |
+| `vms_excluded_by_power_state`   |                       |                     | virtual machines excluded based on power state (powered off VMs are excluded by default) |
+| `vms_excluded_by_resource_pool` |                       |                     | virtual machines excluded based on resource pool name                                    |
+| `folders_all`                   |                       |                     | all folders in the inventory                                                             |
+| `folders_excluded`              |                       |                     | folders excluded by request                                                              |
+| `folders_included`              |                       |                     | folders included by request (all non-listed folders excluded)                            |
+| `folders_evaluated`             |                       |                     | folders remaining after inclusion/exclusion filtering logic is applied                   |
+| `resource_pools_all`            |                       |                     | all resource pools in the inventory                                                      |
+| `resource_pools_excluded`       |                       |                     | resource pools excluded by request                                                       |
+| `resource_pools_included`       |                       |                     | resource pools included by request (all non-listed resource pools excluded)              |
+| `resource_pools_evaluated`      |                       |                     | resource pools remaining after inclusion/exclusion filtering logic is applied            |
+| `hardware_versions_unique`      |                       |                     | virtual machines with unique virtual machine hardware versions                           |
+| `hardware_versions_newest`      |                       |                     | virtual machines with the newest virtual machine hardware version                        |
+| `hardware_versions_default`     |                       |                     | virtual machines with the default cluster hardware version                               |
+| `hardware_versions_oldest`      |                       |                     | virtual machines with the oldest hardware version                                        |
 
 ## Optional evaluation
 
@@ -215,6 +249,8 @@ subcommands, though this may change in the future based on feedback. See the
 | `cluster-name`                   | No        |         | No     | *valid vSphere cluster name*                                            | Specifies the name of a vSphere Cluster. If not specified, applicable plugins will attempt to use the default cluster found in the vSphere environment. Not applicable to standalone ESXi hosts.                                                                                                                                                                                              |
 | `include-rp`                     | No        |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pool names that should be exclusively used when evaluating VMs. Specifying this option will also exclude any VMs from evaluation that are *outside* of a Resource Pool. This option is incompatible with specifying a list of Resource Pool names to ignore or exclude from evaluation.                                                          |
 | `exclude-rp`                     | No        |         | No     | *comma-separated list of resource pool names*                           | Specifies a comma-separated list of Resource Pool names that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Resource Pool names to include for evaluation.                                                                                                                                                                                      |
+| `include-folder-id`              | No        |         | No     | *comma-separated list of folder ID values*                              | Specifies a comma-separated list of Folder Managed Object ID (MOID) values (e.g., group-v34) that should be exclusively used when evaluating VMs. This option is incompatible with specifying a list of Folder IDs to ignore or exclude from evaluation.                                                                                                                                      |
+| `exclude-folder-id`              | No        |         | No     | *comma-separated list of folder ID values*                              | Specifies a comma-separated list of Folder Managed Object ID (MOID) values (e.g., group-v34) that should be ignored when evaluating VMs. This option is incompatible with specifying a list of Folder Managed Object ID (MOID) values to include for evaluation.                                                                                                                              |
 | `ignore-vm`                      | No        |         | No     | *comma-separated list of (vSphere) virtual machine names*               | Specifies a comma-separated list of VM names that should be ignored or excluded from evaluation.                                                                                                                                                                                                                                                                                              |
 | `powered-off`                    | No        | `false` | No     | `true`, `false`                                                         | Toggles evaluation of powered off VMs in addition to powered on VMs. Evaluation of powered off VMs is disabled by default.                                                                                                                                                                                                                                                                    |
 | `obw`, `outdated-by-warning`     | **Maybe** |         | No     | *positive whole number 1 or greater*                                    | If provided, this value is the WARNING threshold for outdated virtual hardware versions. If the current virtual hardware version for a VM is found to be more than this many versions older than the latest version a WARNING state is triggered. Required if specifying the CRITICAL threshold for outdated virtual hardware versions, incompatible with the minimum required version flag.  |
