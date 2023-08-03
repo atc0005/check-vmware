@@ -26,6 +26,29 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.34.0] - 2023-07-28
+
+### Added
+
+- (GH-839) Add initial automated release notes config
+- (GH-841) Add initial automated release build workflow
+- (GH-851) Create plugin to list Virtual Machines in order to test
+  include/exclude options
+
+### Changed
+
+- Dependencies
+  - `vmware/govmomi`
+    - `v0.30.5` to `v0.30.6`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.11.3` to `go-ci-oldstable-build-v0.13.1`
+- (GH-844) Update Dependabot config to monitor both branches
+- (GH-853) Update .gitignore patterns
+
+### Fixed
+
+- (GH-842) Update CodeQL GHAW timeout
+
 ## [v0.33.3] - 2023-07-13
 
 ### Overview
@@ -2134,7 +2157,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.33.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.34.0...HEAD
+[v0.34.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.34.0
 [v0.33.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.3
 [v0.33.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.2
 [v0.33.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.1
