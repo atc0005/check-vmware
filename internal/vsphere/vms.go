@@ -2609,3 +2609,86 @@ func VMListReport(
 
 	return report.String()
 }
+
+// CountVMsPowerStateOn returns the count of VMs from the provided collection
+// that are powered on.
+func CountVMsPowerStateOn(vms []mo.VirtualMachine) int {
+	var count int
+	for _, vm := range vms {
+		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
+			count++
+		}
+	}
+
+	return count
+}
+
+// CountVMsPowerStateSuspended returns the count of VMs from the provided
+// collection that are suspended.
+func CountVMsPowerStateSuspended(vms []mo.VirtualMachine) int {
+	var count int
+	for _, vm := range vms {
+		if vm.Runtime.PowerState == types.VirtualMachinePowerStateSuspended {
+			count++
+		}
+	}
+
+	return count
+}
+
+// CountVMsPowerStateOff returns the count of VMs from the provided collection
+// that are fully powered off. This count does not include VMs that are
+// suspended.
+func CountVMsPowerStateOff(vms []mo.VirtualMachine) int {
+	var count int
+	for _, vm := range vms {
+		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff {
+			count++
+		}
+	}
+
+	return count
+}
+
+// CountVMsPoweredOff returns the count of VMs from the provided collection
+// that are fully powered off and those which are suspended.
+func CountVMsPoweredOff(vms []mo.VirtualMachine) int {
+	var count int
+	for _, vm := range vms {
+		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOff ||
+			vm.Runtime.PowerState == types.VirtualMachinePowerStateSuspended {
+			count++
+		}
+	}
+
+	return count
+}
+
+// CountVMsPowerStates returns the count of VMs from the provided collection
+// in each power state.
+//
+// The order of returned values:
+//
+//  1. Powered On
+//  2. Suspended
+//  3. Powered Off
+func CountVMsPowerStates(vms []mo.VirtualMachine) (int, int, int) {
+	var countPowerStateOn int
+	var countPowerStateSuspended int
+	var countPowerStateOff int
+
+	for _, vm := range vms {
+		switch {
+		case vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn:
+			countPowerStateOn++
+
+		case vm.Runtime.PowerState != types.VirtualMachinePowerStateSuspended:
+			countPowerStateSuspended++
+
+		case vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOff:
+			countPowerStateOff++
+		}
+	}
+
+	return countPowerStateOn, countPowerStateSuspended, countPowerStateOff
+}
