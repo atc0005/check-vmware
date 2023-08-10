@@ -758,7 +758,7 @@ func GetTriggeredAlarms(ctx context.Context, c *govmomi.Client, datacenters []mo
 		)
 	}(&alarms, datacenters)
 
-	if datacenters == nil {
+	if len(datacenters) == 0 {
 		return TriggeredAlarms{}, fmt.Errorf("empty datacenters list provided")
 	}
 

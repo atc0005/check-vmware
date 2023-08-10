@@ -11,11 +11,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/atc0005/go-nagios"
 	"github.com/vmware/govmomi/units"
-	"github.com/vmware/govmomi/vim25/mo"
 
 	"github.com/atc0005/check-vmware/internal/config"
 	"github.com/atc0005/check-vmware/internal/vsphere"
@@ -162,62 +160,43 @@ func main() {
 		}
 	}()
 
-	// At this point we're logged in, ready to retrieve a list of VMs. If
-	// specified, we should limit VMs based on include/exclude lists. First,
-	// we'll make sure that all specified resource pools actually exist in the
-	// vSphere environment.
+	log.Debug().Msg("Filtering vms")
+	vmsFilterOptions := vsphere.VMsFilterOptions{
+		ResourcePoolsIncluded: cfg.IncludedResourcePools,
+		ResourcePoolsExcluded: cfg.ExcludedResourcePools,
 
-	log.Debug().Msg("Validating resource pools")
-	validateErr := vsphere.ValidateRPs(ctx, c.Client, cfg.IncludedResourcePools, cfg.ExcludedResourcePools)
-	if validateErr != nil {
-		log.Error().Err(validateErr).Msg("error validating include/exclude lists")
+		// No Exclusions; evaluate all VMs for non-excluded or explicitly
+		// included resource pools.
+		FoldersIncluded:             []string{},
+		FoldersExcluded:             []string{},
+		VirtualMachineNamesExcluded: []string{},
 
-		plugin.AddError(validateErr)
-		plugin.ServiceOutput = fmt.Sprintf(
-			"%s: Error validating include/exclude lists",
-			nagios.StateCRITICALLabel,
-		)
-		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
-
-		return
+		// Powered off VMs do not consume memory, so no need to evaluate them.
+		IncludePoweredOff: false,
 	}
-	log.Debug().Msg("Successfully validated resource pools")
-
-	log.Debug().Msg("Retrieving eligible resource pools")
-	resourcePools, getRPsErr := vsphere.GetEligibleRPs(
+	vmsFilterResults, vmsFilterErr := vsphere.FilterVMs(
 		ctx,
 		c.Client,
-		cfg.IncludedResourcePools,
-		cfg.ExcludedResourcePools,
-		true,
+		vmsFilterOptions,
 	)
-	if getRPsErr != nil {
-		log.Error().Err(getRPsErr).Msg(
-			"error retrieving list of resource pools",
+	if vmsFilterErr != nil {
+		log.Error().Err(vmsFilterErr).Msg(
+			"error filtering VMs",
 		)
 
-		plugin.AddError(getRPsErr)
+		plugin.AddError(vmsFilterErr)
 		plugin.ServiceOutput = fmt.Sprintf(
-			"%s: Error retrieving list of resource pools from %q",
+			"%s: Error filtering VMs",
 			nagios.StateCRITICALLabel,
-			cfg.Server,
 		)
 		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
 	}
-
-	rpNames := make([]string, 0, len(resourcePools))
-	for _, rp := range resourcePools {
-		rpNames = append(rpNames, rp.Name)
-	}
-
-	log.Debug().
-		Str("resource_pools", strings.Join(rpNames, ", ")).
-		Msg("Successfully retrieved resource pools")
+	log.Debug().Msg("Finished filtering vms")
 
 	log.Debug().Msg("Retrieving stats for resource pools")
-	aggregateRPStats, rpStatsErr := vsphere.ResourcePoolStats(ctx, c.Client, resourcePools)
+	aggregateRPStats, rpStatsErr := vsphere.ResourcePoolStats(ctx, c.Client, vmsFilterResults.RPsAfterFiltering())
 	if rpStatsErr != nil {
 		log.Error().Err(rpStatsErr).Msg(
 			"error retrieving stats for resource pools",
@@ -290,77 +269,42 @@ func main() {
 		Str("max_allowed_memory_bytes_hr", units.ByteSize(memoryUsageMaxInBytes).String()).
 		Msg("memory usage")
 
-	log.Debug().Msg("Retrieving vms from eligible resource pools")
-	rpEntityVals := make([]mo.ManagedEntity, 0, len(resourcePools))
-	for i := range resourcePools {
-		rpEntityVals = append(rpEntityVals, resourcePools[i].ManagedEntity)
-	}
-	vms, getVMsErr := vsphere.GetVMsFromContainer(ctx, c.Client, true, rpEntityVals...)
-	if getVMsErr != nil {
-		log.Error().Err(getVMsErr).Msg(
-			"error retrieving list of VMs from resource pools list",
-		)
-
-		plugin.AddError(getVMsErr)
-		plugin.ServiceOutput = fmt.Sprintf(
-			"%s: Error retrieving list of VMs from resource pools list",
-			nagios.StateCRITICALLabel,
-		)
-		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
-
-		return
-	}
-	log.Debug().Msg("Successfully retrieved vms from eligible resource pools")
-
 	log.Debug().Msg("Compiling Performance Data details")
 
-	pd := []nagios.PerformanceData{
-		// The `time` (runtime) metric is appended at plugin exit, so do not
-		// duplicate it here.
-		{
-			Label: "vms",
-			Value: fmt.Sprintf("%d", len(vms)),
-		},
-		{
-			Label:             "memory_usage",
-			Value:             fmt.Sprintf("%.2f", memoryPercentageUsedOfAllowed),
-			UnitOfMeasurement: "%",
-			Warn:              fmt.Sprintf("%d", cfg.ResourcePoolsMemoryUseWarning),
-			Crit:              fmt.Sprintf("%d", cfg.ResourcePoolsMemoryUseCritical),
-		},
-		{
-			Label:             "memory_used",
-			Value:             fmt.Sprintf("%d", aggregateRPStats.MemoryUsageInBytes),
-			UnitOfMeasurement: "B",
-		},
-		{
-			Label:             "memory_remaining",
-			Value:             fmt.Sprintf("%d", memoryRemainingInBytes),
-			UnitOfMeasurement: "B",
-		},
-		{
-			Label:             "memory_ballooned",
-			Value:             fmt.Sprintf("%d", aggregateRPStats.BalloonedMemoryInBytes),
-			UnitOfMeasurement: "B",
-		},
-		{
-			Label:             "memory_swapped",
-			Value:             fmt.Sprintf("%d", aggregateRPStats.SwappedMemoryInBytes),
-			UnitOfMeasurement: "B",
-		},
-		{
-			Label: "resource_pools_excluded",
-			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
-		},
-		{
-			Label: "resource_pools_included",
-			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
-		},
-		{
-			Label: "resource_pools_evaluated",
-			Value: fmt.Sprintf("%d", len(resourcePools)),
-		},
-	}
+	pd := append(
+		vsphere.VMFilterResultsPerfData(vmsFilterResults),
+		[]nagios.PerformanceData{
+			// The `time` (runtime) metric is appended at plugin exit, so do not
+			// duplicate it here.
+			{
+				Label:             "memory_usage",
+				Value:             fmt.Sprintf("%.2f", memoryPercentageUsedOfAllowed),
+				UnitOfMeasurement: "%",
+				Warn:              fmt.Sprintf("%d", cfg.ResourcePoolsMemoryUseWarning),
+				Crit:              fmt.Sprintf("%d", cfg.ResourcePoolsMemoryUseCritical),
+			},
+			{
+				Label:             "memory_used",
+				Value:             fmt.Sprintf("%d", aggregateRPStats.MemoryUsageInBytes),
+				UnitOfMeasurement: "B",
+			},
+			{
+				Label:             "memory_remaining",
+				Value:             fmt.Sprintf("%d", memoryRemainingInBytes),
+				UnitOfMeasurement: "B",
+			},
+			{
+				Label:             "memory_ballooned",
+				Value:             fmt.Sprintf("%d", aggregateRPStats.BalloonedMemoryInBytes),
+				UnitOfMeasurement: "B",
+			},
+			{
+				Label:             "memory_swapped",
+				Value:             fmt.Sprintf("%d", aggregateRPStats.SwappedMemoryInBytes),
+				UnitOfMeasurement: "B",
+			},
+		}...,
+	)
 
 	if err := plugin.AddPerfData(false, pd...); err != nil {
 		log.Error().
@@ -381,7 +325,9 @@ func main() {
 
 	// Update logger with new performance data related fields
 	log = log.With().
-		Int("vms_total", len(vms)).
+		Int("resource_pools_evaluated", vmsFilterResults.NumRPsAfterFiltering()).
+		Int("vms_total", vmsFilterResults.NumVMsAll()).
+		Int("vms_after_filtering", vmsFilterResults.NumVMsAfterFiltering()).
 		Str("memory_usage", fmt.Sprintf("%.2f%%", memoryPercentageUsedOfAllowed)).
 		Int64("memory_used", aggregateRPStats.MemoryUsageInBytes).
 		Int64("memory_remaining_bytes", memoryRemainingInBytes).
@@ -392,7 +338,6 @@ func main() {
 		Str("memory_swapped_hr", aggregateRPStats.SwappedMemoryHR()).
 		Int64("max_allowed_memory_bytes", memoryUsageMaxInBytes).
 		Str("max_allowed_memory_bytes_hr", units.ByteSize(memoryUsageMaxInBytes).String()).
-		Int("resource_pools_evaluated", len(resourcePools)).
 		Logger()
 
 	switch {
@@ -404,20 +349,18 @@ func main() {
 
 		plugin.ServiceOutput = vsphere.RPMemoryUsageOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
+			vmsFilterResults,
 			aggregateRPStats.MemoryUsageInBytes,
 			memoryUsageMaxInBytes,
 			clusterMemoryInBytes,
-			resourcePools,
 		)
 
 		plugin.LongServiceOutput = vsphere.ResourcePoolsMemoryReport(
 			c.Client,
+			vmsFilterOptions,
+			vmsFilterResults,
 			memoryUsageMaxInBytes,
 			clusterMemoryInBytes,
-			cfg.IncludedResourcePools,
-			cfg.ExcludedResourcePools,
-			resourcePools,
-			vms,
 		)
 
 		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
@@ -432,20 +375,18 @@ func main() {
 
 		plugin.ServiceOutput = vsphere.RPMemoryUsageOneLineCheckSummary(
 			nagios.StateWARNINGLabel,
+			vmsFilterResults,
 			aggregateRPStats.MemoryUsageInBytes,
 			memoryUsageMaxInBytes,
 			clusterMemoryInBytes,
-			resourcePools,
 		)
 
 		plugin.LongServiceOutput = vsphere.ResourcePoolsMemoryReport(
 			c.Client,
+			vmsFilterOptions,
+			vmsFilterResults,
 			memoryUsageMaxInBytes,
 			clusterMemoryInBytes,
-			cfg.IncludedResourcePools,
-			cfg.ExcludedResourcePools,
-			resourcePools,
-			vms,
 		)
 
 		plugin.ExitStatusCode = nagios.StateWARNINGExitCode
@@ -458,20 +399,18 @@ func main() {
 
 		plugin.ServiceOutput = vsphere.RPMemoryUsageOneLineCheckSummary(
 			nagios.StateOKLabel,
+			vmsFilterResults,
 			aggregateRPStats.MemoryUsageInBytes,
 			memoryUsageMaxInBytes,
 			clusterMemoryInBytes,
-			resourcePools,
 		)
 
 		plugin.LongServiceOutput = vsphere.ResourcePoolsMemoryReport(
 			c.Client,
+			vmsFilterOptions,
+			vmsFilterResults,
 			memoryUsageMaxInBytes,
 			clusterMemoryInBytes,
-			cfg.IncludedResourcePools,
-			cfg.ExcludedResourcePools,
-			resourcePools,
-			vms,
 		)
 
 		plugin.ExitStatusCode = nagios.StateOKExitCode

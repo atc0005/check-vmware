@@ -91,16 +91,52 @@ any feedback that you may have. Thanks in advance!
 
 ### Supported metrics
 
-- `time`
-- `vms`
-- `memory_usage`
-- `memory_used`
-- `memory_remaining`
-- `memory_ballooned`
-- `memory_swapped`
-- `resource_pools_excluded`
-- `resource_pools_included`
-- `resource_pools_evaluated`
+Metrics below are obtained in this order:
+
+1. Obtain count of all resource pools
+1. Obtain count of all folders
+1. Obtain count of all virtual machines
+1. Filter virtual machines
+   1. by resource pools
+   1. by folders
+   1. by name
+   1. by power state
+1. Evaluate resource pool statistics
+
+For example, the count of virtual machines powered on is obtained based on VMs
+remaining after resource pool filtering is complete at the time of applying
+power state filtering.
+
+**NOTE**: These metrics are based on the visibility of the service account
+used to login to the target VMware environment. If the service account cannot
+see a resource, it cannot evaluate the resource.
+
+| Metric                          | Alias of              | Unit of Measurement | Description                                                                                                                                                                                                |
+| ------------------------------- | --------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `time`                          |                       | milliseconds        | plugin runtime                                                                                                                                                                                             |
+| `vms`                           | `vms_all`             |                     | all (visible) virtual machines in the inventory                                                                                                                                                            |
+| `vms_all`                       | `vms`                 |                     | all (visible) virtual machines in the inventory                                                                                                                                                            |
+| `vms_evaluated`                 | `vms_after_filtering` |                     | virtual machines after filtering, evaluated for plugin-specific threshold violations                                                                                                                       |
+| `vms_after_filtering`           | `vms_evaluated`       |                     | virtual machines after filtering, evaluated for plugin-specific threshold violations                                                                                                                       |
+| `vms_powered_on`                |                       |                     | virtual machines powered on                                                                                                                                                                                |
+| `vms_powered_off`               |                       |                     | virtual machines powered off                                                                                                                                                                               |
+| `vms_excluded_by_name`          |                       |                     | virtual machines excluded based on fixed name values                                                                                                                                                       |
+| `vms_excluded_by_folder`        |                       |                     | virtual machines excluded based on folder IDs                                                                                                                                                              |
+| `vms_excluded_by_power_state`   |                       |                     | virtual machines excluded based on power state (powered off VMs are excluded by default)                                                                                                                   |
+| `vms_excluded_by_resource_pool` |                       |                     | virtual machines excluded based on resource pool name                                                                                                                                                      |
+| `folders_all`                   |                       |                     | all folders in the inventory                                                                                                                                                                               |
+| `folders_excluded`              |                       |                     | folders excluded by request                                                                                                                                                                                |
+| `folders_included`              |                       |                     | folders included by request (all non-listed folders excluded)                                                                                                                                              |
+| `folders_evaluated`             |                       |                     | folders remaining after inclusion/exclusion filtering logic is applied                                                                                                                                     |
+| `resource_pools_all`            |                       |                     | all resource pools in the inventory                                                                                                                                                                        |
+| `resource_pools_excluded`       |                       |                     | resource pools excluded by request                                                                                                                                                                         |
+| `resource_pools_included`       |                       |                     | resource pools included by request (all non-listed resource pools excluded)                                                                                                                                |
+| `resource_pools_evaluated`      |                       |                     | resource pools remaining after inclusion/exclusion filtering logic is applied                                                                                                                              |
+| `memory_usage`                  |                       | percentage          | host memory usage for non-filtered resource pools using given allowed value                                                                                                                                |
+| `memory_used`                   |                       | bytes               | combined host memory usage for non-filtered resource pools                                                                                                                                                 |
+| `memory_remaining`              |                       | bytes               | remaining memory after subtracting host memory usage for non-filtered resource pools from given allowed value                                                                                              |
+| `memory_ballooned`              |                       | bytes               | The size of the balloon driver in a virtual machine. The host will inflate the balloon driver to reclaim physical memory from a virtual machine. This is a sign that there is memory pressure on the host. |
+| `memory_swapped`                |                       | bytes               | The portion of memory that is granted to a virtual machine from the host's swap space. This is a sign that there is memory pressure on the host.                                                           |
 
 ## Optional evaluation
 
