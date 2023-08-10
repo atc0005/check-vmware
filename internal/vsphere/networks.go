@@ -42,7 +42,7 @@ func GetNetworks(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.N
 
 	err := getObjects(ctx, c, &nets, c.ServiceContent.RootFolder, propsSubset, true)
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve host systems: %w", err)
+		return nil, fmt.Errorf("failed to retrieve networks: %w", err)
 	}
 
 	sort.Slice(nets, func(i, j int) bool {
