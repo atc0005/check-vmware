@@ -96,9 +96,7 @@ func ValidateRPs(ctx context.Context, c *vim25.Client, includeRPs []string, excl
 	v, createViewErr := m.CreateContainerView(
 		ctx,
 		c.ServiceContent.RootFolder,
-		[]string{
-			"ResourcePool",
-		},
+		[]string{MgObjRefTypeResourcePool},
 		true,
 	)
 	if createViewErr != nil {
@@ -120,7 +118,7 @@ func ValidateRPs(ctx context.Context, c *vim25.Client, includeRPs []string, excl
 	// Retrieve name property for all resource pools.
 	props := []string{"name"}
 	var rpsSearchResults []mo.ResourcePool
-	retrieveErr := v.Retrieve(ctx, []string{"ResourcePool"}, props, &rpsSearchResults)
+	retrieveErr := v.Retrieve(ctx, []string{MgObjRefTypeResourcePool}, props, &rpsSearchResults)
 	if retrieveErr != nil {
 		return fmt.Errorf(
 			"failed to retrieve ResourcePool properties: %w",
