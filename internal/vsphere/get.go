@@ -172,7 +172,7 @@ func getObjects(
 			objCount = len(*u)
 		}()
 
-		objKind = "Datacenter"
+		objKind = MgObjRefTypeDatacenter
 
 		if propsSubset {
 			props = getDatacenterPropsSubset()
@@ -183,7 +183,7 @@ func getObjects(
 			objCount = len(*u)
 		}()
 
-		objKind = "Alarm"
+		objKind = MgObjRefTypeAlarm
 
 		if propsSubset {
 			props = getAlarmPropsSubset()
@@ -194,7 +194,7 @@ func getObjects(
 			objCount = len(*u)
 		}()
 
-		objKind = "Datastore"
+		objKind = MgObjRefTypeDatastore
 
 		if propsSubset {
 			props = getDatastorePropsSubset()
@@ -204,7 +204,7 @@ func getObjects(
 		defer func() {
 			objCount = len(*u)
 		}()
-		objKind = "HostSystem"
+		objKind = MgObjRefTypeHostSystem
 
 		if propsSubset {
 			props = getHostSystemPropsSubset()
@@ -214,7 +214,7 @@ func getObjects(
 		defer func() {
 			objCount = len(*u)
 		}()
-		objKind = "VirtualMachine"
+		objKind = MgObjRefTypeVirtualMachine
 
 		if propsSubset {
 			props = getVirtualMachinePropsSubset()
@@ -224,7 +224,7 @@ func getObjects(
 		defer func() {
 			objCount = len(*u)
 		}()
-		objKind = "Network"
+		objKind = MgObjRefTypeNetwork
 
 		if propsSubset {
 			props = getNetworkPropsSubset()
@@ -234,7 +234,7 @@ func getObjects(
 		defer func() {
 			objCount = len(*u)
 		}()
-		objKind = "ResourcePool"
+		objKind = MgObjRefTypeResourcePool
 
 		if propsSubset {
 			props = getResourcePoolPropsSubset()
@@ -244,7 +244,7 @@ func getObjects(
 		defer func() {
 			objCount = len(*u)
 		}()
-		objKind = "VirtualApp"
+		objKind = MgObjRefTypeVirtualApp
 
 		if propsSubset {
 			props = getVirtualAppPropsSubset()
@@ -330,7 +330,7 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 	switch u := dst.(type) {
 	case *mo.Datastore:
 
-		objKind = "Datastore"
+		objKind = MgObjRefTypeDatastore
 		if propsSubset {
 			props = getDatastorePropsSubset()
 		}
@@ -353,7 +353,7 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 
 	case *mo.HostSystem:
 
-		objKind = "HostSystem"
+		objKind = MgObjRefTypeHostSystem
 		if propsSubset {
 			props = getHostSystemPropsSubset()
 		}
@@ -376,7 +376,7 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 
 	case *mo.VirtualMachine:
 
-		objKind = "VirtualMachine"
+		objKind = MgObjRefTypeVirtualMachine
 		if propsSubset {
 			props = getVirtualMachinePropsSubset()
 		}
@@ -399,7 +399,7 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 
 	case *mo.Network:
 
-		objKind = "Network"
+		objKind = MgObjRefTypeNetwork
 		if propsSubset {
 			props = getNetworkPropsSubset()
 		}
@@ -422,7 +422,7 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 
 	case *mo.ResourcePool:
 
-		objKind = "ResourcePool"
+		objKind = MgObjRefTypeResourcePool
 		if propsSubset {
 			props = getResourcePoolPropsSubset()
 		}

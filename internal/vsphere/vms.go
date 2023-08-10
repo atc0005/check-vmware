@@ -583,7 +583,7 @@ func GetVMsFromContainer(ctx context.Context, c *vim25.Client, propsSubset bool,
 
 	defer func(vms *[]mo.VirtualMachine) {
 		logger.Printf(
-			"It took %v to execute GetVMsFromContainers func (and retrieve %d VMs).\n",
+			"It took %v to execute GetVMsFromContainer func (and retrieve %d VMs).\n",
 			time.Since(funcTimeStart),
 			len(*vms),
 		)
@@ -769,7 +769,7 @@ func GetVMsWithCAs(vms []mo.VirtualMachine) ([]VMWithCAs, error) {
 
 	defer func(vms *[]VMWithCAs) {
 		logger.Printf(
-			"It took %v to execute GetVMsWithAllCAs func (and retrieve %d VMWithAllCAs).\n",
+			"It took %v to execute GetVMsWithCAs func (and retrieve %d VMWithAllCAs).\n",
 			time.Since(funcTimeStart),
 			len(*vms),
 		)

@@ -32,11 +32,14 @@ const CustomAttributeValNotSet string = "NotSet"
 
 // Managed Object Reference types
 const (
+	MgObjRefTypeAlarm           string = "Alarm"
 	MgObjRefTypeFolder          string = "Folder"
 	MgObjRefTypeDatacenter      string = "Datacenter"
+	MgObjRefTypeDatastore       string = "Datastore"
 	MgObjRefTypeComputeResource string = "ComputeResource"
 	MgObjRefTypeResourcePool    string = "ResourcePool"
 	MgObjRefTypeHostSystem      string = "HostSystem"
+	MgObjRefTypeNetwork         string = "Network"
 	MgObjRefTypeVirtualMachine  string = "VirtualMachine"
 	MgObjRefTypeVirtualApp      string = "VirtualApp"
 )

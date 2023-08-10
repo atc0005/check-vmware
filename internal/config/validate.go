@@ -30,6 +30,28 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+	case pluginType.DiskConsolidation:
+
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
+
+	case pluginType.InteractiveQuestion:
+
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				"include-rp",
+				"exclude-rp",
+			)
+		}
+
 	case pluginType.SnapshotsAge:
 
 		// only one of these options may be used

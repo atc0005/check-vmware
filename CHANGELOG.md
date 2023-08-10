@@ -26,6 +26,32 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.34.1] - 2023-08-10
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.11` to `1.19.12`
+  - `vmware/govmomi`
+    - `v0.30.6` to `v0.30.7`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.13.1` to `go-ci-oldstable-build-v0.13.2`
+  - `rs/zerolog`
+    `v1.29.1` to `v1.30.0`
+  - `golang.org/x/sys`
+    - `v0.10.0` to `v0.11.0`
+- (GH-868) Update help text for include/exclude RP flags to emphasize
+  filtering by name
+- (GH-869) Add VM power state tally helper funcs
+- (GH-890) Replace fixed MO type strings with constants
+
+### Fixed
+
+- (GH-887) Add missing resource pools flags validation
+- (GH-888) Fix func names in deferred debug log messages
+- (GH-889) Use correct mo type in error message
+
 ## [v0.34.0] - 2023-07-28
 
 ### Added
@@ -2157,7 +2183,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.34.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.34.1...HEAD
+[v0.34.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.34.1
 [v0.34.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.34.0
 [v0.33.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.3
 [v0.33.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.2
