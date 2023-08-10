@@ -51,9 +51,7 @@ func ValidateDCs(ctx context.Context, c *vim25.Client, datacenters []string) err
 	v, createViewErr := m.CreateContainerView(
 		ctx,
 		c.ServiceContent.RootFolder,
-		[]string{
-			"Datacenter",
-		},
+		[]string{MgObjRefTypeDatacenter},
 		true,
 	)
 	if createViewErr != nil {
@@ -75,7 +73,7 @@ func ValidateDCs(ctx context.Context, c *vim25.Client, datacenters []string) err
 	// Retrieve only the name property for all Datacenters.
 	props := []string{"name"}
 	var dcsSearchResults []mo.Datacenter
-	err := v.Retrieve(ctx, []string{"Datacenter"}, props, &dcsSearchResults)
+	err := v.Retrieve(ctx, []string{MgObjRefTypeDatacenter}, props, &dcsSearchResults)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to retrieve Datacenter properties: %w",
