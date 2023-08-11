@@ -85,7 +85,7 @@ see a resource, it cannot evaluate the resource.
 
 | Metric                          | Alias of              | Unit of Measurement | Description                                                                                                  |
 | ------------------------------- | --------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `time`                          |                       |                     | plugin runtime                                                                                               |
+| `time`                          |                       | milliseconds        | plugin runtime                                                                                               |
 | `vms`                           | `vms_all`             |                     | all (visible) virtual machines in the inventory                                                              |
 | `vms_all`                       | `vms`                 |                     | all (visible) virtual machines in the inventory                                                              |
 | `vms_evaluated`                 | `vms_after_filtering` |                     | virtual machines after filtering, evaluated for plugin-specific threshold violations                         |

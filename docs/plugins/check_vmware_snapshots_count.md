@@ -126,12 +126,6 @@ see a resource, it cannot evaluate the resource.
 | `critical_snapshots`            |                       | total number of snapshots which have exceeded the given CRITICAL threshold for snapshots per virtual machine |
 | `warning_snapshots`             |                       | total number of snapshots which have exceeded the given WARNING threshold for snapshots per virtual machine  |
 
-- `vms_with_critical_snapshots`
-- `vms_with_warning_snapshots`
-- `snapshots`
-- `critical_snapshots`
-- `warning_snapshots`
-
 ## Optional evaluation
 
 Some plugins provide optional support to limit evaluation of VMs to specific

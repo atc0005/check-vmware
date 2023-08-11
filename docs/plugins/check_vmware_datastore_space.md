@@ -63,13 +63,19 @@ any feedback that you may have. Thanks in advance!
 
 ### Supported metrics
 
-- `time`
-- `datastore_space_usage`
-- `datastore_space_used`
-- `datastore_space_remaining`
-- `vms`
-- `vms_powered_off`
-- `vms_powered_on`
+**NOTE**: These metrics are based on the visibility of the service account
+used to login to the target VMware environment. If the service account cannot
+see a resource, it cannot evaluate the resource.
+
+| Metric                      | Unit of Measurement | Description                                     |
+| --------------------------- | ------------------- | ----------------------------------------------- |
+| `time`                      | milliseconds        | plugin runtime                                  |
+| `vms`                       |                     | all (visible) virtual machines in the datastore |
+| `vms_powered_on`            |                     | virtual machines powered on                     |
+| `vms_powered_off`           |                     | virtual machines powered off                    |
+| `datastore_space_usage`     | percentage          | datastore usage                                 |
+| `datastore_space_used`      | bytes               | datastore spaced used                           |
+| `datastore_space_remaining` | bytes               | datastore space remaining                       |
 
 ## Optional evaluation
 
