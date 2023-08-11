@@ -25,8 +25,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -36,8 +36,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -45,8 +45,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 
@@ -56,8 +56,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -65,8 +65,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 
@@ -76,8 +76,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -85,8 +85,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 
@@ -116,8 +116,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -125,8 +125,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 
@@ -156,8 +156,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -165,8 +165,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 
@@ -196,8 +196,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -205,8 +205,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 
@@ -420,8 +420,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -458,8 +458,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -467,8 +467,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 
@@ -505,8 +505,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -514,8 +514,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 
@@ -602,8 +602,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -611,8 +611,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 
@@ -817,8 +817,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -826,8 +826,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 
@@ -886,8 +886,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-rp",
-				"exclude-rp",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
 			)
 		}
 
@@ -895,8 +895,8 @@ func (c Config) validate(pluginType PluginType) error {
 		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
 			return fmt.Errorf(
 				"only one of %q or %q flags may be specified",
-				"include-folder-id",
-				"exclude-folder-id",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
 			)
 		}
 	}
