@@ -8,13 +8,13 @@
 ## Table of Contents
 
 - [Overview](#overview)
-  - [Requirements](#requirements)
-  - [How datastore performance metrics are evaluated](#how-datastore-performance-metrics-are-evaluated)
-  - [Performance Data metrics](#performance-data-metrics)
-  - [Stability of this plugin](#stability-of-this-plugin)
 - [Output](#output)
+  - [Requirements](#requirements)
+- [Stability of this plugin](#stability-of-this-plugin)
 - [Performance Data](#performance-data)
   - [Background](#background)
+  - [How datastore performance metrics are evaluated](#how-datastore-performance-metrics-are-evaluated)
+  - [Omitted metrics](#omitted-metrics)
   - [Supported metrics](#supported-metrics)
 - [Optional evaluation](#optional-evaluation)
 - [Installation](#installation)
@@ -38,6 +38,14 @@ details][vsphere-storage-performance-summary-data-object], this plugin also
 reports which VMs reside on the datastore along with their percentage of the
 total datastore space used. This is intended to help pinpoint potential causes
 of high latency at a glance.
+
+## Output
+
+The output for these plugins is designed to provide the one-line summary
+needed by Nagios for quick identification of a problem while providing longer,
+more detailed information for display within the web UI, use in email and
+Teams notifications
+([atc0005/send2teams](https://github.com/atc0005/send2teams)).
 
 ### Requirements
 
@@ -67,6 +75,47 @@ Available settings For `Storage I/O Control`:
 - `Disabled`
 - `Statistics enabled but Storage I/O disabled`
 - `Statistics and Storage I/O enabled`
+
+## Stability of this plugin
+
+**NOTE**: This plugin uses the [`QueryDatastorePerformanceSummary()` method
+provided by the `StorageResourceManager` Managed
+Object][vsphere-query-datastore-performance-summary-method]. While available
+since vSphere API 5.1, this API is marked as experimental (and subject to
+change/removal):
+
+> This is an experimental interface that is not intended for use in production
+> code.
+
+In addition to using the experimental `QueryDatastorePerformanceSummary()`
+API, this plugin uses the deprecated `statsCollectionEnabled` property from
+the [`StorageIORMInfo` Data
+Object][vsphere-storage-io-resource-management-data-object] to determine
+whether `Statistics Collection` is enabled for a datastore. Using the
+prescribed `enabled` property for [that Data
+Object][vsphere-storage-io-resource-management-data-object] to determine
+`Statistics Collection` does not work.
+
+If you use this plugin, please provide feedback by [opening a new discussion
+thread](https://github.com/atc0005/check-vmware/discussions/new).
+
+## Performance Data
+
+### Background
+
+Initial support has been added for emitting Performance Data / Metrics, but
+refinement suggestions are welcome.
+
+Consult the list below for the metrics implemented thus far, [the original
+discussion thread](https://github.com/atc0005/check-vmware/discussions/315)
+and the [Add Performance Data / Metrics
+support](https://github.com/atc0005/check-vmware/projects/1) project board for
+an index of the initial implementation work.
+
+Please add to an existing
+[Discussion](https://github.com/atc0005/check-vmware/discussions) thread or
+[open a new one](https://github.com/atc0005/check-vmware/discussions/new) with
+any feedback that you may have. Thanks in advance!
 
 ### How datastore performance metrics are evaluated
 
@@ -107,7 +156,7 @@ threshold flags is incompatible with specifying one or more percentile sets.
 By specifying multiple percentile sets, you are indicating that crossing the
 thresholds of any one set is enough to trigger a state change.
 
-### Performance Data metrics
+### Omitted metrics
 
 This plugin emits Nagios performance data metrics for each percentile in the
 active interval that is not completely of value `0`. Any percentile with all
@@ -115,77 +164,30 @@ active interval that is not completely of value `0`. Any percentile with all
 by the plugin.
 
 Please provide feedback by [opening a new
-issue](https://github.com/atc0005/check-vmware/issues/new) or commenting on
-the original discussion thread [here
-(GH-316)](https://github.com/atc0005/check-vmware/discussions/316) if you find
-that this decision causes problems with gathering metrics.
-
-### Stability of this plugin
-
-**NOTE**: This plugin uses the [`QueryDatastorePerformanceSummary()` method
-provided by the `StorageResourceManager` Managed
-Object][vsphere-query-datastore-performance-summary-method]. While available
-since vSphere API 5.1, this API is marked as experimental (and subject to
-change/removal):
-
-> This is an experimental interface that is not intended for use in production
-> code.
-
-In addition to using the experimental `QueryDatastorePerformanceSummary()`
-API, this plugin uses the deprecated `statsCollectionEnabled` property from
-the [`StorageIORMInfo` Data
-Object][vsphere-storage-io-resource-management-data-object] to determine
-whether `Statistics Collection` is enabled for a datastore. Using the
-prescribed `enabled` property for [that Data
-Object][vsphere-storage-io-resource-management-data-object] to determine
-`Statistics Collection` does not work.
-
-If you use this plugin, please provide feedback by [opening a new discussion
-thread](https://github.com/atc0005/check-vmware/discussions/new) or commenting
-on the original discussion thread [here
-(GH-316)](https://github.com/atc0005/check-vmware/discussions/316).
-
-## Output
-
-The output for these plugins is designed to provide the one-line summary
-needed by Nagios for quick identification of a problem while providing longer,
-more detailed information for display within the web UI, use in email and
-Teams notifications
-([atc0005/send2teams](https://github.com/atc0005/send2teams)).
+issue](https://github.com/atc0005/check-vmware/issues/new) if you find that
+this decision causes problems with gathering metrics.
 
 See the [main project README](../../README.md) for details.
 
-## Performance Data
-
-### Background
-
-Initial support has been added for emitting Performance Data / Metrics, but
-refinement suggestions are welcome.
-
-Consult the list below for the metrics implemented thus far, [the original
-discussion thread](https://github.com/atc0005/check-vmware/discussions/315)
-and the [Add Performance Data / Metrics
-support](https://github.com/atc0005/check-vmware/projects/1) project board for
-an index of the initial implementation work.
-
-Please add to an existing
-[Discussion](https://github.com/atc0005/check-vmware/discussions) thread or
-[open a new one](https://github.com/atc0005/check-vmware/discussions/new) with
-any feedback that you may have. Thanks in advance!
-
 ### Supported metrics
 
-- `time`
-- `p*_read_latency`
-- `p*_write_latency`
-- `p*_vm_latency`
-- `p*_read_iops`
-- `p*_write_iops`
-- `vms`
-- `vms_powered_off`
-- `vms_powered_on`
+**NOTE**: These metrics are based on the visibility of the service account
+used to login to the target VMware environment. If the service account cannot
+see a resource, it cannot evaluate the resource.
 
-`*` is a placeholder for `90`, `80`, `70`, `60` & `50` percentiles.
+| Metric             | Unit of Measurement | Description                                                                     |
+| ------------------ | ------------------- | ------------------------------------------------------------------------------- |
+| `time`             | milliseconds        | plugin runtime                                                                  |
+| `vms`              |                     | all (visible) virtual machines in the inventory                                 |
+| `vms_powered_on`   |                     | virtual machines powered on                                                     |
+| `vms_powered_off`  |                     | virtual machines powered off                                                    |
+| `p*_read_latency`  | milliseconds        | aggregated datastore latency for read operations                                |
+| `p*_write_latency` | milliseconds        | aggregated datastore latency for write operations                               |
+| `p*_vm_latency`    | milliseconds        | aggregated datastore latency as observed by VirtualMachines using the datastore |
+| `p*_read_iops`     | reads per second    | aggregated datastore read I/O rate                                              |
+| `p*_read_iops`     | writes per second   | aggregated datastore write I/O rate                                             |
+
+**NOTE**: `*` is a placeholder for `90`, `80`, `70`, `60` & `50` percentiles.
 
 ## Optional evaluation
 

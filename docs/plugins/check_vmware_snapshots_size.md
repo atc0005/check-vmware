@@ -98,32 +98,32 @@ power state filtering.
 used to login to the target VMware environment. If the service account cannot
 see a resource, it cannot evaluate the resource.
 
-| Metric                          | Alias of              | Description                                                                              |
-| ------------------------------- | --------------------- | ---------------------------------------------------------------------------------------- |
-| `time`                          |                       | plugin runtime                                                                           |
-| `vms`                           | `vms_all`             | all (visible) virtual machines in the inventory                                          |
-| `vms_all`                       | `vms`                 | all (visible) virtual machines in the inventory                                          |
-| `vms_evaluated`                 | `vms_after_filtering` | virtual machines after filtering, evaluated for plugin-specific threshold violations     |
-| `vms_after_filtering`           | `vms_evaluated`       | virtual machines after filtering, evaluated for plugin-specific threshold violations     |
-| `vms_powered_on`                |                       | virtual machines powered on                                                              |
-| `vms_powered_off`               |                       | virtual machines powered off                                                             |
-| `vms_excluded_by_name`          |                       | virtual machines excluded based on fixed name values                                     |
-| `vms_excluded_by_folder`        |                       | virtual machines excluded based on folder IDs                                            |
-| `vms_excluded_by_power_state`   |                       | virtual machines excluded based on power state (powered off VMs are excluded by default) |
-| `vms_excluded_by_resource_pool` |                       | virtual machines excluded based on resource pool name                                    |
-| `folders_all`                   |                       | all folders in the inventory                                                             |
-| `folders_excluded`              |                       | folders excluded by request                                                              |
-| `folders_included`              |                       | folders included by request (all non-listed folders excluded)                            |
-| `folders_evaluated`             |                       | folders remaining after inclusion/exclusion filtering logic is applied                   |
-| `resource_pools_all`            |                       | all resource pools in the inventory                                                      |
-| `resource_pools_excluded`       |                       | resource pools excluded by request                                                       |
-| `resource_pools_included`       |                       | resource pools included by request (all non-listed resource pools excluded)              |
-| `resource_pools_evaluated`      |                       | resource pools remaining after inclusion/exclusion filtering logic is applied            |
-| `vms_with_critical_snapshots`   |                       | virtual machines with snapshots which have exceeded the given CRITICAL size threshold    |
-| `vms_with_warning_snapshots`    |                       | virtual machines with snapshots which have exceeded the given WARNING size threshold     |
-| `snapshots`                     |                       | total number of snapshots for virtual machines in the inventory                          |
-| `critical_snapshots`            |                       | virtual machine snapshots which have exceeded the given CRITICAL size threshold          |
-| `warning_snapshots`             |                       | virtual machine snapshots which have exceeded the given WARNING size threshold           |
+| Metric                          | Alias of              | Unit of Measurement | Description                                                                              |
+| ------------------------------- | --------------------- | ------------------- | ---------------------------------------------------------------------------------------- |
+| `time`                          |                       | milliseconds        | plugin runtime                                                                           |
+| `vms`                           | `vms_all`             |                     | all (visible) virtual machines in the inventory                                          |
+| `vms_all`                       | `vms`                 |                     | all (visible) virtual machines in the inventory                                          |
+| `vms_evaluated`                 | `vms_after_filtering` |                     | virtual machines after filtering, evaluated for plugin-specific threshold violations     |
+| `vms_after_filtering`           | `vms_evaluated`       |                     | virtual machines after filtering, evaluated for plugin-specific threshold violations     |
+| `vms_powered_on`                |                       |                     | virtual machines powered on                                                              |
+| `vms_powered_off`               |                       |                     | virtual machines powered off                                                             |
+| `vms_excluded_by_name`          |                       |                     | virtual machines excluded based on fixed name values                                     |
+| `vms_excluded_by_folder`        |                       |                     | virtual machines excluded based on folder IDs                                            |
+| `vms_excluded_by_power_state`   |                       |                     | virtual machines excluded based on power state (powered off VMs are excluded by default) |
+| `vms_excluded_by_resource_pool` |                       |                     | virtual machines excluded based on resource pool name                                    |
+| `folders_all`                   |                       |                     | all folders in the inventory                                                             |
+| `folders_excluded`              |                       |                     | folders excluded by request                                                              |
+| `folders_included`              |                       |                     | folders included by request (all non-listed folders excluded)                            |
+| `folders_evaluated`             |                       |                     | folders remaining after inclusion/exclusion filtering logic is applied                   |
+| `resource_pools_all`            |                       |                     | all resource pools in the inventory                                                      |
+| `resource_pools_excluded`       |                       |                     | resource pools excluded by request                                                       |
+| `resource_pools_included`       |                       |                     | resource pools included by request (all non-listed resource pools excluded)              |
+| `resource_pools_evaluated`      |                       |                     | resource pools remaining after inclusion/exclusion filtering logic is applied            |
+| `vms_with_critical_snapshots`   |                       |                     | virtual machines with snapshots which have exceeded the given CRITICAL size threshold    |
+| `vms_with_warning_snapshots`    |                       |                     | virtual machines with snapshots which have exceeded the given WARNING size threshold     |
+| `snapshots`                     |                       |                     | total number of snapshots for virtual machines in the inventory                          |
+| `critical_snapshots`            |                       |                     | virtual machine snapshots which have exceeded the given CRITICAL size threshold          |
+| `warning_snapshots`             |                       |                     | virtual machine snapshots which have exceeded the given WARNING size threshold           |
 
 ## Installation
 
