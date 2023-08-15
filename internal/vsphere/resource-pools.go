@@ -668,21 +668,33 @@ func ResourcePoolsMemoryReport(
 		// gather MOID to Name mappings for later lookup
 		rpIDtoNameIdx[rp.Self.Value] = rp.Name
 
-		rpMemoryUsage := rp.Summary.GetResourcePoolSummary().QuickStats.HostMemoryUsage * units.MB
-		rpMemoryPercentageUsed := MemoryUsedPercentage(rpMemoryUsage, maxMemoryUsageInBytes)
-		memoryPercentageUsedOfClusterCapacity := MemoryUsedPercentage(
-			rpMemoryUsage,
-			clusterMemoryInBytes,
-		)
-		fmt.Fprintf(
-			&report,
-			"* %s [Pool: (%s, %0.1f%%), Cluster: (%.2f%%)]%s",
-			rp.Name,
-			units.ByteSize(rpMemoryUsage),
-			rpMemoryPercentageUsed,
-			memoryPercentageUsedOfClusterCapacity,
-			nagios.CheckOutputEOL,
-		)
+		rpSummary := rp.Summary.GetResourcePoolSummary()
+		switch {
+		case rpSummary == nil:
+			fmt.Fprintf(
+				&report,
+				"* %s [Pool: (unavailable), Cluster: (unavailable)]%s",
+				rp.Name,
+				nagios.CheckOutputEOL,
+			)
+
+		default:
+			rpMemoryUsage := rpSummary.QuickStats.HostMemoryUsage * units.MB
+			rpMemoryPercentageUsed := MemoryUsedPercentage(rpMemoryUsage, maxMemoryUsageInBytes)
+			memoryPercentageUsedOfClusterCapacity := MemoryUsedPercentage(
+				rpMemoryUsage,
+				clusterMemoryInBytes,
+			)
+			fmt.Fprintf(
+				&report,
+				"* %s [Pool: (%s, %0.1f%%), Cluster: (%.2f%%)]%s",
+				rp.Name,
+				units.ByteSize(rpMemoryUsage),
+				rpMemoryPercentageUsed,
+				memoryPercentageUsedOfClusterCapacity,
+				nagios.CheckOutputEOL,
+			)
+		}
 	}
 
 	vms := vmsFilterResults.VMsAfterFiltering()
