@@ -20,12 +20,18 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 	switch {
 	case pluginType.Tools:
 
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
 		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
 	case pluginType.SnapshotsAge:
+
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
@@ -48,6 +54,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.SnapshotsCount:
 
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
@@ -68,6 +77,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.SnapshotsCountCritical, "cc", defaultSnapshotsCountCritical, snapshotsCountCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.SnapshotsSize:
+
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
@@ -90,6 +102,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.VirtualMachinePowerCycleUptime:
 
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
@@ -101,6 +116,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.VMPowerCycleUptimeCritical, "uc", defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.DiskConsolidation:
+
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
@@ -119,6 +137,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
 
 	case pluginType.InteractiveQuestion:
+
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
@@ -232,6 +253,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.VirtualCPUsAllocation:
 
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
 		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
@@ -247,6 +271,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.VCPUsMaxAllowed, "vcma", defaultVCPUsMaxAllowed, vCPUsAllocatedMaxAllowedFlagHelp+" (shorthand)")
 
 	case pluginType.VirtualHardwareVersion:
+
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
@@ -270,6 +297,9 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.BoolVar(&c.VirtualHardwareDefaultVersionIsMinimum, "dimv", defaultVirtualHardwareDefaultIsMinimum, virtualHardwareDefaultIsMinimumFlagHelp+" (shorthand)")
 
 	case pluginType.Host2Datastores2VMs:
+
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
@@ -296,11 +326,14 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		// default makes sense for this particular plugin.
 		//
 		// Please share your feedback here if you feel differently:
-		// https://github.com/atc0005/check-vmware/discussions/176
+		// https://github.com/atc0005/check-vmware/discussions
 		//
 		// Please expand on some use cases for ignoring powered off VMs by default.
 		//
 		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
@@ -319,9 +352,17 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 
 	case pluginType.VirtualMachineList:
 
-		// FIXME: Extend with any other filters already supported by other plugins
+		// FIXME: Need to update README to include this flag.
+		//
+		// TODO: Consider moving this to the "common" flags section and allow
+		// specifying it for ALL plugins. This will provide a useful way to
+		// collect a total VMs count.
+		// flag.Var(&c.DatacenterNames, "dc-name", datacenterNamesFlagHelp)
 
 		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+
+		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
 
 		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
 		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)

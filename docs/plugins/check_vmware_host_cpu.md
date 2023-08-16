@@ -67,14 +67,20 @@ any feedback that you may have. Thanks in advance!
 
 ### Supported metrics
 
-- `time`
-- `cpu_usage`
-- `cpu_total`
-- `cpu_used`
-- `cpu_remaining`
-- `vms`
-- `vms_powered_off`
-- `vms_powered_on`
+**NOTE**: These metrics are based on the visibility of the service account
+used to login to the target VMware environment. If the service account cannot
+see a resource, it cannot evaluate the resource.
+
+| Metric            | Unit of Measurement | Description                                       |
+| ----------------- | ------------------- | ------------------------------------------------- |
+| `time`            | milliseconds        | plugin runtime                                    |
+| `vms`             |                     | all (visible) virtual machines on the host        |
+| `vms_powered_on`  |                     | virtual machines powered on                       |
+| `vms_powered_off` |                     | virtual machines powered off                      |
+| `cpu_usage`       | percentage          | cpu usage                                         |
+| `cpu_total`       | Hz                  | the total amount of CPU capacity for the host     |
+| `cpu_used`        | Hz                  | the amount of CPU used by the host                |
+| `cpu_remaining`   | Hz                  | the amount of CPU capacity remaining for the host |
 
 ## Optional evaluation
 

@@ -117,9 +117,8 @@ func FilterVMsWithToolsIssues(vms []mo.VirtualMachine, includePoweredOff bool) (
 // check results summary. This is the line most prominent in notifications.
 func VMToolsOneLineCheckSummary(
 	stateLabel string,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterResults VMsFilterResults,
 	vmsWithIssues []mo.VirtualMachine,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -137,8 +136,8 @@ func VMToolsOneLineCheckSummary(
 			"%s: %d VMs with VMware Tools issues detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
 			len(vmsWithIssues),
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	default:
@@ -146,8 +145,8 @@ func VMToolsOneLineCheckSummary(
 		return fmt.Sprintf(
 			"%s: No VMware Tools issues detected (evaluated %d VMs, %d Resource Pools)",
 			stateLabel,
-			len(evaluatedVMs),
-			len(rps),
+			vmsFilterResults.NumVMsAfterFiltering(),
+			vmsFilterResults.NumRPsAfterFiltering(),
 		)
 
 	}
@@ -160,14 +159,9 @@ func VMToolsOneLineCheckSummary(
 // results display in the web UI or in the body of many notifications.
 func VMToolsReport(
 	c *vim25.Client,
-	allVMs []mo.VirtualMachine,
-	evaluatedVMs []mo.VirtualMachine,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
 	vmsWithIssues []mo.VirtualMachine,
-	vmsToExclude []string,
-	evalPoweredOffVMs bool,
-	includeRPs []string,
-	excludeRPs []string,
-	rps []mo.ResourcePool,
 ) string {
 
 	funcTimeStart := time.Now()
@@ -178,11 +172,6 @@ func VMToolsReport(
 			time.Since(funcTimeStart),
 		)
 	}()
-
-	rpNames := make([]string, len(rps))
-	for i := range rps {
-		rpNames[i] = rps[i].Name
-	}
 
 	var vmsReport strings.Builder
 
@@ -214,73 +203,12 @@ func VMToolsReport(
 		)
 	}
 
-	fmt.Fprintf(
+	vmFilterResultsReportTrailer(
 		&vmsReport,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* vSphere environment: %s%s",
-		c.URL().String(),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* VMs (evaluated: %d, total: %d)%s",
-		len(evaluatedVMs),
-		len(allVMs),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Powered off VMs evaluated: %t%s",
-		evalPoweredOffVMs,
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Specified VMs to exclude (%d): [%v]%s",
-		len(vmsToExclude),
-		strings.Join(vmsToExclude, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
-		len(includeRPs),
-		strings.Join(includeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
-		len(excludeRPs),
-		strings.Join(excludeRPs, ", "),
-		nagios.CheckOutputEOL,
-	)
-
-	fmt.Fprintf(
-		&vmsReport,
-		"* Resource Pools evaluated (%d): [%v]%s",
-		len(rpNames),
-		strings.Join(rpNames, ", "),
-		nagios.CheckOutputEOL,
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
+		true,
 	)
 
 	return vmsReport.String()

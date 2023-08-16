@@ -115,108 +115,46 @@ func main() {
 		}
 	}()
 
-	// At this point we're logged in, ready to retrieve a list of VMs. If
-	// specified, we should limit VMs based on include/exclude lists. First,
-	// we'll make sure that all specified resource pools actually exist in the
-	// vSphere environment.
+	log.Debug().Msg("Performing initial filtering of vms")
+	vmsFilterOptions := vsphere.VMsFilterOptions{
+		ResourcePoolsIncluded:       cfg.IncludedResourcePools,
+		ResourcePoolsExcluded:       cfg.ExcludedResourcePools,
+		FoldersIncluded:             cfg.IncludedFolders,
+		FoldersExcluded:             cfg.ExcludedFolders,
+		VirtualMachineNamesExcluded: cfg.IgnoredVMs,
 
-	log.Debug().Msg("Validating resource pools")
-	validateErr := vsphere.ValidateRPs(ctx, c.Client, cfg.IncludedResourcePools, cfg.ExcludedResourcePools)
-	if validateErr != nil {
-		log.Error().Err(validateErr).Msg("error validating include/exclude lists")
-
-		plugin.AddError(validateErr)
-		plugin.ServiceOutput = fmt.Sprintf(
-			"%s: Error validating include/exclude lists",
-			nagios.StateCRITICALLabel,
-		)
-		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
-
-		return
+		// NOTE: This plugin is hard-coded to evaluate powered off and powered
+		// on VMs equally. I'm not sure whether ignoring powered off VMs by
+		// default makes sense for this particular plugin.
+		//
+		// Please share your feedback here if you feel differently:
+		// https://github.com/atc0005/check-vmware/discussions/176
+		//
+		// Please expand on some use cases for ignoring powered off VMs by
+		// default.
+		// IncludePoweredOff:           cfg.PoweredOff,
+		IncludePoweredOff: true,
 	}
-
-	log.Debug().Msg("Retrieving eligible resource pools")
-	resourcePools, getRPsErr := vsphere.GetEligibleRPs(
+	vmsFilterResults, vmsFilterErr := vsphere.FilterVMs(
 		ctx,
 		c.Client,
-		cfg.IncludedResourcePools,
-		cfg.ExcludedResourcePools,
-		true,
+		vmsFilterOptions,
 	)
-	if getRPsErr != nil {
-		log.Error().Err(getRPsErr).Msg(
-			"error retrieving list of resource pools",
+	if vmsFilterErr != nil {
+		log.Error().Err(vmsFilterErr).Msg(
+			"error filtering VMs",
 		)
 
-		plugin.AddError(getRPsErr)
+		plugin.AddError(vmsFilterErr)
 		plugin.ServiceOutput = fmt.Sprintf(
-			"%s: Error retrieving list of resource pools from %q",
-			nagios.StateCRITICALLabel,
-			cfg.Server,
-		)
-		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
-
-		return
-	}
-
-	rpNames := make([]string, 0, len(resourcePools))
-	for _, rp := range resourcePools {
-		rpNames = append(rpNames, rp.Name)
-	}
-
-	log.Debug().
-		Str("resource_pools", strings.Join(rpNames, ", ")).
-		Msg("")
-
-	log.Debug().Msg("Retrieving vms from eligible resource pools")
-	rpEntityVals := make([]mo.ManagedEntity, 0, len(resourcePools))
-	for i := range resourcePools {
-		rpEntityVals = append(rpEntityVals, resourcePools[i].ManagedEntity)
-	}
-	vms, getVMsErr := vsphere.GetVMsFromContainer(ctx, c.Client, true, rpEntityVals...)
-	if getVMsErr != nil {
-		log.Error().Err(getVMsErr).Msg(
-			"error retrieving list of VMs from resource pools list",
-		)
-
-		plugin.AddError(getVMsErr)
-		plugin.ServiceOutput = fmt.Sprintf(
-			"%s: Error retrieving list of VMs from resource pools list",
+			"%s: Error filtering VMs",
 			nagios.StateCRITICALLabel,
 		)
 		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
 
 		return
 	}
-
-	log.Debug().
-		Str("vms_evaluated", strings.Join(vsphere.VMNames(vms), ", ")).
-		Msg("Evaluated Virtual Machines")
-
-	log.Debug().Msg("Drop any VMs we've been asked to exclude from checks")
-	filteredVMs, numVMsExcludedByName := vsphere.ExcludeVMsByName(vms, cfg.IgnoredVMs)
-
-	log.Debug().
-		Str("vms_filtered_by_name", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
-		Int("vms_excluded_by_name", numVMsExcludedByName).
-		Msg("VMs after name filtering")
-
-	// NOTE: This plugin is hard-coded to evaluate powered off and powered
-	// on VMs equally. I'm not sure whether ignoring powered off VMs by
-	// default makes sense for this particular plugin.
-	//
-	// Please share your feedback here if you feel differently:
-	// https://github.com/atc0005/check-vmware/discussions/176
-	//
-	// Please expand on some use cases for ignoring powered off VMs by default.
-	//
-	// 	log.Debug().Msg("Filter VMs to specified power state")
-	// 	filteredVMs, numVMsExcludedByPowerState := vsphere.FilterVMsByPowerState(filteredVMs, cfg.PoweredOff)
-	//
-	// 	log.Debug().
-	// 		Str("vms_filtered_by_power_state", strings.Join(vsphere.VMNames(filteredVMs), ", ")).
-	// 		Int("vms_excluded_by_power_state", numVMsExcludedByPowerState).
-	// 		Msg("VMs after power state filtering")
+	log.Debug().Msg("Finished initial filtering of vms")
 
 	// here we diverge from other plugins
 
@@ -227,9 +165,9 @@ func main() {
 		log.Debug().
 			Bool("trigger_state_reload", cfg.TriggerReloadStateData).
 			Msg("Triggering reload of each VirtualMachine to ensure fresh metadata")
-		vmEntityVals := make([]mo.ManagedEntity, 0, len(filteredVMs))
-		for i := range filteredVMs {
-			vmEntityVals = append(vmEntityVals, filteredVMs[i].ManagedEntity)
+		vmEntityVals := make([]mo.ManagedEntity, 0, vmsFilterResults.NumVMsAfterFiltering())
+		for _, vm := range vmsFilterResults.VMsAfterFiltering() {
+			vmEntityVals = append(vmEntityVals, vm.ManagedEntity)
 		}
 		if err := vsphere.TriggerEntityStateReload(ctx, c.Client, vmEntityVals...); err != nil {
 			log.Error().Err(err).Msg(
@@ -257,7 +195,7 @@ func main() {
 	// Create a new collection of VMs with just those found to require disk
 	// consolidation. Keep filteredVMs collection as-is; we'll use that as our
 	// "baseline" against the list of VMs found requiring disk consolidation.
-	vmsNeedingConsolidation, numVMsExcludedByConsolidationState := vsphere.FilterVMsByDiskConsolidationState(filteredVMs)
+	vmsNeedingConsolidation, numVMsExcludedByConsolidationState := vsphere.FilterVMsByDiskConsolidationState(vmsFilterResults.VMsAfterFiltering())
 	numVMsRequiringDiskConsolidation := len(vmsNeedingConsolidation)
 
 	log.Debug().
@@ -268,38 +206,21 @@ func main() {
 
 	log.Debug().Msg("Compiling Performance Data details")
 
-	pd := []nagios.PerformanceData{
-		// The `time` (runtime) metric is appended at plugin exit, so do not
-		// duplicate it here.
-		{
-			Label: "vms",
-			Value: fmt.Sprintf("%d", len(vms)),
-		},
-		{
-			Label: "vms_excluded_by_name",
-			Value: fmt.Sprintf("%d", numVMsExcludedByName),
-		},
-		{
-			Label: "vms_with_consolidation_need",
-			Value: fmt.Sprintf("%d", numVMsRequiringDiskConsolidation),
-		},
-		{
-			Label: "vms_without_consolidation_need",
-			Value: fmt.Sprintf("%d", numVMsExcludedByConsolidationState),
-		},
-		{
-			Label: "resource_pools_excluded",
-			Value: fmt.Sprintf("%d", len(cfg.ExcludedResourcePools)),
-		},
-		{
-			Label: "resource_pools_included",
-			Value: fmt.Sprintf("%d", len(cfg.IncludedResourcePools)),
-		},
-		{
-			Label: "resource_pools_evaluated",
-			Value: fmt.Sprintf("%d", len(resourcePools)),
-		},
-	}
+	pd := append(
+		vsphere.VMFilterResultsPerfData(vmsFilterResults),
+		[]nagios.PerformanceData{
+			// The `time` (runtime) metric is appended at plugin exit, so do not
+			// duplicate it here.
+			{
+				Label: "vms_with_consolidation_need",
+				Value: fmt.Sprintf("%d", numVMsRequiringDiskConsolidation),
+			},
+			{
+				Label: "vms_without_consolidation_need",
+				Value: fmt.Sprintf("%d", numVMsExcludedByConsolidationState),
+			},
+		}...,
+	)
 
 	if err := plugin.AddPerfData(false, pd...); err != nil {
 		log.Error().
@@ -320,12 +241,13 @@ func main() {
 
 	// Update logger with new performance data related fields
 	log = log.With().
-		Int("vms_total", len(vms)).
-		Int("vms_filtered", len(filteredVMs)).
-		Int("vms_excluded_by_name", numVMsExcludedByName).
+		Int("resource_pools_evaluated", vmsFilterResults.NumRPsAfterFiltering()).
+		Int("vms_total", vmsFilterResults.NumVMsAll()).
+		Int("vms_after_filtering", vmsFilterResults.NumVMsAfterFiltering()).
+		Int("vms_excluded_by_name", vmsFilterResults.NumVMsExcludedByName()).
+		Int("vms_excluded_by_power_state", vmsFilterResults.NumVMsExcludedByPowerState()).
 		Int("vms_with_consolidation_need", numVMsRequiringDiskConsolidation).
 		Int("vms_without_consolidation_need", numVMsExcludedByConsolidationState).
-		Int("resource_pools_evaluated", len(resourcePools)).
 		Logger()
 
 	switch {
@@ -343,20 +265,15 @@ func main() {
 
 		plugin.ServiceOutput = vsphere.VMDiskConsolidationOneLineCheckSummary(
 			nagios.StateCRITICALLabel,
-			filteredVMs,
+			vmsFilterResults,
 			vmsNeedingConsolidation,
-			resourcePools,
 		)
 
 		plugin.LongServiceOutput = vsphere.VMDiskConsolidationReport(
 			c.Client,
-			vms,
-			filteredVMs,
+			vmsFilterOptions,
+			vmsFilterResults,
 			vmsNeedingConsolidation,
-			cfg.IgnoredVMs,
-			cfg.IncludedResourcePools,
-			cfg.ExcludedResourcePools,
-			resourcePools,
 		)
 
 		plugin.ExitStatusCode = nagios.StateCRITICALExitCode
@@ -371,20 +288,15 @@ func main() {
 
 		plugin.ServiceOutput = vsphere.VMDiskConsolidationOneLineCheckSummary(
 			nagios.StateOKLabel,
-			filteredVMs,
+			vmsFilterResults,
 			vmsNeedingConsolidation,
-			resourcePools,
 		)
 
 		plugin.LongServiceOutput = vsphere.VMDiskConsolidationReport(
 			c.Client,
-			vms,
-			filteredVMs,
+			vmsFilterOptions,
+			vmsFilterResults,
 			vmsNeedingConsolidation,
-			cfg.IgnoredVMs,
-			cfg.IncludedResourcePools,
-			cfg.ExcludedResourcePools,
-			resourcePools,
 		)
 
 		plugin.ExitStatusCode = nagios.StateOKExitCode

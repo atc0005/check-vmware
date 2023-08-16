@@ -89,15 +89,21 @@ any feedback that you may have. Thanks in advance!
 
 ### Supported metrics
 
-- `time`
-- `datacenters`
-- `triggered_alarms`
-- `triggered_alarms_included`
-- `triggered_alarms_excluded`
-- `triggered_alarms_critical`
-- `triggered_alarms_warning`
-- `triggered_alarms_unknown`
-- `triggered_alarms_ok`
+**NOTE**: These metrics are based on the visibility of the service account
+used to login to the target VMware environment. If the service account cannot
+see a resource, it cannot evaluate the resource.
+
+| Metric                      | Unit of Measurement | Description                                                                       |
+| --------------------------- | ------------------- | --------------------------------------------------------------------------------- |
+| `time`                      | milliseconds        | plugin runtime                                                                    |
+| `datacenters`               |                     | all (visible) datacenters in the inventory                                        |
+| `triggered_alarms`          |                     | all (visible) triggered alarms for specified datacenters                          |
+| `triggered_alarms_included` |                     | triggered alarms remaining after they have been implicitly or explicitly excluded |
+| `triggered_alarms_excluded` |                     | triggered alarms that have been implicitly or explicitly excluded                 |
+| `triggered_alarms_critical` |                     | triggered alarms in the collection are considered to be in a CRITICAL state       |
+| `triggered_alarms_warning`  |                     | triggered alarms in the collection are considered to be in a WARNING state        |
+| `triggered_alarms_unknown`  |                     | triggered alarms in the collection are considered to be in an UNKNOWN state       |
+| `triggered_alarms_ok`       |                     | triggered alarms in the collection are considered to be in an OK state            |
 
 ## Optional evaluation
 
