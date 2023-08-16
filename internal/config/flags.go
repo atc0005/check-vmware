@@ -20,22 +20,22 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 	switch {
 	case pluginType.Tools:
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
-		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
+		flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
 
 	case pluginType.SnapshotsAge:
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
 
 		// NOTE: This plugin is hard-coded to evaluate powered off and powered
 		// on VMs equally. I'm not sure whether ignoring powered off VMs by
@@ -44,22 +44,22 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		// Please share your feedback here if you feel differently:
 		// https://github.com/atc0005/check-vmware/discussions/177
 		//
-		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+		// flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.IntVar(&c.SnapshotsAgeWarning, "age-warning", defaultSnapshotsAgeWarning, snapshotsAgeWarningFlagHelp)
-		flag.IntVar(&c.SnapshotsAgeWarning, "aw", defaultSnapshotsAgeWarning, snapshotsAgeWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.SnapshotsAgeWarning, SnapshotAgeWarningFlagLong, defaultSnapshotsAgeWarning, snapshotsAgeWarningFlagHelp)
+		flag.IntVar(&c.SnapshotsAgeWarning, SnapshotAgeWarningFlagShort, defaultSnapshotsAgeWarning, snapshotsAgeWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.SnapshotsAgeCritical, "age-critical", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp)
-		flag.IntVar(&c.SnapshotsAgeCritical, "ac", defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.SnapshotsAgeCritical, SnapshotAgeCriticalFlagLong, defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp)
+		flag.IntVar(&c.SnapshotsAgeCritical, SnapshotAgeCriticalFlagShort, defaultSnapshotsAgeCritical, snapshotsAgeCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.SnapshotsCount:
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
 
 		// NOTE: This plugin is hard-coded to evaluate powered off and powered
 		// on VMs equally. I'm not sure whether ignoring powered off VMs by
@@ -68,22 +68,22 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		// Please share your feedback here if you feel differently:
 		// https://github.com/atc0005/check-vmware/discussions/177
 		//
-		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+		// flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.IntVar(&c.SnapshotsCountWarning, "count-warning", defaultSnapshotsCountWarning, snapshotsCountWarningFlagHelp)
-		flag.IntVar(&c.SnapshotsCountWarning, "cw", defaultSnapshotsCountWarning, snapshotsCountWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.SnapshotsCountWarning, SnapshotCountWarningFlagLong, defaultSnapshotsCountWarning, snapshotsCountWarningFlagHelp)
+		flag.IntVar(&c.SnapshotsCountWarning, SnapshotCountWarningFlagShort, defaultSnapshotsCountWarning, snapshotsCountWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.SnapshotsCountCritical, "count-critical", defaultSnapshotsCountCritical, snapshotsCountCriticalFlagHelp)
-		flag.IntVar(&c.SnapshotsCountCritical, "cc", defaultSnapshotsCountCritical, snapshotsCountCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.SnapshotsCountCritical, SnapshotCountCriticalFlagLong, defaultSnapshotsCountCritical, snapshotsCountCriticalFlagHelp)
+		flag.IntVar(&c.SnapshotsCountCritical, SnapshotCountCriticalFlagShort, defaultSnapshotsCountCritical, snapshotsCountCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.SnapshotsSize:
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
 
 		// NOTE: This plugin is hard-coded to evaluate powered off and powered
 		// on VMs equally. I'm not sure whether ignoring powered off VMs by
@@ -92,38 +92,38 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		// Please share your feedback here if you feel differently:
 		// https://github.com/atc0005/check-vmware/discussions/177
 		//
-		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+		// flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.IntVar(&c.SnapshotsSizeWarning, "size-warning", defaultSnapshotsSizeWarning, snapshotsSizeWarningFlagHelp)
-		flag.IntVar(&c.SnapshotsSizeWarning, "sw", defaultSnapshotsSizeWarning, snapshotsSizeWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.SnapshotsSizeWarning, SnapshotSizeWarningFlagLong, defaultSnapshotsSizeWarning, snapshotsSizeWarningFlagHelp)
+		flag.IntVar(&c.SnapshotsSizeWarning, SnapshotSizeWarningFlagShort, defaultSnapshotsSizeWarning, snapshotsSizeWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.SnapshotsSizeCritical, "size-critical", defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp)
-		flag.IntVar(&c.SnapshotsSizeCritical, "sc", defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.SnapshotsSizeCritical, SnapshotSizeCriticalFlagLong, defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp)
+		flag.IntVar(&c.SnapshotsSizeCritical, SnapshotSizeCriticalFlagShort, defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.VirtualMachinePowerCycleUptime:
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
 
-		flag.IntVar(&c.VMPowerCycleUptimeWarning, "uptime-warning", defaultVMPowerCycleUptimeWarning, vmPowerCycleUptimeWarningFlagHelp)
-		flag.IntVar(&c.VMPowerCycleUptimeWarning, "uw", defaultVMPowerCycleUptimeWarning, vmPowerCycleUptimeWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VMPowerCycleUptimeWarning, PowerUptimeWarningFlagLong, defaultVMPowerCycleUptimeWarning, vmPowerCycleUptimeWarningFlagHelp)
+		flag.IntVar(&c.VMPowerCycleUptimeWarning, PowerUptimeWarningFlagShort, defaultVMPowerCycleUptimeWarning, vmPowerCycleUptimeWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.VMPowerCycleUptimeCritical, "uptime-critical", defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp)
-		flag.IntVar(&c.VMPowerCycleUptimeCritical, "uc", defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VMPowerCycleUptimeCritical, PowerUptimeCriticalFlagLong, defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp)
+		flag.IntVar(&c.VMPowerCycleUptimeCritical, PowerUptimeCriticalFlagShort, defaultVMPowerCycleUptimeCritical, vmPowerCycleUptimeCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.DiskConsolidation:
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
-		flag.BoolVar(&c.TriggerReloadStateData, "trigger-reload", defaultTriggerReloadStateData, triggerReloadStateDataFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
+		flag.BoolVar(&c.TriggerReloadStateData, TriggerReloadFlagLong, defaultTriggerReloadStateData, triggerReloadStateDataFlagHelp)
 
 		// NOTE: This plugin is hard-coded to evaluate powered off and powered
 		// on VMs equally. I'm not sure whether ignoring powered off VMs by
@@ -134,190 +134,190 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		//
 		// Please expand on some use cases for ignoring powered off VMs by default.
 		//
-		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+		// flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
 
 	case pluginType.InteractiveQuestion:
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
 
 	case pluginType.Alarms:
 
-		flag.Var(&c.DatacenterNames, "dc-name", datacenterNamesFlagHelp)
-		flag.Var(&c.IncludedAlarmEntityTypes, "include-entity-type", includedAlarmEntityTypesFlagHelp)
-		flag.Var(&c.ExcludedAlarmEntityTypes, "exclude-entity-type", excludedAlarmEntityTypesFlagHelp)
+		flag.Var(&c.DatacenterNames, DatacenterNameFlagLong, datacenterNamesFlagHelp)
+		flag.Var(&c.IncludedAlarmEntityTypes, AlarmIncludeEntityTypeFlagLong, includedAlarmEntityTypesFlagHelp)
+		flag.Var(&c.ExcludedAlarmEntityTypes, AlarmExcludeEntityTypeFlagLong, excludedAlarmEntityTypesFlagHelp)
 
-		flag.BoolVar(&c.EvaluateAcknowledgedAlarms, "eval-acknowledged", defaultEvaluateAcknowledgedAlarms, evaluateAcknowledgedTriggeredAlarmFlagHelp)
+		flag.BoolVar(&c.EvaluateAcknowledgedAlarms, AlarmEvalAcknowledgedFlagLong, defaultEvaluateAcknowledgedAlarms, evaluateAcknowledgedTriggeredAlarmFlagHelp)
 
-		flag.Var(&c.IncludedAlarmNames, "include-name", includedAlarmNamesFlagHelp)
-		flag.Var(&c.ExcludedAlarmNames, "exclude-name", excludedAlarmNamesFlagHelp)
+		flag.Var(&c.IncludedAlarmNames, AlarmIncludeNameFlagLong, includedAlarmNamesFlagHelp)
+		flag.Var(&c.ExcludedAlarmNames, AlarmExcludeNameFlagLong, excludedAlarmNamesFlagHelp)
 
-		flag.Var(&c.IncludedAlarmDescriptions, "include-desc", includedAlarmDescriptionsFlagHelp)
-		flag.Var(&c.ExcludedAlarmDescriptions, "exclude-desc", excludedAlarmDescriptionsFlagHelp)
+		flag.Var(&c.IncludedAlarmDescriptions, AlarmIncludeDescFlagLong, includedAlarmDescriptionsFlagHelp)
+		flag.Var(&c.ExcludedAlarmDescriptions, AlarmExcludeDescFlagLong, excludedAlarmDescriptionsFlagHelp)
 
-		flag.Var(&c.includedAlarmStatuses, "include-status", includedAlarmStatusesFlagHelp)
-		flag.Var(&c.excludedAlarmStatuses, "exclude-status", excludedAlarmStatusesFlagHelp)
+		flag.Var(&c.includedAlarmStatuses, AlarmIncludeStatusFlagLong, includedAlarmStatusesFlagHelp)
+		flag.Var(&c.excludedAlarmStatuses, AlarmExcludeStatusFlagLong, excludedAlarmStatusesFlagHelp)
 
-		flag.Var(&c.IncludedAlarmEntityNames, "include-entity-name", includedAlarmEntityNamesFlagHelp)
-		flag.Var(&c.ExcludedAlarmEntityNames, "exclude-entity-name", excludedAlarmEntityNamesFlagHelp)
+		flag.Var(&c.IncludedAlarmEntityNames, AlarmIncludeEntityNameFlagLong, includedAlarmEntityNamesFlagHelp)
+		flag.Var(&c.ExcludedAlarmEntityNames, AlarmExcludeEntityNameFlagLong, excludedAlarmEntityNamesFlagHelp)
 
-		flag.Var(&c.IncludedAlarmEntityResourcePools, "include-entity-rp", includedAlarmEntityResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedAlarmEntityResourcePools, "exclude-entity-rp", excludedAlarmEntityResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedAlarmEntityResourcePools, AlarmIncludeEntityRPoolFlagLong, includedAlarmEntityResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedAlarmEntityResourcePools, AlarmExcludeEntityRPoolFlagLong, excludedAlarmEntityResourcePoolsFlagHelp)
 
 	case pluginType.DatastoresSpace:
 
-		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
+		flag.StringVar(&c.DatacenterName, DatacenterNameFlagLong, defaultDatacenterName, datacenterNameFlagHelp)
 
-		flag.StringVar(&c.DatastoreName, "ds-name", defaultDatastoreName, datastoreNameFlagHelp)
+		flag.StringVar(&c.DatastoreName, DatastoreNameFlagLong, defaultDatastoreName, datastoreNameFlagHelp)
 
-		flag.IntVar(&c.DatastoreSpaceUsageWarning, "ds-usage-warning", defaultDatastoreSpaceUsageWarning, datastoreSpaceUsageWarningFlagHelp)
-		flag.IntVar(&c.DatastoreSpaceUsageWarning, "dsuw", defaultDatastoreSpaceUsageWarning, datastoreSpaceUsageWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.DatastoreSpaceUsageWarning, DatastoreSpaceUsageWarningFlagLong, defaultDatastoreSpaceUsageWarning, datastoreSpaceUsageWarningFlagHelp)
+		flag.IntVar(&c.DatastoreSpaceUsageWarning, DatastoreSpaceUsageWarningFlagShort, defaultDatastoreSpaceUsageWarning, datastoreSpaceUsageWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.DatastoreSpaceUsageCritical, "ds-usage-critical", defaultDatastoreSpaceUsageCritical, datastoreSpaceUsageCriticalFlagHelp)
-		flag.IntVar(&c.DatastoreSpaceUsageCritical, "dsuc", defaultDatastoreSpaceUsageCritical, datastoreSpaceUsageCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.DatastoreSpaceUsageCritical, DatastoreSpaceUsageCriticalFlagLong, defaultDatastoreSpaceUsageCritical, datastoreSpaceUsageCriticalFlagHelp)
+		flag.IntVar(&c.DatastoreSpaceUsageCritical, DatastoreSpaceUsageCriticalFlagShort, defaultDatastoreSpaceUsageCritical, datastoreSpaceUsageCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.DatastoresPerformance:
 
-		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
+		flag.StringVar(&c.DatacenterName, DatacenterNameFlagLong, defaultDatacenterName, datacenterNameFlagHelp)
 
-		flag.StringVar(&c.DatastoreName, "ds-name", defaultDatastoreName, datastoreNameFlagHelp)
+		flag.StringVar(&c.DatastoreName, DatastoreNameFlagLong, defaultDatastoreName, datastoreNameFlagHelp)
 
-		flag.BoolVar(&c.IgnoreMissingDatastorePerfMetrics, "ds-ignore-missing-metrics", defaultIgnoreMissingDatastoreMetrics, ignoreMissingDatastorePerfMetricsFlagHelp)
-		flag.BoolVar(&c.IgnoreMissingDatastorePerfMetrics, "dsim", defaultIgnoreMissingDatastoreMetrics, ignoreMissingDatastorePerfMetricsFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.IgnoreMissingDatastorePerfMetrics, DatastorePerformanceIgnoreMissingMetricsFlagLong, defaultIgnoreMissingDatastoreMetrics, ignoreMissingDatastorePerfMetricsFlagHelp)
+		flag.BoolVar(&c.IgnoreMissingDatastorePerfMetrics, DatastorePerformanceIgnoreMissingMetricsFlagShort, defaultIgnoreMissingDatastoreMetrics, ignoreMissingDatastorePerfMetricsFlagHelp+" (shorthand)")
 
-		flag.BoolVar(&c.HideHistoricalDatastorePerfMetricSets, "ds-hide-historical-metric-sets", defaultHideHistoricalDatastorePerfMetricSets, hideHistoricalDatastorePerfMetricSetsFlagHelp)
-		flag.BoolVar(&c.HideHistoricalDatastorePerfMetricSets, "dshhms", defaultHideHistoricalDatastorePerfMetricSets, hideHistoricalDatastorePerfMetricSetsFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.HideHistoricalDatastorePerfMetricSets, DatastorePerformanceHideHistoricalMetricSetsFlagLong, defaultHideHistoricalDatastorePerfMetricSets, hideHistoricalDatastorePerfMetricSetsFlagHelp)
+		flag.BoolVar(&c.HideHistoricalDatastorePerfMetricSets, DatastorePerformanceHideHistoricalMetricSetsFlagShort, defaultHideHistoricalDatastorePerfMetricSets, hideHistoricalDatastorePerfMetricSetsFlagHelp+" (shorthand)")
 
-		flag.Var(&c.datastoreReadLatencyWarning, "ds-read-latency-warning", datastoreReadLatencyWarningFlagHelp)
-		flag.Var(&c.datastoreReadLatencyWarning, "dsrlw", datastoreReadLatencyWarningFlagHelp+" (shorthand)")
+		flag.Var(&c.datastoreReadLatencyWarning, DatastorePerformanceReadLatencyWarningFlagLong, datastoreReadLatencyWarningFlagHelp)
+		flag.Var(&c.datastoreReadLatencyWarning, DatastorePerformanceReadLatencyWarningFlagShort, datastoreReadLatencyWarningFlagHelp+" (shorthand)")
 
-		flag.Var(&c.datastoreReadLatencyCritical, "ds-read-latency-critical", datastoreReadLatencyCriticalFlagHelp)
-		flag.Var(&c.datastoreReadLatencyCritical, "dsrlc", datastoreReadLatencyCriticalFlagHelp+" (shorthand)")
+		flag.Var(&c.datastoreReadLatencyCritical, DatastorePerformanceReadLatencyCriticalFlagLong, datastoreReadLatencyCriticalFlagHelp)
+		flag.Var(&c.datastoreReadLatencyCritical, DatastorePerformanceReadLatencyCriticalFlagShort, datastoreReadLatencyCriticalFlagHelp+" (shorthand)")
 
-		flag.Var(&c.datastoreWriteLatencyWarning, "ds-write-latency-warning", datastoreWriteLatencyWarningFlagHelp)
-		flag.Var(&c.datastoreWriteLatencyWarning, "dswlw", datastoreWriteLatencyWarningFlagHelp+" (shorthand)")
+		flag.Var(&c.datastoreWriteLatencyWarning, DatastorePerformanceWriteLatencyWarningFlagLong, datastoreWriteLatencyWarningFlagHelp)
+		flag.Var(&c.datastoreWriteLatencyWarning, DatastorePerformanceWriteLatencyWarningFlagShort, datastoreWriteLatencyWarningFlagHelp+" (shorthand)")
 
-		flag.Var(&c.datastoreWriteLatencyCritical, "ds-write-latency-critical", datastoreWriteLatencyCriticalFlagHelp)
-		flag.Var(&c.datastoreWriteLatencyCritical, "dswlc", datastoreWriteLatencyCriticalFlagHelp+" (shorthand)")
+		flag.Var(&c.datastoreWriteLatencyCritical, DatastorePerformanceWriteLatencyCriticalFlagLong, datastoreWriteLatencyCriticalFlagHelp)
+		flag.Var(&c.datastoreWriteLatencyCritical, DatastorePerformanceWriteLatencyCriticalFlagShort, datastoreWriteLatencyCriticalFlagHelp+" (shorthand)")
 
-		flag.Var(&c.datastoreVMLatencyWarning, "ds-vm-latency-warning", datastoreVMLatencyWarningFlagHelp)
-		flag.Var(&c.datastoreVMLatencyWarning, "dsvmlw", datastoreVMLatencyWarningFlagHelp+" (shorthand)")
+		flag.Var(&c.datastoreVMLatencyWarning, DatastorePerformanceVMLatencyWarningFlagLong, datastoreVMLatencyWarningFlagHelp)
+		flag.Var(&c.datastoreVMLatencyWarning, DatastorePerformanceVMLatencyWarningFlagShort, datastoreVMLatencyWarningFlagHelp+" (shorthand)")
 
-		flag.Var(&c.datastoreVMLatencyCritical, "ds-vm-latency-critical", datastoreVMLatencyCriticalFlagHelp)
-		flag.Var(&c.datastoreVMLatencyCritical, "dsvmlc", datastoreVMLatencyCriticalFlagHelp+" (shorthand)")
+		flag.Var(&c.datastoreVMLatencyCritical, DatastorePerformanceVMLatencyCriticalFlagLong, datastoreVMLatencyCriticalFlagHelp)
+		flag.Var(&c.datastoreVMLatencyCritical, DatastorePerformanceVMLatencyCriticalFlagShort, datastoreVMLatencyCriticalFlagHelp+" (shorthand)")
 
-		flag.Var(&c.datastorePerformancePercentileSet, "ds-latency-percentile-set", datastoreLatencyPercintileSetFlagHelp)
-		flag.Var(&c.datastorePerformancePercentileSet, "dslps", datastoreLatencyPercintileSetFlagHelp+" (shorthand)")
+		flag.Var(&c.datastorePerformancePercentileSet, DatastoreLatencyPercentileSetFlagLong, datastoreLatencyPercintileSetFlagHelp)
+		flag.Var(&c.datastorePerformancePercentileSet, DatastoreLatencyPercentileSetFlagShort, datastoreLatencyPercintileSetFlagHelp+" (shorthand)")
 
 	case pluginType.HostSystemMemory:
 
-		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
+		flag.StringVar(&c.DatacenterName, DatacenterNameFlagLong, defaultDatacenterName, datacenterNameFlagHelp)
 
-		flag.StringVar(&c.HostSystemName, "host-name", defaultHostSystemName, hostSystemNameFlagHelp)
+		flag.StringVar(&c.HostSystemName, HostNameFlagLong, defaultHostSystemName, hostSystemNameFlagHelp)
 
-		flag.IntVar(&c.HostSystemMemoryUseWarning, "memory-usage-warning", defaultMemoryUseWarning, hostSystemMemoryUseWarningFlagHelp)
-		flag.IntVar(&c.HostSystemMemoryUseWarning, "mw", defaultMemoryUseWarning, hostSystemMemoryUseWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.HostSystemMemoryUseWarning, HostMemoryUsageWarningFlagLong, defaultMemoryUseWarning, hostSystemMemoryUseWarningFlagHelp)
+		flag.IntVar(&c.HostSystemMemoryUseWarning, HostMemoryUsageWarningFlagShort, defaultMemoryUseWarning, hostSystemMemoryUseWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.HostSystemMemoryUseCritical, "memory-usage-critical", defaultMemoryUseCritical, hostSystemMemoryUseCriticalFlagHelp)
-		flag.IntVar(&c.HostSystemMemoryUseCritical, "mc", defaultMemoryUseCritical, hostSystemMemoryUseCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.HostSystemMemoryUseCritical, HostMemoryUsageCriticalFlagLong, defaultMemoryUseCritical, hostSystemMemoryUseCriticalFlagHelp)
+		flag.IntVar(&c.HostSystemMemoryUseCritical, HostMemoryUsageCriticalFlagShort, defaultMemoryUseCritical, hostSystemMemoryUseCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.HostSystemCPU:
 
-		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
+		flag.StringVar(&c.DatacenterName, DatacenterNameFlagLong, defaultDatacenterName, datacenterNameFlagHelp)
 
-		flag.StringVar(&c.HostSystemName, "host-name", defaultHostSystemName, hostSystemNameFlagHelp)
+		flag.StringVar(&c.HostSystemName, HostNameFlagLong, defaultHostSystemName, hostSystemNameFlagHelp)
 
-		flag.IntVar(&c.HostSystemCPUUseWarning, "cpu-usage-warning", defaultCPUUseWarning, hostSystemCPUUseWarningFlagHelp)
-		flag.IntVar(&c.HostSystemCPUUseWarning, "cw", defaultCPUUseWarning, hostSystemCPUUseWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.HostSystemCPUUseWarning, HostCPUUsageWarningFlagLong, defaultCPUUseWarning, hostSystemCPUUseWarningFlagHelp)
+		flag.IntVar(&c.HostSystemCPUUseWarning, HostCPUUsageWarningFlagShort, defaultCPUUseWarning, hostSystemCPUUseWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.HostSystemCPUUseCritical, "cpu-usage-critical", defaultCPUUseCritical, hostSystemCPUUseCriticalFlagHelp)
-		flag.IntVar(&c.HostSystemCPUUseCritical, "cc", defaultCPUUseCritical, hostSystemCPUUseCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.HostSystemCPUUseCritical, HostCPUUsageCriticalFlagLong, defaultCPUUseCritical, hostSystemCPUUseCriticalFlagHelp)
+		flag.IntVar(&c.HostSystemCPUUseCritical, HostCPUUsageCriticalFlagShort, defaultCPUUseCritical, hostSystemCPUUseCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.ResourcePoolsMemory:
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
 
-		flag.IntVar(&c.ResourcePoolsMemoryUseWarning, "memory-use-warning", defaultMemoryUseWarning, resourcePoolsMemoryUseWarningFlagHelp)
-		flag.IntVar(&c.ResourcePoolsMemoryUseWarning, "mw", defaultMemoryUseWarning, resourcePoolsMemoryUseWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.ResourcePoolsMemoryUseWarning, RPMemoryUseWarningFlagLong, defaultMemoryUseWarning, resourcePoolsMemoryUseWarningFlagHelp)
+		flag.IntVar(&c.ResourcePoolsMemoryUseWarning, RPMemoryUseWarningFlagShort, defaultMemoryUseWarning, resourcePoolsMemoryUseWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.ResourcePoolsMemoryUseCritical, "memory-use-critical", defaultMemoryUseCritical, resourcePoolsMemoryUseCriticalFlagHelp)
-		flag.IntVar(&c.ResourcePoolsMemoryUseCritical, "mc", defaultMemoryUseCritical, resourcePoolsMemoryUseCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.ResourcePoolsMemoryUseCritical, RPMemoryUseCriticalFlagLong, defaultMemoryUseCritical, resourcePoolsMemoryUseCriticalFlagHelp)
+		flag.IntVar(&c.ResourcePoolsMemoryUseCritical, RPMemoryUseCriticalFlagShort, defaultMemoryUseCritical, resourcePoolsMemoryUseCriticalFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.ResourcePoolsMemoryMaxAllowed, "memory-max-allowed", defaultResourcePoolsMemoryMaxAllowed, resourcePoolsMemoryMaxAllowedFlagHelp)
-		flag.IntVar(&c.ResourcePoolsMemoryMaxAllowed, "mma", defaultResourcePoolsMemoryMaxAllowed, resourcePoolsMemoryMaxAllowedFlagHelp+" (shorthand)")
+		flag.IntVar(&c.ResourcePoolsMemoryMaxAllowed, RPMemoryMaxAllowedFlagLong, defaultResourcePoolsMemoryMaxAllowed, resourcePoolsMemoryMaxAllowedFlagHelp)
+		flag.IntVar(&c.ResourcePoolsMemoryMaxAllowed, RPMemoryMaxAllowedFlagShort, defaultResourcePoolsMemoryMaxAllowed, resourcePoolsMemoryMaxAllowedFlagHelp+" (shorthand)")
 
 	case pluginType.VirtualCPUsAllocation:
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
-		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
+		flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.IntVar(&c.VCPUsAllocatedWarning, "vcpus-warning", defaultVCPUsAllocatedWarning, vCPUsAllocatedWarningFlagHelp)
-		flag.IntVar(&c.VCPUsAllocatedWarning, "vw", defaultVCPUsAllocatedWarning, vCPUsAllocatedWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VCPUsAllocatedWarning, VirtualCPUsWarningFlagLong, defaultVCPUsAllocatedWarning, vCPUsAllocatedWarningFlagHelp)
+		flag.IntVar(&c.VCPUsAllocatedWarning, VirtualCPUsWarningFlagShort, defaultVCPUsAllocatedWarning, vCPUsAllocatedWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.VCPUsAllocatedCritical, "vcpus-critical", defaultVCPUsAllocatedCritical, vCPUsAllocatedCriticalFlagHelp)
-		flag.IntVar(&c.VCPUsAllocatedCritical, "vc", defaultVCPUsAllocatedCritical, vCPUsAllocatedCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VCPUsAllocatedCritical, VirtualCPUsCriticalFlagLong, defaultVCPUsAllocatedCritical, vCPUsAllocatedCriticalFlagHelp)
+		flag.IntVar(&c.VCPUsAllocatedCritical, VirtualCPUsCriticalFlagShort, defaultVCPUsAllocatedCritical, vCPUsAllocatedCriticalFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.VCPUsMaxAllowed, "vcpus-max-allowed", defaultVCPUsMaxAllowed, vCPUsAllocatedMaxAllowedFlagHelp)
-		flag.IntVar(&c.VCPUsMaxAllowed, "vcma", defaultVCPUsMaxAllowed, vCPUsAllocatedMaxAllowedFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VCPUsMaxAllowed, VirtualCPUsMaxAllowedFlagLong, defaultVCPUsMaxAllowed, vCPUsAllocatedMaxAllowedFlagHelp)
+		flag.IntVar(&c.VCPUsMaxAllowed, VirtualCPUsMaxAllowedFlagShort, defaultVCPUsMaxAllowed, vCPUsAllocatedMaxAllowedFlagHelp+" (shorthand)")
 
 	case pluginType.VirtualHardwareVersion:
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
-		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
+		flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.StringVar(&c.DatacenterName, "dc-name", defaultDatacenterName, datacenterNameFlagHelp)
-		flag.StringVar(&c.HostSystemName, "host-name", defaultHostSystemName, hostSystemNameFlagHelp)
-		flag.StringVar(&c.ClusterName, "cluster-name", defaultClusterName, clusterNameFlagHelp)
+		flag.StringVar(&c.DatacenterName, DatacenterNameFlagLong, defaultDatacenterName, datacenterNameFlagHelp)
+		flag.StringVar(&c.HostSystemName, HostNameFlagLong, defaultHostSystemName, hostSystemNameFlagHelp)
+		flag.StringVar(&c.ClusterName, ClusterNameFlagLong, defaultClusterName, clusterNameFlagHelp)
 
-		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, "outdated-by-warning", defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp)
-		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, "obw", defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, OutdatedByWarningFlagLong, defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp)
+		flag.IntVar(&c.VirtualHardwareOutdatedByWarning, OutdatedByWarningFlagShort, defaultVirtualHardwareOutdatedByWarning, virtualHardwareOutdatedByWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.VirtualHardwareOutdatedByCritical, "outdated-by-critical", defaultVirtualHardwareOutdatedByCritical, virtualHardwareOutdatedByCriticalFlagHelp)
-		flag.IntVar(&c.VirtualHardwareOutdatedByCritical, "obc", defaultVirtualHardwareOutdatedByCritical, virtualHardwareOutdatedByCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VirtualHardwareOutdatedByCritical, OutdatedByCriticalFlagLong, defaultVirtualHardwareOutdatedByCritical, virtualHardwareOutdatedByCriticalFlagHelp)
+		flag.IntVar(&c.VirtualHardwareOutdatedByCritical, OutdatedByCriticalFlagShort, defaultVirtualHardwareOutdatedByCritical, virtualHardwareOutdatedByCriticalFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.VirtualHardwareMinimumVersion, "minimum-version", defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp)
-		flag.IntVar(&c.VirtualHardwareMinimumVersion, "mv", defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VirtualHardwareMinimumVersion, MinimumVersionFlagLong, defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp)
+		flag.IntVar(&c.VirtualHardwareMinimumVersion, MinimumVersionFlagShort, defaultVirtualHardwareMinimumVersion, virtualHardwareMinimumVersionFlagHelp+" (shorthand)")
 
-		flag.BoolVar(&c.VirtualHardwareDefaultVersionIsMinimum, "default-is-min-version", defaultVirtualHardwareDefaultIsMinimum, virtualHardwareDefaultIsMinimumFlagHelp)
-		flag.BoolVar(&c.VirtualHardwareDefaultVersionIsMinimum, "dimv", defaultVirtualHardwareDefaultIsMinimum, virtualHardwareDefaultIsMinimumFlagHelp+" (shorthand)")
+		flag.BoolVar(&c.VirtualHardwareDefaultVersionIsMinimum, DefaultIsMinimumVersionFlagLong, defaultVirtualHardwareDefaultIsMinimum, virtualHardwareDefaultIsMinimumFlagHelp)
+		flag.BoolVar(&c.VirtualHardwareDefaultVersionIsMinimum, DefaultIsMinimumVersionFlagShort, defaultVirtualHardwareDefaultIsMinimum, virtualHardwareDefaultIsMinimumFlagHelp+" (shorthand)")
 
 	case pluginType.Host2Datastores2VMs:
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
-		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
+		flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.Var(&c.IgnoredDatastores, "ignore-ds", ignoreDatastoreFlagHelp)
+		flag.Var(&c.IgnoredDatastores, IgnoreDatastoreFlagLong, ignoreDatastoreFlagHelp)
 
-		flag.StringVar(&c.sharedCustomAttributeName, "ca-name", defaultCustomAttributeName, sharedCustomAttributeNameFlagHelp)
-		flag.StringVar(&c.sharedCustomAttributePrefixSeparator, "ca-prefix-sep", defaultCustomAttributePrefixSeparator, sharedCustomAttributePrefixSeparatorFlagHelp)
+		flag.StringVar(&c.sharedCustomAttributeName, CustomAttributeNameFlagLong, defaultCustomAttributeName, sharedCustomAttributeNameFlagHelp)
+		flag.StringVar(&c.sharedCustomAttributePrefixSeparator, CustomAttributePrefixSeparatorFlagLong, defaultCustomAttributePrefixSeparator, sharedCustomAttributePrefixSeparatorFlagHelp)
 
-		flag.StringVar(&c.hostCustomAttributeName, "host-ca-name", defaultCustomAttributeName, hostCustomAttributeNameFlagHelp)
-		flag.StringVar(&c.hostCustomAttributePrefixSeparator, "host-ca-prefix-sep", defaultCustomAttributePrefixSeparator, hostCustomAttributePrefixSeparatorFlagHelp)
+		flag.StringVar(&c.hostCustomAttributeName, HostCustomAttributeNameFlagLong, defaultCustomAttributeName, hostCustomAttributeNameFlagHelp)
+		flag.StringVar(&c.hostCustomAttributePrefixSeparator, HostCustomAttributePrefixSeparatorFlagLong, defaultCustomAttributePrefixSeparator, hostCustomAttributePrefixSeparatorFlagHelp)
 
-		flag.StringVar(&c.datastoreCustomAttributeName, "ds-ca-name", defaultCustomAttributeName, datastoreCustomAttributeNameFlagHelp)
-		flag.StringVar(&c.datastoreCustomAttributePrefixSeparator, "ds-ca-prefix-sep", defaultCustomAttributePrefixSeparator, datastoreCustomAttributePrefixSeparatorFlagHelp)
+		flag.StringVar(&c.datastoreCustomAttributeName, DatastoreCustomAttributeNameFlagLong, defaultCustomAttributeName, datastoreCustomAttributeNameFlagHelp)
+		flag.StringVar(&c.datastoreCustomAttributePrefixSeparator, DatastoreCustomAttributePrefixSeparatorFlagLong, defaultCustomAttributePrefixSeparator, datastoreCustomAttributePrefixSeparatorFlagHelp)
 
-		flag.BoolVar(&c.IgnoreMissingCustomAttribute, "ignore-missing-ca", defaultIgnoreMissingCustomAttribute, ignoreMissingCustomAttributeFlagHelp)
+		flag.BoolVar(&c.IgnoreMissingCustomAttribute, CustomAttributeIgnoreMissingCAFlagLong, defaultIgnoreMissingCustomAttribute, ignoreMissingCustomAttributeFlagHelp)
 
 	case pluginType.VirtualMachineLastBackupViaCA:
 
@@ -330,25 +330,25 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		//
 		// Please expand on some use cases for ignoring powered off VMs by default.
 		//
-		// flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+		// flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
 
-		flag.StringVar(&c.VMBackupDateCustomAttribute, "backup-date-ca", defaultVMBackupDateCustomAttribute, vmBackupDateCustomAttributeFlagHelp)
-		flag.StringVar(&c.VMBackupMetadataCustomAttribute, "backup-metadata-ca", defaultVMBackupMetadataCustomAttribute, vmBackupMetadataCustomAttributeFlagHelp)
-		flag.StringVar(&c.VMBackupDateFormat, "backup-date-format", defaultVMBackupDateFormat, vmBackupDateFormatFlagHelp)
-		flag.StringVar(&c.VMBackupDateTimezone, "backup-date-timezone", defaultVMBackupDateTimezone, vmBackupDateTimezoneFlagHelp)
+		flag.StringVar(&c.VMBackupDateCustomAttribute, BackupDateCAFlagLong, defaultVMBackupDateCustomAttribute, vmBackupDateCustomAttributeFlagHelp)
+		flag.StringVar(&c.VMBackupMetadataCustomAttribute, BackupMetadataCAFlagLong, defaultVMBackupMetadataCustomAttribute, vmBackupMetadataCustomAttributeFlagHelp)
+		flag.StringVar(&c.VMBackupDateFormat, BackupDateFormatFlagLong, defaultVMBackupDateFormat, vmBackupDateFormatFlagHelp)
+		flag.StringVar(&c.VMBackupDateTimezone, BackupDateTimezoneFlagLong, defaultVMBackupDateTimezone, vmBackupDateTimezoneFlagHelp)
 
-		flag.IntVar(&c.VMBackupAgeWarning, "backup-age-warning", defaultVMBackupAgeWarning, vmBackupAgeWarningFlagHelp)
-		flag.IntVar(&c.VMBackupAgeWarning, "baw", defaultVMBackupAgeWarning, vmBackupAgeWarningFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VMBackupAgeWarning, BackupAgeWarningFlagLong, defaultVMBackupAgeWarning, vmBackupAgeWarningFlagHelp)
+		flag.IntVar(&c.VMBackupAgeWarning, BackupAgeWarningFlagShort, defaultVMBackupAgeWarning, vmBackupAgeWarningFlagHelp+" (shorthand)")
 
-		flag.IntVar(&c.VMBackupAgeCritical, "backup-age-critical", defaultVMBackupAgeCritical, vmBackupAgeCriticalFlagHelp)
-		flag.IntVar(&c.VMBackupAgeCritical, "bac", defaultVMBackupAgeCritical, vmBackupAgeCriticalFlagHelp+" (shorthand)")
+		flag.IntVar(&c.VMBackupAgeCritical, BackupAgeCriticalFlagLong, defaultVMBackupAgeCritical, vmBackupAgeCriticalFlagHelp)
+		flag.IntVar(&c.VMBackupAgeCritical, BackupAgeCriticalFlagShort, defaultVMBackupAgeCritical, vmBackupAgeCriticalFlagHelp+" (shorthand)")
 
 	case pluginType.VirtualMachineList:
 
@@ -357,46 +357,46 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		// TODO: Consider moving this to the "common" flags section and allow
 		// specifying it for ALL plugins. This will provide a useful way to
 		// collect a total VMs count.
-		// flag.Var(&c.DatacenterNames, "dc-name", datacenterNamesFlagHelp)
+		// flag.Var(&c.DatacenterNames, DatacenterNameFlagLong, datacenterNamesFlagHelp)
 
-		flag.BoolVar(&c.PoweredOff, "powered-off", defaultPoweredOff, poweredOffFlagHelp)
+		flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
 
-		flag.Var(&c.IncludedFolders, "include-folder-id", vmIncludedFoldersFlagHelp)
-		flag.Var(&c.ExcludedFolders, "exclude-folder-id", vmExcludedFoldersFlagHelp)
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
 
-		flag.Var(&c.IncludedResourcePools, "include-rp", vmIncludedResourcePoolsFlagHelp)
-		flag.Var(&c.ExcludedResourcePools, "exclude-rp", vmExcludedResourcePoolsFlagHelp)
-		flag.Var(&c.IgnoredVMs, "ignore-vm", ignoreVMsFlagHelp)
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
 
 	}
 
 	// Shared flags for all plugin types
 
-	flag.StringVar(&c.Username, "username", defaultUsername, usernameFlagHelp)
-	flag.StringVar(&c.Username, "u", defaultUsername, usernameFlagHelp+" (shorthand)")
-	flag.StringVar(&c.Password, "password", defaultPassword, passwordFlagHelp)
-	flag.StringVar(&c.Password, "pw", defaultPassword, passwordFlagHelp+" (shorthand)")
+	flag.StringVar(&c.Username, UsernameFlagLong, defaultUsername, usernameFlagHelp)
+	flag.StringVar(&c.Username, UsernameFlagShort, defaultUsername, usernameFlagHelp+" (shorthand)")
+	flag.StringVar(&c.Password, PasswordFlagLong, defaultPassword, passwordFlagHelp)
+	flag.StringVar(&c.Password, PasswordFlagShort, defaultPassword, passwordFlagHelp+" (shorthand)")
 
-	flag.StringVar(&c.Domain, "domain", defaultUserDomain, userDomainFlagHelp)
+	flag.StringVar(&c.Domain, DomainFlagLong, defaultUserDomain, userDomainFlagHelp)
 
-	flag.BoolVar(&c.TrustCert, "trust-cert", defaultTrustCert, trustCertFlagHelp)
+	flag.BoolVar(&c.TrustCert, TrustCertFlagLong, defaultTrustCert, trustCertFlagHelp)
 
-	flag.BoolVar(&c.EmitBranding, "branding", defaultBranding, brandingFlagHelp)
+	flag.BoolVar(&c.EmitBranding, BrandingFlag, defaultBranding, brandingFlagHelp)
 
-	flag.StringVar(&c.Server, "s", defaultServer, serverFlagHelp+" (shorthand)")
-	flag.StringVar(&c.Server, "server", defaultServer, serverFlagHelp)
+	flag.StringVar(&c.Server, ServerFlagLong, defaultServer, serverFlagHelp)
+	flag.StringVar(&c.Server, ServerFlagShort, defaultServer, serverFlagHelp+" (shorthand)")
 
-	flag.IntVar(&c.Port, "p", defaultPort, portFlagHelp+" (shorthand)")
-	flag.IntVar(&c.Port, "port", defaultPort, portFlagHelp)
+	flag.IntVar(&c.Port, PortFlagLong, defaultPort, portFlagHelp)
+	flag.IntVar(&c.Port, PortFlagShort, defaultPort, portFlagHelp+" (shorthand)")
 
-	flag.IntVar(&c.timeout, "t", defaultPluginRuntimeTimeout, timeoutPluginRuntimeFlagHelp+" (shorthand)")
-	flag.IntVar(&c.timeout, "timeout", defaultPluginRuntimeTimeout, timeoutPluginRuntimeFlagHelp)
+	flag.IntVar(&c.timeout, TimeoutFlagLong, defaultPluginRuntimeTimeout, timeoutPluginRuntimeFlagHelp)
+	flag.IntVar(&c.timeout, TimeoutFlagShort, defaultPluginRuntimeTimeout, timeoutPluginRuntimeFlagHelp+" (shorthand)")
 
-	flag.StringVar(&c.LoggingLevel, "ll", defaultLogLevel, logLevelFlagHelp+" (shorthand)")
-	flag.StringVar(&c.LoggingLevel, "log-level", defaultLogLevel, logLevelFlagHelp)
+	flag.StringVar(&c.LoggingLevel, LogLevelFlagLong, defaultLogLevel, logLevelFlagHelp)
+	flag.StringVar(&c.LoggingLevel, LogLevelFlagShort, defaultLogLevel, logLevelFlagHelp+" (shorthand)")
 
-	flag.BoolVar(&c.ShowVersion, "v", defaultDisplayVersionAndExit, versionFlagHelp+" (shorthand)")
-	flag.BoolVar(&c.ShowVersion, "version", defaultDisplayVersionAndExit, versionFlagHelp)
+	flag.BoolVar(&c.ShowVersion, VersionFlagLong, defaultDisplayVersionAndExit, versionFlagHelp)
+	flag.BoolVar(&c.ShowVersion, VersionFlagShort, defaultDisplayVersionAndExit, versionFlagHelp+" (shorthand)")
 
 	// Allow our function to override the default Help output
 	flag.Usage = Usage

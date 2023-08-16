@@ -95,6 +95,168 @@ const (
 	triggerReloadStateDataFlagHelp                  string = "Toggles (potentially expensive) reload/refresh of state data for evaluated vSphere objects. This is disabled by default."
 )
 
+// Flag names. Exported so that they're available from tests.
+const (
+
+	// Shared flag names.
+	BrandingFlag      string = "branding"
+	HelpFlagLong      string = "help"
+	HelpFlagShort     string = "h"
+	VersionFlagLong   string = "version"
+	VersionFlagShort  string = "v"
+	LogLevelFlagLong  string = "log-level"
+	LogLevelFlagShort string = "ll"
+	PortFlagLong      string = "port"
+	PortFlagShort     string = "p"
+	TimeoutFlagLong   string = "timeout"
+	TimeoutFlagShort  string = "t"
+	ServerFlagLong    string = "server"
+	ServerFlagShort   string = "s"
+	UsernameFlagLong  string = "username"
+	UsernameFlagShort string = "u"
+	PasswordFlagLong  string = "password"
+	PasswordFlagShort string = "pw"
+	DomainFlagLong    string = "domain"
+	TrustCertFlagLong string = "trust-cert"
+
+	// Alarms, Datastore (Space, Performance), VirtualHardwareVersion, ...
+	DatacenterNameFlagLong string = "dc-name"
+	DatastoreNameFlagLong  string = "ds-name"
+	HostNameFlagLong       string = "host-name"
+	ClusterNameFlagLong    string = "cluster-name"
+
+	// Virtual Hardware Version
+	OutdatedByCriticalFlagLong       string = "outdated-by-critical"
+	OutdatedByCriticalFlagShort      string = "obc"
+	OutdatedByWarningFlagLong        string = "outdated-by-warning"
+	OutdatedByWarningFlagShort       string = "obw"
+	MinimumVersionFlagLong           string = "minimum-version"
+	MinimumVersionFlagShort          string = "mv"
+	DefaultIsMinimumVersionFlagLong  string = "default-is-min-version"
+	DefaultIsMinimumVersionFlagShort string = "dimv"
+
+	// vCPUs
+	VirtualCPUsMaxAllowedFlagLong  string = "vcpus-max-allowed"
+	VirtualCPUsMaxAllowedFlagShort string = "vcma"
+	VirtualCPUsCriticalFlagLong    string = "vcpus-critical"
+	VirtualCPUsCriticalFlagShort   string = "vc"
+	VirtualCPUsWarningFlagLong     string = "vcpus-warning"
+	VirtualCPUsWarningFlagShort    string = "vw"
+
+	// ResourcePool Memory Usage
+	RPMemoryMaxAllowedFlagLong   string = "memory-max-allowed"
+	RPMemoryMaxAllowedFlagShort  string = "mma"
+	RPMemoryUseCriticalFlagLong  string = "memory-use-critical"
+	RPMemoryUseCriticalFlagShort string = "mc"
+	RPMemoryUseWarningFlagLong   string = "memory-use-warning"
+	RPMemoryUseWarningFlagShort  string = "mw"
+
+	// Host / Datastore / VM Pairings
+	CustomAttributeNameFlagLong                     string = "ca-name"
+	CustomAttributePrefixSeparatorFlagLong          string = "ca-prefix-sep"
+	CustomAttributeIgnoreMissingCAFlagLong          string = "ignore-missing-ca"
+	IgnoreDatastoreFlagLong                         string = "ignore-ds"
+	HostCustomAttributeNameFlagLong                 string = "host-ca-name"
+	HostCustomAttributePrefixSeparatorFlagLong      string = "host-ca-prefix-sep"
+	DatastoreCustomAttributeNameFlagLong            string = "ds-ca-name"
+	DatastoreCustomAttributePrefixSeparatorFlagLong string = "ds-ca-prefix-sep"
+
+	// Host Memory
+	HostMemoryUsageCriticalFlagLong  string = "memory-usage-critical"
+	HostMemoryUsageCriticalFlagShort string = "mc"
+	HostMemoryUsageWarningFlagLong   string = "memory-usage-warning"
+	HostMemoryUsageWarningFlagShort  string = "mw"
+
+	// Host CPU
+	HostCPUUsageCriticalFlagLong  string = "cpu-usage-critical"
+	HostCPUUsageCriticalFlagShort string = "cc"
+	HostCPUUsageWarningFlagLong   string = "cpu-usage-warning"
+	HostCPUUsageWarningFlagShort  string = "cw"
+
+	// Datastore Space
+	DatastoreSpaceUsageCriticalFlagLong  string = "ds-usage-critical"
+	DatastoreSpaceUsageCriticalFlagShort string = "dsuc"
+	DatastoreSpaceUsageWarningFlagLong   string = "ds-usage-warning"
+	DatastoreSpaceUsageWarningFlagShort  string = "dsuw"
+
+	// Datastore Performance
+	DatastorePerformanceIgnoreMissingMetricsFlagLong      string = "ds-ignore-missing-metrics"
+	DatastorePerformanceIgnoreMissingMetricsFlagShort     string = "dsim"
+	DatastorePerformanceHideHistoricalMetricSetsFlagLong  string = "ds-hide-historical-metric-sets"
+	DatastorePerformanceHideHistoricalMetricSetsFlagShort string = "dshhms"
+	DatastorePerformanceReadLatencyCriticalFlagLong       string = "ds-read-latency-critical"
+	DatastorePerformanceReadLatencyCriticalFlagShort      string = "dsrlc"
+	DatastorePerformanceReadLatencyWarningFlagLong        string = "ds-read-latency-warning"
+	DatastorePerformanceReadLatencyWarningFlagShort       string = "dsrlw"
+	DatastorePerformanceWriteLatencyCriticalFlagLong      string = "ds-write-latency-critical"
+	DatastorePerformanceWriteLatencyCriticalFlagShort     string = "dswlc"
+	DatastorePerformanceWriteLatencyWarningFlagLong       string = "ds-write-latency-warning"
+	DatastorePerformanceWriteLatencyWarningFlagShort      string = "dswlw"
+	DatastorePerformanceVMLatencyCriticalFlagLong         string = "ds-vm-latency-critical"
+	DatastorePerformanceVMLatencyCriticalFlagShort        string = "dsvmlc"
+	DatastorePerformanceVMLatencyWarningFlagLong          string = "ds-vm-latency-warning"
+	DatastorePerformanceVMLatencyWarningFlagShort         string = "dsvmlw"
+	DatastoreLatencyPercentileSetFlagLong                 string = "ds-latency-percentile-set"
+	DatastoreLatencyPercentileSetFlagShort                string = "dslps"
+
+	// Snapshots
+	SnapshotAgeCriticalFlagLong    string = "age-critical"
+	SnapshotAgeCriticalFlagShort   string = "ac"
+	SnapshotAgeWarningFlagLong     string = "age-warning"
+	SnapshotAgeWarningFlagShort    string = "aw"
+	SnapshotCountCriticalFlagLong  string = "count-critical"
+	SnapshotCountCriticalFlagShort string = "cc"
+	SnapshotCountWarningFlagLong   string = "count-warning"
+	SnapshotCountWarningFlagShort  string = "cw"
+	SnapshotSizeCriticalFlagLong   string = "size-critical"
+	SnapshotSizeCriticalFlagShort  string = "sc"
+	SnapshotSizeWarningFlagLong    string = "size-warning"
+	SnapshotSizeWarningFlagShort   string = "sw"
+
+	// Common Filter related
+	IgnoreVMFlagLong string = "ignore-vm" // DEPRECATED (GH-896)
+
+	IncludeResourcePoolFlagLong  string = "include-rp"
+	ExcludeResourcePoolFlagLong  string = "exclude-rp"
+	IncludePoweredOffVMsFlagLong string = "powered-off"
+	IncludeFolderIDFlagLong      string = "include-folder-id"
+	ExcludeFolderIDFlagLong      string = "exclude-folder-id"
+
+	// Power uptime
+	PowerUptimeCriticalFlagLong  string = "uptime-critical"
+	PowerUptimeCriticalFlagShort string = "uc"
+	PowerUptimeWarningFlagLong   string = "uptime-warning"
+	PowerUptimeWarningFlagShort  string = "uw"
+
+	// Backup via CA
+	BackupDateCAFlagLong       string = "backup-date-ca"
+	BackupMetadataCAFlagLong   string = "backup-metadata-ca"
+	BackupDateFormatFlagLong   string = "backup-date-format"
+	BackupDateTimezoneFlagLong string = "backup-date-timezone"
+	BackupAgeCriticalFlagLong  string = "backup-age-critical"
+	BackupAgeCriticalFlagShort string = "bac"
+	BackupAgeWarningFlagLong   string = "backup-age-warning"
+	BackupAgeWarningFlagShort  string = "baw"
+
+	// Alarm related
+	AlarmEvalAcknowledgedFlagLong   string = "eval-acknowledged"
+	AlarmIncludeEntityTypeFlagLong  string = "include-entity-type"
+	AlarmExcludeEntityTypeFlagLong  string = "exclude-entity-type"
+	AlarmIncludeEntityNameFlagLong  string = "include-entity-name"
+	AlarmExcludeEntityNameFlagLong  string = "exclude-entity-name"
+	AlarmIncludeEntityRPoolFlagLong string = "include-entity-rp"
+	AlarmExcludeEntityRPoolFlagLong string = "exclude-entity-rp"
+	AlarmIncludeNameFlagLong        string = "include-name"
+	AlarmExcludeNameFlagLong        string = "exclude-name"
+	AlarmIncludeDescFlagLong        string = "include-desc"
+	AlarmExcludeDescFlagLong        string = "exclude-desc"
+	AlarmIncludeStatusFlagLong      string = "include-status"
+	AlarmExcludeStatusFlagLong      string = "exclude-status"
+
+	// Disk consolidation
+	TriggerReloadFlagLong string = "trigger-reload"
+)
+
 // Default flag settings if not overridden by user input
 const (
 	defaultLogLevel                              string  = "info"
