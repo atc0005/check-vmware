@@ -26,6 +26,30 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.35.0] - 2023-08-17
+
+### Added
+
+- (GH-809) Add support for excluding/ignoring VMs by `Folder` Managed Object
+  ID (MOID)
+
+### Changed
+
+- Dependencies
+  - `Go`
+    - `1.19.12` to `1.20.7`
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.13.2` to `go-ci-oldstable-build-v0.13.4`
+- (GH-862) Replace hard-coded flag names with constants
+- (GH-901) Update project to Go 1.20 series
+
+### Fixed
+
+- (GH-658) Potential nil pointer dereference in
+  `vsphere.ResourcePoolsMemoryReport()`
+- (GH-852) Evaluate consistency of terminology regarding VM collections
+- (GH-897) README: Fix short flag for virtual hardware plugin
+
 ## [v0.34.1] - 2023-08-10
 
 ### Changed
@@ -2183,7 +2207,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.34.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.35.0...HEAD
+[v0.35.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.35.0
 [v0.34.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.34.1
 [v0.34.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.34.0
 [v0.33.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.33.3
