@@ -295,6 +295,10 @@ func main() {
 
 	// Debug logging for troubleshooting purposes.
 	for hostID, pairing := range h2dIdx {
+		// Reassign the iteration variable inside the loop to prevent implicit
+		// memory aliasing.
+		// https://stackoverflow.com/questions/62446118/implicit-memory-aliasing-in-for-loop
+		hostID, pairing := hostID, pairing
 
 		dsNamesForHost := func(pairings vsphere.HostDatastoresPairing) string {
 			names := make([]string, len(pairing.Datastores))
