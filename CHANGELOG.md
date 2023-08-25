@@ -26,6 +26,18 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.35.1] - 2023-08-25
+
+### Changed
+
+- Dependencies
+  - `atc0005/go-ci`
+    - `go-ci-oldstable-build-v0.13.4` to `go-ci-oldstable-build-v0.13.7`
+
+### Fixed
+
+- (GH-916) `gosec` `G601: Implicit memory aliasing in for loop` linting errors
+
 ## [v0.35.0] - 2023-08-17
 
 ### Added
@@ -2207,7 +2219,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.35.0...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.35.1...HEAD
+[v0.35.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.35.1
 [v0.35.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.35.0
 [v0.34.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.34.1
 [v0.34.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.34.0
