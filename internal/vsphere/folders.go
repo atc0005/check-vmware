@@ -475,11 +475,12 @@ func getFoldersCountUsingContainerView(
 	containerRef types.ManagedObjectReference,
 	recursive bool,
 ) (int, error) {
+
 	funcTimeStart := time.Now()
 
-	var allFolders []mo.Folder
+	var allFolders []types.ObjectContent
 
-	defer func(folders *[]mo.Folder, objRef types.ManagedObjectReference) {
+	defer func(folders *[]types.ObjectContent, objRef types.ManagedObjectReference) {
 		logger.Printf(
 			"It took %v to execute getFoldersCountUsingContainerView func (and count %d Folders from %s).\n",
 			time.Since(funcTimeStart),
@@ -506,11 +507,13 @@ func getFoldersCountUsingContainerView(
 		)
 	}
 
+	kind := []string{MgObjRefTypeFolder}
+
 	// FIXME: Should this filter to a specific datacenter? See GH-219.
 	v, createViewErr := m.CreateContainerView(
 		ctx,
 		containerRef,
-		[]string{MgObjRefTypeFolder},
+		kind,
 		recursive,
 	)
 	if createViewErr != nil {
@@ -530,8 +533,9 @@ func getFoldersCountUsingContainerView(
 	}()
 
 	// Perform as lightweight of a search as possible as we're only interested
-	// in counting the total resource pools in a specified container.
-	retrieveErr := v.Retrieve(ctx, []string{MgObjRefTypeFolder}, []string{"name"}, &allFolders)
+	// in counting the total folders in a specified container.
+	prop := []string{"overallStatus"}
+	retrieveErr := v.Retrieve(ctx, kind, prop, &allFolders)
 	if retrieveErr != nil {
 		return 0, retrieveErr
 	}
@@ -582,28 +586,32 @@ func validateFolders(ctx context.Context, client *vim25.Client, filterOptions VM
 func GetNumTotalFolders(ctx context.Context, client *vim25.Client) (int, error) {
 	funcTimeStart := time.Now()
 
-	defer func() {
-		logger.Printf(
-			"It took %v to execute GetNumTotalFolders func.\n",
-			time.Since(funcTimeStart),
-		)
-	}()
+	var numAllFolders int
 
-	numAllFolders, err := getFoldersCountUsingContainerView(
+	defer func(allFolders *int) {
+		logger.Printf(
+			"It took %v to execute GetNumTotalFolders func (and count %d Folders).\n",
+			time.Since(funcTimeStart),
+			*allFolders,
+		)
+	}(&numAllFolders)
+
+	var getFoldersErr error
+	numAllFolders, getFoldersErr = getFoldersCountUsingContainerView(
 		ctx,
 		client,
 		client.ServiceContent.RootFolder,
 		true,
 	)
-	if err != nil {
+	if getFoldersErr != nil {
 		logger.Printf(
 			"error retrieving list of all folders: %v",
-			err,
+			getFoldersErr,
 		)
 
 		return 0, fmt.Errorf(
 			"error retrieving list of all folders: %w",
-			err,
+			getFoldersErr,
 		)
 	}
 	logger.Printf(

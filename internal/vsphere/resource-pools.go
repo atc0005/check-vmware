@@ -59,28 +59,32 @@ var ErrResourcePoolStatisticUnavailable = errors.New("resource pool missing expe
 func GetNumTotalRPs(ctx context.Context, client *vim25.Client) (int, error) {
 	funcTimeStart := time.Now()
 
-	defer func() {
-		logger.Printf(
-			"It took %v to execute getNumTotalRPs func.\n",
-			time.Since(funcTimeStart),
-		)
-	}()
+	var numAllRPs int
 
-	numAllRPs, err := getRPsCountUsingContainerView(
+	defer func(allRPs *int) {
+		logger.Printf(
+			"It took %v to execute GetNumTotalRPs func (and count %d RPs).\n",
+			time.Since(funcTimeStart),
+			*allRPs,
+		)
+	}(&numAllRPs)
+
+	var getRPsErr error
+	numAllRPs, getRPsErr = getRPsCountUsingContainerView(
 		ctx,
 		client,
 		client.ServiceContent.RootFolder,
 		true,
 	)
-	if err != nil {
+	if getRPsErr != nil {
 		logger.Printf(
 			"error retrieving list of all resource pools: %v",
-			err,
+			getRPsErr,
 		)
 
 		return 0, fmt.Errorf(
 			"error retrieving list of all resource pools: %w",
-			err,
+			getRPsErr,
 		)
 	}
 	logger.Printf(
@@ -267,13 +271,12 @@ func getRPsCountUsingContainerView(
 	containerRef types.ManagedObjectReference,
 	recursive bool,
 ) (int, error) {
+
 	funcTimeStart := time.Now()
 
-	// FIXME: What would be a useful preallocation value?
-	// allRPs := make([]mo.VirtualMachine, 0)
-	var allRPs []mo.ResourcePool
+	var allRPs []types.ObjectContent
 
-	defer func(rps *[]mo.ResourcePool, objRef types.ManagedObjectReference) {
+	defer func(rps *[]types.ObjectContent, objRef types.ManagedObjectReference) {
 		logger.Printf(
 			"It took %v to execute getRPsCountUsingContainerView func (and count %d RPs from %s).\n",
 			time.Since(funcTimeStart),
@@ -299,11 +302,13 @@ func getRPsCountUsingContainerView(
 		)
 	}
 
+	kind := []string{MgObjRefTypeResourcePool}
+
 	// FIXME: Should this filter to a specific datacenter? See GH-219.
 	v, createViewErr := m.CreateContainerView(
 		ctx,
 		containerRef,
-		[]string{MgObjRefTypeResourcePool},
+		kind,
 		recursive,
 	)
 	if createViewErr != nil {
@@ -324,7 +329,8 @@ func getRPsCountUsingContainerView(
 
 	// Perform as lightweight of a search as possible as we're only interested
 	// in counting the total resource pools in a specified container.
-	retrieveErr := v.Retrieve(ctx, []string{MgObjRefTypeResourcePool}, []string{"name"}, &allRPs)
+	prop := []string{"overallStatus"}
+	retrieveErr := v.Retrieve(ctx, kind, prop, &allRPs)
 	if retrieveErr != nil {
 		return 0, retrieveErr
 	}
