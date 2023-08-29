@@ -18,6 +18,7 @@ import (
 
 	"github.com/atc0005/check-vmware/internal/textutils"
 	"github.com/atc0005/go-nagios"
+	"github.com/vmware/govmomi/property"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -825,7 +826,7 @@ func FilterVMs(ctx context.Context, client *vim25.Client, filterOptions VMsFilte
 func GetNumTotalVMs(ctx context.Context, client *vim25.Client) (int, error) {
 	funcTimeStart := time.Now()
 
-	var numVMs int
+	var numAllVMs int
 
 	defer func(allVMs *int) {
 		logger.Printf(
@@ -833,10 +834,10 @@ func GetNumTotalVMs(ctx context.Context, client *vim25.Client) (int, error) {
 			time.Since(funcTimeStart),
 			*allVMs,
 		)
-	}(&numVMs)
+	}(&numAllVMs)
 
 	var getVMsErr error
-	numVMs, getVMsErr = getVMsCountUsingParentPoolsAndContainerView(
+	numAllVMs, getVMsErr = getVMsCountUsingRootFolderContainerView(
 		ctx,
 		client,
 		true,
@@ -854,7 +855,7 @@ func GetNumTotalVMs(ctx context.Context, client *vim25.Client) (int, error) {
 		)
 	}
 
-	return numVMs, nil
+	return numAllVMs, nil
 }
 
 // GetAllVMs provides every VirtualMachine in the inventory using the
@@ -1126,24 +1127,139 @@ func GetVMs(ctx context.Context, c *vim25.Client, propsSubset bool) ([]mo.Virtua
 }
 
 // getVMsCountUsingParentPoolsAndContainerView returns only VM counts, not VM
-// template counts. This approach retrieves all VirtualMachines using resource
-// pools named 'Resources'; each cluster and standalone host in the Datacenter
-// has a "parent" resource pool named 'Resources'.
+// template counts.
 //
-// This approach ignores VM templates as templates are not rooted to a
-// resource pool.
-func getVMsCountUsingParentPoolsAndContainerView(
+// This function retrieves all VirtualMachines using "parent" resource pools
+// named 'Resources' (ParentResourcePool). One of these pools are present for
+// each standalone host (ComputeResource) in a datacenter.
+//
+// For example, if we have one standalone host and one cluster in a datacenter
+// like so:
+//
+// Datacenter (ExampleDC)
+// - Hosts & Clusters (hostFolder property)
+//   - HostSystem (192.168.2.200)
+//   - Cluster (XYZ-Hosted)
+//
+// There are two 'Resources' resource pools.
+//
+// We count VMs within each 'Resources' resource pool. This approach ignores
+// VM templates as templates are not rooted to a resource pool.
+// func getVMsCountUsingParentPoolsAndContainerView(
+// 	ctx context.Context,
+// 	c *vim25.Client,
+// 	recursive bool,
+// ) (int, error) {
+// 	funcTimeStart := time.Now()
+//
+// 	var allVMs []types.ObjectContent
+//
+// 	defer func(vms *[]types.ObjectContent) {
+// 		logger.Printf(
+// 			"It took %v to execute getVMsCountUsingParentPoolsAndContainerView func (and count %d VMs).\n",
+// 			time.Since(funcTimeStart),
+// 			len(allVMs),
+// 		)
+// 	}(&allVMs)
+//
+// 	// Create a view of caller-specified objects
+// 	m := view.NewManager(c)
+//
+// 	// FIXME: Should this filter to a specific datacenter? See GH-219.
+// 	rpView, createViewErr := m.CreateContainerView(
+// 		ctx,
+// 		c.ServiceContent.RootFolder,
+// 		[]string{MgObjRefTypeResourcePool},
+// 		recursive,
+// 	)
+// 	if createViewErr != nil {
+// 		return 0, createViewErr
+// 	}
+//
+// 	defer func() {
+// 		// Per vSphere Web Services SDK Programming Guide - VMware vSphere 7.0
+// 		// Update 1:
+// 		//
+// 		// A best practice when using views is to call the DestroyView()
+// 		// method when a view is no longer needed. This practice frees memory
+// 		// on the server.
+// 		if err := rpView.Destroy(ctx); err != nil {
+// 			logger.Printf("Error occurred while destroying datacenter view: %s", err)
+// 		}
+// 	}()
+//
+// 	var rps []mo.ResourcePool
+// 	retrieveErr := rpView.Retrieve(ctx, []string{MgObjRefTypeResourcePool}, []string{"name"}, &rps)
+// 	if retrieveErr != nil {
+// 		return 0, retrieveErr
+// 	}
+//
+// 	for _, rp := range rps {
+// 		if rp.Name == ParentResourcePool {
+// 			parentPoolID := rp.Reference()
+// 			logger.Printf("Pool ID %s for Pool %s", parentPoolID, rp.Name)
+// 			vmView, createViewErr := m.CreateContainerView(
+// 				ctx,
+// 				parentPoolID,
+// 				[]string{MgObjRefTypeVirtualMachine},
+// 				recursive,
+// 			)
+// 			if createViewErr != nil {
+// 				return 0, createViewErr
+// 			}
+// 			defer func() {
+// 				if err := vmView.Destroy(ctx); err != nil {
+// 					logger.Printf("Error occurred while destroying virtual machine view: %s", err)
+// 				}
+// 			}()
+//
+// 			var poolVMs []types.ObjectContent
+//
+// 			kind := []string{MgObjRefTypeVirtualMachine}
+// 			prop := []string{"overallStatus"}
+// 			retrieveErr = vmView.Retrieve(ctx, kind, prop, &poolVMs)
+// 			if retrieveErr != nil {
+// 				return 0, fmt.Errorf(
+// 					"failed to retrieve VMs list from parent resource pool %s: %w",
+// 					ParentResourcePool,
+// 					retrieveErr,
+// 				)
+// 			}
+//
+// 			allVMs = append(allVMs, poolVMs...)
+// 		}
+// 	}
+//
+// 	// Remove any duplicate entries which could occur if we process nested
+// 	// resource pools. Because we are processing only "parent" resource pools
+// 	// this should not happen, but we guard against any unexpected edge cases
+// 	// just to be sure.
+// 	logger.Println("Deduplicating VMs")
+// 	numVMsBeforeDeduping := len(allVMs)
+// 	allVMs = dedupeObjects(allVMs)
+// 	numVMsAfterDeduping := len(allVMs)
+//
+// 	logger.Printf("Before deduping VMs: %d", numVMsBeforeDeduping)
+// 	logger.Printf("After deduping VMs: %d", numVMsAfterDeduping)
+//
+// 	return len(allVMs), nil
+// }
+
+// getVMsCountUsingRootFolderContainerView returns only VM counts, not VM
+// template counts.
+func getVMsCountUsingRootFolderContainerView(
 	ctx context.Context,
 	c *vim25.Client,
 	recursive bool,
 ) (int, error) {
+
 	funcTimeStart := time.Now()
 
-	var allVMs []mo.VirtualMachine
+	var allVMs []types.ObjectContent
 
-	defer func(vms *[]mo.VirtualMachine) {
+	defer func(vms *[]types.ObjectContent) {
 		logger.Printf(
-			"It took %v to execute getVMsCountUsingParentPoolsAndContainerView func (and count %d VMs).\n",
+			"It took %v to execute getVMsCountUsingRootFolderContainerView func (and count %d VMs).\n",
 			time.Since(funcTimeStart),
 			len(allVMs),
 		)
@@ -1152,91 +1268,32 @@ func getVMsCountUsingParentPoolsAndContainerView(
 	// Create a view of caller-specified objects
 	m := view.NewManager(c)
 
-	// FIXME: Should this filter to a specific datacenter? See GH-219.
-	rpView, createViewErr := m.CreateContainerView(
+	kind := []string{MgObjRefTypeVirtualMachine}
+	v, createViewErr := m.CreateContainerView(
 		ctx,
 		c.ServiceContent.RootFolder,
-		[]string{MgObjRefTypeResourcePool},
+		kind,
 		recursive,
 	)
 	if createViewErr != nil {
 		return 0, createViewErr
 	}
-
 	defer func() {
-		// Per vSphere Web Services SDK Programming Guide - VMware vSphere 7.0
-		// Update 1:
-		//
-		// A best practice when using views is to call the DestroyView()
-		// method when a view is no longer needed. This practice frees memory
-		// on the server.
-		if err := rpView.Destroy(ctx); err != nil {
-			logger.Printf("Error occurred while destroying datacenter view: %s", err)
+		if err := v.Destroy(ctx); err != nil {
+			logger.Printf("Error occurred while destroying virtual machine view: %s", err)
 		}
 	}()
 
-	// Perform as lightweight of a search as possible; we need to retrieve the
-	// name property for easy identification and the config property to
-	// determine whether the VM is a template.
-	// var allVMsIncludingTemplates []mo.VirtualMachine
-	// retrieveErr := v.Retrieve(ctx, []string{MgObjRefTypeVirtualMachine}, []string{"name", "config"}, &allVMsIncludingTemplates)
-	// if retrieveErr != nil {
-	// 	return 0, retrieveErr
-	// }
-	var rps []mo.ResourcePool
-	retrieveErr := rpView.Retrieve(ctx, []string{MgObjRefTypeResourcePool}, []string{"name"}, &rps)
+	filter := property.Filter{"config.template": false}
+	prop := []string{"overallStatus"}
+
+	retrieveErr := v.RetrieveWithFilter(ctx, kind, prop, &allVMs, filter)
 	if retrieveErr != nil {
-		return 0, retrieveErr
+		return 0, fmt.Errorf(
+			"failed to retrieve VMs list: %w",
+			retrieveErr,
+		)
 	}
-
-	// NOTE: It looks like there are multiple resource pools named 'Resources'
-	// (ParentResourcePool) in the inventory (that I am testing against). Not
-	// sure why yet, so we loop over the collection and process VMs within
-	// each as I don't (yet) know a way to identify which is the correct
-	// "root" or parent resource pool.
-	for _, rp := range rps {
-		if rp.Name == ParentResourcePool {
-			parentPoolID := rp.Reference()
-			logger.Printf("Pool ID %s for Pool %s", parentPoolID, rp.Name)
-			vmView, createViewErr := m.CreateContainerView(
-				ctx,
-				parentPoolID,
-				[]string{MgObjRefTypeVirtualMachine},
-				recursive,
-			)
-			if createViewErr != nil {
-				return 0, createViewErr
-			}
-			defer func() {
-				if err := vmView.Destroy(ctx); err != nil {
-					logger.Printf("Error occurred while destroying virtual machine view: %s", err)
-				}
-			}()
-
-			var poolVMs []mo.VirtualMachine
-
-			retrieveErr = vmView.Retrieve(ctx, []string{MgObjRefTypeVirtualMachine}, []string{"name"}, &poolVMs)
-			if retrieveErr != nil {
-				return 0, fmt.Errorf(
-					"failed to retrieve VMs list from parent resource pool %s: %w",
-					ParentResourcePool,
-					retrieveErr,
-				)
-			}
-
-			allVMs = append(allVMs, poolVMs...)
-		}
-	}
-
-	// Remove any duplicate entries which could occur if we process nested
-	// resource pools.
-	logger.Println("Deduplicating VMs")
-	numVMsBeforeDeduping := len(allVMs)
-	allVMs = dedupeVMs(allVMs)
-	numVMsAfterDeduping := len(allVMs)
-
-	logger.Printf("Before deduping VMs: %d", numVMsBeforeDeduping)
-	logger.Printf("After deduping VMs: %d", numVMsAfterDeduping)
 
 	return len(allVMs), nil
 }
@@ -2118,6 +2175,39 @@ func dedupeVMs(vmsList []mo.VirtualMachine) []mo.VirtualMachine {
 
 	return vmsList[:j]
 }
+
+// dedupeObjects receives a collection of ObjectContent data objects and
+// returns unique values from the collection.
+//
+// NOTE: The ObjectContent data object type contains the contents retrieved
+// for a single managed object.
+//
+// https://vdc-download.vmware.com/vmwb-repository/dcr-public/fa5d1ee7-fad5-4ebf-b150-bdcef1d38d35/a5e46da1-9b96-4f0c-a1d0-7b8f3ebfd4f5/doc/vmodl.query.PropertyCollector.ObjectContent.html
+// func dedupeObjects(objects []types.ObjectContent) []types.ObjectContent {
+//
+// 	funcTimeStart := time.Now()
+//
+// 	defer func(objs *[]types.ObjectContent) {
+// 		logger.Printf(
+// 			"It took %v to execute dedupeObjects func (evaluated %d ObjectContent values).\n",
+// 			time.Since(funcTimeStart),
+// 			len(*objs),
+// 		)
+// 	}(&objects)
+//
+// 	seen := make(map[string]struct{}, len(objects))
+// 	j := 0
+// 	for _, item := range objects {
+// 		if _, ok := seen[item.Obj.Value]; ok {
+// 			continue
+// 		}
+// 		seen[item.Obj.Value] = struct{}{}
+// 		objects[j] = item
+// 		j++
+// 	}
+//
+// 	return objects[:j]
+// }
 
 // VMNames receives a list of VirtualMachine values and returns a new list of
 // VirtualMachine Name values.
