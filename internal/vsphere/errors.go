@@ -18,7 +18,7 @@ import (
 // environment(s) monitored by plugins in this project. While this team may be
 // the same ones to receive the notifications from the monitoring system using
 // this project's plugin, that may not always be the case.
-const VMwareAdminAssistanceNeeded = "assistance needed from vmware administrators to resolve issue"
+const VMwareAdminAssistanceNeeded = "assistance needed from vmware administrators to resolve issue (see plugin doc for details)"
 
 // AnnotateError is a helper function used to add additional human-readable
 // explanation for errors encountered during plugin execution. We first apply
