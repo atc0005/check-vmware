@@ -96,12 +96,14 @@ type DatastoreVMs []DatastoreVM
 // DatastoreVM is a summary of details for a VirtualMachine found on a
 // specific datastore.
 type DatastoreVM struct {
-
 	// Name is the display name of the VirtualMachine.
 	Name string
 
 	// VMSize is the human readable or formatted size of the VirtualMachine.
 	VMSize string
+
+	// Template indicates whether the VirtualMachine is a template.
+	Template bool
 
 	// DatastoreSpaceUsage is the human readable or formatted percentage of the
 	// Datastore space consumed by this VirtualMachine.
@@ -268,37 +270,34 @@ type DatastorePerformanceSummary struct {
 // printVMSummary is a helper function used by Datastore report functions to
 // generate summary information for a collection of Virtual Machines present
 // on a specific datastore.
-func printVMSummary(w io.Writer, vms DatastoreVMs, powerState types.VirtualMachinePowerState) {
-
+func printVMSummary(w io.Writer, dsVMs DatastoreVMs, powerState types.VirtualMachinePowerState) {
 	// Skip efforts to list VM summary details if there is nothing to show.
-	if len(vms) == 0 {
+	if len(dsVMs) == 0 {
 		return
 	}
 
-	var powerStateVMs int
-	switch powerState {
-	case types.VirtualMachinePowerStatePoweredOn:
-		powerStateVMs = vms.NumVMsPoweredOn()
-	default:
-		powerStateVMs = vms.NumVMsPoweredOff()
+	sectionHeader := func(count int, state string) string {
+		header := fmt.Sprintf(
+			"%d %s VMs on datastore:%s%s",
+			count,
+			state,
+			nagios.CheckOutputEOL,
+			nagios.CheckOutputEOL,
+		)
+
+		if count == 0 {
+			header = strings.ReplaceAll(header, ":", "")
+		}
+
+		return header
 	}
 
-	sectionHeader := fmt.Sprintf(
-		"%d %s VMs on datastore:%s%s",
-		powerStateVMs,
-		powerState,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
+	listVMs := func(w io.Writer, vms DatastoreVMs) {
+		if len(vms) == 0 {
+			return
+		}
 
-	if powerStateVMs == 0 {
-		sectionHeader = strings.ReplaceAll(sectionHeader, ":", "")
-	}
-
-	fmt.Fprint(w, sectionHeader)
-
-	for _, vm := range vms {
-		if vm.PowerState == powerState {
+		for _, vm := range vms {
 			fmt.Fprintf(
 				w,
 				"* %s [Size: %s, Datastore Usage: %s]%s",
@@ -308,10 +307,43 @@ func printVMSummary(w io.Writer, vms DatastoreVMs, powerState types.VirtualMachi
 				nagios.CheckOutputEOL,
 			)
 		}
+
+		fmt.Fprintf(w, nagios.CheckOutputEOL)
 	}
 
-	fmt.Fprintf(w, nagios.CheckOutputEOL)
+	switch {
+	case powerState == types.VirtualMachinePowerStatePoweredOn:
+		fmt.Fprint(
+			w,
+			sectionHeader(
+				dsVMs.NumVMsPoweredOn(),
+				string(types.VirtualMachinePowerStatePoweredOn),
+			),
+		)
 
+		listVMs(w, dsVMs.VMsPoweredOn())
+
+	case powerState == types.VirtualMachinePowerStatePoweredOff:
+		fmt.Fprint(
+			w,
+			sectionHeader(
+				dsVMs.NumVMsPoweredOff(),
+				string(types.VirtualMachinePowerStatePoweredOff),
+			),
+		)
+
+		listVMs(w, dsVMs.VMsPoweredOff())
+
+		fmt.Fprint(
+			w,
+			sectionHeader(
+				dsVMs.NumVMsTemplates(),
+				"template",
+			),
+		)
+
+		listVMs(w, dsVMs.VMsTemplates())
+	}
 }
 
 // ValidateDatastoreAccessibility evaluates a given Datastore's accessibility
@@ -511,6 +543,15 @@ func DatastoreVMsSummary(ds mo.Datastore, vms []mo.VirtualMachine) DatastoreVMs 
 
 	for _, vm := range vms {
 
+		vmIsTemplate := func(vm mo.VirtualMachine) bool {
+			// We can only safely assume that the VM is not a template if the
+			// configuration for the VM is unavailable.
+			if vm.Config == nil {
+				return false
+			}
+			return vm.Config.Template
+		}(vm)
+
 		var vmStorageUsed int64
 		for _, usage := range vm.Storage.PerDatastoreUsage {
 			if usage.Datastore == ds.Reference() {
@@ -524,6 +565,7 @@ func DatastoreVMsSummary(ds mo.Datastore, vms []mo.VirtualMachine) DatastoreVMs 
 			VMSize:              units.ByteSize(vmStorageUsed).String(),
 			DatastoreSpaceUsage: fmt.Sprintf("%2.2f%%", vmPercentOfDSUsed),
 			PowerState:          vm.Runtime.PowerState,
+			Template:            vmIsTemplate,
 		}
 
 		datastoreVMs = append(datastoreVMs, dsVM)
@@ -964,9 +1006,75 @@ func (dsVMs DatastoreVMs) NumVMsPoweredOn() int {
 }
 
 // NumVMsPoweredOff indicates how many VirtualMachines on a specific Datastore
-// are powered off OR suspended.
+// are powered off OR suspended. VirtualMachine templates (if any) are NOT
+// included in this count.
 func (dsVMs DatastoreVMs) NumVMsPoweredOff() int {
-	return len(dsVMs) - dsVMs.NumVMsPoweredOn()
+	count := len(dsVMs) - dsVMs.NumVMsPoweredOn() - dsVMs.NumVMsTemplates()
+
+	if count < 0 {
+		return 0
+	}
+
+	return count
+}
+
+// NumVMsTemplates indicates how many VirtualMachines on a specific Datastore
+// are templates.
+func (dsVMs DatastoreVMs) NumVMsTemplates() int {
+	var numTemplates int
+	for _, vm := range dsVMs {
+		if vm.Template {
+			numTemplates++
+		}
+	}
+
+	return numTemplates
+}
+
+// VMsPoweredOn returns all VirtualMachines on a specific Datastore which are
+// powered on or an empty collection otherwise.
+func (dsVMs DatastoreVMs) VMsPoweredOn() DatastoreVMs {
+	vms := make(DatastoreVMs, 0, dsVMs.NumVMsPoweredOn())
+	for _, vm := range dsVMs {
+		if vm.PowerState == types.VirtualMachinePowerStatePoweredOn {
+			vms = append(vms, vm)
+		}
+	}
+
+	return vms
+}
+
+// VMsPoweredOff returns all VirtualMachines on a specific Datastore which are
+// powered off OR suspended. An empty collection is returned if no matches are
+// found.
+//
+// NOTE: VirtualMachine templates are NOT included in the collection.
+func (dsVMs DatastoreVMs) VMsPoweredOff() DatastoreVMs {
+	vms := make(DatastoreVMs, 0, dsVMs.NumVMsPoweredOff())
+	for _, vm := range dsVMs {
+		if vm.Template {
+			continue
+		}
+
+		if vm.PowerState != types.VirtualMachinePowerStatePoweredOn {
+			vms = append(vms, vm)
+		}
+	}
+
+	return vms
+}
+
+// VMsTemplates returns all VirtualMachine templates on a specific Datastore or
+// an empty collection otherwise.
+func (dsVMs DatastoreVMs) VMsTemplates() DatastoreVMs {
+	vms := make(DatastoreVMs, 0, dsVMs.NumVMsTemplates())
+	for _, vm := range dsVMs {
+		if vm.Template {
+			vms = append(vms, vm)
+		}
+	}
+
+	return vms
 }
 
 // GetDatastores accepts a context, a connected client and a boolean value
