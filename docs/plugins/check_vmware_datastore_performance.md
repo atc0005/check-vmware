@@ -9,7 +9,7 @@
 
 - [Overview](#overview)
 - [Output](#output)
-  - [Requirements](#requirements)
+- [Requirements](#requirements)
 - [Stability of this plugin](#stability-of-this-plugin)
 - [Performance Data](#performance-data)
   - [Background](#background)
@@ -26,6 +26,8 @@
 - [Examples](#examples)
   - [CLI invocation](#cli-invocation)
   - [Command definition](#command-definition)
+- [Troubleshooting](#troubleshooting)
+  - [Datastore storage I/O statistics collection disabled](#datastore-storage-io-statistics-collection-disabled)
 - [License](#license)
 - [References](#references)
 
@@ -47,13 +49,22 @@ more detailed information for display within the web UI, use in email and
 Teams notifications
 ([atc0005/send2teams](https://github.com/atc0005/send2teams)).
 
-### Requirements
+## Requirements
 
 This plugin requires that the `Statistics Collection` setting (part of
 `Storage I/O Control`) for a monitored datastore be enabled. If it is not,
 this plugin is unable to evaluate performance for a specified datastore. This
 plugin attempts to detect and report this condition so that vSphere
 administrators can assist with enabling this feature.
+
+**NOTE**: ***Changing this setting requires elevated privileges in the vSphere
+environment.***
+
+The privileges needed to perform normal sysadmin duties (creating VMs, moving
+VMs, deleting VMs, uploading/downloading files from the datastore, etc.) are
+not sufficient to change this setting. If you have a dedicated team that
+manages your virtual environment you will need to contact them to have this
+setting changed for *every* datastore you wish to monitor with this plugin.
 
 To help with locating datastores in need of adjustment, the following PowerCLI
 snippet may be used:
@@ -321,6 +332,24 @@ See the [configuration options](#configuration-options) section for all
 command-line settings supported by this plugin along with descriptions of
 each. See the [contrib](#contrib) section for information regarding example
 command definitions and Nagios configuration files.
+
+## Troubleshooting
+
+### Datastore storage I/O statistics collection disabled
+
+If you see an error message like this one:
+
+> ```text
+> UNKNOWN: Unable to retrieve performance summary for datastore "DATASTORE_NAME_HERE": datastore storage I/O statistics collection disabled
+>
+> **ERRORS**
+>
+> * datastore storage I/O statistics collection disabled: assistance needed from vmware administrators to resolve issue
+> ```
+
+then it means that the required `Statistics Collection` setting for the
+specified datastore is not enabled. See the [Requirements](#requirements)
+section of this documentation for more information.
 
 ## License
 
