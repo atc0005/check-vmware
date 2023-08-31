@@ -26,6 +26,21 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.36.0] - 2023-08-31
+
+### Added
+
+- (GH-927) Update datastore plugins to indicate which VMs within datastore are
+  templates
+
+### Changed
+
+- (GH-926) Refactor objects tally logic used to provide plugin "trailer"
+  summary details
+- (GH-932) Update `vsphere.VMwareAdminAssistanceNeeded` annotation to point
+  sysadmins to plugin doc
+- (GH-939) Update datastore performance plugin doc
+
 ## [v0.35.1] - 2023-08-25
 
 ### Changed
@@ -2219,7 +2234,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.35.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.0...HEAD
+[v0.36.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.0
 [v0.35.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.35.1
 [v0.35.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.35.0
 [v0.34.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.34.1
