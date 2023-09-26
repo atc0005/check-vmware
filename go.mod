@@ -13,7 +13,7 @@ require (
 	github.com/atc0005/go-nagios v0.16.0
 	github.com/google/go-cmp v0.5.9
 	github.com/rs/zerolog v1.30.0
-	github.com/vmware/govmomi v0.30.7
+	github.com/vmware/govmomi v0.31.0
 )
 
 require (
