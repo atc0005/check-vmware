@@ -11,7 +11,7 @@ go 1.19
 
 require (
 	github.com/atc0005/go-nagios v0.16.0
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/rs/zerolog v1.31.0
 	github.com/vmware/govmomi v0.32.0
 )
