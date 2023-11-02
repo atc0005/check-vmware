@@ -512,7 +512,7 @@ func HostSystemMemoryUsageReport(
 	fmt.Fprintf(
 		&report,
 		"Host Summary:%s%s"+
-			"* Name: %s%s"+
+			"* Name: %s%s"+ //nolint:goconst
 			"* Memory%s"+
 			"** Used by all VMs: %s (%.2f%%)%s"+
 			"** Used by visible VMs: %s (%.2f%%)%s"+
@@ -729,7 +729,7 @@ func HostSystemCPUUsageReport(
 	fmt.Fprintf(
 		&report,
 		"Host Summary:%s%s"+
-			"* Name: %s%s"+
+			"* Name: %s%s"+ //nolint:goconst
 			"* CPU%s"+
 			"** Used by all VMs: %s (%.2f%%)%s"+
 			"** Used by visible VMs: %s (%.2f%%)%s"+
