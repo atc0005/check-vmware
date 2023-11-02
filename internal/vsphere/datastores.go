@@ -1348,7 +1348,7 @@ func DatastoreSpaceUsageReport(
 	fmt.Fprintf(
 		&report,
 		"Datastore Space Summary:%s%s"+
-			"* Name: %s%s"+
+			"* Name: %s%s"+ //nolint:goconst
 			"* Space Used: %v (%.2f%%)%s"+
 			"* Space Remaining: %v (%.2f%%)%s"+
 			"* VMs: %v %s%s",
