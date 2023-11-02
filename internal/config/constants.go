@@ -95,6 +95,10 @@ const (
 	triggerReloadStateDataFlagHelp                  string = "Toggles (potentially expensive) reload/refresh of state data for evaluated vSphere objects. This is disabled by default."
 )
 
+// shorthandFlagSuffix is appended to short flag help text to emphasize that
+// the flag is a shorthand version of a longer flag.
+const shorthandFlagSuffix = " (shorthand)"
+
 // Flag names. Exported so that they're available from tests.
 const (
 
