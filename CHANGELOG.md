@@ -26,6 +26,28 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.36.2] - 2023-11-02
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-980) canary: bump golang from 1.20.8 to 1.20.10 in /dependabot/docker/go
+- (GH-977) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.10 to go-ci-oldstable-build-v0.13.11 in /dependabot/docker/builds
+- (GH-981) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.11 to go-ci-oldstable-build-v0.13.12 in /dependabot/docker/builds
+- (GH-989) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.13.12 to go-ci-oldstable-build-v0.14.0 in /dependabot/docker/builds
+- (GH-976) go.mod: bump github.com/google/go-cmp from 0.5.9 to 0.6.0
+- (GH-985) go.mod: bump github.com/mattn/go-isatty from 0.0.19 to 0.0.20
+- (GH-965) go.mod: bump github.com/rs/zerolog from 1.30.0 to 1.31.0
+- (GH-967) go.mod: bump github.com/vmware/govmomi from 0.30.7 to 0.32.0
+- (GH-987) go.mod: bump github.com/vmware/govmomi from 0.32.0 to 0.33.0
+- (GH-993) go.mod: bump github.com/vmware/govmomi from 0.33.0 to 0.33.1
+- (GH-969) go.mod: bump golang.org/x/sys from 0.12.0 to 0.13.0
+
+### Fixed
+
+- (GH-996) Fix goconst linting errors
+
 ## [v0.36.1] - 2023-10-06
 
 ### Changed
@@ -2247,7 +2269,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.1...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.2...HEAD
+[v0.36.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.2
 [v0.36.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.1
 [v0.36.0]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.0
 [v0.35.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.35.1
