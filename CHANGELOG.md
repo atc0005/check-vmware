@@ -26,6 +26,16 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.36.4] - 2023-12-08
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1012) canary: bump golang from 1.20.11 to 1.20.12 in /dependabot/docker/go
+- (GH-1015) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.1 to go-ci-oldstable-build-v0.14.2 in /dependabot/docker/builds
+- (GH-1011) go.mod: bump golang.org/x/sys from 0.14.0 to 0.15.0
+
 ## [v0.36.3] - 2023-11-15
 
 ### Changed
@@ -2279,7 +2289,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.3...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.4...HEAD
+[v0.36.4]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.4
 [v0.36.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.3
 [v0.36.2]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.2
 [v0.36.1]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.1
