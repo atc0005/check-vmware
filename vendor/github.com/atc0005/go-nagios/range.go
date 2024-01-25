@@ -9,6 +9,7 @@
 package nagios
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
@@ -79,9 +80,9 @@ func ParseRangeString(input string) *Range {
 	r := Range{}
 
 	digitOrInfinity := regexp.MustCompile(`[\d~]`)
-	optionalInvertAndRange := regexp.MustCompile(`^\@?((?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?|~)?(:((?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?)?)?$`)
-	firstHalfOfRange := regexp.MustCompile(`^((?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?)?:`)
-	endOfRange := regexp.MustCompile(`^(?:[-+]?[\d\.]+)(?:e(?:[-+]?[\d\.]+))?$`)
+	optionalInvertAndRange := regexp.MustCompile(`^@?([-+]?[\d.]+(?:e[-+]?[\d.]+)?|~)?(:([-+]?[\d.]+(?:e[-+]?[\d.]+)?)?)?$`)
+	firstHalfOfRange := regexp.MustCompile(`^([-+]?[\d.]+(?:e[-+]?[\d.]+)?)?:`)
+	endOfRange := regexp.MustCompile(`^[-+]?[\d.]+(?:e[-+]?[\d.]+)?$`)
 
 	r.Start = 0
 	r.StartInfinity = false
@@ -149,6 +150,11 @@ func (p *Plugin) EvaluateThreshold(perfData ...PerformanceData) error {
 		if perfData[i].Crit != "" {
 
 			CriticalThresholdObject := ParseRangeString(perfData[i].Crit)
+			if CriticalThresholdObject == nil {
+				err := fmt.Errorf("failed to parse critical range string %s: %w ", perfData[i].Crit, ErrInvalidRangeThreshold)
+				p.ExitStatusCode = StateUNKNOWNExitCode
+				return err
+			}
 
 			if CriticalThresholdObject.CheckRange(perfData[i].Value) {
 				p.ExitStatusCode = StateCRITICALExitCode
@@ -158,6 +164,11 @@ func (p *Plugin) EvaluateThreshold(perfData ...PerformanceData) error {
 
 		if perfData[i].Warn != "" {
 			warningThresholdObject := ParseRangeString(perfData[i].Warn)
+			if warningThresholdObject == nil {
+				err := fmt.Errorf("failed to parse warning range string %s: %w ", perfData[i].Warn, ErrInvalidRangeThreshold)
+				p.ExitStatusCode = StateUNKNOWNExitCode
+				return err
+			}
 
 			if warningThresholdObject.CheckRange(perfData[i].Value) {
 				p.ExitStatusCode = StateWARNINGExitCode
