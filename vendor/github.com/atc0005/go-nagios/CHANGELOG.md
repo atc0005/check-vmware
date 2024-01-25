@@ -26,6 +26,31 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.16.1] - 2024-01-25
+
+### Added
+
+- (GH-220) Add initial automated release notes config
+- (GH-221) Add initial automated release build workflow
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-222) Update Dependabot config to monitor both branches
+- (GH-225) ghaw: bump actions/checkout from 3 to 4
+- (GH-227) go.mod: bump github.com/google/go-cmp from 0.5.9 to 0.6.0
+- (GH-232) ghaw: bump github/codeql-action from 2 to 3
+
+### Fixed
+
+- (GH-219) Disable unsupported build opts in monthly workflow
+- (GH-230) Hotfix goconst linting errors for test cases
+- (GH-236) Fix panic if ParseRangeCheck returns nil
+  - credit: [@Tommi2Day](https://github.com/Tommi2Day)
+- (GH-237) Update Range Check regexp
+  - credit: [@Tommi2Day](https://github.com/Tommi2Day)
+
 ## [v0.16.0] - 2023-06-23
 
 ### Added
@@ -496,7 +521,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.16.1...HEAD
+[v0.16.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.1
 [v0.16.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.0
 [v0.15.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.15.0
 [v0.14.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.14.0

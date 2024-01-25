@@ -96,6 +96,9 @@ var (
 	// metric is not in a supported format.
 	ErrInvalidPerformanceDataFormat = errors.New("invalid performance data format")
 
+	// ErrInvalidRangeThreshold indicates that a given range threshold is not in a supported format.
+	ErrInvalidRangeThreshold = errors.New("invalid range threshold")
+
 	// TODO: Should we use field-specific errors or is the more general
 	// ErrInvalidPerformanceDataFormat "good enough" ? Wrapped versions of
 	// that error will likely already indicate which field is a problem, but
