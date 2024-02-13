@@ -301,9 +301,9 @@ func main() {
 		hostID, pairing := hostID, pairing
 
 		dsNamesForHost := func(pairings vsphere.HostDatastoresPairing) string {
-			names := make([]string, len(pairing.Datastores))
-			for i := range pairing.Datastores {
-				names[i] = pairing.Datastores[i].Name
+			names := make([]string, len(pairings.Datastores))
+			for i := range pairings.Datastores {
+				names[i] = pairings.Datastores[i].Name
 			}
 			return strings.Join(names, ", ")
 		}(pairing)
