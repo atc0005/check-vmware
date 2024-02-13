@@ -1284,7 +1284,7 @@ func getVMsCountUsingRootFolderContainerView(
 		}
 	}()
 
-	filter := property.Filter{"config.template": false}
+	filter := property.Match{"config.template": false}
 	prop := []string{"overallStatus"}
 
 	retrieveErr := v.RetrieveWithFilter(ctx, kind, prop, &allVMs, filter)
