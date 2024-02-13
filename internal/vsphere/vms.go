@@ -1261,7 +1261,7 @@ func getVMsCountUsingRootFolderContainerView(
 		logger.Printf(
 			"It took %v to execute getVMsCountUsingRootFolderContainerView func (and count %d VMs).\n",
 			time.Since(funcTimeStart),
-			len(allVMs),
+			len(*vms),
 		)
 	}(&allVMs)
 
