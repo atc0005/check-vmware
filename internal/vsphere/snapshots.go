@@ -868,7 +868,7 @@ func ListVMSnapshots(vm mo.VirtualMachine, w io.Writer) {
 
 	var listFunc func(mo.VirtualMachine, []types.VirtualMachineSnapshotTree, *types.ManagedObjectReference)
 
-	listFunc = func(vm mo.VirtualMachine, snapTrees []types.VirtualMachineSnapshotTree, parent *types.ManagedObjectReference) {
+	listFunc = func(vm mo.VirtualMachine, snapTrees []types.VirtualMachineSnapshotTree, _ *types.ManagedObjectReference) {
 
 		if len(snapTrees) == 0 {
 			return
