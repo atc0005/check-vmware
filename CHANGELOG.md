@@ -26,6 +26,29 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.36.6] - 2024-02-15
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1056) canary: bump golang from 1.20.13 to 1.20.14 in /dependabot/docker/go
+- (GH-1037) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.3 to go-ci-oldstable-build-v0.14.4 in /dependabot/docker/builds
+- (GH-1045) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.4 to go-ci-oldstable-build-v0.14.5 in /dependabot/docker/builds
+- (GH-1048) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.5 to go-ci-oldstable-build-v0.14.6 in /dependabot/docker/builds
+- (GH-1053) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.6 to go-ci-oldstable-build-v0.14.8 in /dependabot/docker/builds
+- (GH-1059) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.8 to go-ci-oldstable-build-v0.14.9 in /dependabot/docker/builds
+- (GH-1062) docker: bump atc0005/go-ci from go-ci-oldstable-build-v0.14.9 to go-ci-oldstable-build-v0.15.0 in /dependabot/docker/builds
+- (GH-1043) go.mod: bump github.com/atc0005/go-nagios from 0.16.0 to 0.16.1
+- (GH-1049) go.mod: bump github.com/rs/zerolog from 1.31.0 to 1.32.0
+- (GH-1065) go.mod: bump github.com/vmware/govmomi from 0.34.2 to 0.35.0
+- (GH-1057) go.mod: bump golang.org/x/sys from 0.16.0 to 0.17.0
+
+### Fixed
+
+- (GH-1067) Replace property.Filter with property.Match
+- (GH-1071) Fix `unused-parameter` revive linting errors
+
 ## [v0.36.5] - 2024-01-19
 
 ### Changed
@@ -2303,7 +2326,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.5...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.6...HEAD
+[v0.36.6]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.6
 [v0.36.5]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.5
 [v0.36.4]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.4
 [v0.36.3]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.3
