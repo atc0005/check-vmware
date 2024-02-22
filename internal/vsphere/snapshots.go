@@ -876,10 +876,6 @@ func ListVMSnapshots(vm mo.VirtualMachine, w io.Writer) {
 
 		for _, snapTree := range snapTrees {
 
-			// G601: Implicit memory aliasing in for loop
-			// https://stackoverflow.com/questions/62446118/implicit-memory-aliasing-in-for-loop
-			snapTree := snapTree
-
 			daysAge := now.Sub(snapTree.CreateTime).Hours() / 24
 
 			fmt.Fprintf(
@@ -986,10 +982,6 @@ func NewSnapshotSummarySet(
 		}
 
 		for _, snapTree := range snapTrees {
-
-			// G601: Implicit memory aliasing in for loop
-			// https://stackoverflow.com/questions/62446118/implicit-memory-aliasing-in-for-loop
-			snapTree := snapTree
 
 			logger.Printf(
 				"Processing snapshot: [ID: %s, Name: %s, HasParent: %t]\n",
