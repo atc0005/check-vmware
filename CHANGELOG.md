@@ -26,6 +26,24 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.36.8] - 2024-04-08
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1100) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.15.4 to go-ci-oldstable-build-v0.16.0 in /dependabot/docker/builds
+- (GH-1102) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.16.0 to go-ci-oldstable-build-v0.16.1 in /dependabot/docker/builds
+- (GH-1105) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.16.1 to go-ci-oldstable-build-v0.19.0 in /dependabot/docker/builds
+- (GH-1109) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.19.0 to go-ci-oldstable-build-v0.20.0 in /dependabot/docker/builds
+- (GH-1119) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.20.0 to go-ci-oldstable-build-v0.20.1 in /dependabot/docker/builds
+- (GH-1095) Go Dependency: Bump github.com/vmware/govmomi from 0.35.0 to 0.36.0
+- (GH-1098) Go Dependency: Bump github.com/vmware/govmomi from 0.36.0 to 0.36.1
+- (GH-1106) Go Dependency: Bump github.com/vmware/govmomi from 0.36.1 to 0.36.2
+- (GH-1111) Go Dependency: Bump github.com/vmware/govmomi from 0.36.2 to 0.36.3
+- (GH-1117) Go Dependency: Bump golang.org/x/sys from 0.18.0 to 0.19.0
+- (GH-1114) Go Runtime: Bump golang from 1.21.8 to 1.21.9 in /dependabot/docker/go
+
 ## [v0.36.7] - 2024-03-07
 
 ### Changed
@@ -2343,7 +2361,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.7...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.8...HEAD
+[v0.36.8]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.8
 [v0.36.7]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.7
 [v0.36.6]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.6
 [v0.36.5]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.5
