@@ -1750,7 +1750,7 @@ func AlarmsReport(
 
 	var report strings.Builder
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"Non-excluded Triggered Alarms detected:%s%s",
 		nagios.CheckOutputEOL,
@@ -1761,7 +1761,7 @@ func AlarmsReport(
 
 	switch {
 	case numTriggeredAlarmsToReport == 0:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* None%s%s",
 			nagios.CheckOutputEOL,
@@ -1773,7 +1773,7 @@ func AlarmsReport(
 			// only look at non-excluded alarms
 			if !triggeredAlarms[i].Exclude {
 				alarmCtr++
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					&report,
 					"* (%.2d) %s (type %s): %s%s",
 					alarmCtr,
@@ -1785,11 +1785,11 @@ func AlarmsReport(
 			}
 		}
 
-		fmt.Fprintf(&report, "%s", nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(&report, "%s", nagios.CheckOutputEOL)
 
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"Excluded Triggered Alarms (as requested):%s%s",
 		nagios.CheckOutputEOL,
@@ -1798,7 +1798,7 @@ func AlarmsReport(
 
 	switch {
 	case triggeredAlarms.NumExcluded() == 0:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* None%s%s",
 			nagios.CheckOutputEOL,
@@ -1810,7 +1810,7 @@ func AlarmsReport(
 			// only look at excluded alarms
 			if triggeredAlarms[i].Exclude {
 				alarmCtr++
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					&report,
 					"* (%.2d) %s (type: %q, alarm name: %q, exclude reason: %q)%s",
 					alarmCtr,
@@ -1824,7 +1824,7 @@ func AlarmsReport(
 		}
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%s---%s%s",
 		nagios.CheckOutputEOL,
@@ -1832,7 +1832,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%s**NOTE: Explicit exclusions have precedence over inclusions**%s%s",
 		nagios.CheckOutputEOL,
@@ -1840,21 +1840,21 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* vSphere environment: %s%s",
 		c.URL().String(),
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
 		c.Client.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Triggered Alarms (evaluated: %d, ignored: %d, total: %d)%s",
 		numTriggeredAlarmsToReport,
@@ -1863,20 +1863,20 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Acknowledged Triggered Alarms evaluated: %t%s",
 		triggeredAlarmFilters.EvaluateAcknowledgedAlarms,
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Triggered Alarms to explicitly include%s",
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** entity types (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmEntityTypes),
@@ -1884,7 +1884,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** entity names (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmEntityNames),
@@ -1892,7 +1892,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** entity resource pools (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmEntityResourcePools),
@@ -1900,7 +1900,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** names (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmNames),
@@ -1908,7 +1908,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** descriptions (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmDescriptions),
@@ -1916,7 +1916,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** statuses (%d): [%v]%s",
 		len(triggeredAlarmFilters.IncludedAlarmStatuses),
@@ -1924,13 +1924,13 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Triggered Alarms to explicitly exclude%s",
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** entity types (%d): [%v]%s",
 		len(triggeredAlarmFilters.ExcludedAlarmEntityTypes),
@@ -1938,7 +1938,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** entity names (%d): [%v]%s",
 		len(triggeredAlarmFilters.ExcludedAlarmEntityNames),
@@ -1946,7 +1946,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** entity resource pools (%d): [%v]%s",
 		len(triggeredAlarmFilters.ExcludedAlarmEntityResourcePools),
@@ -1954,7 +1954,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** names (%d): [%v]%s",
 		len(triggeredAlarmFilters.ExcludedAlarmNames),
@@ -1962,7 +1962,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** descriptions (%d): [%v]%s",
 		len(triggeredAlarmFilters.ExcludedAlarmDescriptions),
@@ -1970,7 +1970,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"** statuses (%d): [%v]%s",
 		len(triggeredAlarmFilters.ExcludedAlarmStatuses),
@@ -1978,7 +1978,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Datacenters specified (%d): [%v]%s",
 		len(specifiedDatacenters),
@@ -1986,7 +1986,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Datacenters evaluated (%d): [%v]%s",
 		len(datacentersEvaluated),
@@ -1994,7 +1994,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Datacenters with Triggered Alarms (%d): [%v]%s",
 		len(triggeredAlarms.Datacenters()),
@@ -2002,7 +2002,7 @@ func AlarmsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Resource Pools with Triggered Alarms (%d): [%v]%s",
 		len(triggeredAlarms.ResourcePools()),

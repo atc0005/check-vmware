@@ -2551,7 +2551,7 @@ func VMPowerCycleUptimeReport(
 
 	var report strings.Builder
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"VMs with high power cycle uptime:%s%s",
 		nagios.CheckOutputEOL,
@@ -2579,7 +2579,7 @@ func VMPowerCycleUptimeReport(
 			uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
 			uptimeDays := uptime.Hours() / 24
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s: %.2f days%s",
 				vm.Name,
@@ -2589,9 +2589,9 @@ func VMPowerCycleUptimeReport(
 		}
 	default:
 
-		fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"%sTop 10 VMs, not yet exceeding power cycle uptime thresholds:%s%s",
 			nagios.CheckOutputEOL,
@@ -2602,13 +2602,13 @@ func VMPowerCycleUptimeReport(
 		topTen := uptimeSummary.TopTenOK()
 		switch {
 		case len(topTen) == 0:
-			fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
+			_, _ = fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
 		default:
 			for _, vm := range topTen {
 				uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
 				uptimeDays := uptime.Hours() / 24
 
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					&report,
 					"* %s: %.2f days%s",
 					vm.Name,
@@ -2620,7 +2620,7 @@ func VMPowerCycleUptimeReport(
 
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%sTen most recently started VMs:%s%s",
 		nagios.CheckOutputEOL,
@@ -2631,13 +2631,13 @@ func VMPowerCycleUptimeReport(
 	bottomTen := uptimeSummary.BottomTenOK()
 	switch {
 	case len(bottomTen) == 0:
-		fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
 	default:
 		for _, vm := range bottomTen {
 			uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
 			uptimeDays := uptime.Hours() / 24
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s: %.2f days%s",
 				vm.Name,
@@ -2721,7 +2721,7 @@ func VMDiskConsolidationReport(
 
 	var report strings.Builder
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"VMs requiring disk consolidation:%s%s",
 		nagios.CheckOutputEOL,
@@ -2736,7 +2736,7 @@ func VMDiskConsolidationReport(
 		})
 
 		for _, vm := range vmsNeedingConsolidation {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s (%s)%s",
 				vm.Name,
@@ -2747,7 +2747,7 @@ func VMDiskConsolidationReport(
 
 	default:
 
-		fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
 
 	}
 	vmFilterResultsReportTrailer(
@@ -2824,7 +2824,7 @@ func VMInteractiveQuestionReport(
 
 	var report strings.Builder
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"VMs requiring interactive response:%s%s",
 		nagios.CheckOutputEOL,
@@ -2862,7 +2862,7 @@ func VMInteractiveQuestionReport(
 				))
 			}
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s (%q [%s])%s",
 				vm.Name,
@@ -2874,7 +2874,7 @@ func VMInteractiveQuestionReport(
 
 	default:
 
-		fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(&report, "* None %s", nagios.CheckOutputEOL)
 
 	}
 
@@ -2983,7 +2983,7 @@ func VMBackupViaCAReport(
 		backupDateCAVal := vm.CustomAttributes[vm.BackupDateCAName]
 		backupDateMetadataVal := vm.CustomAttributes[vm.BackupMetadataCAName]
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"* %s%s",
 			vm.Name,
@@ -2991,7 +2991,7 @@ func VMBackupViaCAReport(
 		)
 
 		if vm.HasBackup() {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"\t** %s: %t%s",
 				"Old Backup",
@@ -2999,7 +2999,7 @@ func VMBackupViaCAReport(
 				nagios.CheckOutputEOL,
 			)
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"\t** %s: %s%s",
 				"Backup age (formatted)",
@@ -3007,7 +3007,7 @@ func VMBackupViaCAReport(
 				nagios.CheckOutputEOL,
 			)
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"\t** %s: %d%s",
 				"Backup age (in days)",
@@ -3017,7 +3017,7 @@ func VMBackupViaCAReport(
 		}
 
 		if backupDateCAVal != "" {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"\t** %s (raw value): %q%s",
 				vm.BackupDateCAName,
@@ -3027,7 +3027,7 @@ func VMBackupViaCAReport(
 		}
 
 		if backupDateMetadataVal != "" {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"\t** %s: %q%s",
 				vm.BackupMetadataCAName,
@@ -3037,7 +3037,7 @@ func VMBackupViaCAReport(
 		}
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"VMs without backups:%s%s",
 		nagios.CheckOutputEOL,
@@ -3045,10 +3045,10 @@ func VMBackupViaCAReport(
 	)
 	switch {
 	case vmsWithBackup.NumWithoutBackups() == 0:
-		fmt.Fprintf(&report, "* None%s", nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(&report, "* None%s", nagios.CheckOutputEOL)
 
 	case vmsWithBackup.NumWithoutBackups() > vmPrintLimit:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* %d VMs without backups; output limit of %d reached, omitting list of VMs%s",
 			vmsWithBackup.NumWithoutBackups(),
@@ -3062,9 +3062,9 @@ func VMBackupViaCAReport(
 			}
 		}
 	}
-	fmt.Fprint(&report, nagios.CheckOutputEOL)
+	_, _ = fmt.Fprint(&report, nagios.CheckOutputEOL)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"VMs with old backups: %s%s",
 		nagios.CheckOutputEOL,
@@ -3072,10 +3072,10 @@ func VMBackupViaCAReport(
 	)
 	switch {
 	case vmsWithBackup.NumOldBackups() == 0:
-		fmt.Fprintf(&report, "* None%s", nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(&report, "* None%s", nagios.CheckOutputEOL)
 
 	case vmsWithBackup.NumOldBackups() > vmPrintLimit:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* %d VMs with old backups; output limit of %d reached, omitting list of VMs%s",
 			vmsWithBackup.NumOldBackups(),
@@ -3090,28 +3090,28 @@ func VMBackupViaCAReport(
 			}
 		}
 	}
-	fmt.Fprint(&report, nagios.CheckOutputEOL)
+	_, _ = fmt.Fprint(&report, nagios.CheckOutputEOL)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"Virtual Machines Backup Summary: %s%s",
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Missing Backups: %d%s",
 		vmsWithBackup.NumWithoutBackups(),
 		nagios.CheckOutputEOL,
 	)
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* With Backups: %d%s",
 		vmsWithBackup.NumBackups(),
 		nagios.CheckOutputEOL,
 	)
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Old Backups: %d%s",
 		vmsWithBackup.NumOldBackups(),
@@ -3120,7 +3120,7 @@ func VMBackupViaCAReport(
 
 	vmWithOldestBackup := vmsWithBackup.VMWithOldestBackup()
 	if vmWithOldestBackup != nil {
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* Oldest backup: %s (%s)%s",
 			vmWithOldestBackup.Name,
@@ -3131,7 +3131,7 @@ func VMBackupViaCAReport(
 
 	vmWithYoungestBackup := vmsWithBackup.VMWithYoungestBackup()
 	if vmWithYoungestBackup != nil {
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* Most recent backup: %s (%s)%s",
 			vmWithYoungestBackup.Name,
@@ -3209,28 +3209,28 @@ func VMListReport(
 
 	var report strings.Builder
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"Summary of inventory before before any filtering was applied:%s%s",
 		nagios.CheckOutputEOL,
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* %d Virtual Machines%s",
 		vmsFilterResults.NumVMsAll(),
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* %d Resource Pools%s",
 		vmsFilterResults.NumRPsAll(),
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* %d Folders%s",
 		vmsFilterResults.NumFoldersAll(),
@@ -3247,7 +3247,7 @@ func VMListReport(
 		vmsFilterResults.VMsAfterResourcePoolFiltering,
 	)
 
-	fmt.Fprint(&report, nagios.CheckOutputEOL)
+	_, _ = fmt.Fprint(&report, nagios.CheckOutputEOL)
 
 	vmListReportFilteringBeforeAfterResults(
 		&report,
@@ -3259,7 +3259,7 @@ func VMListReport(
 		vmsFilterResults.VMsAfterFolderFiltering,
 	)
 
-	fmt.Fprint(&report, nagios.CheckOutputEOL)
+	_, _ = fmt.Fprint(&report, nagios.CheckOutputEOL)
 
 	vmListReportFilteringBeforeAfterResults(
 		&report,
@@ -3271,7 +3271,7 @@ func VMListReport(
 		vmsFilterResults.VMsAfterVMNameFiltering,
 	)
 
-	fmt.Fprint(&report, nagios.CheckOutputEOL)
+	_, _ = fmt.Fprint(&report, nagios.CheckOutputEOL)
 
 	vmListReportFilteringBeforeAfterResults(
 		&report,
@@ -3283,11 +3283,11 @@ func VMListReport(
 		vmsFilterResults.VMsAfterPowerStateFiltering,
 	)
 
-	fmt.Fprint(&report, nagios.CheckOutputEOL)
+	_, _ = fmt.Fprint(&report, nagios.CheckOutputEOL)
 
 	vmListReportAfterAllFiltering(&report, vmsFilterResults)
 
-	fmt.Fprint(&report, nagios.CheckOutputEOL)
+	_, _ = fmt.Fprint(&report, nagios.CheckOutputEOL)
 
 	vmFilterResultsReportTrailer(
 		&report,
@@ -3301,7 +3301,7 @@ func VMListReport(
 }
 
 func vmListReportAfterAllFiltering(w io.Writer, vmsFilterResults VMsFilterResults) {
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"%s(%d of %d) VMs after all filtering was applied:%s%s",
 		nagios.CheckOutputEOL,
@@ -3313,7 +3313,7 @@ func vmListReportAfterAllFiltering(w io.Writer, vmsFilterResults VMsFilterResult
 
 	switch {
 	case len(vmsFilterResults.VMsAfterFiltering()) == vmsFilterResults.NumVMsAll():
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"No filtering applied: %d VMs remain.%s",
 			vmsFilterResults.NumVMsAll(),
@@ -3321,35 +3321,35 @@ func vmListReportAfterAllFiltering(w io.Writer, vmsFilterResults VMsFilterResult
 		)
 
 	case len(vmsFilterResults.VMsAfterFiltering()) == len(vmsFilterResults.VMsAfterResourcePoolFiltering()):
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"* Same list as after resource pool filtering.%s",
 			nagios.CheckOutputEOL,
 		)
 
 	case len(vmsFilterResults.VMsAfterFiltering()) == len(vmsFilterResults.VMsAfterFolderFiltering()):
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"* Same list as after folder filtering.%s",
 			nagios.CheckOutputEOL,
 		)
 
 	case len(vmsFilterResults.VMsAfterFiltering()) == len(vmsFilterResults.VMsAfterVMNameFiltering()):
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"* Same list as after VM name filtering.%s",
 			nagios.CheckOutputEOL,
 		)
 
 	case len(vmsFilterResults.VMsAfterFiltering()) == len(vmsFilterResults.VMsAfterPowerStateFiltering()):
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"* Same list as after VM power state filtering.%s",
 			nagios.CheckOutputEOL,
 		)
 	default:
 		for _, vmName := range vmsFilterResults.VMNamesAfterFiltering() {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"* %s%s",
 				vmName,
@@ -3377,7 +3377,7 @@ func vmFilterResultsReportTrailer(
 	}()
 
 	if emitSeparator {
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"%s---%s%s",
 			nagios.CheckOutputEOL,
@@ -3386,21 +3386,21 @@ func vmFilterResultsReportTrailer(
 		)
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* vSphere environment: %s%s",
 		c.URL().String(),
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* Plugin User Agent: %s%s",
 		c.Client.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* VMs evaluated: %d of %d%s",
 		len(vmsFilterResults.VMsAfterFiltering()),
@@ -3408,14 +3408,14 @@ func vmFilterResultsReportTrailer(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* Powered off VMs evaluated: %t%s",
 		vmsFilterOptions.IncludePoweredOff,
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* Specified VMs to exclude (%d): [%v]%s",
 		len(vmsFilterOptions.VirtualMachineNamesExcluded),
@@ -3423,7 +3423,7 @@ func vmFilterResultsReportTrailer(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* Specified Folders to explicitly include (%d): [%v]%s",
 		len(vmsFilterOptions.FoldersIncluded),
@@ -3431,7 +3431,7 @@ func vmFilterResultsReportTrailer(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* Specified Folders to explicitly exclude (%d): [%v]%s",
 		len(vmsFilterOptions.FoldersExcluded),
@@ -3439,7 +3439,7 @@ func vmFilterResultsReportTrailer(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* Folders evaluated: %d of %d%s",
 		vmsFilterResults.NumFoldersAfterFiltering(),
@@ -3447,7 +3447,7 @@ func vmFilterResultsReportTrailer(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
 		len(vmsFilterOptions.ResourcePoolsIncluded),
@@ -3455,7 +3455,7 @@ func vmFilterResultsReportTrailer(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
 		len(vmsFilterOptions.ResourcePoolsExcluded),
@@ -3463,7 +3463,7 @@ func vmFilterResultsReportTrailer(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"* Resource Pools evaluated (%d of %d): [%v]%s",
 		vmsFilterResults.NumRPsAfterFiltering(),
@@ -3501,7 +3501,7 @@ func vmListReportFilteringBeforeAfterResults(
 	currentAfterFilterFunc func() []mo.VirtualMachine,
 ) {
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"%s(%d of %d) VMs before %s filtering was applied:%s%s",
 		nagios.CheckOutputEOL,
@@ -3519,14 +3519,14 @@ func vmListReportFilteringBeforeAfterResults(
 
 	switch {
 	case previousAfterFilterFunc == nil:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"* No filtering applied yet; skipping listing of all VMs.%s",
 			nagios.CheckOutputEOL,
 		)
 
 	case len(currentBeforeFilterFunc()) == len(previousAfterFilterFunc()):
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"* Same list as after %s filtering.%s",
 			previousAfterFilterDesc,
@@ -3535,7 +3535,7 @@ func vmListReportFilteringBeforeAfterResults(
 
 	default:
 		for _, vm := range currentBeforeFilterFunc() {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"* %s%s",
 				vm.Name,
@@ -3544,9 +3544,9 @@ func vmListReportFilteringBeforeAfterResults(
 		}
 	}
 
-	fmt.Fprint(w, nagios.CheckOutputEOL)
+	_, _ = fmt.Fprint(w, nagios.CheckOutputEOL)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		w,
 		"%s(%d of %d) VMs after %s filtering was applied:%s%s",
 		nagios.CheckOutputEOL,
@@ -3560,7 +3560,7 @@ func vmListReportFilteringBeforeAfterResults(
 	switch {
 	case currentAfterFilterFunc != nil && currentBeforeFilterFunc == nil:
 		for _, vm := range currentAfterFilterFunc() {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"* %s%s",
 				vm.Name,
@@ -3569,7 +3569,7 @@ func vmListReportFilteringBeforeAfterResults(
 		}
 
 	case len(currentAfterFilterFunc()) == len(currentBeforeFilterFunc()):
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			w,
 			"* Same list as before %s filtering.%s",
 			currentFilterDesc,
@@ -3578,7 +3578,7 @@ func vmListReportFilteringBeforeAfterResults(
 
 	default:
 		for _, vm := range currentAfterFilterFunc() {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"* %s%s",
 				vm.Name,
