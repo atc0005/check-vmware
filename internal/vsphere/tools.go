@@ -184,7 +184,7 @@ func VMToolsReport(
 		})
 
 		for idx, vm := range vmsWithIssues {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&vmsReport,
 				"* %02d) %s (%s, %s)%s",
 				idx+1,
@@ -196,7 +196,7 @@ func VMToolsReport(
 		}
 
 	default:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&vmsReport,
 			"* No VMware Tools issues detected.%s",
 			nagios.CheckOutputEOL,

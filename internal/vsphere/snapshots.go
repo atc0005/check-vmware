@@ -882,7 +882,7 @@ func ListVMSnapshots(vm mo.VirtualMachine, w io.Writer) {
 
 			daysAge := now.Sub(snapTree.CreateTime).Hours() / 24
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"Snapshot [Name: %v, Age: %v, ID: %v, MOID: %v, Active: %t]\n",
 				snapTree.Name,
@@ -1425,7 +1425,7 @@ func writeSnapshotsListEntries(
 		switch {
 		case exceeding:
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"Snapshots%sexceeding WARNING (%d %s) or CRITICAL (%d %s) %s thresholds:%s%s",
 				forWhat,
@@ -1439,7 +1439,7 @@ func writeSnapshotsListEntries(
 			)
 		default:
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"%sSnapshots%s*not yet* exceeding %s thresholds:%s%s",
 				nagios.CheckOutputEOL,
@@ -1470,7 +1470,7 @@ func writeSnapshotsListEntries(
 		for _, snapSet := range snapshotSummarySets {
 			for _, snap := range snapSet.Snapshots {
 				if snap.IsAgeCriticalState() || snap.IsAgeWarningState() {
-					fmt.Fprintf(
+					_, _ = fmt.Fprintf(
 						w,
 						listEntryTemplate,
 						snap.VMName,
@@ -1496,7 +1496,7 @@ func writeSnapshotsListEntries(
 		// point
 		for _, snapSet := range setsWithExcessSnaps {
 			for _, snap := range snapSet.Snapshots {
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					w,
 					listEntryTemplate,
 					snap.VMName,
@@ -1517,7 +1517,7 @@ func writeSnapshotsListEntries(
 		for _, snapSet := range snapshotSummarySets {
 			if snapSet.IsSizeWarningState() || snapSet.IsSizeCriticalState() {
 				for _, snap := range snapSet.Snapshots {
-					fmt.Fprintf(
+					_, _ = fmt.Fprintf(
 						w,
 						listEntryTemplate,
 						snap.VMName,
@@ -1532,7 +1532,7 @@ func writeSnapshotsListEntries(
 		}
 
 	default:
-		fmt.Fprintln(w, "* None detected")
+		_, _ = fmt.Fprintln(w, "* None detected")
 	}
 
 	switch {
@@ -1553,7 +1553,7 @@ func writeSnapshotsListEntries(
 			for _, snap := range snapSet.Snapshots {
 				if !(snap.IsAgeCriticalState() ||
 					snap.IsAgeWarningState()) {
-					fmt.Fprintf(
+					_, _ = fmt.Fprintf(
 						w,
 						listEntryTemplate,
 						snap.VMName,
@@ -1573,7 +1573,7 @@ func writeSnapshotsListEntries(
 		for _, snapSet := range snapshotSummarySets {
 			if !(snapSet.IsCountCriticalState() || snapSet.IsCountWarningState()) {
 				for _, snap := range snapSet.Snapshots {
-					fmt.Fprintf(
+					_, _ = fmt.Fprintf(
 						w,
 						listEntryTemplate,
 						snap.VMName,
@@ -1594,7 +1594,7 @@ func writeSnapshotsListEntries(
 			if !(snapSet.IsSizeWarningState() ||
 				snapSet.IsSizeCriticalState()) {
 				for _, snap := range snapSet.Snapshots {
-					fmt.Fprintf(
+					_, _ = fmt.Fprintf(
 						w,
 						listEntryTemplate,
 						snap.VMName,
@@ -1609,7 +1609,7 @@ func writeSnapshotsListEntries(
 		}
 
 	default:
-		fmt.Fprintln(w, "* None detected")
+		_, _ = fmt.Fprintln(w, "* None detected")
 	}
 
 }
