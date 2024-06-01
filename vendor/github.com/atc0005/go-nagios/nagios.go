@@ -315,7 +315,7 @@ func (p *Plugin) ReturnCheckResults() {
 	// If set, call user-provided branding function before emitting
 	// performance data and exiting application.
 	if p.BrandingCallback != nil {
-		fmt.Fprintf(&output, "%s%s%s", CheckOutputEOL, p.BrandingCallback(), CheckOutputEOL)
+		_, _ = fmt.Fprintf(&output, "%s%s%s", CheckOutputEOL, p.BrandingCallback(), CheckOutputEOL)
 	}
 
 	p.handlePerformanceData(&output)
@@ -330,7 +330,7 @@ func (p *Plugin) ReturnCheckResults() {
 	// TODO: Perhaps just don't emit anything at all?
 	switch {
 	case p.shouldSkipOSExit:
-		fmt.Fprintln(os.Stderr, "Skipping os.Exit call as requested.")
+		_, _ = fmt.Fprintln(os.Stderr, "Skipping os.Exit call as requested.")
 	default:
 		os.Exit(p.ExitStatusCode)
 	}
@@ -427,7 +427,20 @@ func (p Plugin) emitOutput(pluginOutput string) {
 		p.outputSink = os.Stdout
 	}
 
-	fmt.Fprint(p.outputSink, pluginOutput)
+	// Attempt to write to output sink. If this fails, send error to
+	// os.Stderr. If that fails (however unlikely), we have bigger problems
+	// and should abort.
+	_, sinkWriteErr := fmt.Fprint(p.outputSink, pluginOutput)
+	if sinkWriteErr != nil {
+		_, stdErrWriteErr := fmt.Fprintf(
+			os.Stderr,
+			"Failed to write output to given output sink: %s",
+			sinkWriteErr.Error(),
+		)
+		if stdErrWriteErr != nil {
+			panic("Failed to initial output sink failure error message to stderr")
+		}
+	}
 }
 
 // tryAddDefaultTimeMetric inserts a default `time` performance data metric
