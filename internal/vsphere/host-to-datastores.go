@@ -952,7 +952,7 @@ func H2D2VMsReport(
 
 	case len(vmDatastoresPairingIssues) > 0:
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"Mismatched Hosts / Datastores / Virtual Machines:%s%s",
 			nagios.CheckOutputEOL,
@@ -987,13 +987,13 @@ func H2D2VMsReport(
 		for _, vmName := range vmNames {
 			var dsNamesWithCA strings.Builder
 			for i, ds := range vmDatastoresPairingIssues[vmName].Datastores {
-				fmt.Fprintf(&dsNamesWithCA, "%q (%s)", ds.Name, ds.CustomAttribute.Value)
+				_, _ = fmt.Fprintf(&dsNamesWithCA, "%q (%s)", ds.Name, ds.CustomAttribute.Value)
 				if i != len(vmDatastoresPairingIssues[vmName].Datastores)-1 {
 					dsNamesWithCA.WriteString(", ")
 				}
 			}
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s: [Host: %q (%s), Datastores: %s]%s",
 				vmName,
@@ -1004,13 +1004,13 @@ func H2D2VMsReport(
 			)
 		}
 
-		fmt.Fprint(&report, nagios.CheckOutputEOL)
+		_, _ = fmt.Fprint(&report, nagios.CheckOutputEOL)
 
 	default:
 
 		// homogenous
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"No mismatched Host/Datastore/VM pairings detected.%s%s",
 			nagios.CheckOutputEOL,
@@ -1019,7 +1019,7 @@ func H2D2VMsReport(
 
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%s---%s%s",
 		nagios.CheckOutputEOL,
@@ -1029,7 +1029,7 @@ func H2D2VMsReport(
 
 	switch {
 	case ignoreMissingCA:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* As requested, Hosts and Datastores with missing Custom Attribute are ignored [Host: %q, Datastore: %q]%s",
 			hostCAName,
@@ -1038,7 +1038,7 @@ func H2D2VMsReport(
 		)
 
 	default:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* As requested, Hosts and Datastores with missing Custom Attribute is a fatal condition [Host: %q, Datastore: %q]%s",
 			hostCAName,
@@ -1050,7 +1050,7 @@ func H2D2VMsReport(
 	switch {
 	case len(hostsMissingCA) > 0:
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"Hosts missing Custom Attribute %q: %s%s",
 			hostCAName,
@@ -1059,7 +1059,7 @@ func H2D2VMsReport(
 		)
 
 		for _, hostName := range hostsMissingCA {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s%s",
 				hostName,
@@ -1069,7 +1069,7 @@ func H2D2VMsReport(
 
 	case len(datastoresMissingCA) > 0:
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"Datastores missing Custom Attribute %q: %s%s",
 			hostCAName,
@@ -1078,7 +1078,7 @@ func H2D2VMsReport(
 		)
 
 		for _, dsName := range datastoresMissingCA {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s%s",
 				dsName,
@@ -1086,7 +1086,7 @@ func H2D2VMsReport(
 			)
 		}
 	default:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* No Hosts or Datastores are missing specified Custom Attribute%s",
 			nagios.CheckOutputEOL,
@@ -1095,7 +1095,7 @@ func H2D2VMsReport(
 	}
 
 	if hostCAPrefixSeparator != "" || datastoreCAPrefixSeparator != "" {
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* Custom Attribute Prefix Separator: [Host: %q, Datastore: %q]%s",
 			hostCAPrefixSeparator,
@@ -1112,7 +1112,7 @@ func H2D2VMsReport(
 		false,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Specified Datastores to exclude (%d): [%v]%s",
 		len(ignoredDatastores),

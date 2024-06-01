@@ -562,8 +562,8 @@ var Usage = func() {
 	// `--help` flag and have it display within the Admin web UI.
 	flag.CommandLine.SetOutput(os.Stdout)
 
-	fmt.Fprintln(flag.CommandLine.Output(), "\n"+Version()+"\n")
-	fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
+	_, _ = fmt.Fprintln(flag.CommandLine.Output(), "\n"+Version()+"\n")
+	_, _ = fmt.Fprintf(flag.CommandLine.Output(), "Usage of %s:\n", os.Args[0])
 	flag.PrintDefaults()
 }
 

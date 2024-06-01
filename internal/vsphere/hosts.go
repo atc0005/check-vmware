@@ -509,7 +509,7 @@ func HostSystemMemoryUsageReport(
 
 	vmsMemUsedPercentOfHost := (float64(vmsMemUsedBytes) / float64(hsUsageSummary.MemoryTotal)) * 100
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"Host Summary:%s%s"+
 			"* Name: %s%s"+ //nolint:goconst
@@ -544,7 +544,7 @@ func HostSystemMemoryUsageReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%sVMs on host consuming memory (descending order):%s%s",
 		nagios.CheckOutputEOL,
@@ -560,7 +560,7 @@ func HostSystemMemoryUsageReport(
 		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
 			hostMemUsedBytes := int64(vm.Summary.QuickStats.HostMemoryUsage) * units.MB
 			vmPercentOfHostMemUsed := float64(hostMemUsedBytes) / float64(hsUsageSummary.MemoryTotal) * 100
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s (Memory: %v, Host Memory Usage: %2.2f%%)%s",
 				vm.Name,
@@ -572,14 +572,14 @@ func HostSystemMemoryUsageReport(
 	}
 
 	if vmsPoweredOn == 0 {
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* None (visible)%s",
 			nagios.CheckOutputEOL,
 		)
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%sVMs on host not consuming memory:%s%s",
 		nagios.CheckOutputEOL,
@@ -593,7 +593,7 @@ func HostSystemMemoryUsageReport(
 
 	for _, vm := range hsVMs {
 		if vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s%s",
 				vm.Name,
@@ -603,14 +603,14 @@ func HostSystemMemoryUsageReport(
 	}
 
 	if vmsPoweredOff == 0 {
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* None (visible)%s",
 			nagios.CheckOutputEOL,
 		)
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%s---%s%s",
 		nagios.CheckOutputEOL,
@@ -618,14 +618,14 @@ func HostSystemMemoryUsageReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* vSphere environment: %s%s",
 		c.URL().String(),
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
 		c.Client.UserAgent,
@@ -726,7 +726,7 @@ func HostSystemCPUUsageReport(
 
 	vmsCPUUsedPercentOfHost := (float64(vmsCPUUsage) / hsUsageSummary.CPUTotal) * 100
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"Host Summary:%s%s"+
 			"* Name: %s%s"+ //nolint:goconst
@@ -761,7 +761,7 @@ func HostSystemCPUUsageReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%sVMs on host consuming CPU (descending order):%s%s",
 		nagios.CheckOutputEOL,
@@ -777,7 +777,7 @@ func HostSystemCPUUsageReport(
 		if vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn {
 			hostCPUUsed := int64(vm.Summary.QuickStats.OverallCpuUsage) * MHz
 			vmPercentOfHostCPUUsed := (float64(hostCPUUsed) / hsUsageSummary.CPUTotal) * 100
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s (CPU: %s, Host CPU Usage: %2.2f%%)%s",
 				vm.Name,
@@ -789,14 +789,14 @@ func HostSystemCPUUsageReport(
 	}
 
 	if vmsPoweredOn == 0 {
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* None (visible)%s",
 			nagios.CheckOutputEOL,
 		)
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%sVMs on host not consuming CPU:%s%s",
 		nagios.CheckOutputEOL,
@@ -810,7 +810,7 @@ func HostSystemCPUUsageReport(
 
 	for _, vm := range hsVMs {
 		if vm.Runtime.PowerState != types.VirtualMachinePowerStatePoweredOn {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s%s",
 				vm.Name,
@@ -820,14 +820,14 @@ func HostSystemCPUUsageReport(
 	}
 
 	if vmsPoweredOff == 0 {
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* None (visible)%s",
 			nagios.CheckOutputEOL,
 		)
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%s---%s%s",
 		nagios.CheckOutputEOL,
@@ -835,14 +835,14 @@ func HostSystemCPUUsageReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* vSphere environment: %s%s",
 		c.URL().String(),
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
 		c.Client.UserAgent,
