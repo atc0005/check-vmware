@@ -27,7 +27,6 @@ linters:
     - goimports
     - gosec
     - govet
-    - maligned
     - misspell
     - prealloc
     - revive

@@ -33,7 +33,7 @@ func (p Plugin) handleServiceOutputSection(w io.Writer) {
 	// formatting changes to this content, simply emit it as-is. This helps
 	// avoid potential issues with literal characters being interpreted as
 	// formatting verbs.
-	fmt.Fprint(w, p.ServiceOutput)
+	_, _ = fmt.Fprint(w, p.ServiceOutput)
 }
 
 // handleErrorsSection is a wrapper around the logic used to handle/process
@@ -44,7 +44,7 @@ func (p Plugin) handleErrorsSection(w io.Writer) {
 	// hide the section ...
 	if !p.isErrorsHidden() {
 
-		fmt.Fprintf(w,
+		_, _ = fmt.Fprintf(w,
 			"%s%s**%s**%s%s",
 			CheckOutputEOL,
 			CheckOutputEOL,
@@ -54,13 +54,13 @@ func (p Plugin) handleErrorsSection(w io.Writer) {
 		)
 
 		if p.LastError != nil {
-			fmt.Fprintf(w, "* %v%s", p.LastError, CheckOutputEOL)
+			_, _ = fmt.Fprintf(w, "* %v%s", p.LastError, CheckOutputEOL)
 		}
 
 		// Process any non-nil errors in the collection.
 		for _, err := range p.Errors {
 			if err != nil {
-				fmt.Fprintf(w, "* %v%s", err, CheckOutputEOL)
+				_, _ = fmt.Fprintf(w, "* %v%s", err, CheckOutputEOL)
 			}
 		}
 
@@ -80,7 +80,7 @@ func (p Plugin) handleThresholdsSection(w io.Writer) {
 		// not opted to hide the section ...
 		if !p.isThresholdsSectionHidden() {
 
-			fmt.Fprintf(w,
+			_, _ = fmt.Fprintf(w,
 				"%s**%s**%s%s",
 				CheckOutputEOL,
 				p.getThresholdsLabelText(),
@@ -89,7 +89,7 @@ func (p Plugin) handleThresholdsSection(w io.Writer) {
 			)
 
 			if p.CriticalThreshold != "" {
-				fmt.Fprintf(w,
+				_, _ = fmt.Fprintf(w,
 					"* %s: %v%s",
 					StateCRITICALLabel,
 					p.CriticalThreshold,
@@ -98,7 +98,7 @@ func (p Plugin) handleThresholdsSection(w io.Writer) {
 			}
 
 			if p.WarningThreshold != "" {
-				fmt.Fprintf(w,
+				_, _ = fmt.Fprintf(w,
 					"* %s: %v%s",
 					StateWARNINGLabel,
 					p.WarningThreshold,
@@ -129,21 +129,21 @@ func (p Plugin) handleLongServiceOutput(w io.Writer) {
 	// ServiceOutput content.
 	switch {
 	case !p.isThresholdsSectionHidden() || !p.isErrorsHidden():
-		fmt.Fprintf(w,
+		_, _ = fmt.Fprintf(w,
 			"%s**%s**%s",
 			CheckOutputEOL,
 			p.getDetailedInfoLabelText(),
 			CheckOutputEOL,
 		)
 	default:
-		fmt.Fprint(w, CheckOutputEOL)
+		_, _ = fmt.Fprint(w, CheckOutputEOL)
 	}
 
 	// Note: fmt.Println() (and fmt.Fprintln()) has the same issue as `\n`:
 	// Nagios seems to interpret them literally instead of emitting an actual
 	// newline. We work around that by using fmt.Fprintf() for output that is
 	// intended for display within the Nagios web UI.
-	fmt.Fprintf(w,
+	_, _ = fmt.Fprintf(w,
 		"%s%v%s",
 		CheckOutputEOL,
 		p.LongServiceOutput,
@@ -174,18 +174,18 @@ func (p *Plugin) handlePerformanceData(w io.Writer) {
 	// metrics are provided as a single line, leading with a pipe
 	// character, a space and one or more metrics each separated from
 	// another by a single space.
-	fmt.Fprint(w, " |")
+	_, _ = fmt.Fprint(w, " |")
 
 	// Sort performance data values prior to emitting them so that the
 	// output is consistent across plugin execution.
 	perfData := p.getSortedPerfData()
 
 	for _, pd := range perfData {
-		fmt.Fprint(w, pd.String())
+		_, _ = fmt.Fprint(w, pd.String())
 	}
 
 	// Add final trailing newline to satisfy Nagios plugin output format.
-	fmt.Fprint(w, CheckOutputEOL)
+	_, _ = fmt.Fprint(w, CheckOutputEOL)
 
 }
 
