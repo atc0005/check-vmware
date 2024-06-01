@@ -614,7 +614,7 @@ func VirtualHardwareReport(
 	// least one outdated version to report
 	case hwvIndex.Count() > 1:
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"Virtual Hardware Summary%s%s",
 			nagios.CheckOutputEOL,
@@ -623,7 +623,7 @@ func VirtualHardwareReport(
 
 		for _, hwv := range hwvIndex.Versions() {
 			if !hwv.IsHighest() {
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					&report,
 					"version: %s, count: %d (outdated)\n",
 					hwv.String(),
@@ -631,7 +631,7 @@ func VirtualHardwareReport(
 				)
 				continue
 			}
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"version: %s, count: %d\n",
 				hwv.String(),
@@ -643,7 +643,7 @@ func VirtualHardwareReport(
 
 		// homogenous
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"All evaluated VMs are at hardware version %d.%s",
 			hwvIndex.Newest().VersionNumber(),
@@ -659,7 +659,7 @@ func VirtualHardwareReport(
 			minHardwareVersion,
 		)
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"%sVirtual Machines in need of upgrade:%s%s",
 			nagios.CheckOutputEOL,
@@ -680,7 +680,7 @@ func VirtualHardwareReport(
 			hwVersion := newHardwareVersionString(vm.Config.Version)
 			hwVerNum := hwVersion.VersionNumber()
 			if hwVerNum < minHardwareVersion {
-				fmt.Fprintf(
+				_, _ = fmt.Fprintf(
 					&report,
 					"* %s (%s)%s",
 					vm.Name,
@@ -700,7 +700,7 @@ func VirtualHardwareReport(
 		true,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Default Virtual Hardware Version: %d (%s) %s",
 		defaultHardwareVersion.VersionNumber(),
@@ -708,7 +708,7 @@ func VirtualHardwareReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Newest Virtual Hardware Version: %d (%s) %s",
 		hwvIndex.Newest().VersionNumber(),
@@ -716,7 +716,7 @@ func VirtualHardwareReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Oldest Virtual Hardware Version: %d (%s) %s",
 		hwvIndex.Oldest().VersionNumber(),

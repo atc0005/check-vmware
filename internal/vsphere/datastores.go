@@ -298,7 +298,7 @@ func printVMSummary(w io.Writer, dsVMs DatastoreVMs, powerState types.VirtualMac
 		}
 
 		for _, vm := range vms {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				w,
 				"* %s [Size: %s, Datastore Usage: %s]%s",
 				vm.Name,
@@ -308,12 +308,12 @@ func printVMSummary(w io.Writer, dsVMs DatastoreVMs, powerState types.VirtualMac
 			)
 		}
 
-		fmt.Fprintf(w, nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(w, nagios.CheckOutputEOL)
 	}
 
 	switch {
 	case powerState == types.VirtualMachinePowerStatePoweredOn:
-		fmt.Fprint(
+		_, _ = fmt.Fprint(
 			w,
 			sectionHeader(
 				dsVMs.NumVMsPoweredOn(),
@@ -324,7 +324,7 @@ func printVMSummary(w io.Writer, dsVMs DatastoreVMs, powerState types.VirtualMac
 		listVMs(w, dsVMs.VMsPoweredOn())
 
 	case powerState == types.VirtualMachinePowerStatePoweredOff:
-		fmt.Fprint(
+		_, _ = fmt.Fprint(
 			w,
 			sectionHeader(
 				dsVMs.NumVMsPoweredOff(),
@@ -334,7 +334,7 @@ func printVMSummary(w io.Writer, dsVMs DatastoreVMs, powerState types.VirtualMac
 
 		listVMs(w, dsVMs.VMsPoweredOff())
 
-		fmt.Fprint(
+		_, _ = fmt.Fprint(
 			w,
 			sectionHeader(
 				dsVMs.NumVMsTemplates(),
@@ -1345,7 +1345,7 @@ func DatastoreSpaceUsageReport(
 
 	var report strings.Builder
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"Datastore Space Summary:%s%s"+
 			"* Name: %s%s"+ //nolint:goconst
@@ -1371,7 +1371,7 @@ func DatastoreSpaceUsageReport(
 
 	printVMSummary(&report, dsUsageSummary.VMs, types.VirtualMachinePowerStatePoweredOff)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%s---%s%s",
 		nagios.CheckOutputEOL,
@@ -1379,14 +1379,14 @@ func DatastoreSpaceUsageReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* vSphere environment: %s%s",
 		c.URL().String(),
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
 		c.Client.UserAgent,
@@ -1520,7 +1520,7 @@ func DatastorePerformanceReport(
 	// List metrics which exceed threshold.
 	if dsPerfSet.IsWarningState() || dsPerfSet.IsCriticalState() {
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"Metrics for datastore %q which exceed thresholds:%s",
 			dsPerfSet.Datastore.Name,
@@ -1533,7 +1533,7 @@ func DatastorePerformanceReport(
 				continue
 			}
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"%sResult %v (active): %s",
 				nagios.CheckOutputEOL,
@@ -1550,7 +1550,7 @@ func DatastorePerformanceReport(
 
 				// Skip emitting any metrics which don't exceed the thresholds.
 				if summary.IsCriticalState() || summary.IsWarningState() {
-					fmt.Fprintf(
+					_, _ = fmt.Fprintf(
 						&report,
 						"  * { Percentile: %d, RLatency: %.2f, WLatency: %.2f, VMLatency: %.2f, RIops: %.2f, WIops: %.2f, Interval: %d }%s",
 						percentile,
@@ -1566,7 +1566,7 @@ func DatastorePerformanceReport(
 			}
 		}
 
-		fmt.Fprintf(&report, nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(&report, nagios.CheckOutputEOL)
 
 	}
 
@@ -1581,7 +1581,7 @@ func DatastorePerformanceReport(
 			"Full Collection of Performance Metrics for datastore %q (%d VMs):%s"
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		metricCollectionsHeaderTemplate,
 		dsPerfSet.Datastore.Name,
@@ -1601,7 +1601,7 @@ func DatastorePerformanceReport(
 			activeIndicator = "active"
 		}
 
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"%sResult %v (%s): %s",
 			nagios.CheckOutputEOL,
@@ -1617,7 +1617,7 @@ func DatastorePerformanceReport(
 			percentile := percentiles[i]
 			summary := perSummaryIndex.Entries[percentile]
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				// "\t* { Percentile: %d, Read Latency: %.2f, Write Latency: %.2f, VM Latency: %.2f, Read Iops: %.2f, Write Iops: %.2f, Interval: %d%s",
 				"  * { Percentile: %d, RLatency: %.2f, WLatency: %.2f, VMLatency: %.2f, RIops: %.2f, WIops: %.2f, Interval: %d }%s",
@@ -1633,13 +1633,13 @@ func DatastorePerformanceReport(
 		}
 	}
 
-	fmt.Fprintf(&report, nagios.CheckOutputEOL)
+	_, _ = fmt.Fprintf(&report, nagios.CheckOutputEOL)
 
 	printVMSummary(&report, dsPerfSet.VMs, types.VirtualMachinePowerStatePoweredOn)
 
 	printVMSummary(&report, dsPerfSet.VMs, types.VirtualMachinePowerStatePoweredOff)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%s---%s%s",
 		nagios.CheckOutputEOL,
@@ -1647,14 +1647,14 @@ func DatastorePerformanceReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* vSphere environment: %s%s",
 		c.URL().String(),
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
 		c.Client.UserAgent,

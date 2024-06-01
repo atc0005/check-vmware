@@ -134,7 +134,7 @@ func (mvdsperf *MultiValueDSPerfPercentileSetFlag) String() string {
 	var output strings.Builder
 
 	for _, p := range percentiles {
-		fmt.Fprintf(&output,
+		_, _ = fmt.Fprintf(&output,
 			"{Percentile: %v, ThresholdVals: %+v}, ",
 			p,
 			(*mvdsperf)[p],
@@ -203,7 +203,7 @@ func (mvdsperf MultiValueDSPerfPercentileSetFlag) thresholdValues(state string) 
 			// )
 		}
 
-		fmt.Fprintf(&output,
+		_, _ = fmt.Fprintf(&output,
 			"{ Percentile: %v, ReadLatency: %+v, WriteLatency: %v, VMLatency: %v }, ",
 			p,
 			readLatency,

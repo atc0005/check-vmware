@@ -663,7 +663,7 @@ func ResourcePoolsMemoryReport(
 
 	rpIDtoNameIdx := make(map[string]string)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"Memory usage by Resource Pool:%s%s",
 		nagios.CheckOutputEOL,
@@ -677,7 +677,7 @@ func ResourcePoolsMemoryReport(
 		rpSummary := rp.Summary.GetResourcePoolSummary()
 		switch {
 		case rpSummary == nil:
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s [Pool: (unavailable), Cluster: (unavailable)]%s",
 				rp.Name,
@@ -691,7 +691,7 @@ func ResourcePoolsMemoryReport(
 				rpMemoryUsage,
 				clusterMemoryInBytes,
 			)
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s [Pool: (%s, %0.1f%%), Cluster: (%.2f%%)]%s",
 				rp.Name,
@@ -714,7 +714,7 @@ func ResourcePoolsMemoryReport(
 	poweredVMs, numVMsPoweredOff := FilterVMsByPowerState(vms, false)
 	numVMsPoweredOn := len(poweredVMs)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%sTen VMS consuming most memory:%s%s",
 		nagios.CheckOutputEOL,
@@ -724,7 +724,7 @@ func ResourcePoolsMemoryReport(
 
 	switch {
 	case numVMsPoweredOn == 0:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* None (visible); %d powered off%s",
 			numVMsPoweredOff,
@@ -747,7 +747,7 @@ func ResourcePoolsMemoryReport(
 			hostMemUsedBytes := int64(vm.Summary.QuickStats.HostMemoryUsage) * units.MB
 			rpName := rpIDtoNameIdx[vm.ResourcePool.Value]
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s [Mem: %s, Pool: %s]%s",
 				vm.Name,
@@ -759,7 +759,7 @@ func ResourcePoolsMemoryReport(
 
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%sTen VMs most recently powered on:%s%s",
 		nagios.CheckOutputEOL,
@@ -769,7 +769,7 @@ func ResourcePoolsMemoryReport(
 
 	switch {
 	case len(poweredVMs) == 0:
-		fmt.Fprintf(
+		_, _ = fmt.Fprintf(
 			&report,
 			"* None (visible); %d powered off%s",
 			numVMsPoweredOff,
@@ -794,7 +794,7 @@ func ResourcePoolsMemoryReport(
 			uptimeDays := uptime.Hours() / 24
 			rpName := rpIDtoNameIdx[vm.ResourcePool.Value]
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&report,
 				"* %s: [Uptime: %.2f days, Mem: %s, Pool: %s]%s",
 				vm.Name,
@@ -807,7 +807,7 @@ func ResourcePoolsMemoryReport(
 
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"%s---%s%s",
 		nagios.CheckOutputEOL,
@@ -815,21 +815,21 @@ func ResourcePoolsMemoryReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* vSphere environment: %s%s",
 		c.URL().String(),
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
 		c.Client.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Specified Resource Pools to explicitly include (%d): [%v]%s",
 		len(vmsFilterOptions.ResourcePoolsIncluded),
@@ -837,7 +837,7 @@ func ResourcePoolsMemoryReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Specified Resource Pools to explicitly exclude (%d): [%v]%s",
 		len(vmsFilterOptions.ResourcePoolsExcluded),
@@ -845,7 +845,7 @@ func ResourcePoolsMemoryReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&report,
 		"* Resource Pools evaluated (%d of %d): [%v]%s",
 		vmsFilterResults.NumRPsAfterFiltering(),

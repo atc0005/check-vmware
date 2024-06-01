@@ -102,7 +102,7 @@ func VirtualCPUsReport(
 
 	// This is shown regardless of whether the plugin is considered to be in a
 	// non-OK state.
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&vmsReport,
 		"* vCPUs%s** Allocated: %d (%.1f%%)%s** Max Allowed: %d%s",
 		nagios.CheckOutputEOL,
@@ -113,7 +113,7 @@ func VirtualCPUsReport(
 		nagios.CheckOutputEOL,
 	)
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&vmsReport,
 		"%sTop 10 vCPU consumers:%s%s",
 		nagios.CheckOutputEOL,
@@ -135,10 +135,10 @@ func VirtualCPUsReport(
 
 	switch {
 	case len(topTen) == 0:
-		fmt.Fprintf(&vmsReport, "* None %s", nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(&vmsReport, "* None %s", nagios.CheckOutputEOL)
 	default:
 		for _, vm := range topTen {
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&vmsReport,
 				"* %s (%d vCPUs)%s",
 				vm.Name,
@@ -148,7 +148,7 @@ func VirtualCPUsReport(
 		}
 	}
 
-	fmt.Fprintf(
+	_, _ = fmt.Fprintf(
 		&vmsReport,
 		"%sTen most recently started VMs:%s%s",
 		nagios.CheckOutputEOL,
@@ -178,13 +178,13 @@ func VirtualCPUsReport(
 
 	switch {
 	case len(bottomTen) == 0:
-		fmt.Fprintf(&vmsReport, "* None %s", nagios.CheckOutputEOL)
+		_, _ = fmt.Fprintf(&vmsReport, "* None %s", nagios.CheckOutputEOL)
 	default:
 		for _, vm := range bottomTen {
 			uptime := time.Duration(vm.Summary.QuickStats.UptimeSeconds) * time.Second
 			uptimeDays := uptime.Hours() / 24
 
-			fmt.Fprintf(
+			_, _ = fmt.Fprintf(
 				&vmsReport,
 				"* %s: (%.2f days)%s",
 				vm.Name,
