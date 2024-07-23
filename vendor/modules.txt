@@ -20,8 +20,8 @@ github.com/rs/zerolog
 github.com/rs/zerolog/internal/cbor
 github.com/rs/zerolog/internal/json
 github.com/rs/zerolog/log
-# github.com/vmware/govmomi v0.38.0
-## explicit; go 1.19
+# github.com/vmware/govmomi v0.39.0
+## explicit; go 1.21
 github.com/vmware/govmomi
 github.com/vmware/govmomi/find
 github.com/vmware/govmomi/history
