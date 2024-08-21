@@ -26,6 +26,18 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.36.13] - 2024-08-21
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1220) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.21.8 to go-ci-oldstable-build-v0.21.9 in /dependabot/docker/builds
+- (GH-1214) Go Dependency: Bump github.com/vmware/govmomi from 0.39.0 to 0.40.0
+- (GH-1224) Go Dependency: Bump github.com/vmware/govmomi from 0.40.0 to 0.42.0
+- (GH-1223) Go Runtime: Bump golang from 1.21.13 to 1.22.6 in /dependabot/docker/go
+- (GH-1222) Update project to Go 1.22 series
+
 ## [v0.36.12] - 2024-08-13
 
 ### Changed
@@ -2430,7 +2442,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.12...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.13...HEAD
+[v0.36.13]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.13
 [v0.36.12]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.12
 [v0.36.11]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.11
 [v0.36.10]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.10
