@@ -157,9 +157,9 @@ func main() {
 
 	// here we diverge from VMware Tools plugin
 
-	var vCPUsAllocated int32
+	var vCPUsAllocated int64
 	for _, vm := range vmsFilterResults.VMsAfterFiltering() {
-		vCPUsAllocated += vm.Summary.Config.NumCpu
+		vCPUsAllocated += int64(vm.Summary.Config.NumCpu)
 		log.Debug().
 			Str("vm_name", vm.Name).
 			Int32("num_vcpu", vm.Summary.Config.NumCpu).
@@ -167,22 +167,22 @@ func main() {
 	}
 
 	log.Debug().
-		Int32("vcpus_allocated", vCPUsAllocated).
+		Int64("vcpus_allocated", vCPUsAllocated).
 		Msg("Finished counting vCPUs")
 
-	vCPUsPercentageUsedOfAllowed := float32(vCPUsAllocated) / float32(cfg.VCPUsMaxAllowed) * 100
-	var vCPUsRemaining int32
+	vCPUsPercentageUsedOfAllowed := float64(vCPUsAllocated) / float64(cfg.VCPUsMaxAllowed) * 100
+	var vCPUsRemaining int64
 
 	switch {
-	case vCPUsAllocated > int32(cfg.VCPUsMaxAllowed):
+	case vCPUsAllocated > int64(cfg.VCPUsMaxAllowed):
 		vCPUsRemaining = 0
 	default:
-		vCPUsRemaining = int32(cfg.VCPUsMaxAllowed) - vCPUsAllocated
+		vCPUsRemaining = int64(cfg.VCPUsMaxAllowed) - vCPUsAllocated
 	}
 
 	log.Debug().
-		Float32("vcpus_usage", vCPUsPercentageUsedOfAllowed).
-		Int32("vcpus_remaining", vCPUsRemaining).
+		Float64("vcpus_usage", vCPUsPercentageUsedOfAllowed).
+		Int64("vcpus_remaining", vCPUsRemaining).
 		Msg("")
 
 	log.Debug().Msg("Compiling Performance Data details")
@@ -234,14 +234,14 @@ func main() {
 		Int("vms_after_filtering", vmsFilterResults.NumVMsAfterFiltering()).
 		Int("vms_excluded_by_name", vmsFilterResults.NumVMsExcludedByName()).
 		Int("vms_excluded_by_power_state", vmsFilterResults.NumVMsExcludedByPowerState()).
-		Float32("vcpus_usage", vCPUsPercentageUsedOfAllowed).
-		Int32("vcpus_used", vCPUsAllocated).
-		Int32("vcpus_remaining", vCPUsRemaining).
+		Float64("vcpus_usage", vCPUsPercentageUsedOfAllowed).
+		Int64("vcpus_used", vCPUsAllocated).
+		Int64("vcpus_remaining", vCPUsRemaining).
 		Logger()
 
 	log.Debug().Msg("Evaluating vCPU usage")
 	switch {
-	case vCPUsPercentageUsedOfAllowed > float32(cfg.VCPUsAllocatedCritical):
+	case vCPUsPercentageUsedOfAllowed > float64(cfg.VCPUsAllocatedCritical):
 
 		log.Error().Msg("vCPUs allocation CRITICAL")
 
@@ -266,7 +266,7 @@ func main() {
 
 		return
 
-	case vCPUsPercentageUsedOfAllowed > float32(cfg.VCPUsAllocatedWarning):
+	case vCPUsPercentageUsedOfAllowed > float64(cfg.VCPUsAllocatedWarning):
 
 		log.Error().Msg("vCPUs allocation WARNING")
 

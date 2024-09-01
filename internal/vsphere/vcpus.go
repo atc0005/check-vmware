@@ -28,7 +28,7 @@ var ErrVCPUsUsageThresholdCrossed = errors.New("vCPUS allocation exceeds specifi
 func VirtualCPUsOneLineCheckSummary(
 	stateLabel string,
 	vmsFilterResults VMsFilterResults,
-	vCPUsAllocated int32,
+	vCPUsAllocated int64,
 	vCPUsMax int,
 ) string {
 
@@ -41,12 +41,12 @@ func VirtualCPUsOneLineCheckSummary(
 		)
 	}()
 
-	vCPUsPercentageUsed := float32(vCPUsAllocated) / float32(vCPUsMax) * 100
+	vCPUsPercentageUsed := float64(vCPUsAllocated) / float64(vCPUsMax) * 100
 
 	switch {
 
-	case vCPUsAllocated > int32(vCPUsMax):
-		vCPUsOverage := vCPUsAllocated - int32(vCPUsMax)
+	case vCPUsAllocated > int64(vCPUsMax):
+		vCPUsOverage := vCPUsAllocated - int64(vCPUsMax)
 		return fmt.Sprintf(
 			"%s: %d vCPUs allocated (%.1f%%); %d more allocated than %d allowed"+
 				" (evaluated %d VMs, %d Resource Pools)",
@@ -60,7 +60,7 @@ func VirtualCPUsOneLineCheckSummary(
 		)
 
 	default:
-		vCPUsRemaining := int32(vCPUsMax) - vCPUsAllocated
+		vCPUsRemaining := int64(vCPUsMax) - vCPUsAllocated
 		return fmt.Sprintf(
 			"%s: %d vCPUs allocated (%.1f%%); %d more remaining from %d allowed"+
 				" (evaluated %d VMs, %d Resource Pools)",
@@ -85,7 +85,7 @@ func VirtualCPUsReport(
 	c *vim25.Client,
 	vmsFilterOptions VMsFilterOptions,
 	vmsFilterResults VMsFilterResults,
-	vCPUsAllocated int32,
+	vCPUsAllocated int64,
 	vCPUsMax int,
 ) string {
 
