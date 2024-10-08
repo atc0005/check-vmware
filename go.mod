@@ -8,12 +8,13 @@
 module github.com/atc0005/check-vmware
 
 go 1.21
+toolchain go1.22.5
 
 require (
 	github.com/atc0005/go-nagios v0.16.2-0.20240601143430-96be84d30458
 	github.com/google/go-cmp v0.6.0
 	github.com/rs/zerolog v1.33.0
-	github.com/vmware/govmomi v0.43.0
+	github.com/vmware/govmomi v0.44.0
 )
 
 require (
