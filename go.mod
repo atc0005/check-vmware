@@ -7,7 +7,7 @@
 
 module github.com/atc0005/check-vmware
 
-go 1.21
+go 1.22
 
 require (
 	github.com/atc0005/go-nagios v0.16.1
