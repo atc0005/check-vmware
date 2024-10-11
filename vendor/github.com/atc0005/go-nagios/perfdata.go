@@ -322,22 +322,22 @@ func parsePerfData(perfdataString string) (PerformanceData, error) {
 
 	rawWarn, rawCrit, rawMin, rawMax := extractRawWarnCritMinMaxRawFieldVals(perfdataFields)
 
-	warn, err := parsePerfDataWarnField(rawWarn)
+	warnVal, err := parsePerfDataWarnField(rawWarn)
 	if err != nil {
 		return PerformanceData{}, fmt.Errorf("failed to parse warn field: %w", err)
 	}
 
-	crit, err := parsePerfDataCritField(rawCrit)
+	critVal, err := parsePerfDataCritField(rawCrit)
 	if err != nil {
 		return PerformanceData{}, fmt.Errorf("failed to parse crit field: %w", err)
 	}
 
-	min, err := parsePerfDataMinField(rawMin)
+	minVal, err := parsePerfDataMinField(rawMin)
 	if err != nil {
 		return PerformanceData{}, fmt.Errorf("failed to parse min field: %w", err)
 	}
 
-	max, err := parsePerfDataMaxField(rawMax)
+	maxVal, err := parsePerfDataMaxField(rawMax)
 	if err != nil {
 		return PerformanceData{}, fmt.Errorf("failed to parse max field: %w", err)
 	}
@@ -346,10 +346,10 @@ func parsePerfData(perfdataString string) (PerformanceData, error) {
 		Label:             label,
 		Value:             value,
 		UnitOfMeasurement: uom,
-		Warn:              warn,
-		Crit:              crit,
-		Min:               min,
-		Max:               max,
+		Warn:              warnVal,
+		Crit:              critVal,
+		Min:               minVal,
+		Max:               maxVal,
 	}
 
 	return perfdata, nil
@@ -494,27 +494,27 @@ func extractValueAndUoM(input string) (string, string, error) {
 // fields) into Warn, Crit, Min and Max values. If values are not present for
 // those fields an empty string is returned in its place.
 func extractRawWarnCritMinMaxRawFieldVals(perfdataFields []string) (string, string, string, string) {
-	var warn string
+	var warnVal string
 	if len(perfdataFields) >= 2 {
-		warn = perfdataFields[1]
+		warnVal = perfdataFields[1]
 	}
 
-	var crit string
+	var critVal string
 	if len(perfdataFields) >= 3 {
-		crit = perfdataFields[2]
+		critVal = perfdataFields[2]
 	}
 
-	var min string
+	var minVal string
 	if len(perfdataFields) >= 4 {
-		min = perfdataFields[3]
+		minVal = perfdataFields[3]
 	}
 
-	var max string
+	var maxVal string
 	if len(perfdataFields) >= 5 {
-		max = perfdataFields[4]
+		maxVal = perfdataFields[4]
 	}
 
-	return warn, crit, min, max
+	return warnVal, critVal, minVal, maxVal
 }
 
 // parsePerfDataWarnField evaluates the given input string as a Performance

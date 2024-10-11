@@ -26,6 +26,28 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.16.2] - 2024-10-10
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-240) Update Dependabot PR prefixes
+- (GH-241) Update Dependabot PR prefixes (redux)
+- (GH-242) Go Dependency: Bump github.com/stretchr/testify from 1.8.4 to 1.9.0
+
+#### Other
+
+- (GH-245) Add check_cert plugin perfdata success test case
+- (GH-254) Update README reference links
+
+### Fixed
+
+- (GH-247) Remove inactive maligned linter
+- (GH-248) Fix errcheck linting errors
+- (GH-252) Fix `TestEmptyServiceOutputProducesNoOutput` test
+- (GH-257) Fix `predeclared` linter warnings
+
 ## [v0.16.1] - 2024-01-25
 
 ### Added
@@ -521,7 +543,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.16.1...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.16.2...HEAD
+[v0.16.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.2
 [v0.16.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.1
 [v0.16.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.0
 [v0.15.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.15.0

@@ -155,14 +155,13 @@ using either this library or the original project.
 
 - Nagios
   - <https://github.com/nagios-plugins/nagios-plugins/blob/master/plugins-scripts/utils.sh.in>
-  - <http://nagios-plugins.org/doc/guidelines.html>
+  - <https://nagios-plugins.org/doc/guidelines.html>
   - <https://www.monitoring-plugins.org/doc/guidelines.html>
-  - <https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/pluginapi.html>
   - <https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/4/en/pluginapi.html>
-  - <https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/perfdata.html>
   - <https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/4/en/perfdata.html>
-  - <https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/3/en/macrolist.html>
   - <https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/4/en/macrolist.html>
+  - [max plugin output length](https://github.com/NagiosEnterprises/nagioscore/blob/a30a89e0a493da49416e32ed770e294b1fe800f5/include/nagios.h#L274-L280)
+  - [character restrictions applicable to LongServiceOutput macro](https://assets.nagios.com/downloads/nagioscore/docs/nagioscore/4/en/configmain.html#illegal_macro_output_chars)
 - Icinga
   - <https://icinga.com/docs/icinga-2/latest/doc/05-service-monitoring/#plugin-api>
   - <https://icinga.com/docs/icinga-2/latest/doc/05-service-monitoring/#service-monitoring-plugin-api-performance-data-metrics>
