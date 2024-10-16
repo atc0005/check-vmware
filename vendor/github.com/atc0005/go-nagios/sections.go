@@ -151,6 +151,53 @@ func (p Plugin) handleLongServiceOutput(w io.Writer) {
 	)
 }
 
+// handleEncodedPayload is a wrapper around the logic used to handle/process
+// any user-provided content to be encoded and included in the plugin output.
+func (p Plugin) handleEncodedPayload(w io.Writer) {
+	// Early exit if there is no content to process.
+	if p.encodedPayloadBuffer.Len() == 0 {
+		return
+	}
+
+	leftDelimiter := p.getEncodedPayloadDelimiterLeft()
+	rightDelimiter := p.getEncodedPayloadDelimiterRight()
+
+	// Encode the contents of the buffer to Ascii85 with delimiters.
+	encodedWithDelimiters := EncodeASCII85Payload(
+		p.encodedPayloadBuffer.Bytes(),
+		leftDelimiter,
+		rightDelimiter,
+	)
+
+	// Hide section header/label if no payload was specified.
+	//
+	// If we hide the section header, we still provide some padding to prevent
+	// this output from running up against the LongServiceOutput content.
+	switch {
+	case p.encodedPayloadBuffer.Len() > 0:
+		_, _ = fmt.Fprintf(w,
+			"%s**%s**%s",
+			CheckOutputEOL,
+			p.getEncodedPayloadLabelText(),
+			CheckOutputEOL,
+		)
+
+		// Note: fmt.Println() (and fmt.Fprintln()) has the same issue as
+		// `\n`: Nagios seems to interpret them literally instead of emitting
+		// an actual newline. We work around that by using fmt.Fprintf() for
+		// output that is intended for display within the Nagios web UI.
+		_, _ = fmt.Fprintf(w,
+			"%s%v%s",
+			CheckOutputEOL,
+			encodedWithDelimiters,
+			CheckOutputEOL,
+		)
+
+	default:
+		_, _ = fmt.Fprint(w, CheckOutputEOL)
+	}
+}
+
 // handlePerformanceData is a wrapper around the logic used to
 // handle/process plugin Performance Data.
 func (p *Plugin) handlePerformanceData(w io.Writer) {
@@ -240,6 +287,17 @@ func (p Plugin) getDetailedInfoLabelText() string {
 	}
 }
 
+// getEncodedPayloadLabelText retrieves the custom encoded payload label text
+// if set, otherwise returns the default value.
+func (p Plugin) getEncodedPayloadLabelText() string {
+	switch {
+	case p.encodedPayloadLabel != "":
+		return p.encodedPayloadLabel
+	default:
+		return defaultEncodedPayloadLabel
+	}
+}
+
 // SetThresholdsLabel overrides the default thresholds label text.
 func (p *Plugin) SetThresholdsLabel(newLabel string) {
 	p.thresholdsLabel = newLabel
@@ -253,6 +311,11 @@ func (p *Plugin) SetErrorsLabel(newLabel string) {
 // SetDetailedInfoLabel overrides the default detailed info label text.
 func (p *Plugin) SetDetailedInfoLabel(newLabel string) {
 	p.detailedInfoLabel = newLabel
+}
+
+// SetEncodedPayloadLabel overrides the default encoded payload label text.
+func (p *Plugin) SetEncodedPayloadLabel(newLabel string) {
+	p.encodedPayloadLabel = newLabel
 }
 
 // HideThresholdsSection indicates that client code has opted to hide the
