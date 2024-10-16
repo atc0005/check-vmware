@@ -8,6 +8,7 @@
 package nagios
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -58,15 +59,49 @@ const CheckOutputEOL string = " \n"
 
 // Default header text for various sections of the output if not overridden.
 const (
-	defaultThresholdsLabel   string = "THRESHOLDS"
-	defaultErrorsLabel       string = "ERRORS"
-	defaultDetailedInfoLabel string = "DETAILED INFO"
+	defaultThresholdsLabel     string = "THRESHOLDS"
+	defaultErrorsLabel         string = "ERRORS"
+	defaultDetailedInfoLabel   string = "DETAILED INFO"
+	defaultEncodedPayloadLabel string = "ENCODED PAYLOAD"
 )
 
 // Default performance data metrics emitted if not specified by client code.
 const (
 	defaultTimeMetricLabel             string = "time"
 	defaultTimeMetricUnitOfMeasurement string = "ms"
+)
+
+// Default payload values if not specified by client code.
+const (
+	defaultPayloadDelimiterLeft  string = DefaultASCII85EncodingDelimiterLeft
+	defaultPayloadDelimiterRight string = DefaultASCII85EncodingDelimiterRight
+)
+
+const (
+	// DefaultASCII85EncodingDelimiterLeft is the left delimiter often used
+	// with ascii85-encoded data.
+	DefaultASCII85EncodingDelimiterLeft string = "<~"
+
+	// DefaultASCII85EncodingDelimiterRight is the right delimiter often used
+	// with ascii85-encoded data.
+	DefaultASCII85EncodingDelimiterRight string = "~>"
+
+	// DefaultASCII85EncodingPatternRegex is the default regex pattern used to
+	// match and extract an Ascii85 encoded payload as used in the btoa tool
+	// and Adobe's PostScript and PDF document formats.
+	//
+	// In Ascii85-encoded blocks, whitespace and line-break characters may be
+	// present anywhere, including in the middle of a 5-character block, but
+	// they must be silently ignored.
+	//
+	//  - https://pkg.go.dev/encoding/ascii85
+	//  - https://en.wikipedia.org/wiki/Ascii85
+	//
+	// NOTE: Not using delimiters when saving an encoded payload makes the
+	// extraction process *VERY* unreliable as this regex pattern (by itself)
+	// matches far more than likely intended.
+	//
+	DefaultASCII85EncodingPatternRegex string = `[\x21-\x75\s]+`
 )
 
 // Sentinel error collection. Exported for potential use by client code to
@@ -112,6 +147,21 @@ var (
 	// ErrInvalidPerformanceDataCritField  = errors.New("invalid field Crit in parsed performance data")
 	// ErrInvalidPerformanceDataMinField   = errors.New("invalid field Min in parsed performance data")
 	// ErrInvalidPerformanceDataMaxField   = errors.New("invalid field Max in parsed performance data")
+
+	// ErrMissingValue indicates that an expected value was missing.
+	ErrMissingValue = errors.New("missing expected value")
+
+	// ErrEncodedPayloadNotFound indicates that an encoded payload was not
+	// found during an extraction attempt.
+	ErrEncodedPayloadNotFound = errors.New("encoded payload not found")
+
+	// ErrEncodedPayloadInvalid indicates that an encoded payload was found
+	// during extraction but was found to be invalid.
+	ErrEncodedPayloadInvalid = errors.New("encoded payload invalid")
+
+	// ErrEncodedPayloadInvalid indicates that a regular expression used to
+	// identify an encoded payload was found to be invalid.
+	ErrEncodedPayloadRegexInvalid = errors.New("encoded payload regex invalid")
 )
 
 // ServiceState represents the status label and exit code for a service check.
@@ -136,6 +186,21 @@ type ExitCallBackFunc func() string
 type Plugin struct {
 	// outputSink is the user-specified or fallback target for plugin output.
 	outputSink io.Writer
+
+	// encodedPayloadBuffer holds a user-specified payload *before* encoding
+	// is performed. If provided, this payload is later encoded and included
+	// in the generated plugin output.
+	encodedPayloadBuffer bytes.Buffer
+
+	// encodedPayloadDelimiterLeft is the user-specified custom encoded
+	// payload delimiter. If not set the default payload left delimiter is
+	// used.
+	encodedPayloadDelimiterLeft *string
+
+	// encodedPayloadDelimiterRight is the user-specified custom encoded
+	// payload delimiter. If not set the default payload right delimiter is
+	// used.
+	encodedPayloadDelimiterRight *string
 
 	// start tracks when the associated plugin begins executing. This value is
 	// used to generate a default `time` performance data metric (which can be
@@ -192,6 +257,10 @@ type Plugin struct {
 	// detailedInfoLabel is an optional custom label used in place of the
 	// standard text prior to emitting LongServiceOutput.
 	detailedInfoLabel string
+
+	// encodedPayloadLabel is an optional custom label used in place of the
+	// standard text prior to emitting an encoded payload.
+	encodedPayloadLabel string
 
 	// hideThresholdsSection indicates whether client code has opted to hide
 	// the thresholds section, regardless of whether client code previously
@@ -312,6 +381,8 @@ func (p *Plugin) ReturnCheckResults() {
 
 	p.handleLongServiceOutput(&output)
 
+	p.handleEncodedPayload(&output)
+
 	// If set, call user-provided branding function before emitting
 	// performance data and exiting application.
 	if p.BrandingCallback != nil {
@@ -406,6 +477,24 @@ func (p *Plugin) SetOutputTarget(w io.Writer) {
 	p.outputSink = w
 }
 
+// SetEncodedPayloadDelimiterLeft uses the given value to override the default
+// left delimiter used when encoding a provided payload. Specify an empty
+// string if no left delimiter should be used.
+//
+// This value is ignored if no payload is provided.
+func (p *Plugin) SetEncodedPayloadDelimiterLeft(delimiter string) {
+	p.encodedPayloadDelimiterLeft = &delimiter
+}
+
+// SetEncodedPayloadDelimiterRight uses the given value to override the
+// default right delimiter used when encoding a provided payload. Specify an
+// empty string if no right delimiter should be used.
+//
+// This value is ignored if no payload is provided.
+func (p *Plugin) SetEncodedPayloadDelimiterRight(delimiter string) {
+	p.encodedPayloadDelimiterRight = &delimiter
+}
+
 // SkipOSExit indicates that the os.Exit(x) step used to signal to Nagios what
 // state plugin execution has completed in (e.g., OK, WARNING, ...) should be
 // skipped. If skipped, a message is logged to os.Stderr in place of the
@@ -415,6 +504,54 @@ func (p *Plugin) SetOutputTarget(w io.Writer) {
 // 1.16 and newer.
 func (p *Plugin) SkipOSExit() {
 	p.shouldSkipOSExit = true
+}
+
+// SetPayloadBytes uses the given input in bytes to overwrite any existing
+// content in the payload buffer. It returns the length of input and a
+// potential error.
+//
+// The contents of this buffer will be included in the plugin's output as an
+// encoded payload suitable for later retrieval/decoding.
+func (p *Plugin) SetPayloadBytes(input []byte) (int, error) {
+	p.encodedPayloadBuffer.Reset()
+
+	return p.encodedPayloadBuffer.Write(input)
+}
+
+// SetPayloadString uses the given input string to overwrite any existing
+// content in the payload buffer. It returns the length of input and a
+// potential error.
+//
+// The contents of this buffer will be included in the plugin's output as an
+// encoded payload suitable for later retrieval/decoding.
+func (p *Plugin) SetPayloadString(input string) (int, error) {
+	p.encodedPayloadBuffer.Reset()
+
+	return p.encodedPayloadBuffer.WriteString(input)
+}
+
+// AddPayloadBytes appends the given input in bytes to the payload buffer. It
+// returns the length of input and a potential error.
+//
+// The contents of this buffer will be included in the plugin's output as an
+// encoded payload suitable for later retrieval/decoding.
+func (p *Plugin) AddPayloadBytes(input []byte) (int, error) {
+	return p.encodedPayloadBuffer.Write(input)
+}
+
+// AddPayloadString appends the given input string to the payload buffer. It
+// returns the length of input and a potential error.
+//
+// The contents of this buffer will be included in the plugin's output as an
+// encoded payload suitable for later retrieval/decoding.
+func (p *Plugin) AddPayloadString(input string) (int, error) {
+	return p.encodedPayloadBuffer.WriteString(input)
+}
+
+// UnencodedPayload returns the payload buffer contents in string format as-is
+// without encoding applied.
+func (p *Plugin) UnencodedPayload() string {
+	return p.encodedPayloadBuffer.String()
 }
 
 // emitOutput writes final plugin output to the previously set output target.
