@@ -467,11 +467,14 @@ func (p *Plugin) AddUniqueError(errs ...error) {
 }
 
 // SetOutputTarget assigns a target for Nagios plugin output. By default
-// output is emitted to os.Stdout.
+// output is emitted to os.Stdout. If given an invalid output target the
+// default output target will be used instead.
 func (p *Plugin) SetOutputTarget(w io.Writer) {
 	// Guard against potential nil argument.
 	if w == nil {
 		p.outputSink = os.Stdout
+
+		return
 	}
 
 	p.outputSink = w
