@@ -33,81 +33,119 @@ func (p Plugin) handleServiceOutputSection(w io.Writer) {
 	// formatting changes to this content, simply emit it as-is. This helps
 	// avoid potential issues with literal characters being interpreted as
 	// formatting verbs.
-	_, _ = fmt.Fprint(w, p.ServiceOutput)
+	written, err := fmt.Fprint(w, p.ServiceOutput)
+	if err != nil {
+		// Very unlikely to occur, but we should still account for it.
+		panic("Failed to write ServiceOutput to given output sink")
+	}
+
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin ServiceOutput content written to buffer", written))
 }
 
 // handleErrorsSection is a wrapper around the logic used to handle/process
 // the Errors section header and listing.
 func (p Plugin) handleErrorsSection(w io.Writer) {
+	if p.isErrorsHidden() {
+		return
+	}
 
 	// If one or more errors were recorded and client code has not opted to
 	// hide the section ...
-	if !p.isErrorsHidden() {
 
-		_, _ = fmt.Fprintf(w,
-			"%s%s**%s**%s%s",
-			CheckOutputEOL,
-			CheckOutputEOL,
-			p.getErrorsLabelText(),
-			CheckOutputEOL,
-			CheckOutputEOL,
-		)
+	var totalWritten int
 
-		if p.LastError != nil {
-			_, _ = fmt.Fprintf(w, "* %v%s", p.LastError, CheckOutputEOL)
+	writeErrorToOutputSink := func(err error) {
+		written, writeErr := fmt.Fprintf(w, "* %v%s", err, CheckOutputEOL)
+		if writeErr != nil {
+			panic("Failed to write LastError field content to given output sink")
 		}
 
-		// Process any non-nil errors in the collection.
-		for _, err := range p.Errors {
-			if err != nil {
-				_, _ = fmt.Fprintf(w, "* %v%s", err, CheckOutputEOL)
-			}
-		}
-
+		totalWritten += written
 	}
 
+	written, writeErr := fmt.Fprintf(w,
+		"%s%s**%s**%s%s",
+		CheckOutputEOL,
+		CheckOutputEOL,
+		p.getErrorsLabelText(),
+		CheckOutputEOL,
+		CheckOutputEOL,
+	)
+	if writeErr != nil {
+		panic("Failed to write errors section label to given output sink")
+	}
+	totalWritten += written
+
+	if p.LastError != nil {
+		writeErrorToOutputSink(p.LastError)
+	}
+
+	// Process any non-nil errors in the collection.
+	for _, err := range p.Errors {
+		if err != nil {
+			writeErrorToOutputSink(err)
+		}
+	}
+
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes total plugin errors content written to buffer", totalWritten))
 }
 
 // handleThresholdsSection is a wrapper around the logic used to
 // handle/process the Thresholds section header and listing.
 func (p Plugin) handleThresholdsSection(w io.Writer) {
-
 	// We skip emitting the thresholds section if there isn't any
 	// LongServiceOutput to process.
-	if p.LongServiceOutput != "" {
-
-		// If one or more threshold values were recorded and client code has
-		// not opted to hide the section ...
-		if !p.isThresholdsSectionHidden() {
-
-			_, _ = fmt.Fprintf(w,
-				"%s**%s**%s%s",
-				CheckOutputEOL,
-				p.getThresholdsLabelText(),
-				CheckOutputEOL,
-				CheckOutputEOL,
-			)
-
-			if p.CriticalThreshold != "" {
-				_, _ = fmt.Fprintf(w,
-					"* %s: %v%s",
-					StateCRITICALLabel,
-					p.CriticalThreshold,
-					CheckOutputEOL,
-				)
-			}
-
-			if p.WarningThreshold != "" {
-				_, _ = fmt.Fprintf(w,
-					"* %s: %v%s",
-					StateWARNINGLabel,
-					p.WarningThreshold,
-					CheckOutputEOL,
-				)
-			}
-		}
+	if p.LongServiceOutput == "" || p.isThresholdsSectionHidden() {
+		return
 	}
 
+	// If one or more threshold values were recorded and client code has
+	// not opted to hide the section ...
+
+	var totalWritten int
+
+	written, err := fmt.Fprintf(w, "%s**%s**%s%s",
+		CheckOutputEOL,
+		p.getThresholdsLabelText(),
+		CheckOutputEOL,
+		CheckOutputEOL,
+	)
+	if err != nil {
+		panic("Failed to write thresholds section label to given output sink")
+	}
+
+	totalWritten += written
+
+	if p.CriticalThreshold != "" {
+		written, err := fmt.Fprintf(w, "* %s: %v%s",
+			StateCRITICALLabel,
+			p.CriticalThreshold,
+			CheckOutputEOL,
+		)
+		if err != nil {
+			panic("Failed to write thresholds section label to given output sink")
+		}
+
+		totalWritten += written
+	}
+
+	if p.WarningThreshold != "" {
+		warningThresholdText := fmt.Sprintf(
+			"* %s: %v%s",
+			StateWARNINGLabel,
+			p.WarningThreshold,
+			CheckOutputEOL,
+		)
+
+		written, err := fmt.Fprint(w, warningThresholdText)
+		if err != nil {
+			panic("Failed to write thresholds section label to given output sink")
+		}
+
+		totalWritten += written
+	}
+
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin thresholds section content written to buffer", totalWritten))
 }
 
 // handleLongServiceOutput is a wrapper around the logic used to
@@ -119,6 +157,8 @@ func (p Plugin) handleLongServiceOutput(w io.Writer) {
 		return
 	}
 
+	var totalWritten int
+
 	// Hide section header/label if threshold and error values were not
 	// specified by client code or if client code opted to explicitly hide
 	// those sections; there is no need to use a header to separate the
@@ -129,26 +169,44 @@ func (p Plugin) handleLongServiceOutput(w io.Writer) {
 	// ServiceOutput content.
 	switch {
 	case !p.isThresholdsSectionHidden() || !p.isErrorsHidden():
-		_, _ = fmt.Fprintf(w,
+		written, err := fmt.Fprintf(w,
 			"%s**%s**%s",
 			CheckOutputEOL,
 			p.getDetailedInfoLabelText(),
 			CheckOutputEOL,
 		)
+		if err != nil {
+			panic("Failed to write LongServiceOutput section label to given output sink")
+		}
+
+		totalWritten += written
+
 	default:
-		_, _ = fmt.Fprint(w, CheckOutputEOL)
+		written, err := fmt.Fprint(w, CheckOutputEOL)
+		if err != nil {
+			panic("Failed to write LongServiceOutput section label spacer to given output sink")
+		}
+
+		totalWritten += written
 	}
 
 	// Note: fmt.Println() (and fmt.Fprintln()) has the same issue as `\n`:
 	// Nagios seems to interpret them literally instead of emitting an actual
 	// newline. We work around that by using fmt.Fprintf() for output that is
 	// intended for display within the Nagios web UI.
-	_, _ = fmt.Fprintf(w,
+	written, err := fmt.Fprintf(w,
 		"%s%v%s",
 		CheckOutputEOL,
 		p.LongServiceOutput,
 		CheckOutputEOL,
 	)
+	if err != nil {
+		panic("Failed to write LongServiceOutput field content to given output sink")
+	}
+
+	totalWritten += written
+
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin LongServiceOutput content written to buffer", totalWritten))
 }
 
 // handleEncodedPayload is a wrapper around the logic used to handle/process
@@ -169,33 +227,53 @@ func (p Plugin) handleEncodedPayload(w io.Writer) {
 		rightDelimiter,
 	)
 
+	var totalWritten int
+
 	// Hide section header/label if no payload was specified.
 	//
 	// If we hide the section header, we still provide some padding to prevent
 	// this output from running up against the LongServiceOutput content.
 	switch {
 	case p.encodedPayloadBuffer.Len() > 0:
-		_, _ = fmt.Fprintf(w,
+		written, err := fmt.Fprintf(w,
 			"%s**%s**%s",
 			CheckOutputEOL,
 			p.getEncodedPayloadLabelText(),
 			CheckOutputEOL,
 		)
+		if err != nil {
+			panic("Failed to write EncodedPayload section label to given output sink")
+		}
+
+		totalWritten += written
 
 		// Note: fmt.Println() (and fmt.Fprintln()) has the same issue as
 		// `\n`: Nagios seems to interpret them literally instead of emitting
 		// an actual newline. We work around that by using fmt.Fprintf() for
 		// output that is intended for display within the Nagios web UI.
-		_, _ = fmt.Fprintf(w,
+		written, err = fmt.Fprintf(w,
 			"%s%v%s",
 			CheckOutputEOL,
 			encodedWithDelimiters,
 			CheckOutputEOL,
 		)
 
+		if err != nil {
+			panic("Failed to write EncodedPayload content to given output sink")
+		}
+
+		totalWritten += written
+
 	default:
-		_, _ = fmt.Fprint(w, CheckOutputEOL)
+		written, err := fmt.Fprint(w, CheckOutputEOL)
+		if err != nil {
+			panic("Failed to write EncodedPayload section spacer to given output sink")
+		}
+
+		totalWritten += written
 	}
+
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin EncodedPayload content written to buffer", totalWritten))
 }
 
 // handlePerformanceData is a wrapper around the logic used to
@@ -217,22 +295,40 @@ func (p *Plugin) handlePerformanceData(w io.Writer) {
 		return
 	}
 
+	var totalWritten int
+
 	// Performance data metrics are appended to plugin output. These
 	// metrics are provided as a single line, leading with a pipe
 	// character, a space and one or more metrics each separated from
 	// another by a single space.
-	_, _ = fmt.Fprint(w, " |")
+	written, err := fmt.Fprint(w, " |")
+	if err != nil {
+		panic("Failed to write performance data content to given output sink")
+	}
+
+	totalWritten += written
 
 	// Sort performance data values prior to emitting them so that the
 	// output is consistent across plugin execution.
 	perfData := p.getSortedPerfData()
 
 	for _, pd := range perfData {
-		_, _ = fmt.Fprint(w, pd.String())
+		written, err = fmt.Fprint(w, pd.String())
+		if err != nil {
+			panic("Failed to write performance data content to given output sink")
+		}
+		totalWritten += written
 	}
 
 	// Add final trailing newline to satisfy Nagios plugin output format.
-	_, _ = fmt.Fprint(w, CheckOutputEOL)
+	written, err = fmt.Fprint(w, CheckOutputEOL)
+	if err != nil {
+		panic("Failed to write performance data content to given output sink")
+	}
+
+	totalWritten += written
+
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin performance data content written to buffer", totalWritten))
 
 }
 
