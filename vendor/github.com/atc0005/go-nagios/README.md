@@ -65,10 +65,10 @@ such time that the API is considered stable.
     `nagios.NewPlugin()` constructor, a default `time` performance data metric
     is emitted to indicate total plugin runtime
 - Support for collecting multiple errors from client code
-- Support for explicitly omitting Errors section in `LongServiceOutput`
+- Support for explicitly omitting Errors section
   - this section is automatically omitted if no errors were recorded (by
     client code or panic handling code)
-- Support for explicitly omitting Thresholds section in `LongServiceOutput`
+- Support for explicitly omitting Thresholds section
   - this section is automatically omitted if no thresholds were specified by
     client code
 - Automatically omit `LongServiceOutput` section if not specified by client
@@ -80,6 +80,11 @@ such time that the API is considered stable.
   output
 - Support for extracting and decoding an (Ascii85) encoded payload (into the
   original non-encoded form) from captured plugin output
+- Optional debug logging for plugin activity
+  - debug log output is sent to `stderr` by default but can be redirected to a
+    custom target
+  - toggles are provided to enable debug logging for all plugin activity or
+    for select types
 
 ## Changelog
 
