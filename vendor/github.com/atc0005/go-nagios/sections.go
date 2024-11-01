@@ -46,6 +46,8 @@ func (p Plugin) handleServiceOutputSection(w io.Writer) {
 // the Errors section header and listing.
 func (p Plugin) handleErrorsSection(w io.Writer) {
 	if p.isErrorsHidden() {
+		p.logAction("Skipping processing of errors section; option to hide errors enabled")
+
 		return
 	}
 
@@ -93,9 +95,15 @@ func (p Plugin) handleErrorsSection(w io.Writer) {
 // handleThresholdsSection is a wrapper around the logic used to
 // handle/process the Thresholds section header and listing.
 func (p Plugin) handleThresholdsSection(w io.Writer) {
-	// We skip emitting the thresholds section if there isn't any
-	// LongServiceOutput to process.
-	if p.LongServiceOutput == "" || p.isThresholdsSectionHidden() {
+	switch {
+	case p.LongServiceOutput == "":
+		p.logAction("Skipping emission of thresholds section; LongServiceOutput is empty")
+
+		return
+
+	case p.isThresholdsSectionHidden():
+		p.logAction("Skipping emission of thresholds section; option to hide errors enabled")
+
 		return
 	}
 
@@ -154,6 +162,8 @@ func (p Plugin) handleLongServiceOutput(w io.Writer) {
 
 	// Early exit if there is no content to emit.
 	if p.LongServiceOutput == "" {
+		p.logAction("Skipping processing of LongServiceOutput; LongServiceOutput is empty")
+
 		return
 	}
 
@@ -214,6 +224,8 @@ func (p Plugin) handleLongServiceOutput(w io.Writer) {
 func (p Plugin) handleEncodedPayload(w io.Writer) {
 	// Early exit if there is no content to process.
 	if p.encodedPayloadBuffer.Len() == 0 {
+		p.logAction("Skipping processing of encoded payload buffer; buffer is empty")
+
 		return
 	}
 
@@ -283,6 +295,8 @@ func (p *Plugin) handlePerformanceData(w io.Writer) {
 	// We require that a one-line summary is set by client code before
 	// emitting performance data metrics.
 	if strings.TrimSpace(p.ServiceOutput) == "" {
+		p.logAction("Skipping processing of performance data; ServiceOutput is empty")
+
 		return
 	}
 
@@ -292,6 +306,8 @@ func (p *Plugin) handlePerformanceData(w io.Writer) {
 	// If no metrics have been collected by this point we have nothing further
 	// to do.
 	if len(p.perfData) == 0 {
+		p.logAction("Skipping processing of performance data; perfdata collection is empty")
+
 		return
 	}
 

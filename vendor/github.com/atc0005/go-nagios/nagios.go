@@ -579,7 +579,8 @@ func (p *Plugin) SkipOSExit() {
 
 // SetPayloadBytes uses the given input in bytes to overwrite any existing
 // content in the payload buffer. It returns the length of input and a
-// potential error.
+// potential error. If given empty input the payload buffer is reset without
+// adding any content.
 //
 // The contents of this buffer will be included in the plugin's output as an
 // encoded payload suitable for later retrieval/decoding.
@@ -591,12 +592,17 @@ func (p *Plugin) SetPayloadBytes(input []byte) (int, error) {
 
 	p.encodedPayloadBuffer.Reset()
 
+	if len(input) == 0 {
+		return 0, nil
+	}
+
 	return p.encodedPayloadBuffer.Write(input)
 }
 
 // SetPayloadString uses the given input string to overwrite any existing
 // content in the payload buffer. It returns the length of input and a
-// potential error.
+// potential error. If given empty input the payload buffer is reset without
+// adding any content.
 //
 // The contents of this buffer will be included in the plugin's output as an
 // encoded payload suitable for later retrieval/decoding.
@@ -608,15 +614,24 @@ func (p *Plugin) SetPayloadString(input string) (int, error) {
 
 	p.encodedPayloadBuffer.Reset()
 
+	if len(input) == 0 {
+		return 0, nil
+	}
+
 	return p.encodedPayloadBuffer.WriteString(input)
 }
 
 // AddPayloadBytes appends the given input in bytes to the payload buffer. It
-// returns the length of input and a potential error.
+// returns the length of input and a potential error. Empty input is silently
+// ignored.
 //
 // The contents of this buffer will be included in the plugin's output as an
 // encoded payload suitable for later retrieval/decoding.
 func (p *Plugin) AddPayloadBytes(input []byte) (int, error) {
+	if len(input) == 0 {
+		return 0, nil
+	}
+
 	p.logAction(fmt.Sprintf(
 		"Appending %d bytes input to payload buffer",
 		len(input),
@@ -626,11 +641,16 @@ func (p *Plugin) AddPayloadBytes(input []byte) (int, error) {
 }
 
 // AddPayloadString appends the given input string to the payload buffer. It
-// returns the length of input and a potential error.
+// returns the length of input and a potential error. Empty input is silently
+// ignored.
 //
 // The contents of this buffer will be included in the plugin's output as an
 // encoded payload suitable for later retrieval/decoding.
 func (p *Plugin) AddPayloadString(input string) (int, error) {
+	if len(input) == 0 {
+		return 0, nil
+	}
+
 	p.logAction(fmt.Sprintf(
 		"Appending %d bytes input to payload buffer",
 		len(input),
@@ -640,7 +660,8 @@ func (p *Plugin) AddPayloadString(input string) (int, error) {
 }
 
 // UnencodedPayload returns the payload buffer contents in string format as-is
-// without encoding applied.
+// without encoding applied. If the payload buffer is empty an empty string is
+// returned.
 func (p *Plugin) UnencodedPayload() string {
 	p.logAction(fmt.Sprintf(
 		"Returning %d bytes from payload buffer",
