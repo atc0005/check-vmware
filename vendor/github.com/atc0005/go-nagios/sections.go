@@ -170,15 +170,17 @@ func (p Plugin) handleLongServiceOutput(w io.Writer) {
 	var totalWritten int
 
 	// Hide section header/label if threshold and error values were not
-	// specified by client code or if client code opted to explicitly hide
-	// those sections; there is no need to use a header to separate the
-	// LongServiceOutput from those sections if they are not displayed.
+	// specified by client code, if client code opted to explicitly hide
+	// threshold or error sections or if no encoded payload content was
+	// provided; there is no need to use a header to separate the
+	// LongServiceOutput from those sections if they are not displayed (or
+	// provided in the case of an encoded payload).
 	//
 	// If we hide the section header, we still provide some padding to
 	// prevent the LongServiceOutput from running up against the
 	// ServiceOutput content.
 	switch {
-	case !p.isThresholdsSectionHidden() || !p.isErrorsHidden():
+	case !p.isThresholdsSectionHidden() || !p.isErrorsHidden() || !p.isPayloadSectionHidden():
 		written, err := fmt.Fprintf(w,
 			"%s**%s**%s",
 			CheckOutputEOL,
@@ -364,6 +366,12 @@ func (p Plugin) isErrorsHidden() bool {
 		return true
 	}
 	return false
+}
+
+// isPayloadSectionHidden indicates whether the Payload section should be
+// omitted from output.
+func (p Plugin) isPayloadSectionHidden() bool {
+	return p.encodedPayloadBuffer.Len() == 0
 }
 
 // getThresholdsLabelText retrieves the custom thresholds label text if set,
