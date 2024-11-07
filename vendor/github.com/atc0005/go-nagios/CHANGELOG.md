@@ -26,6 +26,24 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.0] - 2024-11-06
+
+### Added
+
+- (GH-288) Add support for embedded/encoded payloads
+- (GH-289) Add support for (internal) debug logging output
+
+### Changed
+
+- (GH-291) Clarify handling of empty payload input
+- (GH-292) Enable LongServiceOutput header/label for payloads
+
+### Fixed
+
+- (GH-268) Fix `Plugin.SetOutputTarget` method
+- (GH-273) Fix test case validity check
+- (GH-290) Minor refactoring of Range and Thresholds support
+
 ## [v0.16.2] - 2024-10-10
 
 ### Changed
@@ -543,7 +561,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.16.2...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.17.0...HEAD
+[v0.17.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.17.0
 [v0.16.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.2
 [v0.16.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.1
 [v0.16.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.0
