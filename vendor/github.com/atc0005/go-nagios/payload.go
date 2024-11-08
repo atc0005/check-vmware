@@ -57,13 +57,31 @@ func EncodeASCII85Payload(data []byte, leftDelimiter string, rightDelimiter stri
 	return leftDelimiter + string(encoded) + rightDelimiter
 }
 
+// unescapeASCII85 unescapes an Ascii85 input payload by removing escape
+// patterns added to the payload as it passes through a monitoring system
+// (e.g., for inclusion in a JSON API response).
+func unescapeASCII85(encodedInput []byte) ([]byte, error) {
+	if len(encodedInput) == 0 {
+		return nil, fmt.Errorf(
+			"failed to unescape empty payload: %w",
+			ErrMissingValue,
+		)
+	}
+
+	// Based on initial testing this is sufficient to unescape an Ascii85
+	// payload that passes through the Nagios XI API.
+	encodedInput = bytes.ReplaceAll(encodedInput, []byte(`\\`), []byte(`\`))
+
+	return encodedInput, nil
+}
+
 // decodeASCII85 decodes given Ascii85 encoded input or an error if one occurs
 // during decoding.
 //
 // The caller is expected to remove any delimiters from the input before
 // calling this function.
 //
-// This function is also not intended for extraction of an Ascii encoded
+// This function is also not intended for extraction of an Ascii85 encoded
 // payload from surrounding text.
 func decodeASCII85(encodedInput []byte) ([]byte, error) {
 	if len(encodedInput) == 0 {
@@ -73,10 +91,15 @@ func decodeASCII85(encodedInput []byte) ([]byte, error) {
 		)
 	}
 
-	decoded := make([]byte, len(encodedInput))
-	n, _, err := ascii85.Decode(decoded, encodedInput, true)
-	if err != nil {
-		return nil, err
+	unescapedInput, unescapeErr := unescapeASCII85(encodedInput)
+	if unescapeErr != nil {
+		return nil, unescapeErr
+	}
+
+	decoded := make([]byte, len(unescapedInput))
+	n, _, decodeErr := ascii85.Decode(decoded, unescapedInput, true)
+	if decodeErr != nil {
+		return nil, decodeErr
 	}
 
 	decodedBytes := decoded[:n]
@@ -94,7 +117,7 @@ func decodeASCII85(encodedInput []byte) ([]byte, error) {
 // occurs during decoding. If provided, the left and right delimiters are
 // trimmed from the given input before decoding is performed.
 //
-// This function is not intended to extract an Ascii encoded payload from
+// This function is not intended to extract an Ascii85 encoded payload from
 // surrounding text.
 func DecodeASCII85Payload(encodedInput []byte, leftDelimiter string, rightDelimiter string) ([]byte, error) {
 	if len(encodedInput) == 0 {
