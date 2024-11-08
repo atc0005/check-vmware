@@ -26,6 +26,12 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.17.1] - 2024-11-08
+
+### Changed
+
+- (GH-296) Unescape encoded Ascii85 payload before decoding
+
 ## [v0.17.0] - 2024-11-06
 
 ### Added
@@ -561,7 +567,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.17.1...HEAD
+[v0.17.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.17.1
 [v0.17.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.17.0
 [v0.16.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.2
 [v0.16.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.1
