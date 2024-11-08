@@ -8,13 +8,21 @@
 package nagios
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"runtime/debug"
 	"strings"
 	"time"
+)
+
+// General package information.
+const (
+	MyPackageName    string = "go-nagios"
+	MyPackagePurpose string = "Provide support and functionality common to monitoring plugins."
 )
 
 // Nagios plugin/service check states. These constants replicate the values
@@ -58,15 +66,49 @@ const CheckOutputEOL string = " \n"
 
 // Default header text for various sections of the output if not overridden.
 const (
-	defaultThresholdsLabel   string = "THRESHOLDS"
-	defaultErrorsLabel       string = "ERRORS"
-	defaultDetailedInfoLabel string = "DETAILED INFO"
+	defaultThresholdsLabel     string = "THRESHOLDS"
+	defaultErrorsLabel         string = "ERRORS"
+	defaultDetailedInfoLabel   string = "DETAILED INFO"
+	defaultEncodedPayloadLabel string = "ENCODED PAYLOAD"
 )
 
 // Default performance data metrics emitted if not specified by client code.
 const (
 	defaultTimeMetricLabel             string = "time"
 	defaultTimeMetricUnitOfMeasurement string = "ms"
+)
+
+// Default payload values if not specified by client code.
+const (
+	defaultPayloadDelimiterLeft  string = DefaultASCII85EncodingDelimiterLeft
+	defaultPayloadDelimiterRight string = DefaultASCII85EncodingDelimiterRight
+)
+
+const (
+	// DefaultASCII85EncodingDelimiterLeft is the left delimiter often used
+	// with ascii85-encoded data.
+	DefaultASCII85EncodingDelimiterLeft string = "<~"
+
+	// DefaultASCII85EncodingDelimiterRight is the right delimiter often used
+	// with ascii85-encoded data.
+	DefaultASCII85EncodingDelimiterRight string = "~>"
+
+	// DefaultASCII85EncodingPatternRegex is the default regex pattern used to
+	// match and extract an Ascii85 encoded payload as used in the btoa tool
+	// and Adobe's PostScript and PDF document formats.
+	//
+	// In Ascii85-encoded blocks, whitespace and line-break characters may be
+	// present anywhere, including in the middle of a 5-character block, but
+	// they must be silently ignored.
+	//
+	//  - https://pkg.go.dev/encoding/ascii85
+	//  - https://en.wikipedia.org/wiki/Ascii85
+	//
+	// NOTE: Not using delimiters when saving an encoded payload makes the
+	// extraction process *VERY* unreliable as this regex pattern (by itself)
+	// matches far more than likely intended.
+	//
+	DefaultASCII85EncodingPatternRegex string = `[\x21-\x75\s]+`
 )
 
 // Sentinel error collection. Exported for potential use by client code to
@@ -112,6 +154,21 @@ var (
 	// ErrInvalidPerformanceDataCritField  = errors.New("invalid field Crit in parsed performance data")
 	// ErrInvalidPerformanceDataMinField   = errors.New("invalid field Min in parsed performance data")
 	// ErrInvalidPerformanceDataMaxField   = errors.New("invalid field Max in parsed performance data")
+
+	// ErrMissingValue indicates that an expected value was missing.
+	ErrMissingValue = errors.New("missing expected value")
+
+	// ErrEncodedPayloadNotFound indicates that an encoded payload was not
+	// found during an extraction attempt.
+	ErrEncodedPayloadNotFound = errors.New("encoded payload not found")
+
+	// ErrEncodedPayloadInvalid indicates that an encoded payload was found
+	// during extraction but was found to be invalid.
+	ErrEncodedPayloadInvalid = errors.New("encoded payload invalid")
+
+	// ErrEncodedPayloadInvalid indicates that a regular expression used to
+	// identify an encoded payload was found to be invalid.
+	ErrEncodedPayloadRegexInvalid = errors.New("encoded payload regex invalid")
 )
 
 // ServiceState represents the status label and exit code for a service check.
@@ -136,6 +193,29 @@ type ExitCallBackFunc func() string
 type Plugin struct {
 	// outputSink is the user-specified or fallback target for plugin output.
 	outputSink io.Writer
+
+	// logOutputSink is the user-specified or fallback target for debug level
+	// plugin output.
+	logOutputSink io.Writer
+
+	// logger is an embedded logger used to emit debug log messages (if
+	// enabled).
+	logger *log.Logger
+
+	// encodedPayloadBuffer holds a user-specified payload *before* encoding
+	// is performed. If provided, this payload is later encoded and included
+	// in the generated plugin output.
+	encodedPayloadBuffer bytes.Buffer
+
+	// encodedPayloadDelimiterLeft is the user-specified custom encoded
+	// payload delimiter. If not set the default payload left delimiter is
+	// used.
+	encodedPayloadDelimiterLeft *string
+
+	// encodedPayloadDelimiterRight is the user-specified custom encoded
+	// payload delimiter. If not set the default payload right delimiter is
+	// used.
+	encodedPayloadDelimiterRight *string
 
 	// start tracks when the associated plugin begins executing. This value is
 	// used to generate a default `time` performance data metric (which can be
@@ -193,6 +273,10 @@ type Plugin struct {
 	// standard text prior to emitting LongServiceOutput.
 	detailedInfoLabel string
 
+	// encodedPayloadLabel is an optional custom label used in place of the
+	// standard text prior to emitting an encoded payload.
+	encodedPayloadLabel string
+
 	// hideThresholdsSection indicates whether client code has opted to hide
 	// the thresholds section, regardless of whether client code previously
 	// specified values for display.
@@ -208,6 +292,9 @@ type Plugin struct {
 	// calling os.Exit(x) is skipped and a message is logged to os.Stderr
 	// instead.
 	shouldSkipOSExit bool
+
+	// debugLogging is the collection of debug logging options for the plugin.
+	debugLogging debugLoggingOptions
 
 	// BrandingCallback is a function that is called before application
 	// termination to emit branding details at the end of the notification.
@@ -273,7 +360,9 @@ func (p *Plugin) ReturnCheckResults() {
 
 	// Check for unhandled panic in client code. If present, override
 	// Plugin and make clear that the client code/plugin crashed.
+	p.logAction("Checking for unhandled panic")
 	if err := recover(); err != nil {
+		p.logAction("Handling panic")
 
 		p.AddError(fmt.Errorf("%w: %s", ErrPanicDetected, err))
 
@@ -304,33 +393,49 @@ func (p *Plugin) ReturnCheckResults() {
 
 	}
 
+	p.logAction("No unhandled panic found")
+
+	p.logAction("Processing ServiceOutput section")
 	p.handleServiceOutputSection(&output)
 
+	p.logAction("Processing Errors section")
 	p.handleErrorsSection(&output)
 
+	p.logAction("Processing Thresholds section")
 	p.handleThresholdsSection(&output)
 
+	p.logAction("Processing LongServiceOutput section")
 	p.handleLongServiceOutput(&output)
+
+	p.logAction("Processing Encoded Payload section")
+	p.handleEncodedPayload(&output)
 
 	// If set, call user-provided branding function before emitting
 	// performance data and exiting application.
-	if p.BrandingCallback != nil {
-		_, _ = fmt.Fprintf(&output, "%s%s%s", CheckOutputEOL, p.BrandingCallback(), CheckOutputEOL)
+	switch {
+	case p.BrandingCallback != nil:
+		p.logAction("Adding Branding Callback")
+		written, err := fmt.Fprintf(&output, "%s%s%s", CheckOutputEOL, p.BrandingCallback(), CheckOutputEOL)
+		if err != nil {
+			panic("Failed to write BrandingCallback content to buffer")
+		}
+		p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin BrandingCalling content written to buffer", written))
+
+	default:
+		p.logAction("Branding Callback not requested, skipping")
 	}
 
+	p.logAction("Processing Performance Data section")
 	p.handlePerformanceData(&output)
 
 	// Emit all collected plugin output using user-specified or fallback
 	// output target.
+	p.logAction("Processing final plugin output")
 	p.emitOutput(output.String())
 
-	// TODO: Should we offer an option to redirect the log message to stderr
-	// to another error output sink?
-	//
-	// TODO: Perhaps just don't emit anything at all?
 	switch {
 	case p.shouldSkipOSExit:
-		_, _ = fmt.Fprintln(os.Stderr, "Skipping os.Exit call as requested.")
+		p.logAction("Skipping os.Exit call as requested.")
 	default:
 		os.Exit(p.ExitStatusCode)
 	}
@@ -374,6 +479,11 @@ func (p *Plugin) AddPerfData(skipValidate bool, perfData ...PerformanceData) err
 // for ensuring that a given error is not already recorded in the collection.
 func (p *Plugin) AddError(errs ...error) {
 	p.Errors = append(p.Errors, errs...)
+
+	p.logAction(fmt.Sprintf(
+		"%d errors added to collection",
+		len(errs),
+	))
 }
 
 // AddUniqueError appends provided errors to the collection if they are not
@@ -387,23 +497,72 @@ func (p *Plugin) AddUniqueError(errs ...error) {
 		existingErrStrings[i] = p.Errors[i].Error()
 	}
 
+	var totalUniqueErrors int
+
 	for _, err := range errs {
 		if inList(err.Error(), existingErrStrings, true) {
 			continue
 		}
 		p.Errors = append(p.Errors, err)
+		totalUniqueErrors++
 	}
+
+	p.logAction(fmt.Sprintf(
+		"%d unique errors added to collection",
+		totalUniqueErrors,
+	))
+}
+
+// OutputTarget returns the user-specified plugin output target or
+// the default value if one was not specified.
+func (p *Plugin) OutputTarget() io.Writer {
+	if p.outputSink == nil {
+		p.logAction("Plugin output target not explicitly set, returning default plugin output target")
+
+		return defaultPluginOutputTarget()
+	}
+
+	p.logAction("Returning current plugin output target")
+
+	return p.outputSink
 }
 
 // SetOutputTarget assigns a target for Nagios plugin output. By default
-// output is emitted to os.Stdout.
+// output is emitted to os.Stdout. If given an invalid output target the
+// default output target will be used instead.
 func (p *Plugin) SetOutputTarget(w io.Writer) {
 	// Guard against potential nil argument.
 	if w == nil {
-		p.outputSink = os.Stdout
+		// We log using an "filtered" logger call to retain previous behavior
+		// of not emitting a "problem has occurred" message.
+		p.logAction("Specified output target is invalid, falling back to default")
+
+		p.outputSink = defaultPluginOutputTarget()
+
+		return
 	}
 
+	p.logAction("Setting output target to specified value")
+
 	p.outputSink = w
+}
+
+// SetEncodedPayloadDelimiterLeft uses the given value to override the default
+// left delimiter used when encoding a provided payload. Specify an empty
+// string if no left delimiter should be used.
+//
+// This value is ignored if no payload is provided.
+func (p *Plugin) SetEncodedPayloadDelimiterLeft(delimiter string) {
+	p.encodedPayloadDelimiterLeft = &delimiter
+}
+
+// SetEncodedPayloadDelimiterRight uses the given value to override the
+// default right delimiter used when encoding a provided payload. Specify an
+// empty string if no right delimiter should be used.
+//
+// This value is ignored if no payload is provided.
+func (p *Plugin) SetEncodedPayloadDelimiterRight(delimiter string) {
+	p.encodedPayloadDelimiterRight = &delimiter
 }
 
 // SkipOSExit indicates that the os.Exit(x) step used to signal to Nagios what
@@ -414,33 +573,143 @@ func (p *Plugin) SetOutputTarget(w io.Writer) {
 // Disabling the call to os.Exit is needed by tests to prevent panics in Go
 // 1.16 and newer.
 func (p *Plugin) SkipOSExit() {
+	p.logAction("Setting plugin to skip os.Exit call as requested")
 	p.shouldSkipOSExit = true
+}
+
+// SetPayloadBytes uses the given input in bytes to overwrite any existing
+// content in the payload buffer. It returns the length of input and a
+// potential error. If given empty input the payload buffer is reset without
+// adding any content.
+//
+// The contents of this buffer will be included in the plugin's output as an
+// encoded payload suitable for later retrieval/decoding.
+func (p *Plugin) SetPayloadBytes(input []byte) (int, error) {
+	p.logAction(fmt.Sprintf(
+		"Overwriting payload buffer with %d bytes input",
+		len(input),
+	))
+
+	p.encodedPayloadBuffer.Reset()
+
+	if len(input) == 0 {
+		return 0, nil
+	}
+
+	return p.encodedPayloadBuffer.Write(input)
+}
+
+// SetPayloadString uses the given input string to overwrite any existing
+// content in the payload buffer. It returns the length of input and a
+// potential error. If given empty input the payload buffer is reset without
+// adding any content.
+//
+// The contents of this buffer will be included in the plugin's output as an
+// encoded payload suitable for later retrieval/decoding.
+func (p *Plugin) SetPayloadString(input string) (int, error) {
+	p.logAction(fmt.Sprintf(
+		"Overwriting payload buffer with %d bytes input",
+		len(input),
+	))
+
+	p.encodedPayloadBuffer.Reset()
+
+	if len(input) == 0 {
+		return 0, nil
+	}
+
+	return p.encodedPayloadBuffer.WriteString(input)
+}
+
+// AddPayloadBytes appends the given input in bytes to the payload buffer. It
+// returns the length of input and a potential error. Empty input is silently
+// ignored.
+//
+// The contents of this buffer will be included in the plugin's output as an
+// encoded payload suitable for later retrieval/decoding.
+func (p *Plugin) AddPayloadBytes(input []byte) (int, error) {
+	if len(input) == 0 {
+		return 0, nil
+	}
+
+	p.logAction(fmt.Sprintf(
+		"Appending %d bytes input to payload buffer",
+		len(input),
+	))
+
+	return p.encodedPayloadBuffer.Write(input)
+}
+
+// AddPayloadString appends the given input string to the payload buffer. It
+// returns the length of input and a potential error. Empty input is silently
+// ignored.
+//
+// The contents of this buffer will be included in the plugin's output as an
+// encoded payload suitable for later retrieval/decoding.
+func (p *Plugin) AddPayloadString(input string) (int, error) {
+	if len(input) == 0 {
+		return 0, nil
+	}
+
+	p.logAction(fmt.Sprintf(
+		"Appending %d bytes input to payload buffer",
+		len(input),
+	))
+
+	return p.encodedPayloadBuffer.WriteString(input)
+}
+
+// UnencodedPayload returns the payload buffer contents in string format as-is
+// without encoding applied. If the payload buffer is empty an empty string is
+// returned.
+func (p *Plugin) UnencodedPayload() string {
+	p.logAction(fmt.Sprintf(
+		"Returning %d bytes from payload buffer",
+		p.encodedPayloadBuffer.Len(),
+	))
+
+	return p.encodedPayloadBuffer.String()
+}
+
+// defaultPluginOutputTarget returns the fallback/default plugin output target
+// used when a user-specified value is not provided.
+func defaultPluginOutputTarget() io.Writer {
+	return os.Stdout
 }
 
 // emitOutput writes final plugin output to the previously set output target.
 // No further modifications to plugin output are performed.
 func (p Plugin) emitOutput(pluginOutput string) {
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes total plugin output to write", len(pluginOutput)))
 
-	// Emit all collected output using user-specified output target. Fall back
-	// to standard output if not set.
+	// Emit all collected output using user-specified output target or
+	// fallback to the default if not set.
 	if p.outputSink == nil {
-		p.outputSink = os.Stdout
+		p.logAction("Custom plugin output target not set")
+		p.logAction("Falling back to default plugin output target")
+		p.outputSink = defaultPluginOutputTarget()
 	}
 
-	// Attempt to write to output sink. If this fails, send error to
-	// os.Stderr. If that fails (however unlikely), we have bigger problems
-	// and should abort.
-	_, sinkWriteErr := fmt.Fprint(p.outputSink, pluginOutput)
+	p.logAction("Writing plugin output")
+
+	// Attempt to write to output sink. If this fails, send error to the
+	// default abort message output target. If that fails (however unlikely),
+	// we have bigger problems and should abort.
+	pluginOutputWritten, sinkWriteErr := fmt.Fprint(p.outputSink, pluginOutput)
 	if sinkWriteErr != nil {
+		p.logAction("Failed to write plugin output")
+
 		_, stdErrWriteErr := fmt.Fprintf(
-			os.Stderr,
+			defaultPluginAbortMessageOutputTarget(),
 			"Failed to write output to given output sink: %s",
 			sinkWriteErr.Error(),
 		)
 		if stdErrWriteErr != nil {
-			panic("Failed to initial output sink failure error message to stderr")
+			panic("Failed to write initial output sink failure error message to stderr")
 		}
 	}
+
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes total plugin output written", pluginOutputWritten))
 }
 
 // tryAddDefaultTimeMetric inserts a default `time` performance data metric
@@ -450,6 +719,8 @@ func (p *Plugin) tryAddDefaultTimeMetric() {
 
 	// We already have an existing time metric, skip replacing it.
 	if _, hasTimeMetric := p.perfData[defaultTimeMetricLabel]; hasTimeMetric {
+		p.logAction("Existing time metric present, skipping replacement")
+
 		return
 	}
 
@@ -457,6 +728,8 @@ func (p *Plugin) tryAddDefaultTimeMetric() {
 	// not have an internal plugin start time that we can use to generate a
 	// default time metric.
 	if p.start.IsZero() {
+		p.logAction("Plugin not created using constructor, so no default time metric to use")
+
 		return
 	}
 
@@ -465,6 +738,8 @@ func (p *Plugin) tryAddDefaultTimeMetric() {
 	}
 
 	p.perfData[defaultTimeMetricLabel] = defaultTimeMetric(p.start)
+
+	p.logAction("Added default time metric to collection")
 }
 
 // defaultTimeMetric is a helper function that wraps the logic used to provide
