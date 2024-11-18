@@ -82,6 +82,7 @@ const (
 const (
 	defaultPayloadDelimiterLeft  string = DefaultASCII85EncodingDelimiterLeft
 	defaultPayloadDelimiterRight string = DefaultASCII85EncodingDelimiterRight
+	defaultEncodingPatternRegex  string = DefaultASCII85EncodingPatternRegex
 )
 
 const (
@@ -97,6 +98,13 @@ const (
 	// match and extract an Ascii85 encoded payload as used in the btoa tool
 	// and Adobe's PostScript and PDF document formats.
 	//
+	// This regex matches:
+	//
+	// - Characters in the Ascii85 range (! to u).
+	// - The special z character for five consecutive null bytes.
+	// - Optional whitespace, which allows for flexibility in formatted or
+	//   multiline encoded data.
+	//
 	// In Ascii85-encoded blocks, whitespace and line-break characters may be
 	// present anywhere, including in the middle of a 5-character block, but
 	// they must be silently ignored.
@@ -108,7 +116,7 @@ const (
 	// extraction process *VERY* unreliable as this regex pattern (by itself)
 	// matches far more than likely intended.
 	//
-	DefaultASCII85EncodingPatternRegex string = `[\x21-\x75\s]+`
+	DefaultASCII85EncodingPatternRegex string = `[\x21-\x75\x7A\s]+`
 )
 
 // Sentinel error collection. Exported for potential use by client code to
@@ -169,6 +177,10 @@ var (
 	// ErrEncodedPayloadInvalid indicates that a regular expression used to
 	// identify an encoded payload was found to be invalid.
 	ErrEncodedPayloadRegexInvalid = errors.New("encoded payload regex invalid")
+
+	// ErrCompressedInputInvalid indicates that given input expected to be in
+	// a compressed format is invalid.
+	ErrCompressedInputInvalid = errors.New("compressed input invalid")
 )
 
 // ServiceState represents the status label and exit code for a service check.
