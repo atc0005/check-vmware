@@ -74,12 +74,13 @@ such time that the API is considered stable.
 - Automatically omit `LongServiceOutput` section if not specified by client
   code
 - Support for overriding text used for section headers/labels
-- Support for adding/embedding an encoded payload (Ascii85) in plugin output
-- Support for decoding (Ascii85) encoded input (payload)
-- Support for extracting an (Ascii85) encoded payload from captured plugin
+- Support for adding/embedding a compressed and encoded payload in plugin
   output
-- Support for extracting and decoding an (Ascii85) encoded payload (into the
-  original non-encoded form) from captured plugin output
+- Support for decoding and decompressing encoded input (payload)
+- Support for extracting (without decoding & decompressing) an encoded payload
+  from captured plugin output
+- Support for extracting, decoding and decompressing an encoded payload (into
+  the original non-encoded form) from captured plugin output
 - Optional debug logging for plugin activity
   - debug log output is sent to `stderr` by default but can be redirected to a
     custom target

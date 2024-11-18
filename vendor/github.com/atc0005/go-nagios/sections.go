@@ -39,7 +39,7 @@ func (p Plugin) handleServiceOutputSection(w io.Writer) {
 		panic("Failed to write ServiceOutput to given output sink")
 	}
 
-	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin ServiceOutput content written to buffer", written))
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin ServiceOutput content written to given output sink", written))
 }
 
 // handleErrorsSection is a wrapper around the logic used to handle/process
@@ -89,7 +89,7 @@ func (p Plugin) handleErrorsSection(w io.Writer) {
 		}
 	}
 
-	p.logPluginOutputSize(fmt.Sprintf("%d bytes total plugin errors content written to buffer", totalWritten))
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes total plugin errors content written to given output sink", totalWritten))
 }
 
 // handleThresholdsSection is a wrapper around the logic used to
@@ -153,7 +153,7 @@ func (p Plugin) handleThresholdsSection(w io.Writer) {
 		totalWritten += written
 	}
 
-	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin thresholds section content written to buffer", totalWritten))
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin thresholds section content written to given output sink", totalWritten))
 }
 
 // handleLongServiceOutput is a wrapper around the logic used to
@@ -218,7 +218,7 @@ func (p Plugin) handleLongServiceOutput(w io.Writer) {
 
 	totalWritten += written
 
-	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin LongServiceOutput content written to buffer", totalWritten))
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin LongServiceOutput content written to given output sink", totalWritten))
 }
 
 // handleEncodedPayload is a wrapper around the logic used to handle/process
@@ -231,15 +231,24 @@ func (p Plugin) handleEncodedPayload(w io.Writer) {
 		return
 	}
 
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes unencoded EncodedPayload content before compression attempt", p.encodedPayloadBuffer.Len()))
+
+	// We opt to continue with original data instead of failing due to a
+	// compression error; failing at this stage loses all results gathered by
+	// the plugin.
+	payloadData := p.compressPayloadBufferOrFallback()
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes EncodedPayload data retrieved", len(payloadData)))
+
 	leftDelimiter := p.getEncodedPayloadDelimiterLeft()
 	rightDelimiter := p.getEncodedPayloadDelimiterRight()
 
-	// Encode the contents of the buffer to Ascii85 with delimiters.
-	encodedWithDelimiters := EncodeASCII85Payload(
-		p.encodedPayloadBuffer.Bytes(),
+	encodedWithDelimiters := encodeASCII85(
+		payloadData,
 		leftDelimiter,
 		rightDelimiter,
 	)
+
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes EncodedPayload data encoded", len(encodedWithDelimiters)))
 
 	var totalWritten int
 
@@ -257,6 +266,8 @@ func (p Plugin) handleEncodedPayload(w io.Writer) {
 		)
 		if err != nil {
 			panic("Failed to write EncodedPayload section label to given output sink")
+		} else {
+			p.logPluginOutputSize(fmt.Sprintf("%d bytes EncodedPayload section header written", len(encodedWithDelimiters)))
 		}
 
 		totalWritten += written
@@ -287,7 +298,7 @@ func (p Plugin) handleEncodedPayload(w io.Writer) {
 		totalWritten += written
 	}
 
-	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin EncodedPayload content written to buffer", totalWritten))
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin EncodedPayload content written to given output sink", totalWritten))
 }
 
 // handlePerformanceData is a wrapper around the logic used to
@@ -346,7 +357,7 @@ func (p *Plugin) handlePerformanceData(w io.Writer) {
 
 	totalWritten += written
 
-	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin performance data content written to buffer", totalWritten))
+	p.logPluginOutputSize(fmt.Sprintf("%d bytes plugin performance data content written to given output sink", totalWritten))
 
 }
 

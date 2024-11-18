@@ -26,6 +26,14 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.18.0] - 2024-11-16
+
+### Changed
+
+- (GH-309) Add support for transparent payload compression
+- (GH-300) Update `logPluginOutputSize` calls for consistency
+- (GH-310) Update README to note payload behavior changes
+
 ## [v0.17.1] - 2024-11-08
 
 ### Changed
@@ -567,7 +575,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.17.1...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.18.0...HEAD
+[v0.18.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.18.0
 [v0.17.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.17.1
 [v0.17.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.17.0
 [v0.16.2]: https://github.com/atc0005/go-nagios/releases/tag/v0.16.2
