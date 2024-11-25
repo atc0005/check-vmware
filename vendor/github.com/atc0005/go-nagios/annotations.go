@@ -21,9 +21,10 @@ const runtimeTimeoutReachedAdvice string = "plugin runtime exceeded specified ti
 
 // connectionResetByPeerAdvice offers advice to the sysadmin for remediating
 // "read: connection reset by peer" errors. The cause of this error can vary
-// but is often associated access control mechanisms such as firewalls,
+// but is often associated with access control mechanisms such as firewalls,
 // misconfigured IIS sites (e.g., missing certificate binding), overloaded
-// services at maximum connection capacity or otherwise misconfigured services.
+// services at maximum connection capacity or otherwise misconfigured
+// services.
 //
 // See also https://stackoverflow.com/questions/1434451
 const connectionResetByPeerAdvice string = "consider checking firewall, certificate/port bindings or maximum supported connections for remote service"
