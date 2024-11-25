@@ -26,6 +26,17 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.18.1] - 2024-11-23
+
+### Changed
+
+- (GH-317) Extend logging for error collection handling
+- (GH-313) Update connectionResetByPeerAdvice doc comments
+
+### Fixed
+
+- (GH-315) Fix log message for skipping thresholds section
+
 ## [v0.18.0] - 2024-11-16
 
 ### Changed
@@ -575,7 +586,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.18.1...HEAD
+[v0.18.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.18.1
 [v0.18.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.18.0
 [v0.17.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.17.1
 [v0.17.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.17.0
