@@ -56,10 +56,11 @@ func (p Plugin) handleErrorsSection(w io.Writer) {
 
 	var totalWritten int
 
-	writeErrorToOutputSink := func(err error) {
+	writeErrorToOutputSink := func(err error, fieldname string) {
 		written, writeErr := fmt.Fprintf(w, "* %v%s", err, CheckOutputEOL)
 		if writeErr != nil {
-			panic("Failed to write LastError field content to given output sink")
+			msg := fmt.Sprintf("Failed to write error field %q value to given output sink", fieldname)
+			panic(msg)
 		}
 
 		totalWritten += written
@@ -79,13 +80,16 @@ func (p Plugin) handleErrorsSection(w io.Writer) {
 	totalWritten += written
 
 	if p.LastError != nil {
-		writeErrorToOutputSink(p.LastError)
+		p.logAction("Writing field p.LastError value to output sink")
+
+		writeErrorToOutputSink(p.LastError, "p.LastError")
 	}
 
 	// Process any non-nil errors in the collection.
+	p.logAction(fmt.Sprintf("Writing %d errors from field %q to output sink", len(p.Errors), "p.Errors"))
 	for _, err := range p.Errors {
 		if err != nil {
-			writeErrorToOutputSink(err)
+			writeErrorToOutputSink(err, "p.Errors")
 		}
 	}
 
@@ -102,7 +106,7 @@ func (p Plugin) handleThresholdsSection(w io.Writer) {
 		return
 
 	case p.isThresholdsSectionHidden():
-		p.logAction("Skipping emission of thresholds section; option to hide errors enabled")
+		p.logAction("Skipping emission of thresholds section; option to hide thresholds enabled")
 
 		return
 	}
