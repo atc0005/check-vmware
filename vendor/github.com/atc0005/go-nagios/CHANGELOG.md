@@ -26,6 +26,16 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.19.0] - 2024-11-27
+
+### Added
+
+- (GH-330) Add plugin output size metric
+
+#### Dependency Updates
+
+- (GH-323) Go Dependency: Bump github.com/stretchr/testify from 1.9.0 to 1.10.0
+
 ## [v0.18.1] - 2024-11-23
 
 ### Changed
@@ -586,7 +596,8 @@ Initial package state
 
 - Nagios state map
 
-[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.18.1...HEAD
+[Unreleased]: https://github.com/atc0005/go-nagios/compare/v0.19.0...HEAD
+[v0.19.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.19.0
 [v0.18.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.18.1
 [v0.18.0]: https://github.com/atc0005/go-nagios/releases/tag/v0.18.0
 [v0.17.1]: https://github.com/atc0005/go-nagios/releases/tag/v0.17.1

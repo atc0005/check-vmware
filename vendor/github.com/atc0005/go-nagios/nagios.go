@@ -15,6 +15,7 @@ import (
 	"log"
 	"os"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -305,6 +306,11 @@ type Plugin struct {
 	// instead.
 	shouldSkipOSExit bool
 
+	// shouldEmitTotalPluginSizeMetric indicates whether client code has opted
+	// to emit (append) a performance data metric calculating the total plugin
+	// output size.
+	shouldEmitTotalPluginSizeMetric bool
+
 	// debugLogging is the collection of debug logging options for the plugin.
 	debugLogging debugLoggingOptions
 
@@ -589,6 +595,13 @@ func (p *Plugin) SkipOSExit() {
 	p.shouldSkipOSExit = true
 }
 
+// EnablePluginOutputSizePerfDataMetric appends a performance data metric
+// noting the total plugin output size.
+func (p *Plugin) EnablePluginOutputSizePerfDataMetric() {
+	p.logAction("Enabling total plugin output size metric as requested")
+	p.shouldEmitTotalPluginSizeMetric = true
+}
+
 // SetPayloadBytes uses the given input in bytes to overwrite any existing
 // content in the payload buffer. It returns the length of input and a
 // potential error. If given empty input the payload buffer is reset without
@@ -704,6 +717,10 @@ func (p Plugin) emitOutput(pluginOutput string) {
 
 	p.logAction("Writing plugin output")
 
+	if p.shouldEmitTotalPluginSizeMetric {
+		pluginOutput = addPluginOutputSizeMetric(pluginOutput)
+	}
+
 	// Attempt to write to output sink. If this fails, send error to the
 	// default abort message output target. If that fails (however unlikely),
 	// we have bigger problems and should abort.
@@ -752,6 +769,49 @@ func (p *Plugin) tryAddDefaultTimeMetric() {
 	p.perfData[defaultTimeMetricLabel] = defaultTimeMetric(p.start)
 
 	p.logAction("Added default time metric to collection")
+}
+
+// addPluginOutputSizeMetric appends a performance data metric to the given
+// input noting the total plugin output size. If the metric is already present
+// the original input is returned unmodified.
+func addPluginOutputSizeMetric(pluginOutput string) string {
+	metricLabel := "plugin_output_size"
+
+	// Attempt to prevent adding the same metric twice.
+	if strings.Contains(pluginOutput, metricLabel) {
+		return pluginOutput
+	}
+
+	pluginOutput = strings.TrimSuffix(pluginOutput, CheckOutputEOL)
+
+	outputSizeMetric := PerformanceData{
+		Label:             metricLabel,
+		Value:             "PLACEHOLDER",
+		UnitOfMeasurement: "B", // bytes
+	}
+
+	var modifiedPluginOutput string
+
+	// Code snippet inspired by or generated with the help of ChatGPT, OpenAI.
+	for {
+		// Calculate the current length.
+		length := len(modifiedPluginOutput)
+
+		// Construct metric using updated length value.
+		outputSizeMetric.Value = strconv.Itoa(length)
+		outputSizeMetricString := outputSizeMetric.String() + CheckOutputEOL
+
+		// Construct modified plugin output using the updated metric.
+		modifiedPluginOutput = pluginOutput + outputSizeMetricString
+
+		// Break when the actual length of modified plugin output containing
+		// the output size metric matches the calculated length.
+		if len(modifiedPluginOutput) == length {
+			break
+		}
+	}
+
+	return modifiedPluginOutput
 }
 
 // defaultTimeMetric is a helper function that wraps the logic used to provide
