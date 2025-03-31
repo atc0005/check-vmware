@@ -298,7 +298,10 @@ func main() {
 		// Reassign the iteration variable inside the loop to prevent implicit
 		// memory aliasing.
 		// https://stackoverflow.com/questions/62446118/implicit-memory-aliasing-in-for-loop
-		hostID, pairing := hostID, pairing
+		//
+		// NOTE: Not needed as of Go 1.22.
+		//
+		// hostID, pairing := hostID, pairing
 
 		dsNamesForHost := func(pairings vsphere.HostDatastoresPairing) string {
 			names := make([]string, len(pairings.Datastores))
