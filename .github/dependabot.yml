@@ -28,7 +28,8 @@ updates:
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "go.mod"
+      prefix: "Go Dependency"
+    rebase-strategy: "disabled"
 
   - package-ecosystem: "gomod"
     directory: "/"
@@ -45,7 +46,8 @@ updates:
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "go.mod"
+      prefix: "Go Dependency"
+    rebase-strategy: "disabled"
 
   ######################################################################
   # Monitor GitHub Actions dependency updates
@@ -67,7 +69,8 @@ updates:
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "ghaw"
+      prefix: "CI Dependency"
+    rebase-strategy: "disabled"
 
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -85,7 +88,8 @@ updates:
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "ghaw"
+      prefix: "CI Dependency"
+    rebase-strategy: "disabled"
 
   ######################################################################
   # Monitor Go updates to service as a reminder to generate new releases
@@ -104,15 +108,17 @@ updates:
     labels:
       - "dependencies"
       - "CI"
+      - "todo/release"
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "canary"
+      prefix: "Go Runtime"
+    rebase-strategy: "disabled"
     ignore:
       - dependency-name: "golang"
         versions:
-          - ">= 1.20"
-          - "< 1.19"
+          - ">= 1.24.0"
+          - "< 1.23.0"
 
   - package-ecosystem: docker
     directory: "/dependabot/docker/go"
@@ -127,10 +133,12 @@ updates:
     labels:
       - "dependencies"
       - "CI"
+      - "todo/release"
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "canary"
+      prefix: "Go Runtime"
+    rebase-strategy: "disabled"
 
   ######################################################################
   # Monitor images used to build project releases
@@ -152,7 +160,8 @@ updates:
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "docker"
+      prefix: "Build Image"
+    rebase-strategy: "disabled"
 
   - package-ecosystem: docker
     directory: "/dependabot/docker/builds"
@@ -170,4 +179,5 @@ updates:
     allow:
       - dependency-type: "all"
     commit-message:
-      prefix: "docker"
+      prefix: "Build Image"
+    rebase-strategy: "disabled
