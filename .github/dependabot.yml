@@ -180,4 +180,4 @@ updates:
       - dependency-type: "all"
     commit-message:
       prefix: "Build Image"
-    rebase-strategy: "disabled
+    rebase-strategy: "disabled"
