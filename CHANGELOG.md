@@ -26,6 +26,30 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.36.20] - 2025-04-09
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1401) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.22.3 to go-ci-oldstable-build-v0.22.8 in /dependabot/docker/builds
+- (GH-1408) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.22.8 to go-ci-oldstable-build-v0.22.9 in /dependabot/docker/builds
+- (GH-1410) Disable Dependabot automatic PR rebasing
+- (GH-1394) Go Dependency: Bump github.com/rs/zerolog from 1.33.0 to 1.34.0
+- (GH-1390) Go Dependency: Bump github.com/vmware/govmomi from 0.48.1 to 0.49.0
+- (GH-1384) Go Dependency: Bump golang.org/x/sys from 0.30.0 to 0.31.0
+- (GH-1412) Go Dependency: Bump golang.org/x/sys from 0.31.0 to 0.32.0
+- (GH-1406) Go Runtime: Bump golang from 1.22.12 to 1.23.8 in /dependabot/docker/go
+- (GH-1388) go.mod: update minimum Go version to 1.23.0
+- (GH-1372) Update project to Go 1.23 series
+
+### Fixed
+
+- (GH-1397) Fix `copyloopvar` linting errors
+- (GH-1399) go.mod format fix
+- (GH-1403) Fix invalid Dependabot go.mod changes
+- (GH-1415) Fix setting for disabling Dependabot auto-rebase
+
 ## [v0.36.19] - 2025-02-21
 
 ### Changed
@@ -2528,7 +2552,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.19...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.20...HEAD
+[v0.36.20]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.20
 [v0.36.19]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.19
 [v0.36.18]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.18
 [v0.36.17]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.17
