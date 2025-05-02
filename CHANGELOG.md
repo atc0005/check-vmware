@@ -26,6 +26,14 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.36.21] - 2025-05-02
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-1420) Go Dependency: Bump github.com/vmware/govmomi from 0.49.0 to 0.50.0
+
 ## [v0.36.20] - 2025-04-09
 
 ### Changed
@@ -2552,7 +2560,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.20...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.21...HEAD
+[v0.36.21]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.21
 [v0.36.20]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.20
 [v0.36.19]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.19
 [v0.36.18]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.18
