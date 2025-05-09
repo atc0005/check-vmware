@@ -270,9 +270,9 @@ func (p Plugin) handleEncodedPayload(w io.Writer) {
 		)
 		if err != nil {
 			panic("Failed to write EncodedPayload section label to given output sink")
-		} else {
-			p.logPluginOutputSize(fmt.Sprintf("%d bytes EncodedPayload section header written", len(encodedWithDelimiters)))
 		}
+
+		p.logPluginOutputSize(fmt.Sprintf("%d bytes EncodedPayload section header written", len(encodedWithDelimiters)))
 
 		totalWritten += written
 

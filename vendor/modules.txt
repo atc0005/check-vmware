@@ -1,5 +1,5 @@
-# github.com/atc0005/go-nagios v0.19.0
-## explicit; go 1.19
+# github.com/atc0005/go-nagios v0.20.0
+## explicit; go 1.21
 github.com/atc0005/go-nagios
 # github.com/google/go-cmp v0.7.0
 ## explicit; go 1.21

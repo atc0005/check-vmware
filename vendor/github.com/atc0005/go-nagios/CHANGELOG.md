@@ -26,11 +26,31 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.20.0] - 2025-05-02
+
+### Changed
+
+#### Dependency Updates
+
+- (GH-344) Bump minimum Go version from 1.19 to 1.21
+- (GH-339) Disable Dependabot automatic PR rebasing
+- (GH-338) Go Dependency: Bump github.com/google/go-cmp from 0.6.0 to 0.7.0
+
+#### Other
+
+- (GH-335) Add general and content-type troubleshooting info
+
+### Fixed
+
+- (GH-346) Fix `superfluous-else` revive linter error
+
 ## [v0.19.0] - 2024-11-27
 
 ### Added
 
 - (GH-330) Add plugin output size metric
+
+### Changed
 
 #### Dependency Updates
 
