@@ -17,6 +17,9 @@ Shared Golang package for Nagios plugins
 - [Features](#features)
 - [Changelog](#changelog)
 - [Examples](#examples)
+- [Troubleshooting](#troubleshooting)
+  - [General](#general)
+  - [Encoded payloads](#encoded-payloads)
 - [License](#license)
 - [Used by](#used-by)
 - [References](#references)
@@ -130,6 +133,55 @@ See <https://pkg.go.dev/github.com/atc0005/go-nagios> for specific examples.
 
 See <https://pkg.go.dev/github.com/atc0005/go-nagios?tab=importedby> for
 projects that are using this library.
+
+## Troubleshooting
+
+### General
+
+Enable debug logging.
+
+While this output is sent to `stderr` by default, it can be redirected to a
+custom target to prevent debugging details from this library from mixing with
+`stderr` content emitted directly by your plugin.
+
+### Encoded payloads
+
+The current encoding format is `Ascii85`. The character set used complies with
+Nagios character set restrictions and in general doesn't cause issues either
+when consumed by monitoring systems (when emitted as part of plugin output) or
+downstream systems consuming notifications.
+
+One notable exception is when Nagios notifications are sent to a Mailman
+mailing list.
+
+In at least one case Mailman heuristics incorrectly detected an email
+notification with an embedded payload as binary. The hotfix for that situation
+for a Nagios XI instance running on RHEL 8 was:
+
+1. Install the `mutt` email CLI package
+1. Update Nagios to use `/usr/bin/mutt` in place of `/bin/mail` (provided by
+   the `mailx` package)
+1. Explicitly add a `Content-Type` header with value of `text/plain`
+
+Prior to those changes the custom `notify-service-by-email-verbose` command
+definition was:
+
+`/usr/bin/printf "%b" "\n***** Nagios Monitor XI Alert *****\n\nNotification Type: $NOTIFICATIONTYPE$\n\nService: $SERVICEDESC$\nHost: $HOSTNAME$\nHost Description: $HOSTALIAS$\nHost Notes: $HOSTNOTES$\nService Notes: $SERVICENOTES$\nAddress: $HOSTADDRESS$\nState: $SERVICESTATE$\n\nDate/Time: $LONGDATETIME$\n\nService Output:\n\n$SERVICEOUTPUT$\n\nAdditional Service Output (if available):\n\n$LONGSERVICEOUTPUT$\n" | /bin/mail -r "sender@example.com" -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$`
+
+This replaced the stock `notify-service-by-email` command which did not expose
+`LongServiceOutput` details.
+
+After swapping `/bin/mail` for `/usr/bin/mutt` the command definition looks
+like:
+
+`/usr/bin/printf "%b" "\n***** Nagios Monitor XI Alert *****\n\nNotification Type: $NOTIFICATIONTYPE$\n\nService: $SERVICEDESC$\nHost: $HOSTNAME$\nHost Description: $HOSTALIAS$\nHost Notes: $HOSTNOTES$\nService Notes: $SERVICENOTES$\nAddress: $HOSTADDRESS$\nState: $SERVICESTATE$\n\nDate/Time: $LONGDATETIME$\n\nService Output:\n\n$SERVICEOUTPUT$\n\nAdditional Service Output (if available):\n\n$LONGSERVICEOUTPUT$\n" | /usr/bin/mutt -e 'my_hdr From:sender@example.com' -e 'set content_type=text/plain' -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$`
+
+Specifically, this is the replacement command for `/bin/mail`:
+
+```diff
+-/bin/mail -r "sender@example.com" -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$
++/usr/bin/mutt -e 'my_hdr From:sender@example.com' -e 'set content_type=text/plain' -s "** $NOTIFICATIONTYPE$ Service Alert: \"$SERVICEDESC$\" for $HOSTNAME$ is $SERVICESTATE$ **" $CONTACTEMAIL$
+```
 
 ## License
 
