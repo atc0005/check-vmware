@@ -1019,13 +1019,7 @@ func H2D2VMsReport(
 
 	}
 
-	_, _ = fmt.Fprintf(
-		&report,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
+	emitSeparator(&report, environmentMetadataHeader)
 
 	switch {
 	case ignoreMissingCA:
@@ -1104,12 +1098,14 @@ func H2D2VMsReport(
 		)
 	}
 
+	// We skip emitting the separator between the helper function output and
+	// this function's output because we inserted our own earlier.
 	vmFilterResultsReportTrailer(
 		&report,
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		false,
+		skipEmittingSeparator,
 	)
 
 	_, _ = fmt.Fprintf(

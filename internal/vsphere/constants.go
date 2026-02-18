@@ -58,6 +58,13 @@ const (
 	snapshotThresholdTypeSizeSuffix  string = "GB"
 )
 
+// used with VM report trailer
+const (
+	// defaultSeparatorText      string = "---"
+	skipEmittingSeparator     string = ""
+	environmentMetadataHeader string = "Environment info/metadata:"
+)
+
 // Substring filtering keywords supported by
 // TriggeredAlarms.filterBySubstring() method
 const (
