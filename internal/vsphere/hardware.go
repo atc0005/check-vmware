@@ -697,7 +697,7 @@ func VirtualHardwareReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	_, _ = fmt.Fprintf(

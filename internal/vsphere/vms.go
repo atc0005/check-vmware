@@ -2652,7 +2652,7 @@ func VMPowerCycleUptimeReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	return report.String()
@@ -2755,7 +2755,7 @@ func VMDiskConsolidationReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	return report.String()
@@ -2883,7 +2883,7 @@ func VMInteractiveQuestionReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	return report.String()
@@ -3145,7 +3145,7 @@ func VMBackupViaCAReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	return report.String()
@@ -3294,7 +3294,7 @@ func VMListReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	return report.String()
@@ -3364,7 +3364,7 @@ func vmFilterResultsReportTrailer(
 	c *vim25.Client,
 	vmsFilterOptions VMsFilterOptions,
 	vmsFilterResults VMsFilterResults,
-	emitSeparator bool,
+	separatorText string,
 ) {
 
 	funcTimeStart := time.Now()
@@ -3376,19 +3376,11 @@ func vmFilterResultsReportTrailer(
 		)
 	}()
 
-	if emitSeparator {
-		_, _ = fmt.Fprintf(
-			w,
-			"%s---%s%s",
-			nagios.CheckOutputEOL,
-			nagios.CheckOutputEOL,
-			nagios.CheckOutputEOL,
-		)
-	}
+	emitSeparator(w, separatorText)
 
 	_, _ = fmt.Fprintf(
 		w,
-		"* vSphere environment: %s%s",
+		"* vSphere endpoint: %s%s",
 		c.URL().String(),
 		nagios.CheckOutputEOL,
 	)
