@@ -1654,7 +1654,7 @@ func SnapshotsAgeReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	return report.String()
@@ -1698,7 +1698,7 @@ func SnapshotsSizeReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	return report.String()
@@ -1743,7 +1743,7 @@ func SnapshotsCountReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	return report.String()
