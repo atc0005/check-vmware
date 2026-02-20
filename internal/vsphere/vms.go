@@ -2100,7 +2100,7 @@ func FilterVMsByDiskConsolidationState(vms []mo.VirtualMachine) ([]mo.VirtualMac
 	}(vms, &vmsNeedingConsolidation)
 
 	for _, vm := range vms {
-		if vm.Runtime.ConsolidationNeeded != nil && *vm.Runtime.ConsolidationNeeded {
+		if vm.Runtime.ConsolidationNeeded {
 			vmsNeedingConsolidation = append(vmsNeedingConsolidation, vm)
 		}
 	}

@@ -388,11 +388,7 @@ func ValidateDatastoreStatsCollectionStatus(datastore mo.Datastore) error {
 
 		return ErrDatastoreIormConfigurationPropertyUnavailable
 
-	case (datastore.IormConfiguration).StatsCollectionEnabled == nil:
-
-		return ErrDatastoreStatsCollectionPropertyUnavailable
-
-	case !*(datastore.IormConfiguration).StatsCollectionEnabled:
+	case !datastore.IormConfiguration.StatsCollectionEnabled:
 
 		return ErrDatastoreIormConfigurationStatisticsCollectionDisabled
 
