@@ -498,8 +498,8 @@ func HostSystemMemoryUsageReport(
 		// vm.Summary.QuickStats.HostMemoryUsage == memory usage in MB
 		vmsMemUsedBytes += int64(vm.Summary.QuickStats.HostMemoryUsage) * units.MB
 
-		switch {
-		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn:
+		switch vm.Runtime.PowerState {
+		case types.VirtualMachinePowerStatePoweredOn:
 			vmsPoweredOn++
 		default:
 			vmsPoweredOff++
@@ -622,7 +622,7 @@ func HostSystemMemoryUsageReport(
 	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
+		c.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 
@@ -709,8 +709,8 @@ func HostSystemCPUUsageReport(
 		vmsCPUUsage += vmCPUUsage
 		logger.Printf("VM %s used %s \n", vm.Name, CPUSpeed(vmCPUUsage))
 
-		switch {
-		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn:
+		switch vm.Runtime.PowerState {
+		case types.VirtualMachinePowerStatePoweredOn:
 			vmsPoweredOn++
 		default:
 			vmsPoweredOff++
@@ -833,7 +833,7 @@ func HostSystemCPUUsageReport(
 	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
+		c.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 

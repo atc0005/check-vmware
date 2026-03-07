@@ -134,8 +134,8 @@ func GetDatacenters(ctx context.Context, c *vim25.Client, dcNames []string, prop
 		)
 	}(&filteredDCs)
 
-	switch {
-	case dcNames == nil:
+	switch dcNames {
+	case nil:
 		logger.Println("empty datacenters list provided")
 	default:
 		logger.Println("one or more datacenters specified")

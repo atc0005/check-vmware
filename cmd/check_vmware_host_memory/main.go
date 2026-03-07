@@ -214,8 +214,8 @@ func main() {
 	var numVMsPoweredOn int
 	var numVMsPoweredOff int
 	for _, vm := range hsVMs {
-		switch {
-		case vm.Runtime.PowerState == types.VirtualMachinePowerStatePoweredOn:
+		switch vm.Runtime.PowerState {
+		case types.VirtualMachinePowerStatePoweredOn:
 			numVMsPoweredOn++
 		default:
 			numVMsPoweredOff++
