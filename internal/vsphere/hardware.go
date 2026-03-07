@@ -102,8 +102,8 @@ func DefaultHardwareVersion(
 
 	finder := find.NewFinder(c, true)
 
-	switch {
-	case datacenterName == "":
+	switch datacenterName {
+	case "":
 		dc, findDCErr := finder.DefaultDatacenter(ctx)
 		if findDCErr != nil {
 			return HardwareVersion{},
@@ -121,8 +121,8 @@ func DefaultHardwareVersion(
 	}
 
 	var computeResourceRef types.ManagedObjectReference
-	switch {
-	case clusterName == "":
+	switch clusterName {
+	case "":
 		cr, findCRErr := finder.DefaultComputeResource(ctx)
 		if findCRErr != nil {
 			return HardwareVersion{},

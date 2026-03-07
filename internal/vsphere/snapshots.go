@@ -1070,9 +1070,9 @@ func NewSnapshotSummarySet(
 
 			// Conditionally prune disk files not directly associated with the
 			// unique snapshot tree we are evaluating
-			switch {
+			switch parent {
 
-			case parent == nil:
+			case nil:
 
 				// No parent snapshot is present. Remove all attached disk
 				// file keys from the list of snapshot file keys. This leaves
@@ -1419,8 +1419,8 @@ func writeSnapshotsListEntries(
 		// Remove any provided whitespace, append one leading and trailing
 		// space if a subject was provided.
 		forWhat = strings.TrimSpace(forWhat)
-		switch {
-		case forWhat == "":
+		switch forWhat {
+		case "":
 			forWhat = " "
 		default:
 			forWhat = " " + forWhat + " "
@@ -1456,12 +1456,12 @@ func writeSnapshotsListEntries(
 
 	}
 
-	switch {
-	case unitName == snapshotThresholdTypeAge:
+	switch unitName {
+	case snapshotThresholdTypeAge:
 		printSnapshotHeader("", true)
-	case unitName == snapshotThresholdTypeCount:
+	case snapshotThresholdTypeCount:
 		printSnapshotHeader("for VMs", true)
-	case unitName == snapshotThresholdTypeSize:
+	case snapshotThresholdTypeSize:
 		printSnapshotHeader("", true)
 	}
 
@@ -1539,12 +1539,12 @@ func writeSnapshotsListEntries(
 		_, _ = fmt.Fprintln(w, "* None detected")
 	}
 
-	switch {
-	case unitName == snapshotThresholdTypeAge:
+	switch unitName {
+	case snapshotThresholdTypeAge:
 		printSnapshotHeader("", false)
-	case unitName == snapshotThresholdTypeCount:
+	case snapshotThresholdTypeCount:
 		printSnapshotHeader("for VMs", false)
-	case unitName == snapshotThresholdTypeSize:
+	case snapshotThresholdTypeSize:
 		printSnapshotHeader("", false)
 	}
 
@@ -1555,8 +1555,7 @@ func writeSnapshotsListEntries(
 
 		for _, snapSet := range snapshotSummarySets {
 			for _, snap := range snapSet.Snapshots {
-				if !(snap.IsAgeCriticalState() ||
-					snap.IsAgeWarningState()) {
+				if !snap.IsAgeCriticalState() && !snap.IsAgeWarningState() {
 					_, _ = fmt.Fprintf(
 						w,
 						listEntryTemplate,
@@ -1575,7 +1574,7 @@ func writeSnapshotsListEntries(
 		snapshotSummarySets.HasNotYetExceededCount(snapshotWarningThreshold):
 
 		for _, snapSet := range snapshotSummarySets {
-			if !(snapSet.IsCountCriticalState() || snapSet.IsCountWarningState()) {
+			if !snapSet.IsCountCriticalState() && !snapSet.IsCountWarningState() {
 				for _, snap := range snapSet.Snapshots {
 					_, _ = fmt.Fprintf(
 						w,
@@ -1595,8 +1594,7 @@ func writeSnapshotsListEntries(
 		snapshotSummarySets.HasNotYetExceededSize(snapshotWarningThreshold):
 
 		for _, snapSet := range snapshotSummarySets {
-			if !(snapSet.IsSizeWarningState() ||
-				snapSet.IsSizeCriticalState()) {
+			if !snapSet.IsSizeWarningState() && !snapSet.IsSizeCriticalState() {
 				for _, snap := range snapSet.Snapshots {
 					_, _ = fmt.Fprintf(
 						w,

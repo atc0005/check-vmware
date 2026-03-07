@@ -251,7 +251,7 @@ func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ig
 		case errors.Is(err, ErrCustomAttributeNotSet):
 			logger.Printf(
 				"custom attributes missing for %s %q",
-				host.ManagedEntity.Self.Type,
+				host.Self.Type,
 				host.Name,
 			)
 
@@ -260,7 +260,7 @@ func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ig
 		case err != nil:
 			logger.Printf(
 				"failed to retrieve custom attribute for %s %q: %s",
-				host.ManagedEntity.Self.Type,
+				host.Self.Type,
 				host.Name,
 				err,
 			)
@@ -269,7 +269,7 @@ func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ig
 			// report them immediately.
 			return nil, fmt.Errorf(
 				"failed to retrieve custom attribute for %s %q: %w",
-				host.ManagedEntity.Self.Type,
+				host.Self.Type,
 				host.Name,
 				err,
 			)
@@ -277,7 +277,7 @@ func GetHostsWithCA(allHosts []mo.HostSystem, hostCustomAttributeName string, ig
 		default:
 			logger.Printf(
 				"successfully retrieved custom attribute for %s %q",
-				host.ManagedEntity.Self.Type,
+				host.Self.Type,
 				host.Name,
 			)
 
@@ -374,7 +374,7 @@ func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, d
 		case errors.Is(err, ErrCustomAttributeNotSet):
 			logger.Printf(
 				"custom attributes missing for %s %q",
-				ds.ManagedEntity.Self.Type,
+				ds.Self.Type,
 				ds.Name,
 			)
 
@@ -383,7 +383,7 @@ func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, d
 		case err != nil:
 			logger.Printf(
 				"failed to retrieve custom attribute for %s %q: %s",
-				ds.ManagedEntity.Self.Type,
+				ds.Self.Type,
 				ds.Name,
 				err,
 			)
@@ -392,7 +392,7 @@ func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, d
 			// report them immediately.
 			return nil, fmt.Errorf(
 				"failed to retrieve custom attribute for %s %q: %w",
-				ds.ManagedEntity.Self.Type,
+				ds.Self.Type,
 				ds.Name,
 				err,
 			)
@@ -400,7 +400,7 @@ func GetDatastoresWithCA(allDS []mo.Datastore, ignoredDatastoreNames []string, d
 		default:
 			logger.Printf(
 				"successfully retrieved custom attribute for %s %q",
-				ds.ManagedEntity.Self.Type,
+				ds.Self.Type,
 				ds.Name,
 			)
 

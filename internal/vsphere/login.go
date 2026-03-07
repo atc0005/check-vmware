@@ -59,7 +59,7 @@ func Login(
 	}
 
 	// Override default user agent
-	c.Client.UserAgent = userAgent
+	c.UserAgent = userAgent
 
 	// provide credentials *after* we create the client so that the desired
 	// User Agent value can be set before logging in.
