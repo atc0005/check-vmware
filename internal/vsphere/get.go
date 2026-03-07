@@ -323,8 +323,8 @@ func getObjectByName(ctx context.Context, c *vim25.Client, dst interface{}, objN
 
 	finder := find.NewFinder(c, true)
 
-	switch {
-	case datacenter == "":
+	switch datacenter {
+	case "":
 		dc, findDCErr := finder.DefaultDatacenter(ctx)
 		if findDCErr != nil {
 			return fmt.Errorf("%s: %w", dcNotProvidedFailedToFallback, findDCErr)
@@ -496,8 +496,8 @@ func getResourcePools(ctx context.Context, c *govmomi.Client, moRef types.Manage
 		)
 	}(&resourcePools)
 
-	switch {
-	case moRef.Type == MgObjRefTypeResourcePool:
+	switch moRef.Type {
+	case MgObjRefTypeResourcePool:
 
 		// if the associated entity is a Resource Pool, then its name
 		// and the name of its parent (another Resource Pool) should
@@ -533,7 +533,7 @@ func getResourcePools(ctx context.Context, c *govmomi.Client, moRef types.Manage
 
 		return resourcePools, nil
 
-	case moRef.Type == MgObjRefTypeVirtualMachine:
+	case MgObjRefTypeVirtualMachine:
 		var vm mo.VirtualMachine
 		var rp mo.ResourcePool
 		var vmProps []string

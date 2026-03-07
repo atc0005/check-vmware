@@ -675,8 +675,8 @@ func ResourcePoolsMemoryReport(
 		rpIDtoNameIdx[rp.Self.Value] = rp.Name
 
 		rpSummary := rp.Summary.GetResourcePoolSummary()
-		switch {
-		case rpSummary == nil:
+		switch rpSummary {
+		case nil:
 			_, _ = fmt.Fprintf(
 				&report,
 				"* %s [Pool: (unavailable), Cluster: (unavailable)]%s",
@@ -722,8 +722,8 @@ func ResourcePoolsMemoryReport(
 		nagios.CheckOutputEOL,
 	)
 
-	switch {
-	case numVMsPoweredOn == 0:
+	switch numVMsPoweredOn {
+	case 0:
 		_, _ = fmt.Fprintf(
 			&report,
 			"* None (visible); %d powered off%s",
@@ -819,7 +819,7 @@ func ResourcePoolsMemoryReport(
 	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
+		c.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 
