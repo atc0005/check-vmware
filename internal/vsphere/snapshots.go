@@ -897,7 +897,7 @@ func ListVMSnapshots(vm mo.VirtualMachine, w io.Writer) {
 				daysAge,
 				snapTree.Id,
 				snapTree.Snapshot.Value,
-				snapTree.Snapshot.Value == vm.Snapshot.CurrentSnapshot.Value,
+				isActiveSnapshot(vm, snapTree),
 			)
 
 			if snapTree.ChildSnapshotList != nil {
@@ -950,7 +950,7 @@ func NewSnapshotSummarySet(
 	}
 
 	logger.Println("Number of snapshot trees:", len(vm.Snapshot.RootSnapshotList))
-	logger.Println("Active snapshot MOID:", vm.Snapshot.CurrentSnapshot)
+	logger.Println("Active snapshot MOID:", getActiveSnapshotMOIDDescription(vm))
 
 	// all disk files attached to the virtual machine at the current point of
 	// running
@@ -1005,11 +1005,6 @@ func NewSnapshotSummarySet(
 				snapTree.Snapshot.Value,
 				snapTree.Name,
 				parent != nil,
-			)
-
-			logger.Printf(
-				"Active snapshot: %s\n",
-				vm.Snapshot.CurrentSnapshot.Value,
 			)
 
 			var snapshotSize int64
@@ -1123,12 +1118,7 @@ func NewSnapshotSummarySet(
 			// allows for measuring and including the growth from the last
 			// fixed snapshot to the present state; this includes
 			// hidden/temporary delta files
-			//
-			// NOTE: vm.Snapshot.CurrentSnapshot will be nil if the working
-			// snapshot is at the root of the snapshot tree. We guard against
-			// this scenario earlier in this function so we skip repeating
-			// that guard logic here.
-			if snapTree.Snapshot.Value == vm.Snapshot.CurrentSnapshot.Value {
+			if isActiveSnapshot(vm, snapTree) {
 				logger.Println("allSnapshotKeys:", allSnapshotKeys)
 				for _, fileKey := range allSnapshotKeys {
 					removeFileKey(&remainingDiskFiles, fileKey)
@@ -1415,16 +1405,82 @@ func SnapshotsSizeOneLineCheckSummary(
 // https://github.com/vmware/govmomi/discussions/3951
 // https://github.com/vmware/govmomi/blob/55b758a91203cc2fe7c53a6cea06ada86fabdccb/simulator/virtual_machine.go#L1943
 func hasSnapshots(vm mo.VirtualMachine) bool {
-	return vm.Snapshot != nil &&
-		// govmomi documentation for the `CurrentSnapshot` field as of v0.52.0:
-		//
-		// Current snapshot of the virtual machine
-		//
-		// This property is set by calling `Snapshot.revert` or
-		// `VirtualMachine.createSnapshot`. This property will be
-		// empty when the working snapshot is at the root of the
-		// snapshot tree.
-		vm.Snapshot.CurrentSnapshot != nil
+	// This technically "works" by avoiding a nil pointer dereference whenever
+	// vm.Snapshot.CurrentSnapshot is nil, but it's *too* cautious and avoids
+	// snapshot evaluation for situations where a snapshot tree is present but
+	// not set as the "current" snapshot.
+	// return vm.Snapshot != nil && vm.Snapshot.CurrentSnapshot != nil
+	//
+	// Instead, we'll add the necessary guard logic within the
+	// `isActiveSnapshot` helper function which we can use as a guard against
+	// attempting to access property when it is unset.
+	return vm.Snapshot != nil
+}
+
+// getNumVMSnapshots is a recursive helper function that returns the total
+// number of snapshots for a given virtual machine.
+func getNumVMSnapshots(snapTrees []types.VirtualMachineSnapshotTree) int {
+	var count = 0
+
+	for _, snapTree := range snapTrees {
+		count++ // Count the current snapshot
+		if len(snapTree.ChildSnapshotList) > 0 {
+			count += getNumVMSnapshots(snapTree.ChildSnapshotList) // Recurse into children
+		}
+	}
+	return count
+}
+
+// isActiveSnapshot indicates whether a given snapshot tree is the active
+// snapshot for a given virtual machine.
+func isActiveSnapshot(vm mo.VirtualMachine, snapTree types.VirtualMachineSnapshotTree) bool {
+	switch {
+	// If there are no snapshots for a VM, then a given snapshot tree could
+	// not be the active snapshot for a given virtual machine.
+	case vm.Snapshot == nil:
+		return false
+
+	// NOTE: vm.Snapshot.CurrentSnapshot will be nil if the working snapshot
+	// is at the root of the snapshot tree.
+	case vm.Snapshot.CurrentSnapshot == nil:
+		return false
+
+	case snapTree.Snapshot.Value == vm.Snapshot.CurrentSnapshot.Value:
+		return true
+
+	default:
+		return false
+	}
+}
+
+// getActiveSnapshotMOIDDescription returns the active snapshot Managed Object
+// ID string for a given VM or a human readable explanation for why it could
+// not be retrieved.
+func getActiveSnapshotMOIDDescription(vm mo.VirtualMachine) string {
+	switch {
+	case vm.Snapshot == nil:
+		logger.Printf("no snapshots for VM %s", vm.Name)
+
+		return "no snapshots for VM"
+
+	case vm.Snapshot.CurrentSnapshot == nil:
+		numSnapshots := getNumVMSnapshots(vm.Snapshot.RootSnapshotList)
+
+		logger.Printf("%d snapshots present, no snapshots active for VM %s", numSnapshots, vm.Name)
+
+		return "no snapshots active for VM"
+
+	default:
+		numSnapshots := getNumVMSnapshots(vm.Snapshot.RootSnapshotList)
+		activeSnapshotMOID := vm.Snapshot.CurrentSnapshot.String()
+
+		logger.Printf(
+			"%d snapshots present, snapshot MOID %s active for VM %s",
+			numSnapshots, activeSnapshotMOID, vm.Name,
+		)
+
+		return activeSnapshotMOID
+	}
 }
 
 // writeSnapshotsListEntries generates a common snapshots report for both age
