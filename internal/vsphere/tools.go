@@ -208,7 +208,7 @@ func VMToolsReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	return vmsReport.String()

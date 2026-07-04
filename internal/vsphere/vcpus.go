@@ -199,7 +199,7 @@ func VirtualCPUsReport(
 		c,
 		vmsFilterOptions,
 		vmsFilterResults,
-		true,
+		environmentMetadataHeader,
 	)
 
 	return vmsReport.String()

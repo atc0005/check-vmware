@@ -1367,13 +1367,7 @@ func DatastoreSpaceUsageReport(
 
 	printVMSummary(&report, dsUsageSummary.VMs, types.VirtualMachinePowerStatePoweredOff)
 
-	_, _ = fmt.Fprintf(
-		&report,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
+	emitSeparator(&report, environmentMetadataHeader)
 
 	_, _ = fmt.Fprintf(
 		&report,
@@ -1635,13 +1629,7 @@ func DatastorePerformanceReport(
 
 	printVMSummary(&report, dsPerfSet.VMs, types.VirtualMachinePowerStatePoweredOff)
 
-	_, _ = fmt.Fprintf(
-		&report,
-		"%s---%s%s",
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-		nagios.CheckOutputEOL,
-	)
+	emitSeparator(&report, environmentMetadataHeader)
 
 	_, _ = fmt.Fprintf(
 		&report,
