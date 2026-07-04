@@ -311,8 +311,8 @@ func printVMSummary(w io.Writer, dsVMs DatastoreVMs, powerState types.VirtualMac
 		_, _ = fmt.Fprintf(w, nagios.CheckOutputEOL)
 	}
 
-	switch {
-	case powerState == types.VirtualMachinePowerStatePoweredOn:
+	switch powerState {
+	case types.VirtualMachinePowerStatePoweredOn:
 		_, _ = fmt.Fprint(
 			w,
 			sectionHeader(
@@ -323,7 +323,7 @@ func printVMSummary(w io.Writer, dsVMs DatastoreVMs, powerState types.VirtualMac
 
 		listVMs(w, dsVMs.VMsPoweredOn())
 
-	case powerState == types.VirtualMachinePowerStatePoweredOff:
+	case types.VirtualMachinePowerStatePoweredOff:
 		_, _ = fmt.Fprint(
 			w,
 			sectionHeader(
@@ -1389,7 +1389,7 @@ func DatastoreSpaceUsageReport(
 	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
+		c.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 
@@ -1657,7 +1657,7 @@ func DatastorePerformanceReport(
 	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
+		c.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 

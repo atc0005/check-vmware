@@ -800,10 +800,8 @@ func GetTriggeredAlarms(ctx context.Context, c *govmomi.Client, datacenters []mo
 			}
 
 			resourcePoolNames := make([]string, 0, 2)
-			switch {
-			case entity.Self.Type == MgObjRefTypeResourcePool ||
-				entity.Self.Type == MgObjRefTypeVirtualApp ||
-				entity.Self.Type == MgObjRefTypeVirtualMachine:
+			switch entity.Self.Type {
+			case MgObjRefTypeResourcePool, MgObjRefTypeVirtualApp, MgObjRefTypeVirtualMachine:
 
 				rps, err := getResourcePools(ctx, c, entity.Self, propsSubset)
 				if err != nil {
@@ -1759,8 +1757,8 @@ func AlarmsReport(
 
 	numTriggeredAlarmsToReport := len(triggeredAlarms) - triggeredAlarms.NumExcluded()
 
-	switch {
-	case numTriggeredAlarmsToReport == 0:
+	switch numTriggeredAlarmsToReport {
+	case 0:
 		_, _ = fmt.Fprintf(
 			&report,
 			"* None%s%s",
@@ -1850,7 +1848,7 @@ func AlarmsReport(
 	_, _ = fmt.Fprintf(
 		&report,
 		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
+		c.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 

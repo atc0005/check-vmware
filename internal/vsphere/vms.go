@@ -339,8 +339,8 @@ func (vmwb VMWithBackup) HasOldBackup() bool {
 // date. If a backup is not recorded, this is indicated instead of a formatted
 // age.
 func (vmwb VMWithBackup) FormattedBackupAge() string {
-	switch {
-	case vmwb.BackupDate == nil:
+	switch vmwb.BackupDate {
+	case nil:
 		return "Backup unavailable"
 	default:
 		return FormattedTimeSinceEvent(*vmwb.BackupDate)
@@ -350,8 +350,8 @@ func (vmwb VMWithBackup) FormattedBackupAge() string {
 // BackupDaysAgo returns the age of a Virtual Machine's backup date in days.
 // If a backup date is not available, 0 is returned.
 func (vmwb VMWithBackup) BackupDaysAgo() int {
-	switch {
-	case vmwb.BackupDate == nil:
+	switch vmwb.BackupDate {
+	case nil:
 		return 0
 	default:
 		return DaysAgo(*vmwb.BackupDate)
@@ -1484,7 +1484,7 @@ func GetVMsWithCA(vms []mo.VirtualMachine, vmCustomAttributeName string, ignoreM
 		if err != nil {
 			return nil, fmt.Errorf(
 				"failed to retrieve custom attribute for %s %s: %w",
-				vm.ManagedEntity.Self.Type,
+				vm.Self.Type,
 				vm.Name,
 				err,
 			)
@@ -1543,7 +1543,7 @@ func GetVMsWithCAs(vms []mo.VirtualMachine) ([]VMWithCAs, error) {
 		case err != nil:
 			return nil, fmt.Errorf(
 				"failed to retrieve custom attribute for %s %s: %w",
-				vm.ManagedEntity.Self.Type,
+				vm.Self.Type,
 				vm.Name,
 				err,
 			)
@@ -2858,7 +2858,7 @@ func VMInteractiveQuestionReport(
 				// ))
 				possibleAnswers = append(possibleAnswers, fmt.Sprintf(
 					"'%s'",
-					ed.Description.Label,
+					ed.Label,
 				))
 			}
 
@@ -3396,7 +3396,7 @@ func vmFilterResultsReportTrailer(
 	_, _ = fmt.Fprintf(
 		w,
 		"* Plugin User Agent: %s%s",
-		c.Client.UserAgent,
+		c.UserAgent,
 		nagios.CheckOutputEOL,
 	)
 
