@@ -26,6 +26,35 @@ The following types of changes will be recorded in this file:
 
 - placeholder
 
+## [v0.36.23] - 2026-07-14
+
+### Changed
+
+#### Output
+
+- (GH-1567) Add explicit metadata section header in footer
+
+#### Dependency Updates
+
+- (GH-1551) Build Image: Bump atc0005/go-ci from go-ci-oldstable-build-v0.22.10 to go-ci-oldstable-build-v0.23.21 in /dependabot/docker/builds
+- (GH-1486) CI Dependency: Bump actions/checkout from 4 to 7
+- (GH-1469) CI Dependency: Bump github/codeql-action from 3 to 4
+- (GH-1557) Go Dependency: Bump github.com/mattn/go-colorable from 0.1.14 to 0.1.15
+- (GH-1545) Go Dependency: Bump github.com/mattn/go-isatty from 0.0.20 to 0.0.22
+- (GH-1541) Go Dependency: Bump github.com/rs/zerolog from 1.34.0 to 1.35.1
+- (GH-1436) Go Dependency: Bump github.com/vmware/govmomi from 0.50.0 to 0.51.0
+- (GH-1558) Go Dependency: Bump github.com/vmware/govmomi from 0.51.0 to 0.55.1
+- (GH-1555) Go Dependency: Bump golang.org/x/sys from 0.33.0 to 0.46.0
+- (GH-1517) go.mod: update minimum Go version to 1.25.0
+- (GH-1519) Remove "canary" Go version tracking
+
+### Fixed
+
+- (GH-1562) Apply staticcheck quickfix QF1001, QF1002, QF1008
+- (GH-1568) Avoid nil pointer deref, cleanup snapshots logic
+- (GH-1565) Fix govmomi v0.53.0 breaking changes
+- (GH-1570) Properly handle unset `currentSnapshot` property
+
 ## [v0.36.22] - 2025-05-16
 
 ### Changed
@@ -2571,7 +2600,8 @@ VMware vSphere environments (with more hopefully on the way soon).
 - Nagios plugin for monitoring virtual hardware versions for select (or all)
   Resource Pools.
 
-[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.22...HEAD
+[Unreleased]: https://github.com/atc0005/check-vmware/compare/v0.36.23...HEAD
+[v0.36.23]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.23
 [v0.36.22]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.22
 [v0.36.21]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.21
 [v0.36.20]: https://github.com/atc0005/check-vmware/releases/tag/v0.36.20
