@@ -23,6 +23,10 @@ var ErrSnapshotAgeThresholdCrossed = errors.New("snapshot exceeds specified age 
 // VM has exceeded a specified count threshold.
 var ErrSnapshotCountThresholdCrossed = errors.New("snapshots exceed specified count threshold")
 
+// ErrSnapshotOrphanThresholdCrossed indicates that a snapshot set for a single
+// VM has exceeded a specified orphaned snapshots threshold.
+var ErrSnapshotOrphanThresholdCrossed = errors.New("snapshots exceed specified orphaned status threshold")
+
 // ErrSnapshotSizeThresholdCrossed indicates that a snapshot is larger than a
 // specified size threshold
 var ErrSnapshotSizeThresholdCrossed = errors.New("snapshot exceeds specified size threshold")
@@ -164,6 +168,10 @@ type SnapshotSummarySet struct {
 	// has crossed the CRITICAL state threshold based on total number of
 	// snapshots in the set crossing snapshot count threshold.
 	setCountCriticalThresholdCrossed bool
+
+	// setOrphanedSnapshotsPresent indicates that one or more virtual machine
+	// snapshots are orphaned.
+	setOrphanedSnapshotsPresent bool
 }
 
 // SnapshotSummarySets is a collection of SnapshotSummarySet types for bulk
@@ -227,6 +235,27 @@ func (sss SnapshotSummarySets) Snapshots() int {
 	}
 
 	return numSnapshots
+}
+
+// VMs indicates how many VMs are in the collection.
+// func (sss SnapshotSummarySets) VMs() int {
+// 	// Each SnapshotSummarySet tracks all snapshots for a specific VM. We can
+// 	// calculate the length of the collection to determine how many total VMs
+// 	// are being tracked.
+// 	return len(sss)
+// }
+
+// VMsWithOrphanedSnapshots indicates how many VMs in the sets have orphaned
+// snapshots.
+func (sss SnapshotSummarySets) VMsWithOrphanedSnapshots() int {
+	var count int
+	for _, set := range sss {
+		if set.setOrphanedSnapshotsPresent {
+			count++
+		}
+	}
+
+	return count
 }
 
 // ExceedsAge indicates how many sets and number of snapshots from all of
@@ -389,13 +418,15 @@ func (ss SnapshotSummary) IsSizeExceeded(sizeGB int) bool {
 }
 
 // IsWarningState indicates whether the snapshot has exceeded age or size
-// WARNING thresholds but NOT age or size CRITICAL thresholds.
+// WARNING thresholds but NOT age or size CRITICAL thresholds. The orphan
+// snapshot status is determined at the snapshot summary *set* level.
 func (ss SnapshotSummary) IsWarningState() bool {
 	return ss.IsAgeWarningState() || ss.IsSizeWarningState()
 }
 
 // IsCriticalState indicates whether the snapshot has exceeded age or size
-// CRITICAL thresholds.
+// CRITICAL thresholds. The orphan snapshot status is determined at the
+// snapshot summary *set* level.
 func (ss SnapshotSummary) IsCriticalState() bool {
 	return ss.IsAgeCriticalState() || ss.IsSizeCriticalState()
 }
@@ -427,16 +458,16 @@ func (ss SnapshotSummary) IsSizeCriticalState() bool {
 // IsWarningState indicates whether the snapshot set has snapshots which have
 // an age, size or count WARNING state.
 func (sss SnapshotSummarySet) IsWarningState() bool {
-
-	// evaluate Age and Size state for each snapshot in the set
+	// Evaluate state for each snapshot in the set (where supported).
 	for i := range sss.Snapshots {
 		if sss.Snapshots[i].IsWarningState() {
 			return true
 		}
 	}
 
-	// evaluate Size and Count state for the set
-	if sss.IsSizeWarningState() || sss.IsCountWarningState() {
+	// Evaluate state for the set (where individual snapshots may not be
+	// enough to determine the status of the whole).
+	if sss.IsSizeWarningState() || sss.IsCountWarningState() || sss.IsOrphanWarningState() {
 		return true
 	}
 
@@ -446,16 +477,16 @@ func (sss SnapshotSummarySet) IsWarningState() bool {
 // IsCriticalState indicates whether the snapshot set has exceeded age, size
 // or count CRITICAL thresholds.
 func (sss SnapshotSummarySet) IsCriticalState() bool {
-
-	// evaluate Age and Size state for each snapshot in the set
+	// Evaluate state for each snapshot in the set (where supported).
 	for i := range sss.Snapshots {
 		if sss.Snapshots[i].IsCriticalState() {
 			return true
 		}
 	}
 
-	// evaluate Size and Count state for the set
-	if sss.IsSizeCriticalState() || sss.IsCountCriticalState() {
+	// Evaluate state for the set (where individual snapshots may not be
+	// enough to determine the status of the whole).
+	if sss.IsSizeCriticalState() || sss.IsCountCriticalState() || sss.IsOrphanCriticalState() {
 		return true
 	}
 
@@ -497,6 +528,23 @@ func (sss SnapshotSummarySet) IsCountWarningState() bool {
 // snapshots count CRITICAL threshold.
 func (sss SnapshotSummarySet) IsCountCriticalState() bool {
 	return sss.setCountCriticalThresholdCrossed
+}
+
+// IsOrphanWarningState indicates whether the snapshot set has exceeded the
+// orphaned snapshots WARNING threshold, but NOT the orphaned snapshots count
+// CRITICAL threshold.
+func (sss SnapshotSummarySet) IsOrphanWarningState() bool {
+	// FIXME: For now, we are triggering WARNING state for the presence of
+	// orphaned snapshots.
+	return sss.setOrphanedSnapshotsPresent
+}
+
+// IsOrphanCriticalState indicates whether the snapshot set has exceeded the
+// orphaned snapshots CRITICAL threshold.
+func (sss SnapshotSummarySet) IsOrphanCriticalState() bool {
+	// FIXME: For now, we are triggering WARNING state for the presence of
+	// orphaned snapshots.
+	return false
 }
 
 // IsSizeWarningState indicates whether the snapshot set has exceeded the
@@ -576,6 +624,31 @@ func (sss SnapshotSummarySets) IsCountWarningState() bool {
 func (sss SnapshotSummarySets) IsCountCriticalState() bool {
 	for i := range sss {
 		if sss[i].IsCountCriticalState() {
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsOrphanWarningState indicates whether the snapshot sets have exceeded the
+// orphaned snapshots WARNING threshold, but NOT the orphaned snapshots
+// CRITICAL threshold.
+func (sss SnapshotSummarySets) IsOrphanWarningState() bool {
+	for i := range sss {
+		if sss[i].IsOrphanWarningState() {
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsOrphanCriticalState indicates whether the snapshot sets have exceeded the
+// orphaned snapshots CRITICAL threshold.
+func (sss SnapshotSummarySets) IsOrphanCriticalState() bool {
+	for i := range sss {
+		if sss[i].IsOrphanCriticalState() {
 			return true
 		}
 	}
@@ -945,6 +1018,7 @@ func NewSnapshotSummarySet(
 			setSizeCriticalThresholdCrossed:  false,
 			setCountWarningThresholdCrossed:  false,
 			setCountCriticalThresholdCrossed: false,
+			setOrphanedSnapshotsPresent:      false,
 			thresholds:                       snapshotThresholds,
 		}
 	}
@@ -1190,6 +1264,7 @@ func NewSnapshotSummarySet(
 		setSizeCriticalThresholdCrossed:  ExceedsSize(setSize, int64(snapshotThresholds.SizeCritical)),
 		setCountWarningThresholdCrossed:  len(snapshots) > snapshotThresholds.CountWarning,
 		setCountCriticalThresholdCrossed: len(snapshots) > snapshotThresholds.CountCritical,
+		setOrphanedSnapshotsPresent:      hasOrphanedSnapshots(vm),
 		thresholds:                       snapshotThresholds,
 	}
 
@@ -1325,6 +1400,49 @@ func SnapshotsCountOneLineCheckSummary(
 	}
 }
 
+// SnapshotsOrphanOneLineCheckSummary is used to generate a one-line Nagios
+// service check results summary. This is the line most prominent in
+// notifications.
+func SnapshotsOrphanOneLineCheckSummary(
+	stateLabel string,
+	snapshotSets SnapshotSummarySets,
+	vmsFilterResults VMsFilterResults,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute SnapshotsOrphanOneLineCheckSummary func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	vmsWithOrphanedSnapshots := snapshotSets.VMsWithOrphanedSnapshots()
+
+	switch {
+	case snapshotSets.IsOrphanCriticalState() || snapshotSets.IsOrphanWarningState():
+		return fmt.Sprintf(
+			"%s: %d VMs with orphaned snapshots (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
+			stateLabel,
+			vmsWithOrphanedSnapshots,
+			vmsFilterResults.NumVMsAfterFiltering(),
+			snapshotSets.Snapshots(),
+			vmsFilterResults.NumRPsAfterFiltering(),
+		)
+
+	default:
+		return fmt.Sprintf(
+			"%s: No VMs with orphaned snapshots detected (evaluated %d VMs, %d Snapshots, %d Resource Pools)",
+			stateLabel,
+			vmsFilterResults.NumVMsAfterFiltering(),
+			snapshotSets.Snapshots(),
+			vmsFilterResults.NumRPsAfterFiltering(),
+		)
+
+	}
+}
+
 // SnapshotsSizeOneLineCheckSummary is used to generate a one-line Nagios
 // service check results summary. This is the line most prominent in
 // notifications.
@@ -1393,17 +1511,11 @@ func SnapshotsSizeOneLineCheckSummary(
 }
 
 // hasSnapshots asserts that a virtual machine has snapshots by requiring that
-// snapshot information is available (set whenever snapshots are present) and
-// that a snapshot is currently set as active.
+// snapshot information is available (set whenever snapshots are present).
 //
-// Based on observations and digging, a snapshot for a virtual machine can be
-// present but not set as active before it is fully created, before it is
-// fully removed during consolidated or just after it is deleted/consolidated.
-// By requiring that both be true we avoid attempting to retrieve snapshot
-// information when their state is not yet stabilized.
-//
-// https://github.com/vmware/govmomi/discussions/3951
-// https://github.com/vmware/govmomi/blob/55b758a91203cc2fe7c53a6cea06ada86fabdccb/simulator/virtual_machine.go#L1943
+// This helper function ignores whether a VM has a snapshot that is set as
+// active and only focuses on whether snapshots are present. See the
+// `isActiveSnapshot` helper function for more details.
 func hasSnapshots(vm mo.VirtualMachine) bool {
 	// This technically "works" by avoiding a nil pointer dereference whenever
 	// vm.Snapshot.CurrentSnapshot is nil, but it's *too* cautious and avoids
@@ -1451,6 +1563,22 @@ func isActiveSnapshot(vm mo.VirtualMachine, snapTree types.VirtualMachineSnapsho
 	default:
 		return false
 	}
+}
+
+// hasOrphanedSnapshots indicates whether a virtual machine has snapshots but
+// without any of them listed as the active snapshot.
+func hasOrphanedSnapshots(vm mo.VirtualMachine) bool {
+	if !hasSnapshots(vm) {
+		return false
+	}
+
+	numSnapshots := getNumVMSnapshots(vm.Snapshot.RootSnapshotList)
+
+	if vm.Snapshot.CurrentSnapshot == nil && numSnapshots > 0 {
+		return true
+	}
+
+	return false
 }
 
 // getActiveSnapshotMOIDDescription returns the active snapshot Managed Object
@@ -1784,6 +1912,81 @@ func SnapshotsSizeReport(
 		snapshotThresholdTypeSize,
 		snapshotSummarySets,
 	)
+
+	vmFilterResultsReportTrailer(
+		&report,
+		c,
+		vmsFilterOptions,
+		vmsFilterResults,
+		environmentMetadataHeader,
+	)
+
+	return report.String()
+}
+
+// SnapshotsOrphanReport generates a summary of snapshot details along
+// with various verbose details intended to aid in troubleshooting check
+// results at a glance. This information is provided for use with the Long
+// Service Output field commonly displayed on the detailed service check
+// results display in the web UI or in the body of many notifications.
+func SnapshotsOrphanReport(
+	c *vim25.Client,
+	snapshotSummarySets SnapshotSummarySets,
+	vmsFilterOptions VMsFilterOptions,
+	vmsFilterResults VMsFilterResults,
+) string {
+
+	funcTimeStart := time.Now()
+
+	defer func() {
+		logger.Printf(
+			"It took %v to execute SnapshotsCountReport func.\n",
+			time.Since(funcTimeStart),
+		)
+	}()
+
+	var report strings.Builder
+
+	listEntryTemplate := "* %q [Age: %v, Size (item: %v, sum: %v), Name: %q, Datastore: %q]\n"
+
+	_, _ = fmt.Fprintf(
+		&report,
+		"Orphaned snapshots exceeding WARNING or CRITICAL thresholds:%s%s",
+		nagios.CheckOutputEOL,
+		nagios.CheckOutputEOL,
+	)
+
+	switch {
+	case snapshotSummarySets.VMsWithOrphanedSnapshots() > 0:
+		for _, snapSet := range snapshotSummarySets {
+			if snapSet.IsOrphanCriticalState() || snapSet.IsOrphanWarningState() {
+				for _, snap := range snapSet.Snapshots {
+					_, _ = fmt.Fprintf(
+						&report,
+						listEntryTemplate,
+						snap.VMName,
+						snap.Age(),
+						snap.SizeHR(),
+						snapSet.SizeHR(),
+						snap.Name,
+						snap.DatastoreName,
+					)
+				}
+			}
+		}
+
+	default:
+		_, _ = fmt.Fprintf(&report, "* None detected%[1]s%[1]s", nagios.CheckOutputEOL)
+	}
+
+	// writeSnapshotsListEntries(
+	// 	&report,
+	// 	snapshotThresholds.CountCritical,
+	// 	snapshotThresholds.CountWarning,
+	// 	snapshotThresholdTypeCountSuffix,
+	// 	snapshotThresholdTypeCount,
+	// 	snapshotSummarySets,
+	// )
 
 	vmFilterResultsReportTrailer(
 		&report,

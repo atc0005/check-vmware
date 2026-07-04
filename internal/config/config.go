@@ -36,6 +36,7 @@ type PluginType struct {
 	SnapshotsAge                   bool
 	SnapshotsCount                 bool
 	SnapshotsSize                  bool
+	SnapshotsOrphan                bool
 	DatastoresSpace                bool
 	DatastoresPerformance          bool
 	ResourcePoolsMemory            bool
@@ -597,6 +598,9 @@ func pluginTypeLabel(pluginType PluginType) string {
 
 	case pluginType.SnapshotsSize:
 		label = PluginTypeSnapshotsSize
+
+	case pluginType.SnapshotsOrphan:
+		label = PluginTypeSnapshotsOrphan
 
 	case pluginType.DatastoresSpace:
 		label = PluginTypeDatastoresSpace

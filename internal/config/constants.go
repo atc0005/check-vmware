@@ -364,6 +364,7 @@ const (
 	PluginTypeSnapshotsAge                   string = "snapshots-age"
 	PluginTypeSnapshotsCount                 string = "snapshots-count"
 	PluginTypeSnapshotsSize                  string = "snapshots-size"
+	PluginTypeSnapshotsOrphan                string = "snapshots-orphan"
 	PluginTypeDatastoresSpace                string = "datastores-space"
 	PluginTypeDatastoresPerformance          string = "datastore-performance"
 	PluginTypeResourcePoolsMemory            string = "resource-pools-memory"

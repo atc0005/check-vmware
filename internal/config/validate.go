@@ -190,6 +190,25 @@ func (c Config) validate(pluginType PluginType) error {
 			)
 		}
 
+	case pluginType.SnapshotsOrphan:
+		// only one of these options may be used
+		if len(c.ExcludedResourcePools) > 0 && len(c.IncludedResourcePools) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				IncludeResourcePoolFlagLong,
+				ExcludeResourcePoolFlagLong,
+			)
+		}
+
+		// only one of these options may be used
+		if len(c.ExcludedFolders) > 0 && len(c.IncludedFolders) > 0 {
+			return fmt.Errorf(
+				"only one of %q or %q flags may be specified",
+				IncludeFolderIDFlagLong,
+				ExcludeFolderIDFlagLong,
+			)
+		}
+
 	case pluginType.VirtualMachinePowerCycleUptime:
 
 		// only one of these options may be used

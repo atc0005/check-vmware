@@ -100,6 +100,24 @@ func (c *Config) handleFlagsConfig(pluginType PluginType) {
 		flag.IntVar(&c.SnapshotsSizeCritical, SnapshotSizeCriticalFlagLong, defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp)
 		flag.IntVar(&c.SnapshotsSizeCritical, SnapshotSizeCriticalFlagShort, defaultSnapshotsSizeCritical, snapshotsSizeCriticalFlagHelp+shorthandFlagSuffix)
 
+	case pluginType.SnapshotsOrphan:
+
+		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
+		flag.Var(&c.ExcludedFolders, ExcludeFolderIDFlagLong, vmExcludedFoldersFlagHelp)
+
+		flag.Var(&c.IncludedResourcePools, IncludeResourcePoolFlagLong, vmIncludedResourcePoolsFlagHelp)
+		flag.Var(&c.ExcludedResourcePools, ExcludeResourcePoolFlagLong, vmExcludedResourcePoolsFlagHelp)
+		flag.Var(&c.IgnoredVMs, IgnoreVMFlagLong, ignoreVMsFlagHelp)
+
+		// NOTE: This plugin is hard-coded to evaluate powered off and powered
+		// on VMs equally. I'm not sure whether ignoring powered off VMs by
+		// default makes sense for this particular plugin.
+		//
+		// Please share your feedback here if you feel differently:
+		// https://github.com/atc0005/check-vmware/discussions/177
+		//
+		// flag.BoolVar(&c.PoweredOff, IncludePoweredOffVMsFlagLong, defaultPoweredOff, poweredOffFlagHelp)
+
 	case pluginType.VirtualMachinePowerCycleUptime:
 
 		flag.Var(&c.IncludedFolders, IncludeFolderIDFlagLong, vmIncludedFoldersFlagHelp)
