@@ -135,6 +135,18 @@ contents:
       mode: 0755
     packager: deb
 
+  - src: ../../release_assets/check_vmware_snapshots_orphan/check_vmware_snapshots_orphan-linux-amd64
+    dst: /usr/lib64/nagios/plugins/check_vmware_snapshots_orphan
+    file_info:
+      mode: 0755
+    packager: rpm
+
+  - src: ../../release_assets/check_vmware_snapshots_orphan/check_vmware_snapshots_orphan-linux-amd64
+    dst: /usr/lib/nagios/plugins/check_vmware_snapshots_orphan
+    file_info:
+      mode: 0755
+    packager: deb
+
   - src: ../../release_assets/check_vmware_rps_memory/check_vmware_rps_memory-linux-amd64
     dst: /usr/lib64/nagios/plugins/check_vmware_rps_memory
     file_info:

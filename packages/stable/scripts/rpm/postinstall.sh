@@ -44,6 +44,7 @@ if [ -x "$(command -v selinuxenabled)" ]; then
             check_vmware_snapshots_age \
             check_vmware_snapshots_count \
             check_vmware_snapshots_size \
+            check_vmware_snapshots_orphan \
             check_vmware_rps_memory \
             check_vmware_host_memory \
             check_vmware_host_cpu \
